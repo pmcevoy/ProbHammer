@@ -1,0 +1,15 @@
+
+# All rider files: https://youtrack.jetbrains.com/articles/SUPPORT-A-226/What-files-produced-by-Rider-should-be-ignored-in-VCS-Perforce-Git
+.idea/
+
+*.suo
+*.user
+.vs/
+[Bb]in/
+[Oo]bj/
+_UpgradeReport_Files/
+[Pp]ackages/
+
+Thumbs.db
+Desktop.ini
+.DS_Store
