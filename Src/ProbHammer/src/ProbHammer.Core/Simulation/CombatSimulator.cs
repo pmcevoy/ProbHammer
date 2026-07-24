@@ -4,7 +4,6 @@ public sealed class CombatSimulator
 {
     private readonly IDiceRoller _dice;
 
-    public CombatSimulator() : this(new DiceRoller()) { }
     public CombatSimulator(IDiceRoller dice) => _dice = dice;
 
     public (IReadOnlyList<int> Damage, IReadOnlyList<int> Kills, CombatStageStats Aggregate, IReadOnlyList<WeaponGroupStats> PerWeapon)

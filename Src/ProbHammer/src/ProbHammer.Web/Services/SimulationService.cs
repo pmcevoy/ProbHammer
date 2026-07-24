@@ -12,6 +12,10 @@ public interface ISimulationService
 
 public class SimulationService : ISimulationService
 {
+    private readonly SimulationAdapter _adapter;
+
+    public SimulationService(SimulationAdapter adapter) => _adapter = adapter;
+
     public async Task<IResult> RunAsync(HttpContext ctx, SimulationRequest simReq)
     {
         await ctx.Session.LoadAsync();
@@ -37,8 +41,7 @@ public class SimulationService : ISimulationService
         if (weaponTypes.Count > 1)
             return Results.BadRequest(new { error = "Cannot mix ranged and melee weapons in one simulation run" });
 
-        var adapter = new SimulationAdapter();
-        var response = adapter.Adapt(simReq, attackers, defender);
+        var response = _adapter.Adapt(simReq, attackers, defender);
         return Results.Json(response, SessionJson.CamelCaseOptions);
     }
 }

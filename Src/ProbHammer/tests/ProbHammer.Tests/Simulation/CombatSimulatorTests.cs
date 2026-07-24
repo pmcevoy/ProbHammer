@@ -485,7 +485,7 @@ public class CombatSimulatorTests
         // S4 vs T4 → 4+ wound. BS3+. AP0, save3+ → effective save = 3.
         // P(hit BS3+) = 4/6, P(wound S4T4) = 3/6, P(fail save 3+ AP0) = 2/6
         // Expected damage per attack = (4/6)×(3/6)×(2/6)×1 = 24/216 ≈ 0.111
-        var sim = new CombatSimulator();
+        var sim = new CombatSimulator(new DiceRoller());
         var weapon = MeleeWeapon(skill: 3, s: 4, ap: 0, damage: 1);
         var (dmg, _, _, _) = sim.Run(BasicAttacker(weapon), BasicDefender(t: 4, save: 3), 50_000);
         double mean = dmg.Average();

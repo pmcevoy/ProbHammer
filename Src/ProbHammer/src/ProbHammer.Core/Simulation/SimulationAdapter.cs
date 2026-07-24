@@ -6,28 +6,38 @@ public sealed class SimulationAdapter
 {
     private readonly CombatSimulator _simulator;
 
-    public SimulationAdapter() : this(new CombatSimulator()) { }
-    public SimulationAdapter(CombatSimulator simulator) => _simulator = simulator;
+    public SimulationAdapter(CombatSimulator simulator)
+    {
+        _simulator = simulator;
+    }
+
+    public static SimulationAdapter GetDefault()
+    {
+        return new SimulationAdapter(new CombatSimulator(new DiceRoller()));
+    }
 
     // Backward-compat overload used by existing tests
     public SimulationResponse Adapt(SimulationRequest request, UnitProfile attacker, UnitProfile defender)
-        => Adapt(request, (IReadOnlyList<UnitProfile>)[attacker], defender);
+    {
+        return Adapt(request, (IReadOnlyList<UnitProfile>)[attacker], defender);
+    }
 
-    public SimulationResponse Adapt(SimulationRequest request, IReadOnlyList<UnitProfile> attackers, UnitProfile defender)
+    public SimulationResponse Adapt(SimulationRequest request, IReadOnlyList<UnitProfile> attackers,
+        UnitProfile defender)
     {
         var primaryAttacker = attackers.FirstOrDefault(a =>
-            string.Equals(a.Name, request.AttackerName, StringComparison.OrdinalIgnoreCase))
-            ?? attackers[0];
+                                  string.Equals(a.Name, request.AttackerName, StringComparison.OrdinalIgnoreCase))
+                              ?? attackers[0];
 
         // Build defender profile
-        int defenderModels = request.DefenderModelCount > 0 ? request.DefenderModelCount : defender.ModelCount;
-        int defenderSave = defender.Save;
+        var defenderModels = request.DefenderModelCount > 0 ? request.DefenderModelCount : defender.ModelCount;
+        var defenderSave = defender.Save;
 
         // Cover adds +1 to saving throw roll, equivalent to lowering the required target by 1.
         if (request.Cover && !request.IgnoresCover)
             defenderSave -= 1;
 
-        int? defenderFnp = defender.FeelNoPain;
+        var defenderFnp = defender.FeelNoPain;
         if (defenderFnp == null && request.FnpOverride > 0)
             defenderFnp = request.FnpOverride;
 
@@ -40,7 +50,7 @@ public sealed class SimulationAdapter
             InvulnerableSave = defender.InvulnerableSave,
             Wounds = defender.Wounds,
             FeelNoPain = defenderFnp,
-            Keywords = defender.Keywords,
+            Keywords = defender.Keywords
         };
 
         // Group weapon selections by profile equality key (attacks excluded)
@@ -51,11 +61,11 @@ public sealed class SimulationAdapter
             var (model, weaponProfile, variant) = FindWeapon(attackers, sel);
             if (model == null || weaponProfile == null || variant == null) continue;
 
-            int modelCount = sel.ModelCount > 0 ? sel.ModelCount : model.Count;
+            var modelCount = sel.ModelCount > 0 ? sel.ModelCount : model.Count;
 
-            int simAp = variant.Ap + request.ApModifier;
-            int effectiveSkill = variant.Skill + request.BsWsModifier;
-            int effectiveStrength = variant.Strength + request.StrengthModifier;
+            var simAp = variant.Ap + request.ApModifier;
+            var effectiveSkill = variant.Skill + request.BsWsModifier;
+            var effectiveStrength = variant.Strength + request.StrengthModifier;
             var anti = MergeAnti(variant.Abilities.Anti, request);
             var simAbilities = BuildSimAbilities(variant.Abilities, request, anti);
 
@@ -68,7 +78,7 @@ public sealed class SimulationAdapter
                 simAbilities.TwinLinked, simAbilities.IndirectFire,
                 NormaliseAnti(anti));
 
-            string displayName = weaponProfile.WeaponName;
+            var displayName = weaponProfile.WeaponName;
             if (!string.IsNullOrEmpty(variant.Variant))
                 displayName += $" ({variant.Variant})";
 
@@ -82,8 +92,8 @@ public sealed class SimulationAdapter
         }
 
         // Build SimWeaponProfile per group
-        int hitMod = Math.Clamp(request.HitRollModifier, -1, 1);
-        int woundMod = Math.Clamp(request.WoundRollModifier, -1, 1);
+        var hitMod = Math.Clamp(request.HitRollModifier, -1, 1);
+        var woundMod = Math.Clamp(request.WoundRollModifier, -1, 1);
 
         var simWeapons = groups.Select(kvp => new SimWeaponProfile
         {
@@ -101,7 +111,7 @@ public sealed class SimulationAdapter
             DamageModifier = request.DamageModifier,
             RerollAttackDice = request.RerollAttackDice,
             RerollDamageDice = request.RerollDamageDice,
-            WithinHalfRange = request.WithinHalfRange,
+            WithinHalfRange = request.WithinHalfRange
         }).ToList();
 
         var simAttacker = new SimAttackerProfile
@@ -115,15 +125,15 @@ public sealed class SimulationAdapter
             WoundRerollAll = request.RerollWoundAll,
             FishForCriticalWounds = request.FishForCritWounds,
             CriticalHitsOn = request.CritHitOn5Plus ? 5 : primaryAttacker.CriticalHitsOn,
-            CriticalWoundsOn = request.CritWoundOn5Plus ? 5 : 6,
+            CriticalWoundsOn = request.CritWoundOn5Plus ? 5 : 6
         };
 
         var (damages, kills, aggregate, perWeapon) = _simulator.Run(simAttacker, simDefender);
 
-        double meanDamage = damages.Average();
-        double meanKills = kills.Average();
-        double pkill = kills.Count(k => k >= 1) / (double)kills.Count;
-        double variance = damages.Sum(d => (d - meanDamage) * (d - meanDamage)) / damages.Count;
+        var meanDamage = damages.Average();
+        var meanKills = kills.Average();
+        var pkill = kills.Count(k => k >= 1) / (double)kills.Count;
+        var variance = damages.Sum(d => (d - meanDamage) * (d - meanDamage)) / damages.Count;
 
         return new SimulationResponse
         {
@@ -132,7 +142,7 @@ public sealed class SimulationAdapter
             PKillAtLeastOne = pkill,
             StdDev = Math.Sqrt(variance),
             StageStats = aggregate,
-            WeaponBreakdown = simWeapons.Count > 1 ? perWeapon.ToList() : [],
+            WeaponBreakdown = simWeapons.Count > 1 ? perWeapon.ToList() : []
         };
     }
 
@@ -142,7 +152,7 @@ public sealed class SimulationAdapter
         var attacker = string.IsNullOrEmpty(sel.UnitName)
             ? attackers[0]
             : attackers.FirstOrDefault(a =>
-                string.Equals(a.Name, sel.UnitName, StringComparison.OrdinalIgnoreCase))
+                  string.Equals(a.Name, sel.UnitName, StringComparison.OrdinalIgnoreCase))
               ?? attackers[0];
 
         foreach (var model in attacker.Models)
@@ -165,6 +175,7 @@ public sealed class SimulationAdapter
                     return (model, weapon, variant);
             }
         }
+
         return (null, null, null);
     }
 
@@ -177,12 +188,12 @@ public sealed class SimulationAdapter
             Blast = src.Blast || req.BlastOverride,
             Melta = src.Melta,
             RapidFire = src.RapidFire,
-            SustainedHits = src.SustainedHits > 0 ? src.SustainedHits : (req.SustainedHitsOverride ? 1 : 0),
+            SustainedHits = src.SustainedHits > 0 ? src.SustainedHits : req.SustainedHitsOverride ? 1 : 0,
             LethalHits = src.LethalHits || req.LethalHitsOverride,
             DevastatingWounds = src.DevastatingWounds || req.DevastatingWoundsOverride,
             TwinLinked = src.TwinLinked,
             IndirectFire = req.IndirectFire,
-            Anti = anti,
+            Anti = anti
         };
     }
 
@@ -191,10 +202,8 @@ public sealed class SimulationAdapter
     {
         var result = new Dictionary<string, int>(baseAnti, StringComparer.OrdinalIgnoreCase);
         if (!string.IsNullOrEmpty(req.AntiKeyword) && req.AntiThreshold > 0)
-        {
-            if (!result.TryGetValue(req.AntiKeyword, out int existing) || req.AntiThreshold < existing)
+            if (!result.TryGetValue(req.AntiKeyword, out var existing) || req.AntiThreshold < existing)
                 result[req.AntiKeyword] = req.AntiThreshold;
-        }
         return result;
     }
 
@@ -202,14 +211,25 @@ public sealed class SimulationAdapter
     {
         if (anti.Count == 0) return "";
         return string.Join(",", anti.OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
-                                    .Select(kv => $"{kv.Key}:{kv.Value}"));
+            .Select(kv => $"{kv.Key}:{kv.Value}"));
     }
 
     private record WeaponGroup(string DisplayName, DiceExpression Attacks, SimWeaponAbilities Abilities);
 
     private record WeaponGroupKey(
-        WeaponType Type, int Skill, int Strength, int Ap, string Damage,
-        bool Torrent, bool Blast, int Melta, int RapidFire, int SustainedHits,
-        bool LethalHits, bool DevastatingWounds, bool TwinLinked, bool IndirectFire,
+        WeaponType Type,
+        int Skill,
+        int Strength,
+        int Ap,
+        string Damage,
+        bool Torrent,
+        bool Blast,
+        int Melta,
+        int RapidFire,
+        int SustainedHits,
+        bool LethalHits,
+        bool DevastatingWounds,
+        bool TwinLinked,
+        bool IndirectFire,
         string Anti);
 }

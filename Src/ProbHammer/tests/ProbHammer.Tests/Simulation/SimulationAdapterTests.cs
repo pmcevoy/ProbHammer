@@ -102,7 +102,7 @@ public class SimulationAdapterTests
     [Fact]
     public void Adapt_BasicRequest_ReturnsResponse()
     {
-        var adapter = new SimulationAdapter();
+        var adapter = SimulationAdapter.GetDefault();
         var response = adapter.Adapt(BasicRequest(), MakeAttacker(), MakeDefender());
 
         response.MeanDamage.Should().BeGreaterThanOrEqualTo(0);
@@ -115,7 +115,7 @@ public class SimulationAdapterTests
     [Fact]
     public void Adapt_SingleWeaponGroup_WeaponBreakdownIsEmpty()
     {
-        var adapter = new SimulationAdapter();
+        var adapter = SimulationAdapter.GetDefault();
         var response = adapter.Adapt(BasicRequest(), MakeAttacker(), MakeDefender());
         response.WeaponBreakdown.Should().BeEmpty();
     }
@@ -125,7 +125,7 @@ public class SimulationAdapterTests
     {
         // AP-2 in contracts (stored as -2); passed unchanged into sim engine.
         // effectiveSave = 3 - (-2) = 5 → some attacks get through → MeanDamage > 0.
-        var adapter = new SimulationAdapter();
+        var adapter = SimulationAdapter.GetDefault();
         var attacker = MakeAttacker(ap: 2); // MakeAttacker sets Ap = -ap = -2
         var defender = MakeDefender(t: 4, save: 3);
 
@@ -159,7 +159,7 @@ public class SimulationAdapterTests
     [Fact]
     public void Adapt_CoverIgnoresCover_NoEffect()
     {
-        var adapter = new SimulationAdapter();
+        var adapter = SimulationAdapter.GetDefault();
         var attacker = MakeAttacker();
         var defender = MakeDefender(t: 4, save: 6);
 
@@ -200,7 +200,7 @@ public class SimulationAdapterTests
     [Fact]
     public void Adapt_NativeFnpWinsOverOverride_NoException()
     {
-        var adapter = new SimulationAdapter();
+        var adapter = SimulationAdapter.GetDefault();
         var attacker = MakeAttacker();
         var defender = MakeDefender(t: 4, save: 7, fnp: 5);
         var request = new SimulationRequest
@@ -258,7 +258,7 @@ public class SimulationAdapterTests
     [Fact]
     public void Adapt_DefenderModelCountOverride_NoException()
     {
-        var adapter = new SimulationAdapter();
+        var adapter = SimulationAdapter.GetDefault();
         var attacker = MakeAttacker(s: 4);
         var defender = MakeDefender(modelCount: 10);
         var request = new SimulationRequest
@@ -296,7 +296,7 @@ public class SimulationAdapterTests
     [Fact]
     public void Adapt_UnknownWeapon_Skipped_NoException()
     {
-        var adapter = new SimulationAdapter();
+        var adapter = SimulationAdapter.GetDefault();
         var attacker = MakeAttacker(weaponName: "Sword");
         var defender = MakeDefender();
         var request = new SimulationRequest

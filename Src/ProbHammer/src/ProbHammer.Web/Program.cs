@@ -29,6 +29,9 @@ builder.Services.AddSingleton<ICatalogueFetcher>(sp =>
 builder.Services.AddSingleton<CatalogueStore>();
 builder.Services.AddSingleton<ArmyListParser>();
 builder.Services.AddSingleton<Enricher>();
+builder.Services.AddSingleton<IDiceRoller, DiceRoller>();
+builder.Services.AddSingleton<CombatSimulator>();
+builder.Services.AddSingleton<SimulationAdapter>();
 builder.Services.AddScoped<ISimulationService, SimulationService>();
 
 // Initialise catalogue store on application startup
