@@ -1,5 +1,12 @@
 # Domain Model & Army List Parser
 
+> **10th-edition shape.** Still what the live Web app, `Enricher`, and `Simulation/*` use.
+> A separate 11th-edition domain model (Attached Units) is being built alongside it in
+> `ProbHammer.Core.Domain.*` — see `.claude/domain-model-11e.md`. This file's `Contracts/*`,
+> `Catalogue/*`, and `Enrichment/Enricher.cs` are superseded in spec but remain in the tree,
+> untouched, until a later change rewires `ArmyListParser`, `Web`, and `Simulation` onto the
+> new model.
+
 ## Core Domain Records
 
 ```csharp

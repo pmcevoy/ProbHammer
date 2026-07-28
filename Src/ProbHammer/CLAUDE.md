@@ -53,7 +53,8 @@ Army list text
  SimulationResponse      Mean damage, expected kills, P(kill ≥ 1), stddev, pipeline stats
 ```
 
-Full domain model, schema, and enrichment rules: @.claude/domain-model.md  
+Full domain model, schema, and enrichment rules (10th edition, current Web app): @.claude/domain-model.md  
+11th edition domain model (Attached Units — in progress, not yet wired to Web/Simulation): @.claude/domain-model-11e.md  
 Simulation engine detail: @.claude/simulation-engine.md  
 Combat rules and attack sequence: @.claude/rules/combat-rules.md  
 BSData parsing and catalogue loading: @.claude/bsdata-parsing.md  

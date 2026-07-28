@@ -8,6 +8,20 @@ Nothing in progress.
 
 ## Recently Completed
 
+- OpenSpec change `attached-unit-domain-model` implemented (all 28 tasks): new 11th-edition
+  domain model under `ProbHammer.Core.Domain.Catalogue` / `ProbHammer.Core.Domain.Roster` —
+  `Datasheet` (named statlines, on-demand weapon-profile resolution), `Ability` (`Scope:
+  Model|Unit`), `Unit`/`AttachedUnit` (Composite-pattern `ICombatUnit` abstraction), live
+  keyword-union and Toughness-resolution rules, per-model-line remaining-count tracking, and
+  the Attached Unit aggregate view (`AttachedUnitAggregator`). Proven against hand-built
+  fixtures only (`tests/ProbHammer.Tests/Domain/Fixtures/`) — no BSData or export-parser
+  wiring. 35 new tests, 207 total, all passing. Doc: `.claude/domain-model-11e.md`.
+  **`Contracts/*`, `Catalogue/*`, and `Enrichment/Enricher.cs` are now superseded** by this
+  new domain model — they remain in the tree, untouched, only because nothing has rewired
+  `ArmyListParser`, `Web`, or `Simulation` onto it yet. **`Simulation/*` is paused** for the
+  same reason (its one-flat-Toughness-per-defender assumption doesn't fit Attached Units or
+  multi-statline datasheets). A later change is expected to rewire all three onto the new
+  model; until then all four old areas keep working exactly as before.
 - AP sign convention unified across the sim engine. `SimWeaponProfile.Ap` is now a negative
   integer matching the game value (AP-2 → -2). `AbilityProcessor.EffectiveSave` and
   `CombatSimulator` both use `save - ap`. `SimulationAdapter` passes AP through unchanged
