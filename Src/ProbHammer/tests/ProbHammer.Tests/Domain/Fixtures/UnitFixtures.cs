@@ -1,3 +1,4 @@
+using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Roster;
 
 namespace ProbHammer.Tests.Domain.Fixtures;
@@ -12,7 +13,7 @@ public static class UnitFixtures
         return new Unit(
             datasheet,
             enhancements: [],
-            modelLines: [new ModelLine("Assault Intercessor", ["Astartes chainsword", "Heavy bolt pistol"], count: 5)]);
+            modelLines: [new ModelLine("Assault Intercessor", [WeaponFixtures.ChainSword.Name, WeaponFixtures.HeavyBoltPistol.Name], count: 5)]);
     }
 
     /// <summary>Crusader Squad with a mixed loadout within the shared "Initiate" statline: 2x Power
@@ -26,8 +27,8 @@ public static class UnitFixtures
             enhancements: [],
             modelLines:
             [
-                new ModelLine("Initiate", ["Power Fist"], count: 2),
-                new ModelLine("Initiate", ["Master-crafted Power Weapon"], count: 3)
+                new ModelLine("Initiate", [WeaponFixtures.PowerFist.Name], count: 2),
+                new ModelLine("Initiate", [WeaponFixtures.MasterCraftedPowerWeapon.Name], count: 3)
             ]);
     }
 }

@@ -8,7 +8,7 @@ public static class DatasheetFixtures
     /// <summary>Single shared statline, referenced by every model-line (Assault Intercessor Squad-style).</summary>
     public static Datasheet AssaultIntercessorSquad()
     {
-        var statline = new Statline(Movement: 6, Toughness: 4, Save: 3, Wounds: 2, Leadership: 6, ObjectiveControl: 2);
+        var statline = new Statline(M: 6, T: 4, Sv: 3, W: 2, Ld: 6, Oc: 2);
 
         return new Datasheet(
             name: "Assault Intercessor Squad",
@@ -18,16 +18,8 @@ public static class DatasheetFixtures
             statlines: new Dictionary<string, Statline> { ["Assault Intercessor"] = statline },
             weaponProfiles: new Dictionary<string, WeaponProfile>
             {
-                ["Astartes chainsword"] = new()
-                {
-                    Name = "Astartes chainsword", Type = WeaponType.Melee, Range = 0, Attacks = 4,
-                    Skill = 3, Strength = 4, Ap = -1, Damage = 1, Abilities = new WeaponAbilities()
-                },
-                ["Heavy bolt pistol"] = new()
-                {
-                    Name = "Heavy bolt pistol", Type = WeaponType.Ranged, Range = 12, Attacks = 1,
-                    Skill = 3, Strength = 4, Ap = -1, Damage = 1, Abilities = new WeaponAbilities()
-                }
+                [WeaponFixtures.ChainSword.Name] = WeaponFixtures.ChainSword,
+                [WeaponFixtures.HeavyBoltPistol.Name] = WeaponFixtures.HeavyBoltPistol
             });
     }
 
@@ -36,11 +28,11 @@ public static class DatasheetFixtures
     {
         var statlines = new Dictionary<string, Statline>
         {
-            ["Chaos Space Marine"] = new(Movement: 6, Toughness: 4, Save: 3, Wounds: 2, Leadership: 7, ObjectiveControl: 2),
-            ["Chaos Space Marine Champion"] = new(Movement: 6, Toughness: 4, Save: 3, Wounds: 3, Leadership: 6, ObjectiveControl: 2),
-            ["Icon Bearer"] = new(Movement: 6, Toughness: 4, Save: 3, Wounds: 2, Leadership: 7, ObjectiveControl: 2),
-            ["Chaos Space Marine Gunner"] = new(Movement: 6, Toughness: 4, Save: 3, Wounds: 3, Leadership: 7, ObjectiveControl: 2),
-            ["Chaos Space Marine Reaper"] = new(Movement: 6, Toughness: 4, Save: 3, Wounds: 3, Leadership: 7, ObjectiveControl: 2)
+            ["Chaos Space Marine"] = new(M: 6, T: 4, Sv: 3, W: 2, Ld: 7, Oc: 2),
+            ["Chaos Space Marine Champion"] = new(M: 6, T: 4, Sv: 3, W: 3, Ld: 6, Oc: 2),
+            ["Icon Bearer"] = new(M: 6, T: 4, Sv: 3, W: 2, Ld: 7, Oc: 2),
+            ["Chaos Space Marine Gunner"] = new(M: 6, T: 4, Sv: 3, W: 3, Ld: 7, Oc: 2),
+            ["Chaos Space Marine Reaper"] = new(M: 6, T: 4, Sv: 3, W: 3, Ld: 7, Oc: 2)
         };
 
         return new Datasheet(
@@ -51,16 +43,8 @@ public static class DatasheetFixtures
             statlines: statlines,
             weaponProfiles: new Dictionary<string, WeaponProfile>
             {
-                ["Astartes chainsword"] = new()
-                {
-                    Name = "Astartes chainsword", Type = WeaponType.Melee, Range = 0, Attacks = 4,
-                    Skill = 3, Strength = 4, Ap = -1, Damage = 1, Abilities = new WeaponAbilities()
-                },
-                ["Bolt pistol"] = new()
-                {
-                    Name = "Bolt pistol", Type = WeaponType.Ranged, Range = 12, Attacks = 1,
-                    Skill = 3, Strength = 4, Ap = 0, Damage = 1, Abilities = new WeaponAbilities()
-                }
+                [WeaponFixtures.ChainSword.Name] =WeaponFixtures.ChainSword,
+                [WeaponFixtures.BoltPistol.Name] = WeaponFixtures.BoltPistol
             });
     }
 
@@ -68,7 +52,7 @@ public static class DatasheetFixtures
     /// weapon profile (Master-crafted Power Weapon) only the Sergeant's model-line resolves.</summary>
     public static Datasheet CrusaderSquad()
     {
-        var statline = new Statline(Movement: 6, Toughness: 4, Save: 3, Wounds: 2, Leadership: 6, ObjectiveControl: 2);
+        var statline = new Statline(M: 6, T: 4, Sv: 3, W: 2, Ld: 6, Oc: 2);
 
         return new Datasheet(
             name: "Crusader Squad",
@@ -78,16 +62,8 @@ public static class DatasheetFixtures
             statlines: new Dictionary<string, Statline> { ["Initiate"] = statline },
             weaponProfiles: new Dictionary<string, WeaponProfile>
             {
-                ["Power Fist"] = new()
-                {
-                    Name = "Power Fist", Type = WeaponType.Melee, Range = 0, Attacks = 2,
-                    Skill = 3, Strength = 8, Ap = -2, Damage = 2, Abilities = new WeaponAbilities()
-                },
-                ["Master-crafted Power Weapon"] = new()
-                {
-                    Name = "Master-crafted Power Weapon", Type = WeaponType.Melee, Range = 0, Attacks = 4,
-                    Skill = 2, Strength = 5, Ap = -2, Damage = 1, Abilities = new WeaponAbilities()
-                }
+                [WeaponFixtures.PowerFist.Name] = WeaponFixtures.PowerFist,
+                [WeaponFixtures.MasterCraftedPowerWeapon.Name] = WeaponFixtures.MasterCraftedPowerWeapon
             });
     }
 }

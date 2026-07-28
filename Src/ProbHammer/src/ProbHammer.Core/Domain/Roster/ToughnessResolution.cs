@@ -25,5 +25,5 @@ public static class ToughnessResolution
     private static IEnumerable<int> PresentToughnesses(Unit unit) =>
         unit.ModelLines
             .Where(ml => ml.RemainingCount > 0)
-            .Select(ml => unit.Datasheet.GetStatline(ml.StatlineName).Toughness);
+            .Select(ml => unit.Datasheet.GetStatline(ml.StatlineName).T);
 }

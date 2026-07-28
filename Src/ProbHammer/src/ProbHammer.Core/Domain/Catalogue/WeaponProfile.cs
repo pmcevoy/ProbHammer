@@ -1,41 +1,62 @@
 namespace ProbHammer.Core.Domain.Catalogue;
 
-public sealed record WeaponProfile
+public sealed record RangedWeapon(
+    string Name,
+    int Range,
+    int A, int Bs, int S, int Ap, int D) : WeaponProfile(Name, WeaponType.Ranged, Range, A, Bs, S, Ap, D);
+
+public sealed record MeleeWeapon(
+    string Name,
+    int A, int Ws, int S, int Ap, int D) : WeaponProfile(Name, WeaponType.Melee, 0, A, Ws, S, Ap, D);
+
+public abstract record WeaponProfile(
+    string Name,
+    WeaponType Type,
+    int Range,
+    int A, int Skill, int S, int Ap, int D)
 {
-    public required string Name { get; init; }
-    public required WeaponType Type { get; init; }
-    public required int Range { get; init; }     // inches; melee weapons use 0
-    public required int Attacks { get; init; }
-    public required int Skill { get; init; }
-    public required int Strength { get; init; }
-    public required int Ap { get; init; }         // negative integer matching game value (e.g. AP-2 -> -2)
-    public required int Damage { get; init; }
-    public required WeaponAbilities Abilities { get; init; }
-
+    public bool Torrent { get; init; }
+    public bool Blast { get; init; }
+    public int Melta { get; init; }          // 0 = absent
+    public int RapidFire { get; init; }      // 0 = absent
+    public int SustainedHits { get; init; }  // 0 = absent
+    public bool LethalHits { get; init; }
+    public bool DevastatingWounds { get; init; }
+    public bool TwinLinked { get; init; }
+    public bool IndirectFire { get; init; }
+    public bool Pistol { get; init; }
+    public IReadOnlyDictionary<string, int> Anti { get; init; } = new Dictionary<string, int>();
     /// <summary>
-    /// Structural equality for aggregation purposes: (Type, Skill, Strength, Ap, Damage, Abilities).
-    /// Excludes Name/Range/Attacks - count/attacks are the quantity being aggregated, not part of
-    /// the profile's identity. Mirrors SimulationAdapter.WeaponGroupKey.
+    ///     Structural equality for aggregation purposes: (Type, Skill, Strength, Ap, Damage, Abilities).
+    ///     Excludes Name/Range/Attacks - count/attacks are the quantity being aggregated, not part of
+    ///     the profile's identity. Mirrors SimulationAdapter.WeaponGroupKey.
     /// </summary>
-    public WeaponProfileEqualityKey EqualityKey() => new(
-        Type, Skill, Strength, Ap, Damage,
-        Abilities.Torrent, Abilities.Blast, Abilities.Melta, Abilities.RapidFire,
-        Abilities.SustainedHits, Abilities.LethalHits, Abilities.DevastatingWounds,
-        Abilities.TwinLinked, Abilities.IndirectFire, NormaliseAnti(Abilities.Anti));
+    public WeaponProfileEqualityKey EqualityKey()
+    {
+        return new WeaponProfileEqualityKey(
+            Type, Skill, S, Ap, D,
+            Torrent, Blast, Melta, RapidFire,
+            SustainedHits, LethalHits, DevastatingWounds,
+            TwinLinked, IndirectFire, NormaliseAnti(Anti));
+    }
 
-    private static string NormaliseAnti(IReadOnlyDictionary<string, int> anti) =>
-        anti.Count == 0
+    private static string NormaliseAnti(IReadOnlyDictionary<string, int> anti)
+    {
+        return anti.Count == 0
             ? ""
             : string.Join(",", anti.OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
                 .Select(kv => $"{kv.Key}:{kv.Value}"));
+    }
+    
+    
 }
 
 public sealed record WeaponProfileEqualityKey(
-    WeaponType Type,
+    WeaponType WeaponType,
     int Skill,
-    int Strength,
+    int S,
     int Ap,
-    int Damage,
+    int D,
     bool Torrent,
     bool Blast,
     int Melta,

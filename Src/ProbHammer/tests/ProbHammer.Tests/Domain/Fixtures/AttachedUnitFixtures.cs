@@ -7,7 +7,7 @@ public static class AttachedUnitFixtures
 {
     public static Datasheet LeaderDatasheet(string name = "Chaplain")
     {
-        var statline = new Statline(Movement: 6, Toughness: 5, Save: 3, Wounds: 4, Leadership: 6, ObjectiveControl: 1);
+        var statline = new Statline(M: 6, T: 5, Sv: 3, W: 4, Ld: 6, Oc: 1);
 
         return new Datasheet(
             name: name,
@@ -20,7 +20,7 @@ public static class AttachedUnitFixtures
 
     public static Datasheet SupportDatasheet()
     {
-        var statline = new Statline(Movement: 6, Toughness: 3, Save: 4, Wounds: 3, Leadership: 7, ObjectiveControl: 1);
+        var statline = new Statline(M: 6, T: 3, Sv: 4, W: 3, Ld: 7, Oc: 1);
 
         return new Datasheet(
             name: "Servitor",

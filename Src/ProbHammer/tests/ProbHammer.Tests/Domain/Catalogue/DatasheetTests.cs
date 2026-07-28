@@ -23,7 +23,7 @@ public class DatasheetTests
         var datasheet = DatasheetFixtures.AssaultIntercessorSquad();
 
         datasheet.Statlines.Should().ContainSingle();
-        datasheet.GetStatline("Assault Intercessor").Toughness.Should().Be(4);
+        datasheet.GetStatline("Assault Intercessor").T.Should().Be(4);
     }
 
     [Fact]
@@ -32,8 +32,8 @@ public class DatasheetTests
         var datasheet = DatasheetFixtures.ChaosSpaceMarineSquad();
 
         datasheet.Statlines.Should().HaveCount(5);
-        datasheet.GetStatline("Chaos Space Marine Champion").Wounds.Should().Be(3);
-        datasheet.GetStatline("Icon Bearer").Wounds.Should().Be(2);
+        datasheet.GetStatline("Chaos Space Marine Champion").W.Should().Be(3);
+        datasheet.GetStatline("Icon Bearer").W.Should().Be(2);
     }
 
     [Fact]
@@ -44,8 +44,8 @@ public class DatasheetTests
         // Both a rank-and-file model and a Sergeant reference the same "Initiate" statline,
         // but only the Sergeant's weapon set includes the Master-crafted Power Weapon.
         datasheet.GetStatline("Initiate").Should().Be(datasheet.GetStatline("Initiate"));
-        datasheet.ResolveWeaponProfile("Power Fist").Should().NotBeNull();
-        datasheet.ResolveWeaponProfile("Master-crafted Power Weapon").Should().NotBeNull();
+        datasheet.ResolveWeaponProfile(WeaponFixtures.PowerFist.Name).Should().NotBeNull();
+        datasheet.ResolveWeaponProfile(WeaponFixtures.MasterCraftedPowerWeapon.Name).Should().NotBeNull();
     }
 
     [Fact]
@@ -53,14 +53,14 @@ public class DatasheetTests
     {
         var datasheet = DatasheetFixtures.AssaultIntercessorSquad();
 
-        var profile = datasheet.ResolveWeaponProfile("Astartes chainsword");
+        var profile = datasheet.ResolveWeaponProfile(WeaponFixtures.ChainSword.Name);
 
         profile.Type.Should().Be(WeaponType.Melee);
-        profile.Attacks.Should().Be(4);
+        profile.A.Should().Be(4);
         profile.Skill.Should().Be(3);
-        profile.Strength.Should().Be(4);
+        profile.S.Should().Be(4);
         profile.Ap.Should().Be(-1);
-        profile.Damage.Should().Be(1);
+        profile.D.Should().Be(1);
     }
 
     [Fact]

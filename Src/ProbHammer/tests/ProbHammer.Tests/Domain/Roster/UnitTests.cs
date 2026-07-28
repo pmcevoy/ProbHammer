@@ -1,4 +1,5 @@
 using FluentAssertions;
+using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Roster;
 using ProbHammer.Tests.Domain.Fixtures;
 
@@ -23,8 +24,8 @@ public class UnitTests
         unit.ModelLines.Should().HaveCount(2);
         unit.ModelLines.Should().OnlyContain(ml => ml.StatlineName == "Initiate");
 
-        var powerFistLine = unit.ModelLines.Single(ml => ml.Weapons.Contains("Power Fist"));
-        var powerWeaponLine = unit.ModelLines.Single(ml => ml.Weapons.Contains("Master-crafted Power Weapon"));
+        var powerFistLine = unit.ModelLines.Single(ml => ml.Weapons.Contains(WeaponFixtures.PowerFist.Name));
+        var powerWeaponLine = unit.ModelLines.Single(ml => ml.Weapons.Contains(WeaponFixtures.MasterCraftedPowerWeapon.Name));
 
         powerFistLine.Count.Should().Be(2);
         powerWeaponLine.Count.Should().Be(3);
@@ -35,7 +36,7 @@ public class UnitTests
     {
         // Constructing a ModelLine takes the statline name directly - there is no code path that
         // derives it from the weapon selection.
-        var modelLine = new ModelLine("Initiate", ["Power Fist"], count: 2);
+        var modelLine = new ModelLine("Initiate", [WeaponFixtures.PowerFist.Name], count: 2);
 
         modelLine.StatlineName.Should().Be("Initiate");
     }
