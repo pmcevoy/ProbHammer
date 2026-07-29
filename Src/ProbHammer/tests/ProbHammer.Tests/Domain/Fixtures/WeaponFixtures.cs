@@ -2,7 +2,7 @@
 
 namespace ProbHammer.Tests.Domain.Fixtures;
 
-public class WeaponFixtures
+public static class WeaponFixtures
 {
     public static MeleeWeapon ChainSword()
     {

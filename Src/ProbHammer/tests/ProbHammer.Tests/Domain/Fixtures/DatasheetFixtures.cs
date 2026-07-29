@@ -43,7 +43,7 @@ public static class DatasheetFixtures
             statlines: statlines,
             weaponProfiles: new Dictionary<string, WeaponProfile>
             {
-                [WeaponFixtures.ChainSword().Name] =WeaponFixtures.ChainSword(),
+                [WeaponFixtures.ChainSword().Name] = WeaponFixtures.ChainSword(),
                 [WeaponFixtures.BoltPistol().Name] = WeaponFixtures.BoltPistol()
             });
     }

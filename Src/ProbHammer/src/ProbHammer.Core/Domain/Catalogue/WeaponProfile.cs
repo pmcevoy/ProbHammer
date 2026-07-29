@@ -62,8 +62,6 @@ public abstract record WeaponProfile(
             : string.Join(",", anti.OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
                 .Select(kv => $"{kv.Key}:{kv.Value}"));
     }
-    
-    
 }
 
 public sealed record WeaponProfileEqualityKey(
@@ -82,3 +80,4 @@ public sealed record WeaponProfileEqualityKey(
     bool TwinLinked,
     bool IndirectFire,
     string Anti);
+    
