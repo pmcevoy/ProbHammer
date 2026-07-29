@@ -15,7 +15,7 @@ public static class AttachedUnitFixtures
             keywords: ["CHARACTER", "INFANTRY", "IMPERIUM", name.ToUpperInvariant()],
             abilities: [],
             statlines: new Dictionary<string, Statline> { [name] = statline },
-            weaponProfiles: new Dictionary<string, WeaponProfile>());
+            weaponProfiles: []);
     }
 
     public static Datasheet SupportDatasheet()
@@ -28,7 +28,7 @@ public static class AttachedUnitFixtures
             keywords: ["INFANTRY", "SERVITOR"],
             abilities: [],
             statlines: new Dictionary<string, Statline> { ["Servitor"] = statline },
-            weaponProfiles: new Dictionary<string, WeaponProfile>());
+            weaponProfiles: []);
     }
 
     public static Unit LeaderUnit(string name = "Chaplain") =>

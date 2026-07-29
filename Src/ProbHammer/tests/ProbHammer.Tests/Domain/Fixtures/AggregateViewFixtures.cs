@@ -21,10 +21,7 @@ public static class AggregateViewFixtures
             keywords: ["CHARACTER", "INFANTRY"],
             abilities: [],
             statlines: new Dictionary<string, Statline> { ["Chaplain"] = new(6, 4, 3, 4, 6, 1) },
-            weaponProfiles: new Dictionary<string, WeaponProfile>
-            {
-                [WeaponFixtures.ChainSword().Name] = WeaponFixtures.ChainSword()
-            });
+            weaponProfiles: [WeaponFixtures.ChainSword()]);
         var leader = new Unit(
             leaderDatasheet, [],
             [new ModelLine("Chaplain", [WeaponFixtures.ChainSword().Name], count: 1)]);
@@ -42,7 +39,7 @@ public static class AggregateViewFixtures
             keywords: ["INFANTRY", "BATTLELINE"],
             abilities: [new Ability { Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit }],
             statlines: new Dictionary<string, Statline> { ["Initiate"] = new(6, 4, 3, 2, 6, 2) },
-            weaponProfiles: new Dictionary<string, WeaponProfile>());
+            weaponProfiles: []);
         var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Initiate", [], count: 5)]);
 
         var leaderDatasheet = new Datasheet(
@@ -51,7 +48,7 @@ public static class AggregateViewFixtures
             keywords: ["CHARACTER", "INFANTRY"],
             abilities: [],
             statlines: new Dictionary<string, Statline> { ["Chaplain"] = new(6, 4, 3, 4, 6, 1) },
-            weaponProfiles: new Dictionary<string, WeaponProfile>());
+            weaponProfiles: []);
 
         var ironHalo = new Ability { Name = "Iron Halo", Text = "This model has a 4+ invulnerable save.", Scope = AbilityScope.Model };
         var leaderLine = new ModelLine("Chaplain", [], count: 1, abilities: [ironHalo]);

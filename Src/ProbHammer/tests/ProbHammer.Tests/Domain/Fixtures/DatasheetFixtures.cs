@@ -16,11 +16,8 @@ public static class DatasheetFixtures
             keywords: ["INFANTRY", "BATTLELINE", "ASSAULT INTERCESSOR SQUAD"],
             abilities: [new Ability { Name = "Shock Assault", Text = "...", Scope = AbilityScope.Unit }],
             statlines: new Dictionary<string, Statline> { ["Assault Intercessor"] = statline },
-            weaponProfiles: new Dictionary<string, WeaponProfile>
-            {
-                [WeaponFixtures.ChainSword().Name] = WeaponFixtures.ChainSword(),
-                [WeaponFixtures.HeavyBoltPistol().Name] = WeaponFixtures.HeavyBoltPistol()
-            });
+            weaponProfiles: [WeaponFixtures.ChainSword(), WeaponFixtures.HeavyBoltPistol()]
+        );
     }
 
     /// <summary>Five distinct model types, each with its own statline (Chaos Space Marine-style).</summary>
@@ -41,15 +38,14 @@ public static class DatasheetFixtures
             keywords: ["INFANTRY", "BATTLELINE"],
             abilities: [],
             statlines: statlines,
-            weaponProfiles: new Dictionary<string, WeaponProfile>
-            {
-                [WeaponFixtures.ChainSword().Name] = WeaponFixtures.ChainSword(),
-                [WeaponFixtures.BoltPistol().Name] = WeaponFixtures.BoltPistol()
-            });
+            weaponProfiles: [WeaponFixtures.ChainSword(), WeaponFixtures.BoltPistol()]
+        );
     }
 
-    /// <summary>Shared statline referenced by both rank-and-file and Sergeant model-lines, with a
-    /// weapon profile (Master-crafted Power Weapon) only the Sergeant's model-line resolves.</summary>
+    /// <summary>
+    ///     Shared statline referenced by both rank-and-file and Sergeant model-lines, with a
+    ///     weapon profile (Master-crafted Power Weapon) only the Sergeant's model-line resolves.
+    /// </summary>
     public static Datasheet CrusaderSquad()
     {
         var statline = new Statline(M: 6, T: 4, Sv: 3, W: 2, Ld: 6, Oc: 2);
@@ -60,10 +56,7 @@ public static class DatasheetFixtures
             keywords: ["INFANTRY", "BATTLELINE"],
             abilities: [],
             statlines: new Dictionary<string, Statline> { ["Initiate"] = statline },
-            weaponProfiles: new Dictionary<string, WeaponProfile>
-            {
-                [WeaponFixtures.PowerFist().Name] = WeaponFixtures.PowerFist(),
-                [WeaponFixtures.MasterCraftedPowerWeapon().Name] = WeaponFixtures.MasterCraftedPowerWeapon()
-            });
+            [WeaponFixtures.PowerFist(), WeaponFixtures.MasterCraftedPowerWeapon()]
+        );
     }
 }

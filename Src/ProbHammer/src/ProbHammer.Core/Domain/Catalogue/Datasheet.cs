@@ -21,14 +21,14 @@ public sealed class Datasheet
         IEnumerable<string> keywords,
         IEnumerable<Ability> abilities,
         IReadOnlyDictionary<string, Statline> statlines,
-        IReadOnlyDictionary<string, WeaponProfile> weaponProfiles)
+        IEnumerable<WeaponProfile> weaponProfiles)
     {
         Name = name;
         FactionKeywords = new HashSet<string>(factionKeywords, StringComparer.OrdinalIgnoreCase);
         Keywords = new HashSet<string>(keywords, StringComparer.OrdinalIgnoreCase);
         Abilities = abilities.ToList();
         Statlines = new Dictionary<string, Statline>(statlines, StringComparer.OrdinalIgnoreCase);
-        _weaponProfiles = new Dictionary<string, WeaponProfile>(weaponProfiles, StringComparer.OrdinalIgnoreCase);
+        _weaponProfiles = weaponProfiles.ToDictionary(x => x.Name,  x => x,  StringComparer.OrdinalIgnoreCase);
     }
 
     public Statline GetStatline(string name) =>
