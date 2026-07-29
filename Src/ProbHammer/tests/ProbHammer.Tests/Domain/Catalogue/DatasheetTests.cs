@@ -44,8 +44,8 @@ public class DatasheetTests
         // Both a rank-and-file model and a Sergeant reference the same "Initiate" statline,
         // but only the Sergeant's weapon set includes the Master-crafted Power Weapon.
         datasheet.GetStatline("Initiate").Should().Be(datasheet.GetStatline("Initiate"));
-        datasheet.ResolveWeaponProfile(WeaponFixtures.PowerFist.Name).Should().NotBeNull();
-        datasheet.ResolveWeaponProfile(WeaponFixtures.MasterCraftedPowerWeapon.Name).Should().NotBeNull();
+        datasheet.ResolveWeaponProfile(WeaponFixtures.PowerFist().Name).Should().NotBeNull();
+        datasheet.ResolveWeaponProfile(WeaponFixtures.MasterCraftedPowerWeapon().Name).Should().NotBeNull();
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public class DatasheetTests
     {
         var datasheet = DatasheetFixtures.AssaultIntercessorSquad();
 
-        var profile = datasheet.ResolveWeaponProfile(WeaponFixtures.ChainSword.Name);
+        var profile = datasheet.ResolveWeaponProfile(WeaponFixtures.ChainSword().Name);
 
         profile.Type.Should().Be(WeaponType.Melee);
         profile.A.Should().Be(4);

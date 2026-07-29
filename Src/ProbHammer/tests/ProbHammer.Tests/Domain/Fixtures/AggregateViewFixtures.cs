@@ -13,7 +13,7 @@ public static class AggregateViewFixtures
         var bodyguardDatasheet = DatasheetFixtures.AssaultIntercessorSquad();
         var bodyguard = new Unit(
             bodyguardDatasheet, [],
-            [new ModelLine("Assault Intercessor", [WeaponFixtures.ChainSword.Name], count: 4)]);
+            [new ModelLine("Assault Intercessor", [WeaponFixtures.ChainSword().Name], count: 4)]);
 
         var leaderDatasheet = new Datasheet(
             name: "Chaplain",
@@ -23,11 +23,11 @@ public static class AggregateViewFixtures
             statlines: new Dictionary<string, Statline> { ["Chaplain"] = new(6, 4, 3, 4, 6, 1) },
             weaponProfiles: new Dictionary<string, WeaponProfile>
             {
-                [WeaponFixtures.ChainSword.Name] = WeaponFixtures.ChainSword
+                [WeaponFixtures.ChainSword().Name] = WeaponFixtures.ChainSword()
             });
         var leader = new Unit(
             leaderDatasheet, [],
-            [new ModelLine("Chaplain", [WeaponFixtures.ChainSword.Name], count: 1)]);
+            [new ModelLine("Chaplain", [WeaponFixtures.ChainSword().Name], count: 1)]);
 
         return new AttachedUnit(bodyguard, [leader]);
     }

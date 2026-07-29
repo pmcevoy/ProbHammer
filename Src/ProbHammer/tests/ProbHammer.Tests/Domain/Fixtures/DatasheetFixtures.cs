@@ -18,8 +18,8 @@ public static class DatasheetFixtures
             statlines: new Dictionary<string, Statline> { ["Assault Intercessor"] = statline },
             weaponProfiles: new Dictionary<string, WeaponProfile>
             {
-                [WeaponFixtures.ChainSword.Name] = WeaponFixtures.ChainSword,
-                [WeaponFixtures.HeavyBoltPistol.Name] = WeaponFixtures.HeavyBoltPistol
+                [WeaponFixtures.ChainSword().Name] = WeaponFixtures.ChainSword(),
+                [WeaponFixtures.HeavyBoltPistol().Name] = WeaponFixtures.HeavyBoltPistol()
             });
     }
 
@@ -43,8 +43,8 @@ public static class DatasheetFixtures
             statlines: statlines,
             weaponProfiles: new Dictionary<string, WeaponProfile>
             {
-                [WeaponFixtures.ChainSword.Name] =WeaponFixtures.ChainSword,
-                [WeaponFixtures.BoltPistol.Name] = WeaponFixtures.BoltPistol
+                [WeaponFixtures.ChainSword().Name] =WeaponFixtures.ChainSword(),
+                [WeaponFixtures.BoltPistol().Name] = WeaponFixtures.BoltPistol()
             });
     }
 
@@ -62,8 +62,8 @@ public static class DatasheetFixtures
             statlines: new Dictionary<string, Statline> { ["Initiate"] = statline },
             weaponProfiles: new Dictionary<string, WeaponProfile>
             {
-                [WeaponFixtures.PowerFist.Name] = WeaponFixtures.PowerFist,
-                [WeaponFixtures.MasterCraftedPowerWeapon.Name] = WeaponFixtures.MasterCraftedPowerWeapon
+                [WeaponFixtures.PowerFist().Name] = WeaponFixtures.PowerFist(),
+                [WeaponFixtures.MasterCraftedPowerWeapon().Name] = WeaponFixtures.MasterCraftedPowerWeapon()
             });
     }
 }

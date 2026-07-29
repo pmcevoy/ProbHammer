@@ -13,7 +13,7 @@ public static class UnitFixtures
         return new Unit(
             datasheet,
             enhancements: [],
-            modelLines: [new ModelLine("Assault Intercessor", [WeaponFixtures.ChainSword.Name, WeaponFixtures.HeavyBoltPistol.Name], count: 5)]);
+            modelLines: [new ModelLine("Assault Intercessor", [WeaponFixtures.ChainSword().Name, WeaponFixtures.HeavyBoltPistol().Name], count: 5)]);
     }
 
     /// <summary>Crusader Squad with a mixed loadout within the shared "Initiate" statline: 2x Power
@@ -27,8 +27,8 @@ public static class UnitFixtures
             enhancements: [],
             modelLines:
             [
-                new ModelLine("Initiate", [WeaponFixtures.PowerFist.Name], count: 2),
-                new ModelLine("Initiate", [WeaponFixtures.MasterCraftedPowerWeapon.Name], count: 3)
+                new ModelLine("Initiate", [WeaponFixtures.PowerFist().Name], count: 2),
+                new ModelLine("Initiate", [WeaponFixtures.MasterCraftedPowerWeapon().Name], count: 3)
             ]);
     }
 }
