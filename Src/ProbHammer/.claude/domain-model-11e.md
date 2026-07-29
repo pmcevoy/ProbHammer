@@ -26,12 +26,23 @@ Datasheet
   Statlines: IReadOnlyDictionary<string, Statline>   // enumerable, queryable by name
   ResolveWeaponProfile(name) -> WeaponProfile          // on-demand only, never enumerated
 
-Statline(Movement, Toughness, Save, Wounds, Leadership, ObjectiveControl)   // value object
+Statline(M, T, Sv, W, Ld, Oc)   // value object — field names match official shorthand
 
-WeaponProfile(Name, Type, Range, Attacks, Skill, Strength, Ap, Damage, Abilities)  // value object
-  EqualityKey() -> WeaponProfileEqualityKey   // (Type, Skill, Strength, Ap, Damage, Abilities)
-                                               // excludes Name/Range/Attacks — used to aggregate
+WeaponProfile(Name, Type, Range, A, S, Ap, D)   // abstract value object
+  Skill: int                                    // abstract computed property, see below
+  Torrent, Blast, Melta, RapidFire, SustainedHits, LethalHits, DevastatingWounds,
+    TwinLinked, IndirectFire, Pistol, Anti       // init-settable ability properties, flattened
+                                                  // directly onto WeaponProfile (no nested
+                                                  // WeaponAbilities type)
+  EqualityKey() -> WeaponProfileEqualityKey   // (Type, Skill, S, Ap, D, ability fields)
+                                               // excludes Name/Range/A — used to aggregate
                                                // weapon instances by profile, not identity
+
+RangedWeapon(Name, Range, A, Bs, S, Ap, D) : WeaponProfile   // Type fixed to Ranged
+  Skill => Bs
+
+MeleeWeapon(Name, A, Ws, S, Ap, D) : WeaponProfile           // Type fixed to Melee, Range fixed to 0
+  Skill => Ws
 
 Ability(Name, Text, Choices: IReadOnlyList<AbilityChoice>, Scope: Model | Unit)
 ```
@@ -46,6 +57,20 @@ Ability(Name, Text, Choices: IReadOnlyList<AbilityChoice>, Scope: Model | Unit)
   datasheet-intrinsic) — 11e rules text treats those as examples of sources, not special cases.
 - `WeaponProfile.EqualityKey()` mirrors `SimulationAdapter.WeaponGroupKey` (10e code) — same
   concept (group by structural profile, sum quantities), ported rather than reimplemented.
+- `WeaponProfile` is abstract with sealed `RangedWeapon`/`MeleeWeapon` subtypes rather than a
+  single record with a `Type` field — makes it impossible to construct a weapon whose `Type` and
+  `Range` disagree with its own shape (a melee weapon can't accidentally carry a non-zero range).
+- `Skill` is an abstract *computed* property (`RangedWeapon.Skill => Bs`, `MeleeWeapon.Skill =>
+  Ws`), not a stored/init value on the base record. This keeps official terminology (`Bs`
+  ballistic skill, `Ws` weapon skill) as the single source of truth on each subtype while still
+  giving shared logic (`EqualityKey()`, future hit-roll code) one `Skill` name to read regardless
+  of weapon type. Earlier draft had `Bs`/`Ws` as extra positional parameters forwarded into a
+  stored base `Skill` — that created two independent backing fields that could desync under a
+  `with` expression (`weapon with { Skill = x }` wouldn't update `Bs`). Computing `Skill` from
+  the subtype's own field instead of storing it separately removes that failure mode structurally.
+- Field names throughout (`Statline.M/T/Sv/W/Ld/Oc`, `WeaponProfile.A/S/Ap/D`) intentionally match
+  official 40k shorthand rather than spelled-out names — readability for anyone who knows the
+  rules trumps self-documenting-variable-name conventions here.
 
 ---
 
