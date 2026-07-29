@@ -23,8 +23,11 @@ in the tree, untouched, and is what the live Web app and `Simulation/*` still us
 ```
 Datasheet
   Name, FactionKeywords, Keywords, Abilities (unit-wide)
-  Statlines: IReadOnlyDictionary<string, Statline>   // enumerable, queryable by name
+  Statlines: IReadOnlyDictionary<string, Statline>   // enumerable, queryable by name; caller-supplied
+                                                      // keys - Statline carries no Name of its own
   ResolveWeaponProfile(name) -> WeaponProfile          // on-demand only, never enumerated
+  ctor(..., statlines: IReadOnlyDictionary<string, Statline>, weaponProfiles: IEnumerable<WeaponProfile>)
+                                                      // weaponProfiles keyed internally by .Name
 
 Statline(M, T, Sv, W, Ld, Oc)   // value object — field names match official shorthand
 
@@ -71,6 +74,18 @@ Ability(Name, Text, Choices: IReadOnlyList<AbilityChoice>, Scope: Model | Unit)
 - Field names throughout (`Statline.M/T/Sv/W/Ld/Oc`, `WeaponProfile.A/S/Ap/D`) intentionally match
   official 40k shorthand rather than spelled-out names — readability for anyone who knows the
   rules trumps self-documenting-variable-name conventions here.
+- `Datasheet`'s constructor takes `weaponProfiles` as `IEnumerable<WeaponProfile>`, not a pre-built
+  dictionary — the internal lookup is built from `.Name` inside the constructor, so a caller can
+  never construct a `Datasheet` where a weapon's dictionary key disagrees with its own `Name` (a
+  real bug hit when `WeaponFixtures` was introduced: fixture call sites had duplicated the name as
+  both the dictionary key and the `WeaponProfile.Name` argument, and the two drifted). `Statlines`
+  stays a caller-supplied `IReadOnlyDictionary<string, Statline>` rather than getting the same
+  treatment, because `Statline` carries no `Name` of its own — the name is genuine external
+  metadata (a role label like "Sergeant"), not something derivable from the value. Two
+  differently-named statlines with identical `M/T/Sv/W/Ld/Oc` are valid and expected — real BSData
+  exports name "Assault Intercessor" and "Assault Intercessor Sergeant" separately even though
+  they share a statline — which is exactly why `AttachedUnitAggregator.BuildStatlines` dedupes by
+  name, not by value.
 
 ---
 

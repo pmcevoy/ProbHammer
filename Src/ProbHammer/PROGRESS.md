@@ -8,6 +8,18 @@ Nothing in progress.
 
 ## Recently Completed
 
+- Refinement pass on the `attached-unit-domain-model` change (commits `3cfdfc0`..`d8c53c0`, all
+  tasks already closed — no scope change): `WeaponProfile` reshaped to an abstract base with
+  sealed `RangedWeapon`/`MeleeWeapon` subtypes (`WeaponAbilities` removed, ability fields
+  flattened directly onto `WeaponProfile`); `Skill` is now an abstract *computed* property
+  (`RangedWeapon.Skill => Bs`, `MeleeWeapon.Skill => Ws`) rather than a stored value, avoiding a
+  shadow-property desync under `with` expressions. `Datasheet`'s constructor now takes
+  `weaponProfiles` as `IEnumerable<WeaponProfile>` (keyed internally by `.Name`) instead of a
+  caller-built dictionary, removing a key/name-drift bug class found when `WeaponFixtures` was
+  introduced. New fixture/test coverage added for two differently-named statlines with identical
+  values (`Assault Intercessor` / `Assault Intercessor Sergeant`), proving
+  `AttachedUnitAggregator` dedupes statlines by name, not by value. 35 domain tests, all passing.
+  Doc: `.claude/domain-model-11e.md` updated to match.
 - OpenSpec change `attached-unit-domain-model` implemented (all 28 tasks): new 11th-edition
   domain model under `ProbHammer.Core.Domain.Catalogue` / `ProbHammer.Core.Domain.Roster` —
   `Datasheet` (named statlines, on-demand weapon-profile resolution), `Ability` (`Scope:
