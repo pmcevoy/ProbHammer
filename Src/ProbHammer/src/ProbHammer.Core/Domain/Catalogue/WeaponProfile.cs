@@ -3,18 +3,33 @@ namespace ProbHammer.Core.Domain.Catalogue;
 public sealed record RangedWeapon(
     string Name,
     int Range,
-    int A, int Bs, int S, int Ap, int D) : WeaponProfile(Name, WeaponType.Ranged, Range, A, Bs, S, Ap, D);
+    int A,
+    int Bs,
+    int S,
+    int Ap,
+    int D) : WeaponProfile(Name, WeaponType.Ranged, Range, A, S, Ap, D)
+{
+    public override  int Skill => Bs;
+}
 
 public sealed record MeleeWeapon(
     string Name,
-    int A, int Ws, int S, int Ap, int D) : WeaponProfile(Name, WeaponType.Melee, 0, A, Ws, S, Ap, D);
+    int A,
+    int Ws,
+    int S,
+    int Ap,
+    int D) : WeaponProfile(Name, WeaponType.Melee, 0, A, S, Ap, D)
+{
+    public override int Skill => Ws;
+}
 
 public abstract record WeaponProfile(
     string Name,
     WeaponType Type,
     int Range,
-    int A, int Skill, int S, int Ap, int D)
+    int A, int S, int Ap, int D)
 {
+    public abstract int Skill { get; }
     public bool Torrent { get; init; }
     public bool Blast { get; init; }
     public int Melta { get; init; }          // 0 = absent
