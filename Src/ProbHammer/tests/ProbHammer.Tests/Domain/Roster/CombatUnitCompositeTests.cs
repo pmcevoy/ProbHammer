@@ -9,7 +9,7 @@ public class CombatUnitCompositeTests
     [Fact]
     public void PlainUnit_YieldsItselfAsItsOnlyComponent()
     {
-        ICombatUnit unit = UnitFixtures.AssaultIntercessorSquadUniform();
+        ICombatUnit unit = UnitFixtures.AssaultIntercessorSquadWithUnitLeader();
 
         unit.Components.Should().ContainSingle().Which.Should().BeSameAs(unit);
     }

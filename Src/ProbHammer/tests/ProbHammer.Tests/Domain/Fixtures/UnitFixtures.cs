@@ -1,23 +1,47 @@
-using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Roster;
 
 namespace ProbHammer.Tests.Domain.Fixtures;
 
 public static class UnitFixtures
 {
-    /// <summary>5 Assault Intercessors, all equipped identically (one model-line).</summary>
-    public static Unit AssaultIntercessorSquadUniform()
+    /// <summary>
+    ///     4 identical sword brothers
+    /// </summary>
+    public static Unit SwordBrethrenSquadUniform()
+    {
+        var datasheet = DatasheetFixtures.SwordBrethrenSquad();
+
+        return new Unit(
+            datasheet,
+            enhancements: [],
+            modelLines:
+            [
+                new ModelLine("Sword Brother",
+                    [WeaponFixtures.ChainSword().Name, WeaponFixtures.HeavyBoltPistol().Name], count: 4)
+            ]);
+    }
+
+    /// <summary>5 Assault Intercessors, 4 troops, one sergeant</summary>
+    public static Unit AssaultIntercessorSquadWithUnitLeader()
     {
         var datasheet = DatasheetFixtures.AssaultIntercessorSquad();
 
         return new Unit(
             datasheet,
             enhancements: [],
-            modelLines: [new ModelLine("Assault Intercessor", [WeaponFixtures.ChainSword().Name, WeaponFixtures.HeavyBoltPistol().Name], count: 5)]);
+            modelLines:
+            [
+                new ModelLine("Assault Intercessor Sergeant",
+                    [WeaponFixtures.ChainSword().Name, WeaponFixtures.HeavyBoltPistol().Name], count: 1),
+                new ModelLine("Assault Intercessor",
+                    [WeaponFixtures.ChainSword().Name, WeaponFixtures.HeavyBoltPistol().Name], count: 4)
+            ]);
     }
 
-    /// <summary>Crusader Squad with a mixed loadout within the shared "Initiate" statline: 2x Power
-    /// Fist / 3x Master-crafted Power Weapon - matches the roster-model spec scenario verbatim.</summary>
+    /// <summary>
+    ///     Crusader Squad with a mixed loadout within the shared "Initiate" statline: 2x Power
+    ///     Fist / 3x Master-crafted Power Weapon - matches the roster-model spec scenario verbatim.
+    /// </summary>
     public static Unit CrusaderSquadMixedLoadout()
     {
         var datasheet = DatasheetFixtures.CrusaderSquad();

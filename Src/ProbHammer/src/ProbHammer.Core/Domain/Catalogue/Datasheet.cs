@@ -28,7 +28,7 @@ public sealed class Datasheet
         Keywords = new HashSet<string>(keywords, StringComparer.OrdinalIgnoreCase);
         Abilities = abilities.ToList();
         Statlines = new Dictionary<string, Statline>(statlines, StringComparer.OrdinalIgnoreCase);
-        _weaponProfiles = weaponProfiles.ToDictionary(x => x.Name,  x => x,  StringComparer.OrdinalIgnoreCase);
+        _weaponProfiles = weaponProfiles.ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
     }
 
     public Statline GetStatline(string name) =>

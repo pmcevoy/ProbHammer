@@ -20,10 +20,10 @@ public class DatasheetTests
     [Fact]
     public void SingleSharedStatline_IsExposedAsOneNamedEntry()
     {
-        var datasheet = DatasheetFixtures.AssaultIntercessorSquad();
+        var datasheet = DatasheetFixtures.SwordBrethrenSquad();
 
         datasheet.Statlines.Should().ContainSingle();
-        datasheet.GetStatline("Assault Intercessor").T.Should().Be(4);
+        datasheet.GetStatline("Sword Brother").T.Should().Be(4);
     }
 
     [Fact]

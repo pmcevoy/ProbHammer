@@ -5,17 +5,42 @@ namespace ProbHammer.Tests.Domain.Fixtures;
 /// <summary>Hand-built static Datasheets used across domain-model tests. No BSData or parser dependency.</summary>
 public static class DatasheetFixtures
 {
-    /// <summary>Single shared statline, referenced by every model-line (Assault Intercessor Squad-style).</summary>
+    /// <summary>Single shared statline, referenced by every model-line</summary>
+    public static Datasheet SwordBrethrenSquad()
+    {
+        var bro = new Statline(M: 6, T: 4, Sv: 3, W: 3, Ld: 6, Oc: 2);
+        
+        return new Datasheet(
+            name: "Sword Brethren Squad",
+            factionKeywords: ["ADEPTUS ASTARTES"],
+            keywords: ["INFANTRY", "SWORD BRETHREN SQUAD"],
+            abilities: [new Ability { Name = "Exploit their cowardice", Text = "...", Scope = AbilityScope.Unit }],
+            statlines: new Dictionary<string, Statline>
+            {
+                ["Sword Brother"] = bro,
+            },
+            weaponProfiles: [WeaponFixtures.MasterCraftedPowerWeapon(), WeaponFixtures.HeavyBoltPistol()]
+        );
+    }
+
+    
+    /// <summary>Multiple statlines, but with same value: unit-leader / troop</summary>
     public static Datasheet AssaultIntercessorSquad()
     {
-        var statline = new Statline(M: 6, T: 4, Sv: 3, W: 2, Ld: 6, Oc: 2);
+        var troop = new Statline(M: 6, T: 4, Sv: 3, W: 2, Ld: 6, Oc: 2);
+        var sergeant = new Statline(M: 6, T: 4, Sv: 3, W: 2, Ld: 6, Oc: 2);
+        //Note troop == sergeant
 
         return new Datasheet(
             name: "Assault Intercessor Squad",
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY", "BATTLELINE", "ASSAULT INTERCESSOR SQUAD"],
             abilities: [new Ability { Name = "Shock Assault", Text = "...", Scope = AbilityScope.Unit }],
-            statlines: new Dictionary<string, Statline> { ["Assault Intercessor"] = statline },
+            statlines: new Dictionary<string, Statline>
+            {
+                ["Assault Intercessor"] = troop,
+                ["Assault Intercessor Sergeant"] = sergeant,
+            },
             weaponProfiles: [WeaponFixtures.ChainSword(), WeaponFixtures.HeavyBoltPistol()]
         );
     }
@@ -56,7 +81,7 @@ public static class DatasheetFixtures
             keywords: ["INFANTRY", "BATTLELINE"],
             abilities: [],
             statlines: new Dictionary<string, Statline> { ["Initiate"] = statline },
-            [WeaponFixtures.PowerFist(), WeaponFixtures.MasterCraftedPowerWeapon()]
+            weaponProfiles: [WeaponFixtures.PowerFist(), WeaponFixtures.MasterCraftedPowerWeapon()]
         );
     }
 }

@@ -7,17 +7,31 @@ namespace ProbHammer.Tests.Domain.Roster;
 public class AttachedUnitAggregatorTests
 {
     [Fact]
+    public void StatlineView_TreatsDifferentlyNamedStatlinesAsDistinct_EvenWithEqualValues()
+    {
+        var unit = UnitFixtures.AssaultIntercessorSquadWithUnitLeader();
+        var view = AttachedUnitAggregator.Build(unit);
+
+        //Two statlines
+        view.Statlines.Should().HaveCount(2);
+        var troop = view.Statlines.Single(s => s.StatlineName == "Assault Intercessor");
+        var sergeant = view.Statlines.Single(s => s.StatlineName == "Assault Intercessor Sergeant");
+
+        //And both statlines are equal
+        troop.Statline.Should().Be(sergeant.Statline);
+    }
+
+    [Fact]
     public void StatlineView_DropsAStatlineOnceAllItsModelsAreGone()
     {
-        var unit = UnitFixtures.AssaultIntercessorSquadUniform();
-        var before = AttachedUnitAggregator.Build(unit);
-        before.Statlines.Should().ContainSingle(s => s.StatlineName == "Assault Intercessor");
-
-        foreach (var modelLine in unit.ModelLines)
-            modelLine.RemoveCasualties(modelLine.Count);
+        var unit = UnitFixtures.AssaultIntercessorSquadWithUnitLeader();
+        var sergeant = unit.ModelLines.Single(x => x.StatlineName == "Assault Intercessor Sergeant");
+        sergeant.RemoveCasualties(sergeant.Count);
 
         var after = AttachedUnitAggregator.Build(unit);
-        after.Statlines.Should().BeEmpty();
+
+        after.Statlines.Should().HaveCount(1);
+        after.Statlines.Should().ContainSingle(s => s.StatlineName == "Assault Intercessor");
     }
 
     [Fact]
@@ -61,7 +75,8 @@ public class AttachedUnitAggregatorTests
 
         var view = AttachedUnitAggregator.Build(attachedUnit);
 
-        view.ModelScopedAbilities.Should().ContainSingle(e => e.Ability.Name == "Iron Halo" && e.ModelLine == leaderLine);
+        view.ModelScopedAbilities.Should()
+            .ContainSingle(e => e.Ability.Name == "Iron Halo" && e.ModelLine == leaderLine);
         view.UnitScopedAbilities.Should().NotContain(a => a.Name == "Iron Halo");
     }
 

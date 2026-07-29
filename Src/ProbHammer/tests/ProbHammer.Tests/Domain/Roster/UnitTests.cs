@@ -10,10 +10,10 @@ public class UnitTests
     [Fact]
     public void UniformLoadout_ProducesOneModelLine()
     {
-        var unit = UnitFixtures.AssaultIntercessorSquadUniform();
+        var unit = UnitFixtures.SwordBrethrenSquadUniform();
 
         unit.ModelLines.Should().ContainSingle();
-        unit.ModelLines[0].Count.Should().Be(5);
+        unit.ModelLines[0].Count.Should().Be(4);
     }
 
     [Fact]
