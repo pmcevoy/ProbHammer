@@ -31,10 +31,23 @@ Datasheet
 
 Statline(M, T, Sv, W, Ld, Oc)   // value object — field names match official shorthand
 
-WeaponProfile(Name, Type, Range, A, S, Ap, D)   // abstract value object
+DiceExpression(Count, Sides, Modifier)   // value object — a fixed integer (Count=0) or a dice
+                                          // roll ("D6", "2D3+1"); Parse/Fixed/Scale/Add unchanged
+                                          // from its original Simulation-namespace shape
+  Parse(string) -> DiceExpression        // "3" | "D6" | "2D3+1"
+  implicit operator DiceExpression(int)  // plain ints convert to a fixed value at call sites
+  D3, D6                                 // static presets for the common single-die case
+  operator +(DiceExpression, int)        // e.g. DiceExpression.D6 + 2 → "D6+2"; non-mutating
+  Scale(n), Add(other)                   // multi-model attack/damage aggregation
+
+WeaponProfile(Name, Type, Range, A, S, Ap, D)   // abstract value object; A and D are
+                                                 // DiceExpression (Attacks/Damage can be fixed
+                                                 // or dice-based, e.g. Multi-melta D6 damage);
+                                                 // S and Ap stay plain int
   Skill: int                                    // abstract computed property, see below
   Torrent, Blast, Melta, RapidFire, SustainedHits, LethalHits, DevastatingWounds,
-    TwinLinked, IndirectFire, Pistol, Anti       // init-settable ability properties, flattened
+    TwinLinked, IndirectFire, Pistol, IgnoresCover, Assault, Anti
+                                                  // init-settable ability properties, flattened
                                                   // directly onto WeaponProfile (no nested
                                                   // WeaponAbilities type)
   EqualityKey() -> WeaponProfileEqualityKey   // (Type, Skill, S, Ap, D, ability fields)
@@ -74,6 +87,19 @@ Ability(Name, Text, Choices: IReadOnlyList<AbilityChoice>, Scope: Model | Unit)
 - Field names throughout (`Statline.M/T/Sv/W/Ld/Oc`, `WeaponProfile.A/S/Ap/D`) intentionally match
   official 40k shorthand rather than spelled-out names — readability for anyone who knows the
   rules trumps self-documenting-variable-name conventions here.
+- `DiceExpression` lives here (`Domain.Catalogue`), not in `Simulation/*` where it originated —
+  it's a game-rules quantity (a D6 means the same thing whether or not a simulation ever rolls
+  it), and `WeaponProfile.A`/`D` depend on it directly. `Simulation/*` now references this type
+  instead of owning it; that repoint is a `using`-statement change only (openspec change
+  `promote-dice-expression-to-domain`) and does **not** mean `Simulation/*` has been rewired onto
+  this domain model — see Deliberate Omissions below, which still holds.
+- `DiceExpression`'s implicit `int` conversion exists so fixed-value weapon stats (the common
+  case) can be written as a plain integer at construction sites instead of `DiceExpression.Fixed(n)`
+  everywhere; variable stats (e.g. `DiceExpression.D6`, `DiceExpression.D6 + 2`) still use
+  `DiceExpression` explicitly. Chosen over constructor overloads on `RangedWeapon`/`MeleeWeapon`
+  because `A` and `D` vary independently between fixed and dice-based (e.g. Multi-melta: fixed `A`,
+  dice `D`) — overloads would need one combination per shape; the implicit conversion applies
+  per-argument instead, so mixed cases fall out for free.
 - `Datasheet`'s constructor takes `weaponProfiles` as `IEnumerable<WeaponProfile>`, not a pre-built
   dictionary — the internal lookup is built from `.Name` inside the constructor, so a caller can
   never construct a `Datasheet` where a weapon's dictionary key disagrees with its own `Name` (a
@@ -141,6 +167,9 @@ ICombatUnit
 - Ability text is never auto-parsed into behavioral effects — permanent exclusion, not a
   deferral (some conditions need positional/objective-control state the domain has no way to
   represent even in principle).
-- `Simulation/*` (CombatSimulator, SimulationAdapter, WoundPool, DiceExpression) is untouched but
-  paused — not wired to this domain model. `Parsing/ArmyListParser.cs` is also untouched;
-  fixtures stand in for parsed input until the 11e export format is studied.
+- `Simulation/*` (CombatSimulator, SimulationAdapter, WoundPool) is untouched but paused — not
+  wired to this domain model. The one exception is `DiceExpression`, which moved from
+  `Simulation/*` into `Domain.Catalogue` (see Catalogue Context above); `Simulation/*` files were
+  repointed to the relocated type via `using` statement only — no behavior, method signature, or
+  test change in `Simulation/*` itself. `Parsing/ArmyListParser.cs` is also untouched; fixtures
+  stand in for parsed input until the 11e export format is studied.

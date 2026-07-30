@@ -8,6 +8,30 @@ Nothing in progress.
 
 ## Recently Completed
 
+- OpenSpec change `promote-dice-expression-to-domain` implemented (all 19 tasks): `DiceExpression`
+  moved from `ProbHammer.Core.Simulation` into `ProbHammer.Core.Domain.Catalogue` — it's a
+  game-rules value type (`WeaponProfile.A`/`D` already depended on it), not a simulation-owned
+  one. `Simulation/*` (`SimulationAdapter`, `CombatSimulator`, `SimWeaponProfile`, `IDiceRoller`,
+  plus their test doubles/tests) were repointed via `using` statements only — no behavior change;
+  `Simulation/*` remains paused/not wired to the 11e domain model, per `.claude/domain-model-11e.md`.
+  Added an implicit `int -> DiceExpression` conversion, `D3`/`D6` static presets, and an
+  `operator +(DiceExpression, int)` so fixed weapon stats can be written as plain integers and
+  dice notation reads close to game shorthand (`DiceExpression.D6 + 2`), rather than needing
+  `DiceExpression.Fixed(n)` wrapping at every call site or a combinatorial set of constructor
+  overloads on `RangedWeapon`/`MeleeWeapon`. **Scope addition made mid-implementation** (agreed
+  with the user after discovering it during apply): `WeaponProfile.D` (Damage) was also widened
+  from `int` to `DiceExpression`, matching `A` — this had been started but abandoned mid-way in
+  the prior commit (a `//NOTE: D needs to be able to accept "D6"` comment on a `Fixed(6)`
+  placeholder for the Multi-melta), and completing it was necessary to actually fix that weapon's
+  damage. `BlackCrusade.cs` and `WeaponFixtures.cs` simplified to drop now-unnecessary
+  `DiceExpression.Fixed(...)` wrapping. `DiceExpression` already had a dedicated test suite
+  (`tests/.../Simulation/DiceExpressionTests.cs` — the proposal incorrectly claimed it had none);
+  relocated it to `tests/.../Domain/DiceExpressionTests.cs` and extended it with coverage for the
+  three new additions. Also fixed one pre-existing test bug the build surfaced: `DatasheetTests.cs`
+  asserted `profile.A.Should().Be(4)` against a `DiceExpression`-typed property using a bare `int`
+  literal — this only started failing at runtime (rather than silently not compiling) once the new
+  implicit conversion made it compile; fixed to assert against `DiceExpression.Fixed(...)`
+  explicitly. 214 tests, all passing.
 - Refinement pass on the `attached-unit-domain-model` change (commits `3cfdfc0`..`d8c53c0`, all
   tasks already closed — no scope change): `WeaponProfile` reshaped to an abstract base with
   sealed `RangedWeapon`/`MeleeWeapon` subtypes (`WeaponAbilities` removed, ability fields

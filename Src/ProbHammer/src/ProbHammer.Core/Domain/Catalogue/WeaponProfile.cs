@@ -1,5 +1,3 @@
-using ProbHammer.Core.Simulation;
-
 namespace ProbHammer.Core.Domain.Catalogue;
 
 public sealed record RangedWeapon(
@@ -9,10 +7,9 @@ public sealed record RangedWeapon(
     int Bs,
     int S,
     int Ap,
-    int D) : WeaponProfile(Name, WeaponType.Ranged, Range, A, S, Ap, D)  //NOTE: D needs to be able to accept "D6" like DiceExpression
+    DiceExpression D) : WeaponProfile(Name, WeaponType.Ranged, Range, A, S, Ap, D)
 {
     public override  int Skill => Bs;
-    
 }
 
 public sealed record MeleeWeapon(
@@ -21,7 +18,7 @@ public sealed record MeleeWeapon(
     int Ws,
     int S,
     int Ap,
-    int D) : WeaponProfile(Name, WeaponType.Melee, 0, A, S, Ap, D)
+    DiceExpression D) : WeaponProfile(Name, WeaponType.Melee, 0, A, S, Ap, D)
 {
     public override int Skill => Ws;
 }
@@ -30,7 +27,7 @@ public abstract record WeaponProfile(
     string Name,
     WeaponType Type,
     int Range,
-    DiceExpression A, int S, int Ap, int D)
+    DiceExpression A, int S, int Ap, DiceExpression D)
 {
     public abstract int Skill { get; }
     public bool Torrent { get; init; }
@@ -74,7 +71,7 @@ public sealed record WeaponProfileEqualityKey(
     int Skill,
     int S,
     int Ap,
-    int D,
+    DiceExpression D,
     bool Torrent,
     bool Blast,
     int Melta,

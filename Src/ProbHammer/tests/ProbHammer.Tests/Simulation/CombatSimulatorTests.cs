@@ -1,6 +1,7 @@
 using FluentAssertions;
 using ProbHammer.Core.Contracts;
 using ProbHammer.Core.Simulation;
+using DiceExpression = ProbHammer.Core.Domain.Catalogue.DiceExpression;
 
 namespace ProbHammer.Tests.Simulation;
 

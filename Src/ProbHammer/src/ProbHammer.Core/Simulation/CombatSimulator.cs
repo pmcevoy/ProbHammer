@@ -1,3 +1,5 @@
+using DiceExpression = ProbHammer.Core.Domain.Catalogue.DiceExpression;
+
 namespace ProbHammer.Core.Simulation;
 
 public sealed class CombatSimulator

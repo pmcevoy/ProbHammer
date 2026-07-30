@@ -56,11 +56,11 @@ public class DatasheetTests
         var profile = datasheet.ResolveWeaponProfile(WeaponFixtures.ChainSword().Name);
 
         profile.Type.Should().Be(WeaponType.Melee);
-        profile.A.Should().Be(4);
+        profile.A.Should().Be(DiceExpression.Fixed(4));
         profile.Skill.Should().Be(3);
         profile.S.Should().Be(4);
         profile.Ap.Should().Be(-1);
-        profile.D.Should().Be(1);
+        profile.D.Should().Be(DiceExpression.Fixed(1));
     }
 
     [Fact]

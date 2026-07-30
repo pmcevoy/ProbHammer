@@ -1,4 +1,5 @@
 using ProbHammer.Core.Contracts;
+using DiceExpression = ProbHammer.Core.Domain.Catalogue.DiceExpression;
 
 namespace ProbHammer.Core.Simulation;
 

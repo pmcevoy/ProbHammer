@@ -39,7 +39,7 @@ public static class BlackCrusade
             weaponProfiles:
             [
                 new RangedWeapon("Ferocity",
-                    24, DiceExpression.Fixed(2), 2, 5, -1, 2)
+                    24, 2, 2, 5, -1, 2)
                 {
                     DevastatingWounds = true,
                     Anti = new Dictionary<string, int>
@@ -48,9 +48,9 @@ public static class BlackCrusade
                     }
                 },
                 new MeleeWeapon("➤ Sword of the High Marshals - sweep",
-                    DiceExpression.Fixed(12), 2, 6, -3, 1),
+                    12, 2, 6, -3, 1),
                 new MeleeWeapon("➤ Sword of the High Marshals - strike",
-                    DiceExpression.Fixed(6), 2, 8, -3, 3)
+                    6, 2, 8, -3, 3)
             ],
             abilities:
             [
@@ -96,9 +96,9 @@ public static class BlackCrusade
             },
             weaponProfiles:
             [
-                new RangedWeapon("Bold Pistol", 12, DiceExpression.Fixed(1), 2, 4, 0, 1) { Pistol = true },
-                new MeleeWeapon("Master-crafted power weapon", DiceExpression.Fixed(5), 2, 5, -2, 2),
-                new MeleeWeapon("Close combat weapon", DiceExpression.Fixed(5), 2, 4, 0, 1)
+                new RangedWeapon("Bold Pistol", 12, 1, 2, 4, 0, 1) { Pistol = true },
+                new MeleeWeapon("Master-crafted power weapon", 5, 2, 5, -2, 2),
+                new MeleeWeapon("Close combat weapon", 5, 2, 4, 0, 1)
             ],
             abilities: new[]
             {
@@ -142,13 +142,13 @@ public static class BlackCrusade
             },
             weaponProfiles:
             [
-                new RangedWeapon("Combi-weapon", 24, DiceExpression.Fixed(1), 3, 4, 0, 1)
+                new RangedWeapon("Combi-weapon", 24, 1, 3, 4, 0, 1)
                 {
                     DevastatingWounds = true, RapidFire = 1, Anti = new Dictionary<string, int> { ["INFANTRY"] = 4 }
                 },
-                new MeleeWeapon("Master-crafted power weapon", DiceExpression.Fixed(7), 2, 5, -2, 2)
+                new MeleeWeapon("Master-crafted power weapon", 7, 2, 5, -2, 2)
                     { LethalHits = true },
-                new MeleeWeapon("Close combat weapon", DiceExpression.Fixed(5), 2, 4, 0, 1)
+                new MeleeWeapon("Close combat weapon", 5, 2, 4, 0, 1)
             ],
             abilities: new[]
             {
@@ -194,8 +194,8 @@ public static class BlackCrusade
             },
             weaponProfiles:
             [
-                new RangedWeapon("Heavy bolt pistol", 18, DiceExpression.Fixed(1), 3, 4, -1, 1) { Pistol = true },
-                new MeleeWeapon("Astartes chainsword", DiceExpression.Fixed(4), 3, 4, -1, 1)
+                new RangedWeapon("Heavy bolt pistol", 18, 1, 3, 4, -1, 1) { Pistol = true },
+                new MeleeWeapon("Astartes chainsword", 4, 3, 4, -1, 1)
             ],
             abilities: new[]
             {
@@ -227,16 +227,16 @@ public static class BlackCrusade
             },
             weaponProfiles:
             [
-                new MeleeWeapon("Master-crafted power weapon", DiceExpression.Fixed(3), 2, 5, -2, 2)
+                new MeleeWeapon("Master-crafted power weapon", 3, 2, 5, -2, 2)
                     { LethalHits = true },
-                new RangedWeapon("Pyre pistol", 12, new DiceExpression { Sides = 6, Count = 1 }, 0, 4, 0, 1)
+                new RangedWeapon("Pyre pistol", 12, DiceExpression.D6, 0, 4, 0, 1)
                     { Pistol = true, Torrent = true, IgnoresCover = true },
 
-                new RangedWeapon("Bolt pistol", 12, DiceExpression.Fixed(1), 3, 4, 0, 1) { Pistol = true },
-                new RangedWeapon("Heavy Bolt pistol", 18, DiceExpression.Fixed(1), 3, 4, -1, 1) { Pistol = true },
-                new MeleeWeapon("Close combat weapon", DiceExpression.Fixed(3), 3, 4, 0, 1),
-                new MeleeWeapon("Astartes chainsword", DiceExpression.Fixed(4), 3, 4, -1, 1) { SustainedHits = 1 },
-                new MeleeWeapon("Power fist", DiceExpression.Fixed(3), 3, 8, -2, 2)
+                new RangedWeapon("Bolt pistol", 12, 1, 3, 4, 0, 1) { Pistol = true },
+                new RangedWeapon("Heavy Bolt pistol", 18, 1, 3, 4, -1, 1) { Pistol = true },
+                new MeleeWeapon("Close combat weapon", 3, 3, 4, 0, 1),
+                new MeleeWeapon("Astartes chainsword", 4, 3, 4, -1, 1) { SustainedHits = 1 },
+                new MeleeWeapon("Power fist", 3, 3, 8, -2, 2)
             ],
             abilities: new[]
             {
@@ -266,11 +266,10 @@ public static class BlackCrusade
             },
             weaponProfiles:
             [
-                new RangedWeapon("Storm Bolter", 24, DiceExpression.Fixed(2), 3, 4, 0, 1) { RapidFire = 2 },
-                new MeleeWeapon("Armoured hull", DiceExpression.Fixed(3), 4, 6, 0, 1),
-                new RangedWeapon("Multi-melta", 18, DiceExpression.Fixed(2), 3, 9, -4, 6)
-                    { Melta = 2 }, //NOTE D needs to be "D6"
-                new RangedWeapon("Heavy Bolt pistol", 18, DiceExpression.Fixed(1), 3, 4, -1, 1) { Pistol = true }
+                new RangedWeapon("Storm Bolter", 24, 2, 3, 4, 0, 1) { RapidFire = 2 },
+                new MeleeWeapon("Armoured hull", A: 3, Ws: 4, S: 6, Ap: 0, D: 1),
+                new RangedWeapon("Multi-melta", 18, 2, 3, 9, -4, DiceExpression.D6) { Melta = 2 },
+                new RangedWeapon("Heavy Bolt pistol", 18, 1, 3, 4, -1, 1) { Pistol = true }
             ],
             abilities: new[]
             {
@@ -319,10 +318,10 @@ public static class BlackCrusade
             },
             weaponProfiles:
             [
-                new RangedWeapon("Bolt pistol", 12, DiceExpression.Fixed(1), 3, 4, 0, 1) { Pistol = true },
-                new MeleeWeapon("Close combat weapon", DiceExpression.Fixed(2), 3, 4, 0, 1),
-                new MeleeWeapon("Astartes chainsword", DiceExpression.Fixed(4), 3, 4, -1, 1),
-                new RangedWeapon("Astartes shotgun", 18, DiceExpression.Fixed(2), 3, 4, 0, 1) { Assault = true }
+                new RangedWeapon("Bolt pistol", 12, 1, 3, 4, 0, 1) { Pistol = true },
+                new MeleeWeapon("Close combat weapon", 2, 3, 4, 0, 1),
+                new MeleeWeapon("Astartes chainsword", 4, 3, 4, -1, 1),
+                new RangedWeapon("Astartes shotgun", 18, 2, 3, 4, 0, 1) { Assault = true }
             ],
             abilities: new[]
             {
@@ -364,8 +363,8 @@ public static class BlackCrusade
             },
             weaponProfiles:
             [
-                new RangedWeapon("Heavy bolt pistol", 18, DiceExpression.Fixed(1), 3, 4, -1, 1) { Pistol = true },
-                new MeleeWeapon("Master-crafted power weapon", DiceExpression.Fixed(3), 2, 5, -2, 2) {LethalHits = true},
+                new RangedWeapon("Heavy bolt pistol", 18, 1, 3, 4, -1, 1) { Pistol = true },
+                new MeleeWeapon("Master-crafted power weapon", 3, 2, 5, -2, 2) {LethalHits = true},
             ],
             abilities: new[]
             {

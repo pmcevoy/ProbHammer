@@ -1,7 +1,7 @@
 using FluentAssertions;
-using ProbHammer.Core.Simulation;
+using ProbHammer.Core.Domain.Catalogue;
 
-namespace ProbHammer.Tests.Simulation;
+namespace ProbHammer.Tests.Domain;
 
 public class DiceExpressionTests
 {
@@ -102,5 +102,53 @@ public class DiceExpressionTests
     {
         var expr = new DiceExpression { Count = count, Sides = sides, Modifier = mod };
         expr.ToString().Should().Be(expected);
+    }
+
+    // ─── new in this change ────────────────────────────────────────────────
+
+    [Fact]
+    public void ImplicitConversion_FromInt_ProducesFixedExpression()
+    {
+        DiceExpression expr = 5;
+        expr.Should().Be(DiceExpression.Fixed(5));
+    }
+
+    [Fact]
+    public void ImplicitConversion_AllowsPlainIntAtCallSite()
+    {
+        // Mirrors a fixed weapon stat construction site: no DiceExpression.Fixed(...) needed.
+        DiceExpression Accepts(DiceExpression d) => d;
+        Accepts(3).Should().Be(DiceExpression.Fixed(3));
+    }
+
+    [Fact]
+    public void D6Preset_IsOneSixSidedDieNoModifier()
+    {
+        DiceExpression.D6.Count.Should().Be(1);
+        DiceExpression.D6.Sides.Should().Be(6);
+        DiceExpression.D6.Modifier.Should().Be(0);
+    }
+
+    [Fact]
+    public void D3Preset_IsOneThreeSidedDieNoModifier()
+    {
+        DiceExpression.D3.Count.Should().Be(1);
+        DiceExpression.D3.Sides.Should().Be(3);
+        DiceExpression.D3.Modifier.Should().Be(0);
+    }
+
+    [Fact]
+    public void PlusOperator_AddsModifier_MatchesParsedNotation()
+    {
+        (DiceExpression.D6 + 2).Should().Be(DiceExpression.Parse("D6+2"));
+    }
+
+    [Fact]
+    public void PlusOperator_DoesNotMutateOriginal()
+    {
+        var original = DiceExpression.D6;
+        _ = original + 2;
+        original.Should().Be(DiceExpression.D6);
+        original.Modifier.Should().Be(0);
     }
 }

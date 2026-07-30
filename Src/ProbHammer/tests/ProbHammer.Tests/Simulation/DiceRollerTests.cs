@@ -1,4 +1,5 @@
 using FluentAssertions;
+using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Simulation;
 
 namespace ProbHammer.Tests.Simulation;

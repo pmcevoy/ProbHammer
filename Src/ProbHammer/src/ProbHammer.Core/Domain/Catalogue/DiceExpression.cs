@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace ProbHammer.Core.Simulation;
+namespace ProbHammer.Core.Domain.Catalogue;
 
 /// <summary>
 /// Represents a dice expression such as "D6", "2D3+1", or a fixed integer.
@@ -11,6 +11,9 @@ public record DiceExpression
     public int Count { get; init; }
     public int Sides { get; init; }
     public int Modifier { get; init; }
+
+    public static readonly DiceExpression D3 = new() { Count = 1, Sides = 3 };
+    public static readonly DiceExpression D6 = new() { Count = 1, Sides = 6 };
 
     private static readonly Regex DicePattern =
         new(@"^(\d*)D(\d+)(?:\+(\d+))?$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -35,6 +38,14 @@ public record DiceExpression
 
     public static DiceExpression Fixed(int value) =>
         new() { Count = 0, Sides = 0, Modifier = value };
+
+    /// <summary>Implicitly treat a plain int as a fixed-value DiceExpression, so callers
+    /// describing a fixed weapon statistic don't need to reference Fixed(...) directly.</summary>
+    public static implicit operator DiceExpression(int value) => Fixed(value);
+
+    /// <summary>Add a flat modifier (e.g. DiceExpression.D6 + 2 → "D6+2"). Non-mutating.</summary>
+    public static DiceExpression operator +(DiceExpression d, int modifier) =>
+        d with { Modifier = d.Modifier + modifier };
 
     /// <summary>Multiply this expression by n (e.g. 3 models × D6+1 → 3D6+3).</summary>
     public DiceExpression Scale(int n)
