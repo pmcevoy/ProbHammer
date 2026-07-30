@@ -6,4 +6,7 @@ public sealed record Statline(
     int Sv,
     int W,
     int Ld,
-    int Oc);
+    int Oc)
+{
+    public int InSv { get; init; }
+}

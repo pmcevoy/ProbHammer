@@ -1,20 +1,23 @@
+using ProbHammer.Core.Simulation;
+
 namespace ProbHammer.Core.Domain.Catalogue;
 
 public sealed record RangedWeapon(
     string Name,
     int Range,
-    int A,
+    DiceExpression A,
     int Bs,
     int S,
     int Ap,
-    int D) : WeaponProfile(Name, WeaponType.Ranged, Range, A, S, Ap, D)
+    int D) : WeaponProfile(Name, WeaponType.Ranged, Range, A, S, Ap, D)  //NOTE: D needs to be able to accept "D6" like DiceExpression
 {
     public override  int Skill => Bs;
+    
 }
 
 public sealed record MeleeWeapon(
     string Name,
-    int A,
+    DiceExpression A,
     int Ws,
     int S,
     int Ap,
@@ -27,7 +30,7 @@ public abstract record WeaponProfile(
     string Name,
     WeaponType Type,
     int Range,
-    int A, int S, int Ap, int D)
+    DiceExpression A, int S, int Ap, int D)
 {
     public abstract int Skill { get; }
     public bool Torrent { get; init; }
@@ -40,6 +43,8 @@ public abstract record WeaponProfile(
     public bool TwinLinked { get; init; }
     public bool IndirectFire { get; init; }
     public bool Pistol { get; init; }
+    public bool IgnoresCover { get; init; }
+    public bool Assault { get; init; }
     public IReadOnlyDictionary<string, int> Anti { get; init; } = new Dictionary<string, int>();
     /// <summary>
     ///     Structural equality for aggregation purposes: (Type, Skill, Strength, Ap, Damage, Abilities).
