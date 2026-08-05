@@ -1,33 +1,9 @@
 ﻿using ProbHammer.Core.Domain.Catalogue;
-using ProbHammer.Core.Simulation;
 
 namespace ProbHammer.Core.Domain.Examples;
 
-public static class BlackCrusade
+public static class Datasheets
 {
-    private static Ability TemplarVows()
-    {
-        return new Ability
-        {
-            Name = "TEMPLAR VOWS",
-            Text =
-                "If your Army Faction is **^^Adeptus Astartes^^**, at the start of the first battle round, select one of the following Vows to be active for **^^Adeptus Astartes^^** units from your army. " +
-                "While a Vow is active for your army, that unit has the associated ability below.",
-            Choices =
-            [
-                new AbilityChoice("Abhor the Witch, Destroy the Witch",
-                    "Each time this unit declares a charge, if one or more targets of that charge have the **^^Psyker^^** keyword, you can re-roll the Charge roll. Melee weapons equipped by models in this unit have the **[PRECISION]** ability while targeting **^^Psyker^^** units."),
-                new AbilityChoice("Accept Any Challenge, No Matter the Odds",
-                    "Each time a model in this unit makes a melee attack, if the Strength characteristic of that attack is less than or equal to the Toughness characteristic of the target, add 1 to the wound roll"),
-                new AbilityChoice("Suffer Not the Unclean to Live",
-                    "This unit is eligible to declare a charge in a turn in which it Fell Back, and each time a model in this unit makes a Pile-in or Consolidation move, it does not need to end that move closer to the closest enemy model, provided it ends that move as close as possible to the nearest enemy unit."),
-                new AbilityChoice("Uphold the Honour of the Emperor",
-                    "If this unit has the **^^Infantry^^** keyword:\\n■ At the end of your Command phase, if this unit is within range of an objective marker you control, that objective marker remains under your control until your opponent's level of control over that objective marker is greater than yours at the end of the phase. \\n■ If the mission you are playing features Actions, this unit is eligible to start to perform an Action in a turn in which it Advanced.")
-            ],
-            Scope = AbilityScope.Unit
-        };
-    }
-
     public static Datasheet HighMarshalHelbrecht()
     {
         return new Datasheet(
@@ -81,6 +57,52 @@ public static class BlackCrusade
             [
                 "INFANTRY", "CHARACTER", "EPIC HERO", "GRENADES", "IMPERIUM", "TACITUS", "CHAPTER MASTER",
                 "HIGH MARSHAL HELBRECHT"
+            ],
+            factionKeywords: ["APEPTUS ASTARTES", "BLACK TEMPLARS"]
+        );
+    }
+
+    public static Datasheet CrusadeAncient()
+    {
+        return new Datasheet(
+            name: "Crusade Ancient",
+            statlines: new Dictionary<string, Statline>
+            {
+                ["Crusade Ancient"] = new(6, 4, 3, 4, 6, 1)
+            },
+            weaponProfiles:
+            [
+                new RangedWeapon("Bold Pistol", 12, 1, 3, 4, 0, 1) { Pistol = true },
+                new MeleeWeapon("Master-crafted power weapon", 5, 2, 5, -2, 2)
+            ],
+            abilities: new[]
+            {
+                TemplarVows(),
+                new Ability
+                {
+                    Name = "SUPPORT",
+                    Text =
+                        "This model can be attached to the following units:\n\n■ CRUSADER SQUAD\n■ SWORD BRETHREN SQUAD\n\nYou can attach this model to a unit it can lead even if one Captain or Chapter Master model has already been attached to it. If you do, and that Bodyguard unit is destroyed, the Leader units attached to it become separate units, with their original Starting Strengths.",
+                    Scope = AbilityScope.Model
+                },
+                new Ability
+                {
+                    Name = "Vengeful Exhortation",
+                    Text =
+                        "Fight on death on a 4+",
+                    Scope = AbilityScope.Unit
+                },
+                new Ability
+                {
+                    Name = "Martial Honour",
+                    Text =
+                        "Destory a unit, add 5 to OC",
+                    Scope = AbilityScope.Unit
+                }
+            },
+            keywords:
+            [
+                "INFANTRY", "CHARACTER", "GRENADES", "IMPERIUM", "TACITUS", "ANCIENT", "CRUSADE ANCIENT"
             ],
             factionKeywords: ["APEPTUS ASTARTES", "BLACK TEMPLARS"]
         );
@@ -352,19 +374,19 @@ public static class BlackCrusade
             factionKeywords: ["APEPTUS ASTARTES"]
         );
     }
-    
+
     public static Datasheet SwordBrethernSquad()
     {
         return new Datasheet(
             name: "Sword Bretheren Squad",
             statlines: new Dictionary<string, Statline>
             {
-                ["Sword Brother"] = new(6, 4, 3, 3, 6, 1),
+                ["Sword Brother"] = new(6, 4, 3, 3, 6, 1)
             },
             weaponProfiles:
             [
                 new RangedWeapon("Heavy bolt pistol", 18, 1, 3, 4, -1, 1) { Pistol = true },
-                new MeleeWeapon("Master-crafted power weapon", 3, 2, 5, -2, 2) {LethalHits = true},
+                new MeleeWeapon("Master-crafted power weapon", 3, 2, 5, -2, 2) { LethalHits = true }
             ],
             abilities: new[]
             {
@@ -382,5 +404,28 @@ public static class BlackCrusade
             ],
             factionKeywords: ["APEPTUS ASTARTES", "BLACK TEMPLARS"]
         );
+    }
+
+    private static Ability TemplarVows()
+    {
+        return new Ability
+        {
+            Name = "TEMPLAR VOWS",
+            Text =
+                "If your Army Faction is **^^Adeptus Astartes^^**, at the start of the first battle round, select one of the following Vows to be active for **^^Adeptus Astartes^^** units from your army. " +
+                "While a Vow is active for your army, that unit has the associated ability below.",
+            Choices =
+            [
+                new AbilityChoice("Abhor the Witch, Destroy the Witch",
+                    "Each time this unit declares a charge, if one or more targets of that charge have the **^^Psyker^^** keyword, you can re-roll the Charge roll. Melee weapons equipped by models in this unit have the **[PRECISION]** ability while targeting **^^Psyker^^** units."),
+                new AbilityChoice("Accept Any Challenge, No Matter the Odds",
+                    "Each time a model in this unit makes a melee attack, if the Strength characteristic of that attack is less than or equal to the Toughness characteristic of the target, add 1 to the wound roll"),
+                new AbilityChoice("Suffer Not the Unclean to Live",
+                    "This unit is eligible to declare a charge in a turn in which it Fell Back, and each time a model in this unit makes a Pile-in or Consolidation move, it does not need to end that move closer to the closest enemy model, provided it ends that move as close as possible to the nearest enemy unit."),
+                new AbilityChoice("Uphold the Honour of the Emperor",
+                    "If this unit has the **^^Infantry^^** keyword:\\n■ At the end of your Command phase, if this unit is within range of an objective marker you control, that objective marker remains under your control until your opponent's level of control over that objective marker is greater than yours at the end of the phase. \\n■ If the mission you are playing features Actions, this unit is eligible to start to perform an Action in a turn in which it Advanced.")
+            ],
+            Scope = AbilityScope.Unit
+        };
     }
 }
