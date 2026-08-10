@@ -32,7 +32,7 @@ public static class Units
                     [
                         new ModelLine(
                             statlineName: "Crusade Ancient",
-                            weapons: ["Bold Pistol", "Master-crafted power weapon"],
+                            weapons: ["Bolt Pistol", "Master-crafted power weapon"],
                             count: 1)
                     ])
             ]
@@ -62,7 +62,7 @@ public static class Units
                     [
                         new ModelLine(
                             statlineName: "Lieutenant",
-                            weapons: ["Bold Pistol", "Master-crafted power weapon", "Close combat weapon"],
+                            weapons: ["Bolt Pistol", "Master-crafted power weapon", "Close combat weapon"],
                             count: 1)
                     ])
             ]

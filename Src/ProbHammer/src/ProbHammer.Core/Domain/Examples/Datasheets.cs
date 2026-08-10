@@ -72,7 +72,7 @@ public static class Datasheets
             },
             weaponProfiles:
             [
-                new RangedWeapon("Bold Pistol", 12, 1, 3, 4, 0, 1) { Pistol = true },
+                new RangedWeapon("Bolt Pistol", 12, 1, 3, 4, 0, 1) { Pistol = true },
                 new MeleeWeapon("Master-crafted power weapon", 5, 2, 5, -2, 2)
             ],
             abilities: new[]
@@ -118,7 +118,7 @@ public static class Datasheets
             },
             weaponProfiles:
             [
-                new RangedWeapon("Bold Pistol", 12, 1, 2, 4, 0, 1) { Pistol = true },
+                new RangedWeapon("Bolt Pistol", 12, 1, 2, 4, 0, 1) { Pistol = true },
                 new MeleeWeapon("Master-crafted power weapon", 5, 2, 5, -2, 2),
                 new MeleeWeapon("Close combat weapon", 5, 2, 4, 0, 1)
             ],
