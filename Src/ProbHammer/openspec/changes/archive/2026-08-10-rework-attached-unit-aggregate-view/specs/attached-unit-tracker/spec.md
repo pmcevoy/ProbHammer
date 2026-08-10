@@ -1,25 +1,4 @@
-# attached-unit-tracker
-
-## Purpose
-
-Tracks live game state for an Attached Unit (casualties, and the aggregate statline/weapon/ability
-view derived from its currently-present components) as play proceeds. TBD: expand as this
-capability grows beyond its initial domain-model scope.
-## Requirements
-### Requirement: Model-Line Remaining Count
-Each model-line SHALL track a remaining count, initialized to the model-line's original Count, which can be decremented to reflect casualties down to a minimum of zero.
-
-#### Scenario: Decrementing a squad model-line
-- **WHEN** a model-line with an original Count of 5 has 2 models removed as casualties
-- **THEN** its remaining count is 3
-
-#### Scenario: Removing a single-model line
-- **WHEN** a model-line with an original Count of 1 (e.g. an attached Leader) is removed as a casualty
-- **THEN** its remaining count is 0
-
-#### Scenario: Remaining count cannot go negative
-- **WHEN** a model-line's remaining count is already 0
-- **THEN** further removal attempts do not decrement it below 0
+## MODIFIED Requirements
 
 ### Requirement: Aggregate Statline View
 The Attached Unit aggregate view SHALL list one entry per distinct statline name referenced by any present component Unit's model-lines, for as long as at least one model-line sharing that name has a remaining count greater than zero. Each entry SHALL report a remaining count and an initial count, both summed across every model-line sharing that statline name, and SHALL list a loadout breakdown containing one entry per model-line sharing that name, each with its own weapon list, remaining count, and initial count.
@@ -66,19 +45,3 @@ The Attached Unit aggregate view SHALL aggregate weapons across all component Un
 #### Scenario: Contributions are retained on a merged entry
 - **WHEN** two or more model-lines contribute to the same aggregated weapon entry
 - **THEN** the entry's contribution list includes one item per contributing model-line, each reporting that model-line's own remaining count and per-model Attacks
-
-### Requirement: Aggregate Ability View
-The Attached Unit aggregate view SHALL combine all Unit-scoped Abilities from every currently-present component Unit into a single list, and SHALL display Model-scoped Abilities against their originating model-line rather than in the combined list.
-
-#### Scenario: Unit-scoped ability appears in the combined list
-- **WHEN** a component Unit has a Unit-scoped Ability
-- **THEN** that Ability appears in the aggregate view's combined abilities list
-
-#### Scenario: Model-scoped ability stays with its model
-- **WHEN** a component Unit's model-line has a Model-scoped Ability (e.g. granted by an Enhancement)
-- **THEN** that Ability appears attached to that specific model-line in the aggregate view, not in the combined list
-
-#### Scenario: Model-scoped ability disappears when its bearer is removed
-- **WHEN** the model-line bearing a Model-scoped Ability has its remaining count reduced to 0
-- **THEN** that Ability no longer appears anywhere in the aggregate view
-

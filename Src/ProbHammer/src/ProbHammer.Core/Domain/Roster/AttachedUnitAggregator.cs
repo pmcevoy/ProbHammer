@@ -11,39 +11,57 @@ public static class AttachedUnitAggregator
 {
     public static AttachedUnitAggregateView Build(ICombatUnit combatUnit)
     {
-        var presentLines = combatUnit.Components
+        var allLines = combatUnit.Components
             .SelectMany(unit => unit.ModelLines.Select(modelLine => (Unit: unit, ModelLine: modelLine)))
-            .Where(x => x.ModelLine.RemainingCount > 0)
             .ToList();
 
+        var presentLines = allLines.Where(x => x.ModelLine.RemainingCount > 0).ToList();
+
         return new AttachedUnitAggregateView(
-            Statlines: BuildStatlines(presentLines),
+            Statlines: BuildStatlines(allLines),
             Weapons: BuildWeapons(presentLines),
             UnitScopedAbilities: BuildUnitScopedAbilities(combatUnit, presentLines),
             ModelScopedAbilities: BuildModelScopedAbilities(presentLines),
             Keywords: KeywordResolution.EffectiveKeywords(combatUnit));
     }
 
+    // Groups by StatlineName across every model-line belonging to a component, regardless of that
+    // line's own RemainingCount, so a fully-wiped loadout-variant still contributes its InitialCount
+    // and still appears in the Loadouts breakdown (as 0 remaining) as long as another model-line
+    // sharing the same statline name still has models remaining.
     private static IReadOnlyList<AggregateStatlineEntry> BuildStatlines(
-        List<(Unit Unit, ModelLine ModelLine)> presentLines) =>
-        presentLines
-            .Select(x => x.ModelLine.StatlineName)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Select(name =>
+        List<(Unit Unit, ModelLine ModelLine)> allLines) =>
+        allLines
+            .GroupBy(x => x.ModelLine.StatlineName, StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Any(x => x.ModelLine.RemainingCount > 0))
+            .Select(group =>
             {
-                var owner = presentLines.First(x =>
-                    string.Equals(x.ModelLine.StatlineName, name, StringComparison.OrdinalIgnoreCase));
-                return new AggregateStatlineEntry(name, owner.Unit.Datasheet.GetStatline(name));
+                var owner = group.First().Unit;
+                var loadouts = group
+                    .Select(x => new ModelLineLoadout(
+                        WeaponsLabel: string.Join(", ", x.ModelLine.Weapons),
+                        RemainingCount: x.ModelLine.RemainingCount,
+                        InitialCount: x.ModelLine.Count))
+                    .ToList();
+
+                return new AggregateStatlineEntry(
+                    StatlineName: group.Key,
+                    Statline: owner.Datasheet.GetStatline(group.Key),
+                    RemainingCount: group.Sum(x => x.ModelLine.RemainingCount),
+                    InitialCount: group.Sum(x => x.ModelLine.Count),
+                    Loadouts: loadouts);
             })
             .ToList();
 
-    // Groups weapons by structural profile equality (WeaponProfile.EqualityKey), summing the
-    // remaining counts of all model-lines carrying that profile - the aggregation concept ported
-    // from SimulationAdapter's weapon-group-by-equality-key algorithm.
+    // Groups weapons by structural profile equality (WeaponProfile.EqualityKey), aggregating a true
+    // TotalAttacks (per contributing model-line: PerModelAttacks.Scale(RemainingCount), Add-reduced
+    // across every contributor sharing the key) and retaining per-contribution provenance - the
+    // aggregation concept ported from SimulationAdapter's weapon-group-by-equality-key algorithm.
     private static IReadOnlyList<AggregateWeaponEntry> BuildWeapons(
         List<(Unit Unit, ModelLine ModelLine)> presentLines)
     {
-        var groups = new Dictionary<WeaponProfileEqualityKey, (WeaponProfile Profile, int Count)>();
+        var groups = new Dictionary<WeaponProfileEqualityKey,
+            (WeaponProfile Profile, DiceExpression TotalAttacks, List<WeaponContribution> Contributions)>();
 
         foreach (var (unit, modelLine) in presentLines)
         {
@@ -52,13 +70,28 @@ public static class AttachedUnitAggregator
                 var profile = unit.Datasheet.ResolveWeaponProfile(weaponName);
                 var key = profile.EqualityKey();
 
-                groups[key] = groups.TryGetValue(key, out var existing)
-                    ? (existing.Profile, existing.Count + modelLine.RemainingCount)
-                    : (profile, modelLine.RemainingCount);
+                var contribution = new WeaponContribution(
+                    ComponentName: unit.Datasheet.Name,
+                    StatlineName: modelLine.StatlineName,
+                    Count: modelLine.RemainingCount,
+                    PerModelAttacks: profile.A);
+                var scaledAttacks = profile.A.Scale(modelLine.RemainingCount);
+
+                if (groups.TryGetValue(key, out var existing))
+                {
+                    existing.Contributions.Add(contribution);
+                    groups[key] = (existing.Profile, existing.TotalAttacks.Add(scaledAttacks), existing.Contributions);
+                }
+                else
+                {
+                    groups[key] = (profile, scaledAttacks, [contribution]);
+                }
             }
         }
 
-        return groups.Values.Select(v => new AggregateWeaponEntry(v.Profile, v.Count)).ToList();
+        return groups.Values
+            .Select(v => new AggregateWeaponEntry(v.Profile, v.TotalAttacks, v.Contributions))
+            .ToList();
     }
 
     private static IReadOnlyList<Ability> BuildUnitScopedAbilities(

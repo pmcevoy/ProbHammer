@@ -44,9 +44,12 @@ public abstract record WeaponProfile(
     public bool Assault { get; init; }
     public IReadOnlyDictionary<string, int> Anti { get; init; } = new Dictionary<string, int>();
     /// <summary>
-    ///     Structural equality for aggregation purposes: (Type, Skill, Strength, Ap, Damage, Abilities).
-    ///     Excludes Name/Range/Attacks - count/attacks are the quantity being aggregated, not part of
-    ///     the profile's identity. Mirrors SimulationAdapter.WeaponGroupKey.
+    ///     Structural equality for aggregation purposes: (Type, Skill, Strength, Ap, Damage, and
+    ///     every ability/keyword flag). Excludes Name/Range/Attacks - count/attacks are the
+    ///     quantity being aggregated, not part of the profile's identity. Mirrors
+    ///     SimulationAdapter.WeaponGroupKey. Every ability property on WeaponProfile must appear
+    ///     here - two weapons differing in any one keyword (e.g. Pistol vs Assault) are different
+    ///     profiles and must not be merged, even if their damage-relevant stats coincide.
     /// </summary>
     public WeaponProfileEqualityKey EqualityKey()
     {
@@ -54,7 +57,8 @@ public abstract record WeaponProfile(
             Type, Skill, S, Ap, D,
             Torrent, Blast, Melta, RapidFire,
             SustainedHits, LethalHits, DevastatingWounds,
-            TwinLinked, IndirectFire, NormaliseAnti(Anti));
+            TwinLinked, IndirectFire, Pistol, IgnoresCover, Assault,
+            NormaliseAnti(Anti));
     }
 
     private static string NormaliseAnti(IReadOnlyDictionary<string, int> anti)
@@ -81,5 +85,7 @@ public sealed record WeaponProfileEqualityKey(
     bool DevastatingWounds,
     bool TwinLinked,
     bool IndirectFire,
+    bool Pistol,
+    bool IgnoresCover,
+    bool Assault,
     string Anti);
-    

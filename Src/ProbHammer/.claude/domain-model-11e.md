@@ -30,6 +30,8 @@ Datasheet
                                                       // weaponProfiles keyed internally by .Name
 
 Statline(M, T, Sv, W, Ld, Oc)   // value object — field names match official shorthand
+  InSv: int                     // init-only property, defaults to 0; 0 means "no invulnerable
+                                 // save" (consumers must treat 0 as absent, not as a 0+ save)
 
 DiceExpression(Count, Sides, Modifier)   // value object — a fixed integer (Count=0) or a dice
                                           // roll ("D6", "2D3+1"); Parse/Fixed/Scale/Add unchanged
@@ -146,15 +148,54 @@ ICombatUnit
   Domain fact only; not wired to `Simulation/*` in this change.
 
 **Aggregate view** (`AttachedUnitAggregator.Build(ICombatUnit) -> AttachedUnitAggregateView`):
-- `Statlines` — every distinct statline referenced by a present model-line.
-- `Weapons` — grouped by `WeaponProfile.EqualityKey()`, summing `RemainingCount` across all
-  components' model-lines carrying that profile.
+
+```
+ModelLineLoadout(WeaponsLabel, RemainingCount, InitialCount)
+  // WeaponsLabel is ModelLine.Weapons comma-joined, e.g. "Bolt pistol, Heavy Bolt pistol, Power fist"
+
+AggregateStatlineEntry(StatlineName, Statline, RemainingCount, InitialCount,
+                        Loadouts: IReadOnlyList<ModelLineLoadout>)
+  // RemainingCount/InitialCount are summed across every ModelLine sharing StatlineName, including
+  // model-lines that have been fully removed as casualties. Loadouts has one entry per
+  // contributing ModelLine (not collapsed by weapon list) so a fully-wiped loadout-variant still
+  // shows up as 0/InitialCount instead of silently disappearing.
+
+WeaponContribution(ComponentName, StatlineName, Count, PerModelAttacks)
+  // ComponentName is the owning Unit.Datasheet.Name; Count is that ModelLine's RemainingCount at
+  // build time.
+
+AggregateWeaponEntry(Profile: WeaponProfile, TotalAttacks: DiceExpression,
+                      Contributions: IReadOnlyList<WeaponContribution>)
+  // Profile is retained for its identity fields (Name/Type/Range/Skill/S/Ap/D/ability flags) only.
+  // Profile.A is NOT authoritative once a row has merged more than one contribution - it's
+  // whichever contributor's WeaponProfile happened to be inserted first. Only TotalAttacks is
+  // safe to render.
+```
+
+- `Statlines` — one entry per distinct statline name referenced by any present component's
+  model-lines, built from *every* model-line belonging to a component regardless of that specific
+  line's own `RemainingCount` (unlike `Weapons` below). A statline name is included only while at
+  least one of its model-lines still has `RemainingCount > 0`.
+- `Weapons` — grouped by `WeaponProfile.EqualityKey()` (Type/Skill/S/Ap/D/ability flags — excludes
+  Name/Range/Attacks) across only `RemainingCount > 0` model-lines. `TotalAttacks` is computed per
+  contribution as `PerModelAttacks.Scale(modelLine.RemainingCount)`, `Add`-reduced across every
+  contributor sharing the `EqualityKey` — **not** a representative contributor's raw `A` with only
+  the model count summed. (That was the bug this shape fixes: two model-lines sharing an
+  `EqualityKey` with different per-model Attacks, e.g. 4 models × A3 and 1 model × A7, must total
+  19, not silently keep one contributor's A and report Count=5.)
 - `UnitScopedAbilities` — combined list of `Scope == Unit` abilities from present components'
   `Datasheet.Abilities` and present model-lines' own `Abilities` (e.g. an Enhancement that buffs
   the whole unit).
 - `ModelScopedAbilities` — `Scope == Model` abilities from `ModelLine.Abilities`, kept attached to
   their originating `ModelLine`; disappear once that line's `RemainingCount` reaches 0.
 - `Keywords` — wired directly to `KeywordResolution.EffectiveKeywords`.
+
+`AttachedUnitAggregator.Build` internally computes two differently-filtered views over the same
+`combatUnit.Components`: an unfiltered per-component model-line set (feeds `BuildStatlines`, so
+fully-dead loadout-variants and correct `InitialCount`s stay visible) and a `RemainingCount > 0`
+set (feeds `BuildWeapons`, `BuildUnitScopedAbilities`, `BuildModelScopedAbilities` — a fully-dead
+model-line contributes nothing to a weapon total or an ability list). These are kept as two
+explicitly separate, purpose-named variables rather than one shared list read two ways.
 
 ---
 

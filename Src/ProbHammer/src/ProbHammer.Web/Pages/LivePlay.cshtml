@@ -23,23 +23,40 @@
                             <th>M</th>
                             <th>T</th>
                             <th>Sv</th>
+                            <th>InSv</th>
                             <th>W</th>
                             <th>Ld</th>
                             <th>OC</th>
+                            <th>Models</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var row in unit.Statlines)
                         {
                             <tr>
-                                <td class="statline-name">@row.Names</td>
+                                <td class="statline-name">@row.StatlineName</td>
                                 <td>@(row.Statline.M)"</td>
                                 <td>@row.Statline.T</td>
                                 <td>@(row.Statline.Sv)+</td>
+                                <td>@(row.Statline.InSv > 0 ? $"{row.Statline.InSv}++" : "")</td>
                                 <td>@row.Statline.W</td>
                                 <td>@row.Statline.Ld</td>
                                 <td>@row.Statline.Oc</td>
+                                <td>@(row.RemainingCount) / @(row.InitialCount)</td>
                             </tr>
+                            @if (row.Loadouts.Count > 1)
+                            {
+                                <tr class="loadout-row">
+                                    <td colspan="9">
+                                        <ul class="loadout-breakdown">
+                                            @foreach (var loadout in row.Loadouts)
+                                            {
+                                                <li>@loadout.WeaponsLabel — @(loadout.RemainingCount) / @(loadout.InitialCount)</li>
+                                            }
+                                        </ul>
+                                    </td>
+                                </tr>
+                            }
                         }
                     </tbody>
                 </table>
@@ -58,7 +75,6 @@
                             <th>S</th>
                             <th>AP</th>
                             <th>D</th>
-                            <th>Count</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -70,12 +86,11 @@
                                 <td class="weapon-name">@weapon.Name</td>
                                 <td>@weapon.Type</td>
                                 <td>@rangeText</td>
-                                <td>@weapon.A</td>
+                                <td>@entry.TotalAttacks</td>
                                 <td>@(weapon.Skill)+</td>
                                 <td>@weapon.S</td>
                                 <td>@weapon.Ap</td>
                                 <td>@weapon.D</td>
-                                <td>@entry.Count</td>
                             </tr>
                         }
                     </tbody>
