@@ -58,6 +58,7 @@ public static class AttachedUnitAggregator
                     .ToList();
 
                 entries.Add(new AggregateStatlineEntry(
+                    ComponentName: component.Datasheet.Name,
                     StatlineName: statlineName,
                     Statline: statline,
                     RemainingCount: lines.Sum(ml => ml.RemainingCount),

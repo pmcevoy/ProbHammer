@@ -1,25 +1,4 @@
-# attached-unit-tracker
-
-## Purpose
-
-Tracks live game state for an Attached Unit (casualties, and the aggregate statline/weapon/ability
-view derived from its currently-present components) as play proceeds. TBD: expand as this
-capability grows beyond its initial domain-model scope.
-## Requirements
-### Requirement: Model-Line Remaining Count
-Each model-line SHALL track a remaining count, initialized to the model-line's original Count, which can be decremented to reflect casualties down to a minimum of zero.
-
-#### Scenario: Decrementing a squad model-line
-- **WHEN** a model-line with an original Count of 5 has 2 models removed as casualties
-- **THEN** its remaining count is 3
-
-#### Scenario: Removing a single-model line
-- **WHEN** a model-line with an original Count of 1 (e.g. an attached Leader) is removed as a casualty
-- **THEN** its remaining count is 0
-
-#### Scenario: Remaining count cannot go negative
-- **WHEN** a model-line's remaining count is already 0
-- **THEN** further removal attempts do not decrement it below 0
+## MODIFIED Requirements
 
 ### Requirement: Aggregate Statline View
 The Attached Unit aggregate view SHALL list one entry per distinct statline name referenced by any
@@ -82,42 +61,3 @@ in its Datasheet's declared order.
 - **THEN** every statline entry contributed by the Bodyguard reports the Bodyguard's Datasheet name
   as its component name, and every entry contributed by the Attached unit reports that unit's own
   Datasheet name
-
-### Requirement: Aggregate Weapon Count View
-The Attached Unit aggregate view SHALL aggregate weapons across all component Units by structural profile equality (matching weapon Type, Skill, Strength, AP, Damage, and every ability/keyword flag the weapon carries — including but not limited to Torrent, Blast, Melta, Rapid Fire, Sustained Hits, Lethal Hits, Devastating Wounds, Twin-Linked, Indirect Fire, Pistol, Ignores Cover, Assault, and Anti — excluding Name, Range, and Attacks), and SHALL report a total Attacks value computed by summing each contributing model-line's per-model Attacks scaled by that model-line's remaining count. Each aggregated entry SHALL retain a list of the individual contributions (owning component name, statline name, remaining count, and per-model Attacks) that the total was built from.
-
-#### Scenario: Same weapon profile from different components is combined
-- **WHEN** the Bodyguard unit has 4 models carrying a weapon profile with 3 Attacks each, and the attached Leader carries a wargear item with an identical structural profile but 7 Attacks
-- **THEN** the aggregate view shows one combined entry with a total Attacks value of 19 (4 × 3 + 7), not the Attacks value of either contributor alone
-
-#### Scenario: Weapon count reflects casualties
-- **WHEN** 2 of the 4 Bodyguard models carrying a given weapon profile are removed as casualties
-- **THEN** the aggregate view's total Attacks for that weapon profile decreases by the removed models' share
-
-#### Scenario: Differently-modified copies of a same-named weapon are not combined
-- **WHEN** two components each carry a same-named weapon, but one copy has an ability (e.g. Lethal Hits) that the other does not
-- **THEN** the aggregate view shows them as two separate entries, each with its own total Attacks
-
-#### Scenario: Weapons differing only by a targeting/eligibility keyword are not combined
-- **WHEN** two weapons match on Type, Skill, Strength, AP, and Damage, but differ in a keyword flag such as Pistol, Assault, or Ignores Cover
-- **THEN** the aggregate view shows them as two separate entries, each with its own total Attacks — a targeting/eligibility keyword is as much a part of the weapon's identity as a damage-modifying one
-
-#### Scenario: Contributions are retained on a merged entry
-- **WHEN** two or more model-lines contribute to the same aggregated weapon entry
-- **THEN** the entry's contribution list includes one item per contributing model-line, each reporting that model-line's own remaining count and per-model Attacks
-
-### Requirement: Aggregate Ability View
-The Attached Unit aggregate view SHALL combine all Unit-scoped Abilities from every currently-present component Unit into a single list, and SHALL display Model-scoped Abilities against their originating model-line rather than in the combined list.
-
-#### Scenario: Unit-scoped ability appears in the combined list
-- **WHEN** a component Unit has a Unit-scoped Ability
-- **THEN** that Ability appears in the aggregate view's combined abilities list
-
-#### Scenario: Model-scoped ability stays with its model
-- **WHEN** a component Unit's model-line has a Model-scoped Ability (e.g. granted by an Enhancement)
-- **THEN** that Ability appears attached to that specific model-line in the aggregate view, not in the combined list
-
-#### Scenario: Model-scoped ability disappears when its bearer is removed
-- **WHEN** the model-line bearing a Model-scoped Ability has its remaining count reduced to 0
-- **THEN** that Ability no longer appears anywhere in the aggregate view
-

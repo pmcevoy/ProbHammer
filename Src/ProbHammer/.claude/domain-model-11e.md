@@ -188,8 +188,12 @@ AttachedUnitAggregateView(Name: string, IsAttachedUnit: bool, Statlines, Weapons
 ModelLineLoadout(WeaponsLabel, RemainingCount, InitialCount)
   // WeaponsLabel is ModelLine.Weapons comma-joined, e.g. "Bolt pistol, Heavy Bolt pistol, Power fist"
 
-AggregateStatlineEntry(StatlineName, Statline, RemainingCount, InitialCount,
+AggregateStatlineEntry(ComponentName, StatlineName, Statline, RemainingCount, InitialCount,
                         Loadouts: IReadOnlyList<ModelLineLoadout>)
+  // ComponentName is the owning component's Datasheet.Name (same convention as
+  // WeaponContribution.ComponentName below) - lets a downstream consumer (e.g. /LivePlay's
+  // adjacent-statline-tile grouping) detect component boundaries without re-deriving them from
+  // Statlines' declared order.
   // RemainingCount/InitialCount are summed across every ModelLine sharing StatlineName, including
   // model-lines that have been fully removed as casualties. Loadouts has one entry per
   // contributing ModelLine (not collapsed by weapon list) so a fully-wiped loadout-variant still

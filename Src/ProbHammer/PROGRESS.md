@@ -2,16 +2,34 @@
 
 ## Active Work
 
-One OpenSpec change remains drafted (proposal/specs/design/tasks written and validated) but not
-yet implemented: `merge-adjacent-live-play-statlines` (render adjacent same-component,
-value-identical statline rows under one shared stat-tile — depended on
-`order-statlines-by-declaration`, which is now implemented, so it's unblocked and ready to pick up
-next).
+Nothing in progress. All four queued `/LivePlay` display/ordering OpenSpec changes are implemented
+and archived.
 
 ---
 
 ## Recently Completed
 
+- OpenSpec change `merge-adjacent-live-play-statlines` implemented and archived: on `/LivePlay`,
+  adjacent statline rows within the same component that share an identical Statline value
+  (M/T/Sv/W/Ld/Oc, and InSv when present) now render under one shared stat-tile, with each
+  contributing entry's own name/count kept as its own header line above it (and its own nested
+  loadout breakdown, unaffected by sharing a tile). The merge is adjacency-scoped (only a
+  contiguous run in the already-established component/declared-order sequence) and never crosses a
+  component boundary, even when values happen to match — this is a rendering-only grouping, not a
+  data-level merge; the underlying `AggregateStatlineEntry` list is unchanged, so per-name
+  remaining/initial counts and future casualty tracking stay independently addressable per entry.
+  `AggregateStatlineEntry` gained a `ComponentName` field (same convention as
+  `WeaponContribution.ComponentName`), populated in `AttachedUnitAggregator.BuildStatlines`. The
+  grouping itself (a single forward scan starting a new run whenever `ComponentName` or `Statline`
+  differs from the current run) lives entirely at the page layer in a new `StatlineBlockViewModel`,
+  matching this page's established precedent of rendering-only decisions living in
+  `LivePlayModel`. `BuildUnitBlock` was made `internal` (with `InternalsVisibleTo` for
+  `ProbHammer.Tests`) so a hand-built `AttachedUnitAggregateView` could exercise a
+  same-component/equal-value merge, a value-change split, and a component-boundary split in one
+  precise unit test — the real example army doesn't naturally contain the last case adjacently.
+  Visually verified via `firefox-devtools-mcp`: Crusader Squad shows Sword Brother + Initiate under
+  one shared tile with Neophyte separate; Assault Intercessor Squad shows Sergeant + rank-and-file
+  under one shared tile. 243 tests, all passing.
 - OpenSpec change `order-live-play-unit-cards` implemented and archived: `/LivePlay` unit-card
   blocks now render attached-sourced units (`AttachedUnit` source) before plain-`Unit`-sourced
   ones; within each group, descending total model count (Bodyguard + every Attached unit's models

@@ -1,4 +1,6 @@
 using FluentAssertions;
+using ProbHammer.Core.Domain.Catalogue;
+using ProbHammer.Core.Domain.Roster;
 using ProbHammer.Web.Pages;
 
 namespace ProbHammer.Tests.Web;
@@ -23,5 +25,38 @@ public class LivePlayModelTests
             "Assault Intercessor Squad",
             "Scout Squad",
             "Impulsor");
+    }
+
+    [Fact]
+    public void BuildUnitBlock_GroupsAdjacentSameComponentEqualValuedStatlines_SeparatesOnValueOrComponentChange()
+    {
+        var statlineA = new Statline(6, 4, 3, 2, 6, 2);
+        var statlineB = new Statline(6, 4, 4, 2, 6, 2); // differs from A by Sv
+
+        var view = new AttachedUnitAggregateView(
+            Name: "Test Unit",
+            IsAttachedUnit: true,
+            Statlines:
+            [
+                new AggregateStatlineEntry("Squad A", "Sword Brother", statlineA, 1, 1, []),
+                new AggregateStatlineEntry("Squad A", "Initiate", statlineA, 5, 5, []),
+                new AggregateStatlineEntry("Squad A", "Neophyte", statlineB, 4, 4, []),
+                new AggregateStatlineEntry("Squad B", "Guardian", statlineB, 1, 1, [])
+            ],
+            Weapons: [],
+            UnitScopedAbilities: [],
+            ModelScopedAbilities: [],
+            Keywords: new HashSet<string>());
+
+        var block = LivePlayModel.BuildUnitBlock(view);
+
+        // Sword Brother + Initiate share Squad A and statlineA -> one block. Neophyte shares Squad A
+        // but has statlineB -> a value change starts a new block. Guardian shares statlineB with
+        // Neophyte but belongs to Squad B -> a component change starts a new block even though the
+        // value matches the immediately preceding entry.
+        block.Statlines.Should().HaveCount(3);
+        block.Statlines[0].Entries.Select(e => e.StatlineName).Should().Equal("Sword Brother", "Initiate");
+        block.Statlines[1].Entries.Select(e => e.StatlineName).Should().Equal("Neophyte");
+        block.Statlines[2].Entries.Select(e => e.StatlineName).Should().Equal("Guardian");
     }
 }

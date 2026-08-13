@@ -5,6 +5,7 @@ namespace ProbHammer.Core.Domain.Roster;
 public sealed record ModelLineLoadout(string WeaponsLabel, int RemainingCount, int InitialCount);
 
 public sealed record AggregateStatlineEntry(
+    string ComponentName,
     string StatlineName,
     Statline Statline,
     int RemainingCount,

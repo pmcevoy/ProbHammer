@@ -156,6 +156,20 @@ public class AttachedUnitAggregatorTests
     }
 
     [Fact]
+    public void StatlineView_EachEntryReportsItsOwningComponentsName()
+    {
+        var attachedUnit = AttachedUnitFixtures.DefaultAttachedUnit();
+
+        var view = AttachedUnitAggregator.Build(attachedUnit);
+
+        var bodyguardEntries = view.Statlines.Where(s => s.ComponentName == "Crusader Squad").ToList();
+        bodyguardEntries.Should().ContainSingle(s => s.StatlineName == "Initiate");
+
+        view.Statlines.Should().ContainSingle(s => s.ComponentName == "Chaplain" && s.StatlineName == "Chaplain");
+        view.Statlines.Should().ContainSingle(s => s.ComponentName == "Servitor" && s.StatlineName == "Servitor");
+    }
+
+    [Fact]
     public void WeaponView_CombinesSameStructuralProfileFromDifferentComponents_IntoATrueTotal()
     {
         var attachedUnit = AggregateViewFixtures.WeaponAggregationAttachedUnit();

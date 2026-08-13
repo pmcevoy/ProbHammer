@@ -19,37 +19,40 @@
                 <details class="lp-section">
                     <summary>Statline</summary>
                     <div class="statline-blocks">
-                        @foreach (var entry in unit.Statlines)
+                        @foreach (var block in unit.Statlines)
                         {
                             <div class="statline-block">
-                                <div class="statline-header">
-                                    <span class="statline-name">@entry.StatlineName</span>
-                                    <span class="statline-count">@(entry.RemainingCount) / @(entry.InitialCount)</span>
-                                </div>
+                                @foreach (var entry in block.Entries)
+                                {
+                                    <div class="statline-header">
+                                        <span class="statline-name">@entry.StatlineName</span>
+                                        <span class="statline-count">@(entry.RemainingCount) / @(entry.InitialCount)</span>
+                                    </div>
+                                    @if (entry.Loadouts.Count > 1)
+                                    {
+                                        <ul class="loadout-breakdown">
+                                            @foreach (var loadout in entry.Loadouts)
+                                            {
+                                                <li>@loadout.WeaponsLabel — @(loadout.RemainingCount) / @(loadout.InitialCount)</li>
+                                            }
+                                        </ul>
+                                    }
+                                }
                                 <div class="statline-tiles">
-                                    <div class="stat-tile"><span class="stat-label">M</span><span class="stat-value">@(entry.Statline.M)"</span></div>
-                                    <div class="stat-tile"><span class="stat-label">T</span><span class="stat-value">@(entry.Statline.T)</span></div>
+                                    <div class="stat-tile"><span class="stat-label">M</span><span class="stat-value">@(block.Statline.M)"</span></div>
+                                    <div class="stat-tile"><span class="stat-label">T</span><span class="stat-value">@(block.Statline.T)</span></div>
                                     <div class="stat-tile">
                                         <span class="stat-label">Sv</span>
-                                        <span class="stat-value">@(entry.Statline.Sv)+</span>
-                                        @if (entry.Statline.InSv > 0)
+                                        <span class="stat-value">@(block.Statline.Sv)+</span>
+                                        @if (block.Statline.InSv > 0)
                                         {
-                                            <span class="stat-subvalue">@(entry.Statline.InSv)++</span>
+                                            <span class="stat-subvalue">@(block.Statline.InSv)++</span>
                                         }
                                     </div>
-                                    <div class="stat-tile"><span class="stat-label">W</span><span class="stat-value">@(entry.Statline.W)</span></div>
-                                    <div class="stat-tile"><span class="stat-label">Ld</span><span class="stat-value">@(entry.Statline.Ld)+</span></div>
-                                    <div class="stat-tile"><span class="stat-label">OC</span><span class="stat-value">@(entry.Statline.Oc)</span></div>
+                                    <div class="stat-tile"><span class="stat-label">W</span><span class="stat-value">@(block.Statline.W)</span></div>
+                                    <div class="stat-tile"><span class="stat-label">Ld</span><span class="stat-value">@(block.Statline.Ld)+</span></div>
+                                    <div class="stat-tile"><span class="stat-label">OC</span><span class="stat-value">@(block.Statline.Oc)</span></div>
                                 </div>
-                                @if (entry.Loadouts.Count > 1)
-                                {
-                                    <ul class="loadout-breakdown">
-                                        @foreach (var loadout in entry.Loadouts)
-                                        {
-                                            <li>@loadout.WeaponsLabel — @(loadout.RemainingCount) / @(loadout.InitialCount)</li>
-                                        }
-                                    </ul>
-                                }
                             </div>
                         }
                     </div>
