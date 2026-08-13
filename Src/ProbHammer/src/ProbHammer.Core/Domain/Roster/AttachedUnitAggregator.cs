@@ -18,6 +18,7 @@ public static class AttachedUnitAggregator
 
         return new AttachedUnitAggregateView(
             Name: combatUnit.Name,
+            IsAttachedUnit: combatUnit is AttachedUnit,
             Statlines: BuildStatlines(combatUnit),
             Weapons: BuildWeapons(presentLines),
             UnitScopedAbilities: BuildUnitScopedAbilities(combatUnit, presentLines),

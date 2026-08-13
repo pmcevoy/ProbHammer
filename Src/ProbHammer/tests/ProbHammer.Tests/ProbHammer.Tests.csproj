@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ProbHammer.Core\ProbHammer.Core.csproj" />
+    <ProjectReference Include="..\..\src\ProbHammer.Web\ProbHammer.Web.csproj" />
   </ItemGroup>
 
 </Project>

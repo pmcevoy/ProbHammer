@@ -176,9 +176,14 @@ ICombatUnit
 **Aggregate view** (`AttachedUnitAggregator.Build(ICombatUnit) -> AttachedUnitAggregateView`):
 
 ```
-AttachedUnitAggregateView(Name: string, Statlines, Weapons, UnitScopedAbilities,
-                           ModelScopedAbilities, Keywords)
+AttachedUnitAggregateView(Name: string, IsAttachedUnit: bool, Statlines, Weapons,
+                           UnitScopedAbilities, ModelScopedAbilities, Keywords)
   // Name is the source combatUnit.Name (see ICombatUnit above), copied through unchanged.
+  // IsAttachedUnit is `combatUnit is AttachedUnit`, set in Build - lets a page-layer consumer
+  // (e.g. /LivePlay's unit-card ordering) distinguish an AttachedUnit-sourced view from a plain
+  // Unit-sourced one without re-deriving it from Statlines/Weapons shape. True even for an
+  // AttachedUnit with zero Attached units, since it's a fact about the source type, not the
+  // rendered content (which is identical to a plain Unit's in that case).
 
 ModelLineLoadout(WeaponsLabel, RemainingCount, InitialCount)
   // WeaponsLabel is ModelLine.Weapons comma-joined, e.g. "Bolt pistol, Heavy Bolt pistol, Power fist"

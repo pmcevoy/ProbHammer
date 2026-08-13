@@ -11,7 +11,12 @@ public class LivePlayModel : PageModel
 
     public void OnGet()
     {
-        Units = View.MyArmy().Select(BuildUnitBlock).ToList();
+        Units = View.MyArmy()
+            .OrderByDescending(v => v.IsAttachedUnit)
+            .ThenByDescending(v => v.Statlines.Sum(s => s.InitialCount))
+            .ThenBy(v => v.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(BuildUnitBlock)
+            .ToList();
     }
 
     private static UnitBlockViewModel BuildUnitBlock(AttachedUnitAggregateView view)

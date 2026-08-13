@@ -2,17 +2,29 @@
 
 ## Active Work
 
-Two OpenSpec changes remain drafted (proposal/specs/design/tasks written and validated) but not
-yet implemented: `order-live-play-unit-cards` (reorder unit-card blocks: attached-sourced first,
-then largest-to-smallest by model count, ties broken by name — no dependency on the other two) and
-`merge-adjacent-live-play-statlines` (render adjacent same-component, value-identical statline
-rows under one shared stat-tile — depends on `order-statlines-by-declaration`, now implemented, so
-it's unblocked and ready to pick up next).
+One OpenSpec change remains drafted (proposal/specs/design/tasks written and validated) but not
+yet implemented: `merge-adjacent-live-play-statlines` (render adjacent same-component,
+value-identical statline rows under one shared stat-tile — depended on
+`order-statlines-by-declaration`, which is now implemented, so it's unblocked and ready to pick up
+next).
 
 ---
 
 ## Recently Completed
 
+- OpenSpec change `order-live-play-unit-cards` implemented and archived: `/LivePlay` unit-card
+  blocks now render attached-sourced units (`AttachedUnit` source) before plain-`Unit`-sourced
+  ones; within each group, descending total model count (Bodyguard + every Attached unit's models
+  for an AttachedUnit), ties broken by ascending `Name` (ordinal, case-insensitive). An
+  `AttachedUnit` with zero attached units still counts as attached-sourced, since the rule keys on
+  source type, not rendered content. `AttachedUnitAggregateView` gained a new `IsAttachedUnit`
+  field (`combatUnit is AttachedUnit`, set in `AttachedUnitAggregator.Build`) so the page layer can
+  tell the two source types apart — the sort itself happens in `LivePlayModel.OnGet()`, matching
+  the existing precedent of weapon ordering being a page-layer concern. `ProbHammer.Tests` gained
+  its first `ProbHammer.Web` project reference and a `Web/LivePlayModelTests.cs` exercising
+  `LivePlayModel.OnGet()` directly against the real example army (no DI needed) — the exact
+  expected order was hand-computed from `Examples/Units.cs`'s model counts and confirmed both by
+  the test and visually via `firefox-devtools-mcp`. 241 tests, all passing.
 - OpenSpec change `order-statlines-by-declaration` implemented and archived: `Datasheet.Statlines`
   changed from `IReadOnlyDictionary<string, Statline>` to an ordered
   `IReadOnlyList<(string Name, Statline Statline)>` — declaration order (Sergeant/leader-equivalent

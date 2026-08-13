@@ -305,6 +305,36 @@ public class AttachedUnitAggregatorTests
     }
 
     [Fact]
+    public void SourceTypeView_ForAPlainUnit_IsNotAttachedUnit()
+    {
+        var unit = UnitFixtures.CrusaderSquadMixedLoadout();
+
+        var view = AttachedUnitAggregator.Build(unit);
+
+        view.IsAttachedUnit.Should().BeFalse();
+    }
+
+    [Fact]
+    public void SourceTypeView_ForAnAttachedUnit_IsAttachedUnit()
+    {
+        var attachedUnit = AttachedUnitFixtures.DefaultAttachedUnit();
+
+        var view = AttachedUnitAggregator.Build(attachedUnit);
+
+        view.IsAttachedUnit.Should().BeTrue();
+    }
+
+    [Fact]
+    public void SourceTypeView_ForAnAttachedUnitWithZeroAttached_IsStillAttachedUnit()
+    {
+        var attachedUnit = new AttachedUnit(UnitFixtures.CrusaderSquadMixedLoadout(), []);
+
+        var view = AttachedUnitAggregator.Build(attachedUnit);
+
+        view.IsAttachedUnit.Should().BeTrue();
+    }
+
+    [Fact]
     public void KeywordView_IsWiredToTheLiveKeywordUnion()
     {
         var attachedUnit = AttachedUnitFixtures.DefaultAttachedUnit();
