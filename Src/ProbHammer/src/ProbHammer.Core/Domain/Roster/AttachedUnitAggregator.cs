@@ -11,48 +11,62 @@ public static class AttachedUnitAggregator
 {
     public static AttachedUnitAggregateView Build(ICombatUnit combatUnit)
     {
-        var allLines = combatUnit.Components
+        var presentLines = combatUnit.Components
             .SelectMany(unit => unit.ModelLines.Select(modelLine => (Unit: unit, ModelLine: modelLine)))
+            .Where(x => x.ModelLine.RemainingCount > 0)
             .ToList();
-
-        var presentLines = allLines.Where(x => x.ModelLine.RemainingCount > 0).ToList();
 
         return new AttachedUnitAggregateView(
             Name: combatUnit.Name,
-            Statlines: BuildStatlines(allLines),
+            Statlines: BuildStatlines(combatUnit),
             Weapons: BuildWeapons(presentLines),
             UnitScopedAbilities: BuildUnitScopedAbilities(combatUnit, presentLines),
             ModelScopedAbilities: BuildModelScopedAbilities(presentLines),
             Keywords: KeywordResolution.EffectiveKeywords(combatUnit));
     }
 
-    // Groups by StatlineName across every model-line belonging to a component, regardless of that
-    // line's own RemainingCount, so a fully-wiped loadout-variant still contributes its InitialCount
-    // and still appears in the Loadouts breakdown (as 0 remaining) as long as another model-line
-    // sharing the same statline name still has models remaining.
-    private static IReadOnlyList<AggregateStatlineEntry> BuildStatlines(
-        List<(Unit Unit, ModelLine ModelLine)> allLines) =>
-        allLines
-            .GroupBy(x => x.ModelLine.StatlineName, StringComparer.OrdinalIgnoreCase)
-            .Where(group => group.Any(x => x.ModelLine.RemainingCount > 0))
-            .Select(group =>
+    // Walks components in display order (an AttachedUnit's Attached units first, in their list
+    // order, then the Bodyguard; a plain Unit is just itself), and within each component, its
+    // Datasheet's declared Statlines in order. Matching each declared name against only that
+    // component's own ModelLines (never another component's) is what makes per-component merge
+    // scoping fall out for free - two components can never combine into one entry, and there's no
+    // separate sort step to disagree with the grouping.
+    private static IReadOnlyList<AggregateStatlineEntry> BuildStatlines(ICombatUnit combatUnit)
+    {
+        IReadOnlyList<Unit> components = combatUnit is AttachedUnit attachedUnit
+            ? [.. attachedUnit.Attached, attachedUnit.Bodyguard]
+            : combatUnit.Components;
+
+        var entries = new List<AggregateStatlineEntry>();
+        foreach (var component in components)
+        {
+            foreach (var (statlineName, statline) in component.Datasheet.Statlines)
             {
-                var owner = group.First().Unit;
-                var loadouts = group
-                    .Select(x => new ModelLineLoadout(
-                        WeaponsLabel: string.Join(", ", x.ModelLine.Weapons),
-                        RemainingCount: x.ModelLine.RemainingCount,
-                        InitialCount: x.ModelLine.Count))
+                var lines = component.ModelLines
+                    .Where(ml => string.Equals(ml.StatlineName, statlineName, StringComparison.OrdinalIgnoreCase))
                     .ToList();
 
-                return new AggregateStatlineEntry(
-                    StatlineName: group.Key,
-                    Statline: owner.Datasheet.GetStatline(group.Key),
-                    RemainingCount: group.Sum(x => x.ModelLine.RemainingCount),
-                    InitialCount: group.Sum(x => x.ModelLine.Count),
-                    Loadouts: loadouts);
-            })
-            .ToList();
+                if (!lines.Any(ml => ml.RemainingCount > 0))
+                    continue;
+
+                var loadouts = lines
+                    .Select(ml => new ModelLineLoadout(
+                        WeaponsLabel: string.Join(", ", ml.Weapons),
+                        RemainingCount: ml.RemainingCount,
+                        InitialCount: ml.Count))
+                    .ToList();
+
+                entries.Add(new AggregateStatlineEntry(
+                    StatlineName: statlineName,
+                    Statline: statline,
+                    RemainingCount: lines.Sum(ml => ml.RemainingCount),
+                    InitialCount: lines.Sum(ml => ml.Count),
+                    Loadouts: loadouts));
+            }
+        }
+
+        return entries;
+    }
 
     // Groups weapons by structural profile equality (WeaponProfile.EqualityKey), aggregating a true
     // TotalAttacks (per contributing model-line: PerModelAttacks.Scale(RemainingCount), Add-reduced

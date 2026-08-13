@@ -23,10 +23,17 @@ in the tree, untouched, and is what the live Web app and `Simulation/*` still us
 ```
 Datasheet
   Name, FactionKeywords, Keywords, Abilities (unit-wide)
-  Statlines: IReadOnlyDictionary<string, Statline>   // enumerable, queryable by name; caller-supplied
-                                                      // keys - Statline carries no Name of its own
+  Statlines: IReadOnlyList<(string Name, Statline Statline)>   // ordered - declaration order is a
+                                                      // load-bearing, documented property (the
+                                                      // Sergeant/leader-equivalent entry is declared
+                                                      // first, matching the real NewRecruit/GW app
+                                                      // export convention); not an incidental
+                                                      // collection-enumeration detail
+  GetStatline(name) -> Statline                        // O(1) lookup, backed by an internal
+                                                      // Dictionary built once in the constructor
+                                                      // from the ordered list
   ResolveWeaponProfile(name) -> WeaponProfile          // on-demand only, never enumerated
-  ctor(..., statlines: IReadOnlyDictionary<string, Statline>, weaponProfiles: IEnumerable<WeaponProfile>)
+  ctor(..., statlines: IReadOnlyList<(string Name, Statline Statline)>, weaponProfiles: IEnumerable<WeaponProfile>)
                                                       // weaponProfiles keyed internally by .Name
 
 Statline(M, T, Sv, W, Ld, Oc)   // value object — field names match official shorthand
@@ -110,13 +117,20 @@ Ability(Name, Text, Choices: IReadOnlyList<AbilityChoice>, Scope: Model | Unit)
   never construct a `Datasheet` where a weapon's dictionary key disagrees with its own `Name` (a
   real bug hit when `WeaponFixtures` was introduced: fixture call sites had duplicated the name as
   both the dictionary key and the `WeaponProfile.Name` argument, and the two drifted). `Statlines`
-  stays a caller-supplied `IReadOnlyDictionary<string, Statline>` rather than getting the same
-  treatment, because `Statline` carries no `Name` of its own — the name is genuine external
-  metadata (a role label like "Sergeant"), not something derivable from the value. Two
-  differently-named statlines with identical `M/T/Sv/W/Ld/Oc` are valid and expected — real BSData
-  exports name "Assault Intercessor" and "Assault Intercessor Sergeant" separately even though
-  they share a statline — which is exactly why `AttachedUnitAggregator.BuildStatlines` dedupes by
-  name, not by value.
+  changed from a caller-supplied `IReadOnlyDictionary<string, Statline>` to an ordered
+  `IReadOnlyList<(string Name, Statline Statline)>` — `Dictionary` enumeration order is an
+  implementation detail, not a documented .NET contract, and it only happened to preserve insertion
+  order because nothing ever removed an entry; declared order is now an explicit, tested guarantee
+  instead of an accident. A plain tuple keeps the pairing without a single-use wrapper type, since
+  `Statline` still carries no `Name` of its own — the name is genuine external metadata (a role
+  label like "Sergeant"), not something derivable from the value. `GetStatline(name)` stays the
+  primary lookup API for existing callers (`ToughnessResolution`, tests); internally it's backed by
+  a `Dictionary<string, Statline>` built once in the constructor from the ordered list, so lookup
+  stays O(1) and the ordered list stays the single source of truth for both lookup and display
+  order. Two differently-named statlines with identical `M/T/Sv/W/Ld/Oc` are valid and expected —
+  real BSData exports name "Assault Intercessor" and "Assault Intercessor Sergeant" separately even
+  though they share a statline — which is exactly why `AttachedUnitAggregator.BuildStatlines`
+  dedupes by name, not by value.
 
 ---
 
@@ -188,9 +202,16 @@ AggregateWeaponEntry(Profile: WeaponProfile, TotalAttacks: DiceExpression,
   // safe to render.
 ```
 
-- `Statlines` — one entry per distinct statline name referenced by any present component's
-  model-lines, built from *every* model-line belonging to a component regardless of that specific
-  line's own `RemainingCount` (unlike `Weapons` below). A statline name is included only while at
+- `Statlines` — built by walking components in display order (an `AttachedUnit`'s `Attached` list,
+  in order, then its `Bodyguard`; a plain `Unit` is just itself), and within each component, that
+  component's own `Datasheet.Statlines` in declared order. For each declared name, only that
+  component's own `ModelLine`s are matched (case-insensitive) — never another component's — so
+  per-name grouping is scoped to a single component and two components can never merge into one
+  entry even if they happen to share a statline name (confirmed acceptable: the real 40k attachment
+  rules attach by Leader/Support ability, not by name, and don't allow two identically-named
+  Leader/Support units on the same Bodyguard, so this can't occur in valid data). A statline name's
+  entry is built from *every* model-line of that component sharing the name, regardless of that
+  specific line's own `RemainingCount` (unlike `Weapons` below), and is included only while at
   least one of its model-lines still has `RemainingCount > 0`.
 - `Weapons` — grouped by `WeaponProfile.EqualityKey()` (Type/Skill/S/Ap/D/ability flags — excludes
   Name/Range/Attacks) across only `RemainingCount > 0` model-lines. `TotalAttacks` is computed per
@@ -206,12 +227,17 @@ AggregateWeaponEntry(Profile: WeaponProfile, TotalAttacks: DiceExpression,
   their originating `ModelLine`; disappear once that line's `RemainingCount` reaches 0.
 - `Keywords` — wired directly to `KeywordResolution.EffectiveKeywords`.
 
-`AttachedUnitAggregator.Build` internally computes two differently-filtered views over the same
-`combatUnit.Components`: an unfiltered per-component model-line set (feeds `BuildStatlines`, so
-fully-dead loadout-variants and correct `InitialCount`s stay visible) and a `RemainingCount > 0`
-set (feeds `BuildWeapons`, `BuildUnitScopedAbilities`, `BuildModelScopedAbilities` — a fully-dead
-model-line contributes nothing to a weapon total or an ability list). These are kept as two
-explicitly separate, purpose-named variables rather than one shared list read two ways.
+`AttachedUnitAggregator.Build` computes one `RemainingCount > 0`-filtered `presentLines` list from
+`combatUnit.Components`, feeding `BuildWeapons`, `BuildUnitScopedAbilities`, and
+`BuildModelScopedAbilities` (a fully-dead model-line contributes nothing to a weapon total or an
+ability list). `BuildStatlines` takes `combatUnit` directly instead of a pre-flattened line list —
+it already needs each component's own `Datasheet` for declared statline order, so it walks
+`component.ModelLines` itself per component rather than being fed a cross-component flattened set;
+this is also what makes per-component merge scoping fall out for free, with no separate sort step
+that could disagree with the grouping. Unfiltered access to a component's `ModelLine`s (so
+fully-dead loadout-variants and correct `InitialCount`s stay visible) happens naturally since
+`BuildStatlines` reads `component.ModelLines` directly rather than through the `presentLines`
+filter.
 
 ---
 

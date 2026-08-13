@@ -74,6 +74,26 @@ public class DatasheetTests
     }
 
     [Fact]
+    public void Statlines_EnumerateInConstructionOrder()
+    {
+        var statline = new Statline(6, 4, 3, 2, 6, 2);
+        var datasheet = new Datasheet(
+            "Test Squad",
+            factionKeywords: [],
+            keywords: [],
+            abilities: [],
+            statlines:
+            [
+                ("Zealot", statline),
+                ("Acolyte", statline),
+                ("Novitiate", statline),
+            ],
+            weaponProfiles: []);
+
+        datasheet.Statlines.Select(s => s.Name).Should().Equal("Zealot", "Acolyte", "Novitiate");
+    }
+
+    [Fact]
     public void Datasheet_OmitsConstraintAndCostData()
     {
         // No public surface for wargear min/max, composition counts, or points - compile-time

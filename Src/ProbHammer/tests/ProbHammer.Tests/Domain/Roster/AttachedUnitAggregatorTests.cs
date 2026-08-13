@@ -83,6 +83,79 @@ public class AttachedUnitAggregatorTests
     }
 
     [Fact]
+    public void StatlineView_AttachedComponentsRenderBeforeBodyguard_SergeantFirstWithinEach()
+    {
+        var chaplainStatline = new Statline(6, 5, 3, 4, 6, 1);
+        var chaplainDatasheet = new Datasheet(
+            "Chaplain", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Chaplain", chaplainStatline)], weaponProfiles: []);
+        var chaplain = new Unit(chaplainDatasheet, [], [new ModelLine("Chaplain", [], count: 1)]);
+
+        var ancientStatline = new Statline(6, 4, 3, 4, 6, 1);
+        var ancientDatasheet = new Datasheet(
+            "Ancient", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Ancient", ancientStatline)], weaponProfiles: []);
+        var ancient = new Unit(ancientDatasheet, [], [new ModelLine("Ancient", [], count: 1)]);
+
+        var bodyguardStatline = new Statline(6, 4, 3, 2, 6, 2);
+        var bodyguardDatasheet = new Datasheet(
+            "Crusader Squad", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Sword Brother", bodyguardStatline), ("Initiate", bodyguardStatline)],
+            weaponProfiles: []);
+        var bodyguard = new Unit(
+            bodyguardDatasheet, [],
+            [new ModelLine("Sword Brother", [], count: 1), new ModelLine("Initiate", [], count: 4)]);
+
+        var attachedUnit = new AttachedUnit(bodyguard, [chaplain, ancient]);
+
+        var view = AttachedUnitAggregator.Build(attachedUnit);
+
+        view.Statlines.Select(s => s.StatlineName).Should().Equal(
+            "Chaplain", "Ancient", "Sword Brother", "Initiate");
+    }
+
+    [Fact]
+    public void StatlineView_ForAPlainUnit_FollowsItsDatasheetDeclaredOrder()
+    {
+        var statline = new Statline(6, 4, 3, 2, 6, 2);
+        var datasheet = new Datasheet(
+            "Test Squad", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Sergeant", statline), ("Trooper", statline)], weaponProfiles: []);
+        var unit = new Unit(
+            datasheet, [],
+            [new ModelLine("Sergeant", [], count: 1), new ModelLine("Trooper", [], count: 4)]);
+
+        var view = AttachedUnitAggregator.Build(unit);
+
+        view.Statlines.Select(s => s.StatlineName).Should().Equal("Sergeant", "Trooper");
+    }
+
+    [Fact]
+    public void StatlineView_TwoComponentsSharingAStatlineName_ProduceTwoSeparateEntries()
+    {
+        var bodyguardStatline = new Statline(6, 4, 3, 2, 6, 2);
+        var bodyguardDatasheet = new Datasheet(
+            "Crusader Squad", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Guardian", bodyguardStatline)], weaponProfiles: []);
+        var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Guardian", [], count: 3)]);
+
+        var leaderStatline = new Statline(6, 5, 3, 4, 6, 1);
+        var leaderDatasheet = new Datasheet(
+            "Ancient", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Guardian", leaderStatline)], weaponProfiles: []);
+        var leader = new Unit(leaderDatasheet, [], [new ModelLine("Guardian", [], count: 1)]);
+
+        var attachedUnit = new AttachedUnit(bodyguard, [leader]);
+
+        var view = AttachedUnitAggregator.Build(attachedUnit);
+
+        view.Statlines.Should().HaveCount(2);
+        view.Statlines.Should().OnlyContain(s => s.StatlineName == "Guardian");
+        view.Statlines.Should().ContainSingle(s => s.RemainingCount == 3 && s.Statline == bodyguardStatline);
+        view.Statlines.Should().ContainSingle(s => s.RemainingCount == 1 && s.Statline == leaderStatline);
+    }
+
+    [Fact]
     public void WeaponView_CombinesSameStructuralProfileFromDifferentComponents_IntoATrueTotal()
     {
         var attachedUnit = AggregateViewFixtures.WeaponAggregationAttachedUnit();
@@ -156,7 +229,7 @@ public class AttachedUnitAggregatorTests
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY"],
             abilities: [],
-            statlines: new Dictionary<string, Statline> { ["Scout"] = new(6, 4, 4, 2, 6, 1) },
+            statlines: [("Scout", new Statline(6, 4, 4, 2, 6, 1))],
             weaponProfiles:
             [
                 new RangedWeapon("Bolt pistol", 12, 1, 3, 4, 0, 1) { Pistol = true },

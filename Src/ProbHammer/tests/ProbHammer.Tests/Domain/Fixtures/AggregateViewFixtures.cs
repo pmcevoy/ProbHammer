@@ -18,7 +18,7 @@ public static class AggregateViewFixtures
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY"],
             abilities: [],
-            statlines: new Dictionary<string, Statline> { ["Sword Brother"] = new(6, 4, 3, 3, 6, 1) },
+            statlines: [("Sword Brother", new Statline(6, 4, 3, 3, 6, 1))],
             weaponProfiles: [bodyguardWeapon]);
         var bodyguard = new Unit(
             bodyguardDatasheet, [],
@@ -30,7 +30,7 @@ public static class AggregateViewFixtures
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["CHARACTER", "INFANTRY"],
             abilities: [],
-            statlines: new Dictionary<string, Statline> { ["Marshal"] = new(6, 4, 3, 5, 6, 1) },
+            statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))],
             weaponProfiles: [leaderWeapon]);
         var leader = new Unit(
             leaderDatasheet, [],
@@ -50,7 +50,7 @@ public static class AggregateViewFixtures
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY"],
             abilities: [],
-            statlines: new Dictionary<string, Statline> { ["Sword Brother"] = new(6, 4, 3, 3, 6, 1) },
+            statlines: [("Sword Brother", new Statline(6, 4, 3, 3, 6, 1))],
             weaponProfiles: [bodyguardWeapon]);
         var bodyguard = new Unit(
             bodyguardDatasheet, [],
@@ -62,7 +62,7 @@ public static class AggregateViewFixtures
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["CHARACTER", "INFANTRY"],
             abilities: [],
-            statlines: new Dictionary<string, Statline> { ["Marshal"] = new(6, 4, 3, 5, 6, 1) },
+            statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))],
             weaponProfiles: [leaderWeapon]);
         var leader = new Unit(
             leaderDatasheet, [],
@@ -80,7 +80,7 @@ public static class AggregateViewFixtures
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY", "BATTLELINE"],
             abilities: [new Ability { Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit }],
-            statlines: new Dictionary<string, Statline> { ["Initiate"] = new(6, 4, 3, 2, 6, 2) },
+            statlines: [("Initiate", new Statline(6, 4, 3, 2, 6, 2))],
             weaponProfiles: []);
         var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Initiate", [], count: 5)]);
 
@@ -89,7 +89,7 @@ public static class AggregateViewFixtures
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["CHARACTER", "INFANTRY"],
             abilities: [],
-            statlines: new Dictionary<string, Statline> { ["Chaplain"] = new(6, 4, 3, 4, 6, 1) },
+            statlines: [("Chaplain", new Statline(6, 4, 3, 4, 6, 1))],
             weaponProfiles: []);
 
         var ironHalo = new Ability { Name = "Iron Halo", Text = "This model has a 4+ invulnerable save.", Scope = AbilityScope.Model };

@@ -15,10 +15,7 @@ public static class DatasheetFixtures
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY", "SWORD BRETHREN SQUAD"],
             abilities: [new Ability { Name = "Exploit their cowardice", Text = "...", Scope = AbilityScope.Unit }],
-            statlines: new Dictionary<string, Statline>
-            {
-                ["Sword Brother"] = bro,
-            },
+            statlines: [("Sword Brother", bro)],
             weaponProfiles: [WeaponFixtures.MasterCraftedPowerWeapon(), WeaponFixtures.HeavyBoltPistol()]
         );
     }
@@ -36,11 +33,7 @@ public static class DatasheetFixtures
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY", "BATTLELINE", "ASSAULT INTERCESSOR SQUAD"],
             abilities: [new Ability { Name = "Shock Assault", Text = "...", Scope = AbilityScope.Unit }],
-            statlines: new Dictionary<string, Statline>
-            {
-                ["Assault Intercessor"] = troop,
-                ["Assault Intercessor Sergeant"] = sergeant,
-            },
+            statlines: [("Assault Intercessor", troop), ("Assault Intercessor Sergeant", sergeant)],
             weaponProfiles: [WeaponFixtures.ChainSword(), WeaponFixtures.HeavyBoltPistol()]
         );
     }
@@ -48,14 +41,14 @@ public static class DatasheetFixtures
     /// <summary>Five distinct model types, each with its own statline (Chaos Space Marine-style).</summary>
     public static Datasheet ChaosSpaceMarineSquad()
     {
-        var statlines = new Dictionary<string, Statline>
-        {
-            ["Chaos Space Marine"] = new(M: 6, T: 4, Sv: 3, W: 2, Ld: 7, Oc: 2),
-            ["Chaos Space Marine Champion"] = new(M: 6, T: 4, Sv: 3, W: 3, Ld: 6, Oc: 2),
-            ["Icon Bearer"] = new(M: 6, T: 4, Sv: 3, W: 2, Ld: 7, Oc: 2),
-            ["Chaos Space Marine Gunner"] = new(M: 6, T: 4, Sv: 3, W: 3, Ld: 7, Oc: 2),
-            ["Chaos Space Marine Reaper"] = new(M: 6, T: 4, Sv: 3, W: 3, Ld: 7, Oc: 2)
-        };
+        IReadOnlyList<(string Name, Statline Statline)> statlines =
+        [
+            ("Chaos Space Marine", new Statline(M: 6, T: 4, Sv: 3, W: 2, Ld: 7, Oc: 2)),
+            ("Chaos Space Marine Champion", new Statline(M: 6, T: 4, Sv: 3, W: 3, Ld: 6, Oc: 2)),
+            ("Icon Bearer", new Statline(M: 6, T: 4, Sv: 3, W: 2, Ld: 7, Oc: 2)),
+            ("Chaos Space Marine Gunner", new Statline(M: 6, T: 4, Sv: 3, W: 3, Ld: 7, Oc: 2)),
+            ("Chaos Space Marine Reaper", new Statline(M: 6, T: 4, Sv: 3, W: 3, Ld: 7, Oc: 2))
+        ];
 
         return new Datasheet(
             name: "Chaos Space Marines",
@@ -80,7 +73,7 @@ public static class DatasheetFixtures
             factionKeywords: ["ADEPTUS ASTARTES", "BLACK TEMPLARS"],
             keywords: ["INFANTRY", "BATTLELINE"],
             abilities: [],
-            statlines: new Dictionary<string, Statline> { ["Initiate"] = statline },
+            statlines: [("Initiate", statline)],
             weaponProfiles: [WeaponFixtures.PowerFist(), WeaponFixtures.MasterCraftedPowerWeapon()]
         );
     }

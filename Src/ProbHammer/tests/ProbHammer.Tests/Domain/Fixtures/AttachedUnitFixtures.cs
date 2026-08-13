@@ -14,7 +14,7 @@ public static class AttachedUnitFixtures
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["CHARACTER", "INFANTRY", "IMPERIUM", name.ToUpperInvariant()],
             abilities: [],
-            statlines: new Dictionary<string, Statline> { [name] = statline },
+            statlines: [(name, statline)],
             weaponProfiles: []);
     }
 
@@ -27,7 +27,7 @@ public static class AttachedUnitFixtures
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY", "SERVITOR"],
             abilities: [],
-            statlines: new Dictionary<string, Statline> { ["Servitor"] = statline },
+            statlines: [("Servitor", statline)],
             weaponProfiles: []);
     }
 

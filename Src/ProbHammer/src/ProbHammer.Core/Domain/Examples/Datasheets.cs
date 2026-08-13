@@ -8,10 +8,10 @@ public static class Datasheets
     {
         return new Datasheet(
             name: "High Marshal Helbrecht",
-            statlines: new Dictionary<string, Statline>
-            {
-                ["High Marshal Helbrecht"] = new(6, 4, 2, 6, 6, 3) { InSv = 4 }
-            },
+            statlines:
+            [
+                ("High Marshal Helbrecht", new Statline(6, 4, 2, 6, 6, 3) { InSv = 4 })
+            ],
             weaponProfiles:
             [
                 new RangedWeapon("Ferocity",
@@ -66,10 +66,10 @@ public static class Datasheets
     {
         return new Datasheet(
             name: "Crusade Ancient",
-            statlines: new Dictionary<string, Statline>
-            {
-                ["Crusade Ancient"] = new(6, 4, 3, 4, 6, 1)
-            },
+            statlines:
+            [
+                ("Crusade Ancient", new Statline(6, 4, 3, 4, 6, 1))
+            ],
             weaponProfiles:
             [
                 new RangedWeapon("Bolt Pistol", 12, 1, 3, 4, 0, 1) { Pistol = true },
@@ -112,10 +112,10 @@ public static class Datasheets
     {
         return new Datasheet(
             name: "Lieutenant",
-            statlines: new Dictionary<string, Statline>
-            {
-                ["Lieutenant"] = new(6, 4, 3, 4, 6, 1)
-            },
+            statlines:
+            [
+                ("Lieutenant", new Statline(6, 4, 3, 4, 6, 1))
+            ],
             weaponProfiles:
             [
                 new RangedWeapon("Bolt Pistol", 12, 1, 2, 4, 0, 1) { Pistol = true },
@@ -158,10 +158,10 @@ public static class Datasheets
     {
         return new Datasheet(
             name: "Marshal",
-            statlines: new Dictionary<string, Statline>
-            {
-                ["Marshal"] = new(6, 4, 3, 5, 6, 1) { InSv = 4 }
-            },
+            statlines:
+            [
+                ("Marshal", new Statline(6, 4, 3, 5, 6, 1) { InSv = 4 })
+            ],
             weaponProfiles:
             [
                 new RangedWeapon("Combi-weapon", 24, 1, 3, 4, 0, 1)
@@ -209,11 +209,11 @@ public static class Datasheets
     {
         return new Datasheet(
             name: "Assault Intercessor Squad",
-            statlines: new Dictionary<string, Statline>
-            {
-                ["Assault Intercessor Sergeant"] = new(6, 4, 3, 2, 6, 2),
-                ["Assault Intercessor"] = new(6, 4, 3, 2, 6, 2)
-            },
+            statlines:
+            [
+                ("Assault Intercessor Sergeant", new Statline(6, 4, 3, 2, 6, 2)),
+                ("Assault Intercessor", new Statline(6, 4, 3, 2, 6, 2))
+            ],
             weaponProfiles:
             [
                 new RangedWeapon("Heavy bolt pistol", 18, 1, 3, 4, -1, 1) { Pistol = true },
@@ -241,12 +241,12 @@ public static class Datasheets
     {
         return new Datasheet(
             name: "Crusader Squad",
-            statlines: new Dictionary<string, Statline>
-            {
-                ["Sword Brother"] = new(6, 4, 3, 2, 6, 2),
-                ["Initiate"] = new(6, 4, 3, 2, 6, 2),
-                ["Neophyte"] = new(6, 4, 4, 2, 6, 2)
-            },
+            statlines:
+            [
+                ("Sword Brother", new Statline(6, 4, 3, 2, 6, 2)),
+                ("Initiate", new Statline(6, 4, 3, 2, 6, 2)),
+                ("Neophyte", new Statline(6, 4, 4, 2, 6, 2))
+            ],
             weaponProfiles:
             [
                 new MeleeWeapon("Master-crafted power weapon", 3, 2, 5, -2, 2)
@@ -282,10 +282,10 @@ public static class Datasheets
     {
         return new Datasheet(
             name: "Impulsor",
-            statlines: new Dictionary<string, Statline>
-            {
-                ["Impulsor"] = new(12, 9, 3, 11, 6, 2)
-            },
+            statlines:
+            [
+                ("Impulsor", new Statline(12, 9, 3, 11, 6, 2))
+            ],
             weaponProfiles:
             [
                 new RangedWeapon("Storm Bolter", 24, 2, 3, 4, 0, 1) { RapidFire = 2 },
@@ -333,11 +333,11 @@ public static class Datasheets
     {
         return new Datasheet(
             name: "Scout Squad",
-            statlines: new Dictionary<string, Statline>
-            {
-                ["Scout Sergeant"] = new(6, 4, 4, 2, 6, 1),
-                ["Scout"] = new(6, 4, 4, 2, 6, 1)
-            },
+            statlines:
+            [
+                ("Scout Sergeant", new Statline(6, 4, 4, 2, 6, 1)),
+                ("Scout", new Statline(6, 4, 4, 2, 6, 1))
+            ],
             weaponProfiles:
             [
                 new RangedWeapon("Bolt pistol", 12, 1, 3, 4, 0, 1) { Pistol = true },
@@ -379,10 +379,10 @@ public static class Datasheets
     {
         return new Datasheet(
             name: "Sword Bretheren Squad",
-            statlines: new Dictionary<string, Statline>
-            {
-                ["Sword Brother"] = new(6, 4, 3, 3, 6, 1)
-            },
+            statlines:
+            [
+                ("Sword Brother", new Statline(6, 4, 3, 3, 6, 1))
+            ],
             weaponProfiles:
             [
                 new RangedWeapon("Heavy bolt pistol", 18, 1, 3, 4, -1, 1) { Pistol = true },

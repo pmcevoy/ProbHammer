@@ -2,18 +2,34 @@
 
 ## Active Work
 
-Three OpenSpec changes are drafted (proposal/specs/design/tasks written and validated) but not
-yet implemented, queued in dependency order: `order-live-play-unit-cards` (reorder unit-card
-blocks: attached-sourced first, then largest-to-smallest by model count, ties broken by name),
-`order-statlines-by-declaration` (make `Datasheet.Statlines` an ordered collection and render each
-unit-card's statlines in that declared order, scoped per component), and
+Two OpenSpec changes remain drafted (proposal/specs/design/tasks written and validated) but not
+yet implemented: `order-live-play-unit-cards` (reorder unit-card blocks: attached-sourced first,
+then largest-to-smallest by model count, ties broken by name — no dependency on the other two) and
 `merge-adjacent-live-play-statlines` (render adjacent same-component, value-identical statline
-rows under one shared stat-tile — depends on the previous change landing first).
+rows under one shared stat-tile — depends on `order-statlines-by-declaration`, now implemented, so
+it's unblocked and ready to pick up next).
 
 ---
 
 ## Recently Completed
 
+- OpenSpec change `order-statlines-by-declaration` implemented and archived: `Datasheet.Statlines`
+  changed from `IReadOnlyDictionary<string, Statline>` to an ordered
+  `IReadOnlyList<(string Name, Statline Statline)>` — declaration order (Sergeant/leader-equivalent
+  entry first, matching the real NewRecruit/GW app export convention) is now a documented,
+  load-bearing property instead of an accident of `Dictionary` enumeration. `GetStatline(name)`
+  stays O(1), backed by an internal dictionary built once in the constructor. All 9 sites in
+  `Examples/Datasheets.cs` and 12 test-fixture sites migrated (all already declared Sergeant/leader
+  first, so no reordering was needed beyond the syntax change). `AttachedUnitAggregator
+  .BuildStatlines` rewritten to walk components in display order (an `AttachedUnit`'s `Attached`
+  list, then `Bodyguard`; a plain `Unit` is just itself) and, within each, that component's
+  Datasheet-declared statline order — matching each declared name only against that component's
+  own `ModelLine`s. **Behavior change**: per-name statline merging is now scoped to a single
+  component, not merged globally across an `AttachedUnit` as before; confirmed acceptable since
+  real 40k attachment rules can't produce two identically-named Leader/Support units on one
+  Bodyguard. Visually verified via `firefox-devtools-mcp`: an AttachedUnit card renders Attached
+  units before its Bodyguard, sergeant-first within each; a plain Unit card renders its Sergeant
+  statline first. 237 tests, all passing.
 - OpenSpec change `drop-melee-range-column` implemented and archived: the Melee Weapons table on
   `/LivePlay` no longer shows a Range column (always read "Melee", pure noise). Two further
   `/LivePlay` display tweaks landed alongside it (no spec impact — pure CSS/markup): the

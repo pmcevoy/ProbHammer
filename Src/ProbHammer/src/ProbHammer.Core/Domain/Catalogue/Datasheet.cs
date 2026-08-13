@@ -11,8 +11,9 @@ public sealed class Datasheet
     public IReadOnlySet<string> FactionKeywords { get; }
     public IReadOnlySet<string> Keywords { get; }
     public IReadOnlyList<Ability> Abilities { get; }
-    public IReadOnlyDictionary<string, Statline> Statlines { get; }
+    public IReadOnlyList<(string Name, Statline Statline)> Statlines { get; }
 
+    private readonly IReadOnlyDictionary<string, Statline> _statlinesByName;
     private readonly IReadOnlyDictionary<string, WeaponProfile> _weaponProfiles;
 
     public Datasheet(
@@ -20,19 +21,20 @@ public sealed class Datasheet
         IEnumerable<string> factionKeywords,
         IEnumerable<string> keywords,
         IEnumerable<Ability> abilities,
-        IReadOnlyDictionary<string, Statline> statlines,
+        IReadOnlyList<(string Name, Statline Statline)> statlines,
         IEnumerable<WeaponProfile> weaponProfiles)
     {
         Name = name;
         FactionKeywords = new HashSet<string>(factionKeywords, StringComparer.OrdinalIgnoreCase);
         Keywords = new HashSet<string>(keywords, StringComparer.OrdinalIgnoreCase);
         Abilities = abilities.ToList();
-        Statlines = new Dictionary<string, Statline>(statlines, StringComparer.OrdinalIgnoreCase);
+        Statlines = statlines;
+        _statlinesByName = statlines.ToDictionary(x => x.Name, x => x.Statline, StringComparer.OrdinalIgnoreCase);
         _weaponProfiles = weaponProfiles.ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
     }
 
     public Statline GetStatline(string name) =>
-        Statlines.TryGetValue(name, out var statline)
+        _statlinesByName.TryGetValue(name, out var statline)
             ? statline
             : throw new KeyNotFoundException($"Datasheet '{Name}' has no statline named '{name}'.");
 
