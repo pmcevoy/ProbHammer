@@ -8,6 +8,49 @@ Nothing in progress.
 
 ## Recently Completed
 
+- OpenSpec change `add-live-play-weapon-provenance` implemented: weapon rows on `/LivePlay` now
+  expand on click to show which `(ComponentName, StatlineName)` groups contributed how much,
+  instead of only ever showing the aggregated total. Contributions sharing a group collapse to one
+  row (`Name (Count×PerModelAttacks)`, product as the Attacks subtotal) when their
+  `PerModelAttacks` agree; if they disagree — possible since `WeaponProfileEqualityKey` excludes
+  Attacks by design, though no real fixture exercises it — each contributing `ModelLine` renders
+  separately instead, so no subtotal is ever shown that isn't verifiable from the numbers beside
+  it. Grouping/formatting (`LivePlayModel.BuildContributionBreakdown`) is page-layer view-model
+  work over data `AttachedUnitAggregator` already computed correctly (`WeaponContribution`, added
+  in `rework-attached-unit-aggregate-view` specifically for this), matching the page's existing
+  `StatlineBlockViewModel` precedent — no domain-model change. This is `/LivePlay`'s first
+  JavaScript (`live-play.js`, click-to-toggle): native `<details>` can't span additional `<tr>`s
+  below the row that triggers it, so a small script toggles pre-rendered, hidden breakdown rows
+  via a shared `data-weapon-id` attribute.
+  **Refined after hands-on layout feedback, twice.** First: zebra striping broke, because
+  `:nth-child(even)` counts the always-present-but-`[hidden]` breakdown rows too, silently shifting
+  every later primary row's parity (confirmed live — a unit's 4th weapon row, which should read as
+  even/grey, rendered white because three hidden rows ahead of it shifted its DOM position to odd).
+  Fixed by driving `.weapon-row-alt` from each weapon's own list index instead of DOM position, and
+  giving a breakdown row the same class as its parent so an expanded row reads as one continuous
+  block rather than a colour gap; also increased the breakdown label's indent for a clearer
+  nested-section look. Second, a genuine scope change: the trigger was originally per-weapon
+  (`Contributions.Count > 1`), but using the page surfaced that a *single* contributor is still
+  worth naming — e.g. a Pyre pistol carried only by a unit's Sword Brother — as long as the unit has
+  other `ModelLine`s to distinguish it from. Trigger is now unit-level: `totalModelLinesInUnit > 1`,
+  computed once via `view.Statlines.Sum(s => Math.Max(s.Loadouts.Count, 1))` (`Loadouts` is empty
+  when exactly one `ModelLine` shares a statline name, so `Max(.,1)` recovers the true per-name
+  count). This can only ever exclude a single-`ModelLine` plain `Unit` (e.g. Impulsor) — an
+  `AttachedUnit` always totals two or more `ModelLine`s by construction (Bodyguard + at least one
+  Attached component, each contributing at least one line), confirmed by a dedicated test asserting
+  no weapon on Impulsor ever shows a breakdown. Visually verified via `firefox-devtools-mcp` against
+  the real example army: the Crusader Squad's Bolt pistol (A10) expands to Neophyte (4×1), Initiate
+  (5×1, collapsed across its two differently-loadout model-lines), and the attached Crusade
+  Ancient's own Bolt Pistol (1×1) — a genuine cross-component merge, confirming
+  `WeaponProfileEqualityKey`-equal weapons from different components do combine as designed; Pyre
+  pistol expands to a single "Sword Brother (1×D6)" row; the Melee table's Astartes chainsword
+  breakdown (Neophyte 4×4, chainsword-loadout Initiate 3×4, Power-fist-loadout Initiates correctly
+  absent since they don't carry that weapon) confirmed the loadout-differentiation scenario
+  discussed during design needed no special-casing. 253 tests, all passing. `.claude/vnext-ideas.md`
+  updated: this item removed (now implemented), two new complementary ideas added — an
+  ability/weapon-keyword definitions popup, and selection-scoped weapon aggregation (checkbox-driven
+  filtering of the Statline section, deliberately sequenced after this change since it reuses the
+  same grouping logic).
 - OpenSpec change `add-live-play-ability-columns` implemented and archived: the Statline section
   on `/LivePlay` is now a 3-column CSS Grid — STATLINES | MODEL ABILITIES | UNIT ABILITIES —
   filling the previously-unused horizontal space beside each statline block and putting each

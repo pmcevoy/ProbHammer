@@ -1,5 +1,6 @@
 using FluentAssertions;
 using ProbHammer.Core.Domain.Catalogue;
+using ProbHammer.Core.Domain.Examples;
 using ProbHammer.Core.Domain.Roster;
 using ProbHammer.Web.Pages;
 
@@ -105,4 +106,137 @@ public class LivePlayModelTests
         block.ComponentAbilitySpans.Should().ContainSingle(s =>
             s.FirstRunIndex == 2 && s.LastRunIndex == 2 && s.ModelAbilities.Single().Name == "SUPPORT");
     }
+
+    [Fact]
+    public void BuildContributionBreakdown_CollapsesSameNameContributions_WhenPerModelAttacksAgree()
+    {
+        // Real fixture: Crusader Squad's Bolt pistol (A1) is carried by the Neophyte line (x4) and
+        // both differently-loadout Initiate lines (Power-fist x2 / Astartes-chainsword x3, both
+        // still carrying the same Bolt pistol entry) - plus the attached Crusade Ancient's own
+        // "Bolt Pistol" (x1), which is structurally EqualityKey-equal (same Skill/S/Ap/D/Pistol)
+        // and so merges into the same AggregateWeaponEntry from a different component.
+        var view = AttachedUnitAggregator.Build(Units.CrusaderSquad_Helbrecht_Ancient());
+        var boltPistol = view.Weapons.Single(w =>
+            w.Profile.Name.Equals("Bolt pistol", StringComparison.OrdinalIgnoreCase));
+
+        var breakdown = LivePlayModel.BuildContributionBreakdown(boltPistol, TotalModelLines(view));
+
+        breakdown.Should().BeEquivalentTo(
+        [
+            new WeaponContributionRow("Neophyte", 4, DiceExpression.Fixed(1), DiceExpression.Fixed(4)),
+            new WeaponContributionRow("Initiate", 5, DiceExpression.Fixed(1), DiceExpression.Fixed(5)),
+            new WeaponContributionRow("Crusade Ancient", 1, DiceExpression.Fixed(1), DiceExpression.Fixed(1))
+        ]);
+    }
+
+    [Fact]
+    public void BuildContributionBreakdown_ListsContributionsSeparately_WhenPerModelAttacksDisagree()
+    {
+        // Synthetic: EqualityKey excludes Attacks, so two contributions sharing a StatlineName
+        // could in principle disagree on PerModelAttacks even though no real fixture produces this.
+        var profile = new RangedWeapon("Test Weapon", 12, DiceExpression.Fixed(1), 3, 4, 0, 1);
+        var entry = new AggregateWeaponEntry(
+            Profile: profile,
+            TotalAttacks: DiceExpression.Fixed(7),
+            Contributions:
+            [
+                new WeaponContribution("Squad A", "Initiate", 2, DiceExpression.Fixed(1)),
+                new WeaponContribution("Squad A", "Initiate", 1, DiceExpression.Fixed(5))
+            ]);
+
+        var breakdown = LivePlayModel.BuildContributionBreakdown(entry, totalModelLinesInUnit: 3);
+
+        breakdown.Should().BeEquivalentTo(
+        [
+            new WeaponContributionRow("Initiate", 2, DiceExpression.Fixed(1), DiceExpression.Fixed(2)),
+            new WeaponContributionRow("Initiate", 1, DiceExpression.Fixed(5), DiceExpression.Fixed(5))
+        ]);
+    }
+
+    [Fact]
+    public void BuildContributionBreakdown_ReturnsOneRow_WhenEntryHasSingleContribution_AndUnitHasMultipleModelLines()
+    {
+        // A single contributor is still worth naming - e.g. "it was the Sword Brother" - as long
+        // as the unit has more than one ModelLine to distinguish it from.
+        var profile = new RangedWeapon("Test Weapon", 12, DiceExpression.Fixed(1), 3, 4, 0, 1);
+        var entry = new AggregateWeaponEntry(
+            Profile: profile,
+            TotalAttacks: DiceExpression.Fixed(3),
+            Contributions: [new WeaponContribution("Squad A", "Sword Brother", 3, DiceExpression.Fixed(1))]);
+
+        var breakdown = LivePlayModel.BuildContributionBreakdown(entry, totalModelLinesInUnit: 2);
+
+        breakdown.Should().BeEquivalentTo(
+        [
+            new WeaponContributionRow("Sword Brother", 3, DiceExpression.Fixed(1), DiceExpression.Fixed(3))
+        ]);
+    }
+
+    [Fact]
+    public void BuildContributionBreakdown_ReturnsEmpty_WhenUnitHasOnlyOneModelLineTotal()
+    {
+        var profile = new RangedWeapon("Test Weapon", 12, DiceExpression.Fixed(1), 3, 4, 0, 1);
+        var entry = new AggregateWeaponEntry(
+            Profile: profile,
+            TotalAttacks: DiceExpression.Fixed(3),
+            Contributions: [new WeaponContribution("Squad A", "Initiate", 3, DiceExpression.Fixed(1))]);
+
+        LivePlayModel.BuildContributionBreakdown(entry, totalModelLinesInUnit: 1).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void OnGet_AttachesContributionBreakdown_ForCrusaderSquadsMergedBoltPistolRow()
+    {
+        var model = new LivePlayModel();
+
+        model.OnGet();
+
+        var unit = model.Units.Single(u => u.Name == "Crusader Squad with High Marshal Helbrecht and Crusade Ancient");
+        var boltPistolRow = unit.RangedWeapons.Single(w =>
+            w.Entry.Profile.Name.Equals("Bolt pistol", StringComparison.OrdinalIgnoreCase));
+
+        boltPistolRow.Breakdown.Should().BeEquivalentTo(
+        [
+            new WeaponContributionRow("Neophyte", 4, DiceExpression.Fixed(1), DiceExpression.Fixed(4)),
+            new WeaponContributionRow("Initiate", 5, DiceExpression.Fixed(1), DiceExpression.Fixed(5)),
+            new WeaponContributionRow("Crusade Ancient", 1, DiceExpression.Fixed(1), DiceExpression.Fixed(1))
+        ]);
+    }
+
+    [Fact]
+    public void OnGet_AttachesSingleContributorBreakdown_ForCrusaderSquadsPyrePistolRow()
+    {
+        // Pyre pistol is carried only by the Sword Brother (1 model, D6 attacks) - the exact
+        // "it was the Sword Brother that contributed it" case: a single contributor, still shown
+        // because the unit as a whole has several other ModelLines.
+        var model = new LivePlayModel();
+
+        model.OnGet();
+
+        var unit = model.Units.Single(u => u.Name == "Crusader Squad with High Marshal Helbrecht and Crusade Ancient");
+        var pyrePistolRow = unit.RangedWeapons.Single(w => w.Entry.Profile.Name == "Pyre pistol");
+
+        pyrePistolRow.Breakdown.Should().BeEquivalentTo(
+        [
+            new WeaponContributionRow("Sword Brother", 1, DiceExpression.D6, DiceExpression.D6)
+        ]);
+    }
+
+    [Fact]
+    public void OnGet_AttachesNoBreakdown_ForAnyWeapon_WhenUnitHasOnlyOneModelLineTotal()
+    {
+        // Impulsor is a single-model, single-ModelLine Unit - there's no second source any of its
+        // weapons could be distinguished from, so no weapon on it should ever show a toggle.
+        var model = new LivePlayModel();
+
+        model.OnGet();
+
+        var unit = model.Units.Single(u => u.Name == "Impulsor");
+
+        unit.RangedWeapons.Should().OnlyContain(w => w.Breakdown.Count == 0);
+        unit.MeleeWeapons.Should().OnlyContain(w => w.Breakdown.Count == 0);
+    }
+
+    private static int TotalModelLines(AttachedUnitAggregateView view) =>
+        view.Statlines.Sum(s => Math.Max(s.Loadouts.Count, 1));
 }

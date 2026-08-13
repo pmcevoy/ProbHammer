@@ -24,8 +24,18 @@ public class LivePlayModel : PageModel
 
     internal static UnitBlockViewModel BuildUnitBlock(AttachedUnitAggregateView view)
     {
+        // Loadouts is empty when exactly one ModelLine shares a statline name (the "no redundant
+        // breakdown row" rule - see AggregateStatlineEntry), so Max(.,1) recovers the true
+        // per-name ModelLine count in that case; summed across every entry, this gives the unit's
+        // total ModelLine count even though BuildStatlines has already collapsed same-named lines
+        // into one entry each. An AttachedUnit can never total 1 here (Bodyguard + >=1 Attached,
+        // each with >=1 ModelLine, is >=2 by construction) - only a single-ModelLine plain Unit
+        // (e.g. Impulsor) can.
+        var totalModelLines = view.Statlines.Sum(s => Math.Max(s.Loadouts.Count, 1));
+
         var orderedWeapons = view.Weapons
             .OrderByDescending(w => w.TotalAttacks.ExpectedValue())
+            .Select(w => new WeaponRowViewModel(w, BuildContributionBreakdown(w, totalModelLines)))
             .ToList();
 
         var statlineBlocks = GroupStatlines(view.Statlines, view.Abilities);
@@ -33,10 +43,62 @@ public class LivePlayModel : PageModel
         return new(
             Name: view.Name,
             Statlines: statlineBlocks,
-            RangedWeapons: orderedWeapons.Where(w => w.Profile.Type == WeaponType.Ranged).ToList(),
-            MeleeWeapons: orderedWeapons.Where(w => w.Profile.Type == WeaponType.Melee).ToList(),
+            RangedWeapons: orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Ranged).ToList(),
+            MeleeWeapons: orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Melee).ToList(),
             ComponentAbilitySpans: BuildComponentAbilitySpans(statlineBlocks, view.Abilities),
             Keywords: view.Keywords.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList());
+    }
+
+    // Rendering-only grouping over data AttachedUnitAggregator already computed correctly (mirrors
+    // GroupStatlines/StatlineBlockViewModel's precedent - the domain retains ungrouped, per-
+    // ModelLine provenance; only the display grouping is page-layer work). Groups Contributions by
+    // (ComponentName, StatlineName) in first-seen order. A group collapses to one row when every
+    // contribution shares the same PerModelAttacks; otherwise each contributing ModelLine renders
+    // as its own row, so no subtotal is ever shown that isn't verifiable from the numbers beside it.
+    // Label is StatlineName alone (no ComponentName prefix) - matches the validated UI shape and
+    // accepts the same known limitation as ICombatUnit.Name's duplicate-leader case: two components
+    // sharing a statline name would render identically-labeled rows.
+    //
+    // Trigger is the unit's total ModelLine count, not entry.Contributions.Count: knowing "this
+    // came from the Sword Brother" is useful even when only one ModelLine carries a weapon, as
+    // long as the unit has more than one ModelLine to distinguish it from. A unit with only one
+    // ModelLine overall returns no rows for any of its weapons - there's no second source to name.
+    internal static IReadOnlyList<WeaponContributionRow> BuildContributionBreakdown(
+        AggregateWeaponEntry entry, int totalModelLinesInUnit)
+    {
+        if (totalModelLinesInUnit <= 1) return [];
+
+        var groups = new List<List<WeaponContribution>>();
+        var groupIndex = new Dictionary<(string ComponentName, string StatlineName), List<WeaponContribution>>();
+        foreach (var contribution in entry.Contributions)
+        {
+            var key = (contribution.ComponentName, contribution.StatlineName);
+            if (!groupIndex.TryGetValue(key, out var group))
+            {
+                group = [];
+                groupIndex[key] = group;
+                groups.Add(group);
+            }
+            group.Add(contribution);
+        }
+
+        var rows = new List<WeaponContributionRow>();
+        foreach (var group in groups)
+        {
+            if (group.All(c => c.PerModelAttacks == group[0].PerModelAttacks))
+            {
+                var count = group.Sum(c => c.Count);
+                rows.Add(new WeaponContributionRow(group[0].StatlineName, count, group[0].PerModelAttacks,
+                    group[0].PerModelAttacks.Scale(count)));
+            }
+            else
+            {
+                rows.AddRange(group.Select(c =>
+                    new WeaponContributionRow(c.StatlineName, c.Count, c.PerModelAttacks, c.PerModelAttacks.Scale(c.Count))));
+            }
+        }
+
+        return rows;
     }
 
     // Single forward scan: a new run starts whenever ComponentName or Statline differs from the
@@ -124,10 +186,20 @@ public sealed record ComponentAbilitySpanViewModel(
     IReadOnlyList<Ability> ModelAbilities,
     IReadOnlyList<Ability> UnitAbilities);
 
+/// <summary>One collapsed-or-expanded row of a weapon entry's contribution breakdown. Label is a
+/// StatlineName (see <see cref="LivePlayModel.BuildContributionBreakdown"/> for the grouping
+/// rule). Subtotal is always <c>PerModelAttacks.Scale(Count)</c> - safe to render standalone since
+/// every row's own Count/PerModelAttacks are shown right beside it.</summary>
+public sealed record WeaponContributionRow(string Label, int Count, DiceExpression PerModelAttacks, DiceExpression Subtotal);
+
+/// <summary>A weapon entry plus its (possibly empty) contribution breakdown. Empty means the entry
+/// has zero or one contributions - nothing to break down, so the page renders no toggle at all.</summary>
+public sealed record WeaponRowViewModel(AggregateWeaponEntry Entry, IReadOnlyList<WeaponContributionRow> Breakdown);
+
 public sealed record UnitBlockViewModel(
     string Name,
     IReadOnlyList<StatlineBlockViewModel> Statlines,
-    IReadOnlyList<AggregateWeaponEntry> RangedWeapons,
-    IReadOnlyList<AggregateWeaponEntry> MeleeWeapons,
+    IReadOnlyList<WeaponRowViewModel> RangedWeapons,
+    IReadOnlyList<WeaponRowViewModel> MeleeWeapons,
     IReadOnlyList<ComponentAbilitySpanViewModel> ComponentAbilitySpans,
     IReadOnlyList<string> Keywords);

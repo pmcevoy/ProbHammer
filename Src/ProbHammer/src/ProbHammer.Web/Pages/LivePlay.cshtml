@@ -129,25 +129,52 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var entry in unit.RangedWeapons)
+                            @for (var w = 0; w < unit.RangedWeapons.Count; w++)
                             {
-                                var weapon = entry.Profile;
+                                var row = unit.RangedWeapons[w];
+                                var weapon = row.Entry.Profile;
                                 var tags = WeaponAbilityTags(weapon);
-                                <tr>
+                                var weaponId = $"w-{i}-r-{w}";
+                                <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")">
                                     <td class="weapon-name">
-                                        @weapon.Name
-                                        @if (tags.Count > 0)
+                                        @if (row.Breakdown.Count > 0)
                                         {
-                                            <span class="weapon-tags">[@string.Join(", ", tags)]</span>
+                                            <button type="button" class="weapon-name-toggle" data-weapon-id="@weaponId" aria-expanded="false">
+                                                @weapon.Name
+                                                @if (tags.Count > 0)
+                                                {
+                                                    <span class="weapon-tags">[@string.Join(", ", tags)]</span>
+                                                }
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            @weapon.Name
+                                            @if (tags.Count > 0)
+                                            {
+                                                <span class="weapon-tags">[@string.Join(", ", tags)]</span>
+                                            }
                                         }
                                     </td>
                                     <td>@(weapon.Range)"</td>
-                                    <td>@entry.TotalAttacks</td>
+                                    <td>@row.Entry.TotalAttacks</td>
                                     <td>@(weapon.Skill)+</td>
                                     <td>@weapon.S</td>
                                     <td>@weapon.Ap</td>
                                     <td>@weapon.D</td>
                                 </tr>
+                                @foreach (var breakdown in row.Breakdown)
+                                {
+                                    <tr class="weapon-contribution-row @(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId" hidden>
+                                        <td class="weapon-contribution-label">@breakdown.Label (@(breakdown.Count)&times;@(breakdown.PerModelAttacks))</td>
+                                        <td></td>
+                                        <td>@breakdown.Subtotal</td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
@@ -178,24 +205,50 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var entry in unit.MeleeWeapons)
+                            @for (var w = 0; w < unit.MeleeWeapons.Count; w++)
                             {
-                                var weapon = entry.Profile;
+                                var row = unit.MeleeWeapons[w];
+                                var weapon = row.Entry.Profile;
                                 var tags = WeaponAbilityTags(weapon);
-                                <tr>
+                                var weaponId = $"w-{i}-m-{w}";
+                                <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")">
                                     <td class="weapon-name">
-                                        @weapon.Name
-                                        @if (tags.Count > 0)
+                                        @if (row.Breakdown.Count > 0)
                                         {
-                                            <span class="weapon-tags">[@string.Join(", ", tags)]</span>
+                                            <button type="button" class="weapon-name-toggle" data-weapon-id="@weaponId" aria-expanded="false">
+                                                @weapon.Name
+                                                @if (tags.Count > 0)
+                                                {
+                                                    <span class="weapon-tags">[@string.Join(", ", tags)]</span>
+                                                }
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            @weapon.Name
+                                            @if (tags.Count > 0)
+                                            {
+                                                <span class="weapon-tags">[@string.Join(", ", tags)]</span>
+                                            }
                                         }
                                     </td>
-                                    <td>@entry.TotalAttacks</td>
+                                    <td>@row.Entry.TotalAttacks</td>
                                     <td>@(weapon.Skill)+</td>
                                     <td>@weapon.S</td>
                                     <td>@weapon.Ap</td>
                                     <td>@weapon.D</td>
                                 </tr>
+                                @foreach (var breakdown in row.Breakdown)
+                                {
+                                    <tr class="weapon-contribution-row @(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId" hidden>
+                                        <td class="weapon-contribution-label">@breakdown.Label (@(breakdown.Count)&times;@(breakdown.PerModelAttacks))</td>
+                                        <td>@breakdown.Subtotal</td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
@@ -209,6 +262,10 @@
         </section>
     }
 </main>
+
+@section Scripts {
+    <script src="~/js/live-play.js" asp-append-version="true"></script>
+}
 
 @functions {
     static List<string> WeaponAbilityTags(WeaponProfile w)
