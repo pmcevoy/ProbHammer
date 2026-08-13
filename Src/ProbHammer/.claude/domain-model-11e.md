@@ -177,7 +177,7 @@ ICombatUnit
 
 ```
 AttachedUnitAggregateView(Name: string, IsAttachedUnit: bool, Statlines, Weapons,
-                           UnitScopedAbilities, ModelScopedAbilities, Keywords)
+                           Abilities, Keywords)
   // Name is the source combatUnit.Name (see ICombatUnit above), copied through unchanged.
   // IsAttachedUnit is `combatUnit is AttachedUnit`, set in Build - lets a page-layer consumer
   // (e.g. /LivePlay's unit-card ordering) distinguish an AttachedUnit-sourced view from a plain
@@ -209,6 +209,15 @@ AggregateWeaponEntry(Profile: WeaponProfile, TotalAttacks: DiceExpression,
   // Profile.A is NOT authoritative once a row has merged more than one contribution - it's
   // whichever contributor's WeaponProfile happened to be inserted first. Only TotalAttacks is
   // safe to render.
+
+AggregateAbilityEntry(ComponentName: string, StatlineName: string?, Ability: Ability)
+  // StatlineName is null for a Datasheet-sourced ability (Unit.Datasheet.Abilities - not tied to
+  // any one model-line, applies to the whole component) and set to a specific statline name for a
+  // ModelLine-sourced ability (that ModelLine's own Abilities, e.g. Enhancement-conferred). This
+  // applies regardless of Ability.Scope: Scope alone decides which UI column (Model vs Unit) an
+  // entry belongs in; source alone decides which statline row(s) it binds to. No cross-component
+  // combination or deduplication - two components each having an ability of the same Name produce
+  // two separate entries.
 ```
 
 - `Statlines` — built by walking components in display order (an `AttachedUnit`'s `Attached` list,
@@ -229,24 +238,30 @@ AggregateWeaponEntry(Profile: WeaponProfile, TotalAttacks: DiceExpression,
   the model count summed. (That was the bug this shape fixes: two model-lines sharing an
   `EqualityKey` with different per-model Attacks, e.g. 4 models × A3 and 1 model × A7, must total
   19, not silently keep one contributor's A and report Count=5.)
-- `UnitScopedAbilities` — combined list of `Scope == Unit` abilities from present components'
-  `Datasheet.Abilities` and present model-lines' own `Abilities` (e.g. an Enhancement that buffs
-  the whole unit).
-- `ModelScopedAbilities` — `Scope == Model` abilities from `ModelLine.Abilities`, kept attached to
-  their originating `ModelLine`; disappear once that line's `RemainingCount` reaches 0.
+- `Abilities` — built by `BuildAbilities`, walking components in the same display order
+  `BuildStatlines` uses. For each component where `IsPresent`: one entry per
+  `Datasheet.Ability` (`StatlineName: null`), then one entry per `Ability` on each of that
+  component's own `ModelLine`s with `RemainingCount > 0` (`StatlineName:` that line's own name).
+  No cross-component combination or deduplication, regardless of `Ability.Scope` — mirrors
+  `Statlines`' per-component scoping exactly. The explicit `IsPresent` guard exists only for
+  Datasheet-sourced entries: unlike `BuildStatlines`, where a fully-dead component naturally
+  produces zero entries through its per-statline `RemainingCount` check, a Datasheet ability has
+  no statline-level gate of its own to fall through. A `ModelLine`-sourced entry (any Scope)
+  disappears once that line's `RemainingCount` reaches 0, since it's simply excluded from that
+  component's model-line scan on the next `Build`.
 - `Keywords` — wired directly to `KeywordResolution.EffectiveKeywords`.
 
 `AttachedUnitAggregator.Build` computes one `RemainingCount > 0`-filtered `presentLines` list from
-`combatUnit.Components`, feeding `BuildWeapons`, `BuildUnitScopedAbilities`, and
-`BuildModelScopedAbilities` (a fully-dead model-line contributes nothing to a weapon total or an
-ability list). `BuildStatlines` takes `combatUnit` directly instead of a pre-flattened line list —
-it already needs each component's own `Datasheet` for declared statline order, so it walks
-`component.ModelLines` itself per component rather than being fed a cross-component flattened set;
-this is also what makes per-component merge scoping fall out for free, with no separate sort step
-that could disagree with the grouping. Unfiltered access to a component's `ModelLine`s (so
-fully-dead loadout-variants and correct `InitialCount`s stay visible) happens naturally since
-`BuildStatlines` reads `component.ModelLines` directly rather than through the `presentLines`
-filter.
+`combatUnit.Components`, feeding only `BuildWeapons` (a fully-dead model-line contributes nothing
+to a weapon total). `BuildStatlines` and `BuildAbilities` both take `combatUnit` directly instead
+of a pre-flattened line list, sharing a private `ComponentDisplayOrder` helper — both already need
+each component's own `Datasheet` (for declared statline order, or for `Datasheet.Abilities`), so
+each walks `component.ModelLines` itself per component rather than being fed a cross-component
+flattened set; this is also what makes per-component merge scoping fall out for free in both, with
+no separate sort step that could disagree with the grouping. Unfiltered access to a component's
+`ModelLine`s (so fully-dead loadout-variants and correct `InitialCount`s stay visible in
+`Statlines`) happens naturally since `BuildStatlines` reads `component.ModelLines` directly rather
+than through the `presentLines` filter.
 
 ---
 

@@ -545,11 +545,22 @@ button[type="submit"]:hover { opacity: 0.85; }
 
 .lp-section > *:not(summary) { padding-top: 0.5rem; }
 
-/* ── Statline blocks ── */
+/* ── Statline grid (statlines + Model/Unit ability columns) ──
+   CSS Grid, not flexbox: a component-wide ability cell needs to span several statline rows
+   (grid-row: start / end) alongside two independent sibling columns - flexbox columns flow
+   independently and can't be told to occupy a specific vertical range shared with another
+   column's actual rendered heights. Every cell (statline and ability alike) gets an explicit
+   grid-row/grid-column via inline style computed server-side; row tracks are `auto`-sized by
+   default, so a spanning ability cell taller than its statline counterpart simply grows the
+   shared row track(s). */
 
-.statline-blocks { display: flex; flex-direction: column; gap: 0.5rem; }
+.statline-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.5rem;
+}
 
-.statline-block {
+.statline-cell.col-statline {
     border: 1px solid var(--border);
     border-radius: 3px;
     padding: 0.4rem 0.6rem;
@@ -639,13 +650,21 @@ button[type="submit"]:hover { opacity: 0.85; }
     letter-spacing: 0.02em;
 }
 
-/* ── Abilities ── */
+/* ── Statline ability columns ── */
 
-.live-play-page .abilities-section { display: flex; flex-direction: column; gap: 0.5rem; }
-.live-play-page .ability-block.model-scoped { border-top: 1px dashed var(--border); padding-top: 0.4rem; }
-.live-play-page .model-scoped-heading { font-weight: 700; color: var(--amber); margin-bottom: 0.2rem; }
-.live-play-page .ability { margin: 0.2rem 0; line-height: 1.4; font-size: 0.82rem; }
-.live-play-page .ability strong { color: var(--text); }
+.statline-cell.col-model-abilities,
+.statline-cell.col-unit-abilities {
+    border: 1px dashed var(--border);
+    border-radius: 3px;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.78rem;
+}
+
+/* Component-wide (Datasheet-sourced) abilities spanning multiple statline rows get a subtle fill
+   so the taller cell visibly reads as "covering" its span, not just an odd empty gap. */
+.statline-cell.spans-component { background: var(--bg); }
+
+.ability-name-line { padding: 0.1rem 0; font-weight: 600; }
 
 .live-play-page .keywords {
     margin-top: 0.5rem;

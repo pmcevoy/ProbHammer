@@ -57,7 +57,8 @@ model count as its own distinct element, never concatenated with another entry's
 the shared stat-tile, in the run's order. Each entry's header line SHALL render its own nested
 loadout breakdown listing every entry in that statline's `Loadouts`, showing each loadout's weapon
 list and its own remaining/initial count, unaffected by whether it is sharing a stat-tile with
-other entries.
+other entries. This statline rendering occupies the first of three columns in the unit block's
+Statline area — see "Statline Ability Column Rendering" for the other two.
 
 #### Scenario: Squad with a distinct sergeant statline sharing the same values
 - **WHEN** a unit's aggregate view contains two consecutive same-component statline entries with
@@ -102,6 +103,36 @@ other entries.
 #### Scenario: Invulnerable save is omitted when absent
 - **WHEN** a run's shared Statline value has an unset `InSv` value (the default)
 - **THEN** the rendered stat-tile does not display an invulnerable save value
+
+### Requirement: Statline Ability Column Rendering
+Each unit block's Statline area SHALL render two additional columns alongside the statline column:
+a Model Abilities column for entries whose Ability has Scope Model, and a Unit Abilities column for
+entries whose Ability has Scope Unit. Within each column, an ability entry bound to a specific
+statline row SHALL render beside that row only; an ability entry with no statline-row binding (a
+component-wide ability) SHALL render beside the first rendered statline row belonging to its
+component, and SHALL visually span every row belonging to that component. Each ability SHALL
+render by Name only; ability descriptive Text is not rendered by this requirement.
+
+#### Scenario: A row-bound ability renders beside its own statline row
+- **WHEN** an ability entry carries the name of a specific statline
+- **THEN** it renders in its Scope's column beside that specific statline row, not beside any
+  other row of the same component
+
+#### Scenario: A component-wide ability spans every row of its component
+- **WHEN** an ability entry carries no statline name (a Datasheet-sourced, component-wide ability)
+  and its owning component renders three statline rows (e.g. two merged into one shared tile and
+  one separate)
+- **THEN** it renders once, beside the first of those three rows, visually spanning all three
+
+#### Scenario: Column placement is determined by Ability Scope
+- **WHEN** a component contributes both a Model-scoped and a Unit-scoped ability
+- **THEN** the Model-scoped ability renders in the Model Abilities column and the Unit-scoped
+  ability renders in the Unit Abilities column, regardless of whether either is row-bound or
+  component-wide
+
+#### Scenario: Only the ability name renders
+- **WHEN** an ability entry renders in either column
+- **THEN** only its Name is shown; its descriptive Text is not rendered
 
 ### Requirement: Weapon Section Rendering
 Each unit block SHALL group the view's `Weapons` into a Ranged section and a Melee section by each
@@ -150,17 +181,6 @@ alongside a separate model count.
 - **THEN** the rendered entry shows those abilities as tags immediately alongside the weapon's
   name, not in a separate table column
 
-### Requirement: Ability Section Rendering
-Each unit block SHALL render `UnitScopedAbilities` as one combined list, and SHALL render `ModelScopedAbilities` grouped under the name of their owning model-line, separately from the combined list.
-
-#### Scenario: Unit-scoped ability appears once in the combined section
-- **WHEN** a unit's aggregate view has a non-empty `UnitScopedAbilities` list
-- **THEN** each ability appears once in the block's combined-abilities section
-
-#### Scenario: Model-scoped ability appears under its own model-line
-- **WHEN** a unit's aggregate view has a `ModelScopedAbilities` entry tied to a specific model-line
-- **THEN** that ability is rendered under that model-line's own heading, not in the combined-abilities section
-
 ### Requirement: Keyword Section Rendering
 Each unit block SHALL render the view's `Keywords` as a single list of the unit's effective keywords.
 
@@ -169,20 +189,24 @@ Each unit block SHALL render the view's `Keywords` as a single list of the unit'
 - **THEN** every keyword in that set is rendered somewhere in the unit's block
 
 ### Requirement: Empty Sections Render Without Error
-If any of `Statlines`, `Weapons`, `UnitScopedAbilities`, `ModelScopedAbilities`, or `Keywords` is empty for a given unit, the page SHALL render that unit's block without error, omitting or clearly marking the empty section.
+If any of `Statlines`, `Weapons`, the per-component ability data, or `Keywords` is empty for a
+given unit, the page SHALL render that unit's block without error, omitting or clearly marking the
+empty section or column.
 
 #### Scenario: Unit with no unit-scoped abilities
-- **WHEN** a unit's aggregate view has an empty `UnitScopedAbilities` list
-- **THEN** the page renders that unit's block successfully, with no exception and no blank/broken markup in the abilities section
+- **WHEN** a unit's aggregate view has no Unit-scoped ability entries for any of its components
+- **THEN** the page renders that unit's block successfully, with no exception and no blank/broken
+  markup in the Unit Abilities column
 
 ### Requirement: Per-Section Disclosure Defaults to Collapsed
-Each unit block's statline, ranged-weapons, melee-weapons, and abilities sections SHALL be
-independently collapsible, and SHALL render collapsed by default when the page first loads.
+Each unit block's statline (including its two ability columns), ranged-weapons, and melee-weapons
+sections SHALL be independently collapsible, and SHALL render collapsed by default when the page
+first loads.
 
 #### Scenario: Sections load collapsed
 - **WHEN** a user navigates to `/LivePlay`
-- **THEN** every unit block's statline, ranged-weapons, melee-weapons, and abilities sections
-  render in a collapsed state, showing no section's detail content until expanded
+- **THEN** every unit block's statline, ranged-weapons, and melee-weapons sections render in a
+  collapsed state, showing no section's detail content until expanded
 
 #### Scenario: Expanding one section does not affect others
 - **WHEN** a user expands one unit's ranged-weapons section

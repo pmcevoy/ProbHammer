@@ -18,10 +18,11 @@
             {
                 <details class="lp-section">
                     <summary>Statline</summary>
-                    <div class="statline-blocks">
-                        @foreach (var block in unit.Statlines)
+                    <div class="statline-grid">
+                        @for (var runIndex = 0; runIndex < unit.Statlines.Count; runIndex++)
                         {
-                            <div class="statline-block">
+                            var block = unit.Statlines[runIndex];
+                            <div class="statline-cell col-statline" style="grid-row: @(runIndex + 1); grid-column: 1;">
                                 @foreach (var entry in block.Entries)
                                 {
                                     <div class="statline-header">
@@ -54,6 +55,49 @@
                                     <div class="stat-tile"><span class="stat-label">OC</span><span class="stat-value">@(block.Statline.Oc)</span></div>
                                 </div>
                             </div>
+
+                            @if (block.ModelAbilities.Any())
+                            {
+                                <div class="statline-cell col-model-abilities" style="grid-row: @(runIndex + 1); grid-column: 2;">
+                                    @foreach (var ability in block.ModelAbilities)
+                                    {
+                                        <div class="ability-name-line">@ability.Name</div>
+                                    }
+                                </div>
+                            }
+
+                            @if (block.UnitAbilities.Any())
+                            {
+                                <div class="statline-cell col-unit-abilities" style="grid-row: @(runIndex + 1); grid-column: 3;">
+                                    @foreach (var ability in block.UnitAbilities)
+                                    {
+                                        <div class="ability-name-line">@ability.Name</div>
+                                    }
+                                </div>
+                            }
+                        }
+
+                        @foreach (var span in unit.ComponentAbilitySpans)
+                        {
+                            @if (span.ModelAbilities.Any())
+                            {
+                                <div class="statline-cell col-model-abilities spans-component" style="grid-row: @(span.FirstRunIndex + 1) / @(span.LastRunIndex + 2); grid-column: 2;">
+                                    @foreach (var ability in span.ModelAbilities)
+                                    {
+                                        <div class="ability-name-line">@ability.Name</div>
+                                    }
+                                </div>
+                            }
+
+                            @if (span.UnitAbilities.Any())
+                            {
+                                <div class="statline-cell col-unit-abilities spans-component" style="grid-row: @(span.FirstRunIndex + 1) / @(span.LastRunIndex + 2); grid-column: 3;">
+                                    @foreach (var ability in span.UnitAbilities)
+                                    {
+                                        <div class="ability-name-line">@ability.Name</div>
+                                    }
+                                </div>
+                            }
                         }
                     </div>
                 </details>
@@ -155,35 +199,6 @@
                             }
                         </tbody>
                     </table>
-                </details>
-            }
-
-            @if (unit.UnitScopedAbilities.Any() || unit.ModelScopedAbilityGroups.Any())
-            {
-                <details class="lp-section">
-                    <summary>Abilities</summary>
-                    <div class="abilities-section">
-                        @if (unit.UnitScopedAbilities.Any())
-                        {
-                            <div class="ability-block">
-                                @foreach (var ability in unit.UnitScopedAbilities)
-                                {
-                                    <p class="ability"><strong>@ability.Name:</strong> @ability.Text</p>
-                                }
-                            </div>
-                        }
-
-                        @foreach (var group in unit.ModelScopedAbilityGroups)
-                        {
-                            <div class="ability-block model-scoped">
-                                <div class="model-scoped-heading">@group.ModelLineLabel</div>
-                                @foreach (var ability in group.Abilities)
-                                {
-                                    <p class="ability"><strong>@ability.Name:</strong> @ability.Text</p>
-                                }
-                            </div>
-                        }
-                    </div>
                 </details>
             }
 

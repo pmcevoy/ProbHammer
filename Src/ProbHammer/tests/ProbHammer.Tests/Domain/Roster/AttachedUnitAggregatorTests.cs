@@ -263,30 +263,29 @@ public class AttachedUnitAggregatorTests
     }
 
     [Fact]
-    public void AbilityView_UnitScopedAbilityAppearsInTheCombinedList()
+    public void AbilityView_DatasheetSourcedAbilityIsReportedWithoutAStatlineName()
     {
         var attachedUnit = AggregateViewFixtures.ModelScopedAbilityAttachedUnit();
 
         var view = AttachedUnitAggregator.Build(attachedUnit);
 
-        view.UnitScopedAbilities.Should().ContainSingle(a => a.Name == "Righteous Zeal");
+        view.Abilities.Should().ContainSingle(e =>
+            e.Ability.Name == "Righteous Zeal" && e.ComponentName == "Crusader Squad" && e.StatlineName == null);
     }
 
     [Fact]
-    public void AbilityView_ModelScopedAbilityStaysWithItsModelLine()
+    public void AbilityView_ModelLineSourcedAbilityIsReportedWithItsBearersStatlineName()
     {
         var attachedUnit = AggregateViewFixtures.ModelScopedAbilityAttachedUnit();
-        var leaderLine = attachedUnit.Attached[0].ModelLines[0];
 
         var view = AttachedUnitAggregator.Build(attachedUnit);
 
-        view.ModelScopedAbilities.Should()
-            .ContainSingle(e => e.Ability.Name == "Iron Halo" && e.ModelLine == leaderLine);
-        view.UnitScopedAbilities.Should().NotContain(a => a.Name == "Iron Halo");
+        view.Abilities.Should().ContainSingle(e =>
+            e.Ability.Name == "Iron Halo" && e.ComponentName == "Chaplain" && e.StatlineName == "Chaplain");
     }
 
     [Fact]
-    public void AbilityView_ModelScopedAbilityDisappearsWhenItsBearerIsRemoved()
+    public void AbilityView_ModelLineSourcedAbilityDisappearsWhenItsBearerIsRemoved()
     {
         var attachedUnit = AggregateViewFixtures.ModelScopedAbilityAttachedUnit();
         var leaderLine = attachedUnit.Attached[0].ModelLines[0];
@@ -294,8 +293,51 @@ public class AttachedUnitAggregatorTests
 
         var view = AttachedUnitAggregator.Build(attachedUnit);
 
-        view.ModelScopedAbilities.Should().BeEmpty();
-        view.UnitScopedAbilities.Should().NotContain(a => a.Name == "Iron Halo");
+        view.Abilities.Should().NotContain(e => e.Ability.Name == "Iron Halo");
+        view.Abilities.Should().Contain(e => e.Ability.Name == "Righteous Zeal"); // Datasheet-sourced, unaffected
+    }
+
+    [Fact]
+    public void AbilityView_AbilitiesAreNotCombinedAcrossComponents()
+    {
+        var bodyguardDatasheet = new Datasheet(
+            "Crusader Squad", factionKeywords: [], keywords: [],
+            abilities: [new Ability { Name = "Shared Name", Text = "...", Scope = AbilityScope.Unit }],
+            statlines: [("Guardian", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
+        var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Guardian", [], count: 3)]);
+
+        var leaderDatasheet = new Datasheet(
+            "Ancient", factionKeywords: [], keywords: [],
+            abilities: [new Ability { Name = "Shared Name", Text = "...", Scope = AbilityScope.Unit }],
+            statlines: [("Ancient", new Statline(6, 5, 3, 4, 6, 1))], weaponProfiles: []);
+        var leader = new Unit(leaderDatasheet, [], [new ModelLine("Ancient", [], count: 1)]);
+
+        var attachedUnit = new AttachedUnit(bodyguard, [leader]);
+
+        var view = AttachedUnitAggregator.Build(attachedUnit);
+
+        view.Abilities.Where(e => e.Ability.Name == "Shared Name").Should().HaveCount(2);
+        view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Shared Name" && e.ComponentName == "Crusader Squad");
+        view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Shared Name" && e.ComponentName == "Ancient");
+    }
+
+    [Fact]
+    public void AbilityView_DatasheetSourcedAbilityPersistsWhileAnyModelLineRemains()
+    {
+        var datasheet = new Datasheet(
+            "Crusader Squad", factionKeywords: [], keywords: [],
+            abilities: [new Ability { Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit }],
+            statlines: [("Initiate", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
+        var unit = new Unit(datasheet, [],
+            [
+                new ModelLine("Initiate", [], count: 2),
+                new ModelLine("Initiate", [], count: 3)
+            ]);
+        unit.ModelLines[0].RemoveCasualties(2); // first line fully removed, second still has 3
+
+        var view = AttachedUnitAggregator.Build(unit);
+
+        view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Righteous Zeal");
     }
 
     [Fact]

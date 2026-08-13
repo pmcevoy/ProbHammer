@@ -29,13 +29,19 @@ public sealed record AggregateWeaponEntry(
     DiceExpression TotalAttacks,
     IReadOnlyList<WeaponContribution> Contributions);
 
-public sealed record ModelScopedAbilityEntry(ModelLine ModelLine, Ability Ability);
+/// <summary>
+/// <see cref="StatlineName"/> is null for a Datasheet-sourced ability (not tied to any one
+/// model-line - applies to the whole component) and set for a ModelLine-sourced ability
+/// (Enhancement-conferred - tied to that specific model-line). This applies regardless of
+/// <see cref="Ability.Scope"/>: Scope alone decides which UI column an entry belongs in; source
+/// alone decides which row(s) it binds to.
+/// </summary>
+public sealed record AggregateAbilityEntry(string ComponentName, string? StatlineName, Ability Ability);
 
 public sealed record AttachedUnitAggregateView(
     string Name,
     bool IsAttachedUnit,
     IReadOnlyList<AggregateStatlineEntry> Statlines,
     IReadOnlyList<AggregateWeaponEntry> Weapons,
-    IReadOnlyList<Ability> UnitScopedAbilities,
-    IReadOnlyList<ModelScopedAbilityEntry> ModelScopedAbilities,
+    IReadOnlyList<AggregateAbilityEntry> Abilities,
     IReadOnlySet<string> Keywords);

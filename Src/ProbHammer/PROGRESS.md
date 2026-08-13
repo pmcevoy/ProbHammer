@@ -2,13 +2,29 @@
 
 ## Active Work
 
-Nothing in progress. All four queued `/LivePlay` display/ordering OpenSpec changes are implemented
-and archived.
+Nothing in progress.
 
 ---
 
 ## Recently Completed
 
+- OpenSpec change `add-live-play-ability-columns` implemented and archived: the Statline section
+  on `/LivePlay` is now a 3-column CSS Grid — STATLINES | MODEL ABILITIES | UNIT ABILITIES —
+  filling the previously-unused horizontal space beside each statline block and putting each
+  ability directly beside the model(s) it depends on. `AttachedUnitAggregateView.Abilities`
+  replaces the old `UnitScopedAbilities`/`ModelScopedAbilities` fields with a single per-component,
+  optionally row-bound `AggregateAbilityEntry(ComponentName, StatlineName?, Ability)` list: `null`
+  `StatlineName` means Datasheet-sourced (renders beside the first statline row of its component,
+  visually spanning every row belonging to that component via CSS Grid's `grid-row` span — not an
+  HTML `<table>`/`rowspan`, since the page's existing `<div>`-based cards and rich nested statline
+  content don't fit a literal table); a set `StatlineName` means ModelLine-sourced, Enhancement-
+  conferred (renders beside that one row only). Column placement is decided purely by
+  `Ability.Scope`; row placement purely by ability source — this also surfaces a previously-hidden
+  gap, since Datasheet-level `Scope: Model` abilities (`LEADER`, `SUPPORT`) were never rendered
+  anywhere before this change. Ability rendering is name-only for now; full-text-on-demand is
+  explicitly deferred. The old standalone "Abilities" collapsible section is removed. Visually
+  verified via `firefox-devtools-mcp` against the real example army, including the rowspan effect
+  spanning a merged statline run through a separate one. 246 tests, all passing.
 - OpenSpec change `merge-adjacent-live-play-statlines` implemented and archived: on `/LivePlay`,
   adjacent statline rows within the same component that share an identical Statline value
   (M/T/Sv/W/Ld/Oc, and InSv when present) now render under one shared stat-tile, with each

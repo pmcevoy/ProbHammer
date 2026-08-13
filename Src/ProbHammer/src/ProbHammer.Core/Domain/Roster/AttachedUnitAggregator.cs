@@ -21,22 +21,26 @@ public static class AttachedUnitAggregator
             IsAttachedUnit: combatUnit is AttachedUnit,
             Statlines: BuildStatlines(combatUnit),
             Weapons: BuildWeapons(presentLines),
-            UnitScopedAbilities: BuildUnitScopedAbilities(combatUnit, presentLines),
-            ModelScopedAbilities: BuildModelScopedAbilities(presentLines),
+            Abilities: BuildAbilities(combatUnit),
             Keywords: KeywordResolution.EffectiveKeywords(combatUnit));
     }
 
-    // Walks components in display order (an AttachedUnit's Attached units first, in their list
-    // order, then the Bodyguard; a plain Unit is just itself), and within each component, its
-    // Datasheet's declared Statlines in order. Matching each declared name against only that
-    // component's own ModelLines (never another component's) is what makes per-component merge
-    // scoping fall out for free - two components can never combine into one entry, and there's no
-    // separate sort step to disagree with the grouping.
-    private static IReadOnlyList<AggregateStatlineEntry> BuildStatlines(ICombatUnit combatUnit)
-    {
-        IReadOnlyList<Unit> components = combatUnit is AttachedUnit attachedUnit
+    // Component display order: an AttachedUnit's Attached units first, in their list order, then
+    // the Bodyguard; a plain Unit is just itself. Shared by BuildStatlines and BuildAbilities so
+    // both walk components in the same order.
+    private static IReadOnlyList<Unit> ComponentDisplayOrder(ICombatUnit combatUnit) =>
+        combatUnit is AttachedUnit attachedUnit
             ? [.. attachedUnit.Attached, attachedUnit.Bodyguard]
             : combatUnit.Components;
+
+    // Walks components in display order, and within each component, its Datasheet's declared
+    // Statlines in order. Matching each declared name against only that component's own
+    // ModelLines (never another component's) is what makes per-component merge scoping fall out
+    // for free - two components can never combine into one entry, and there's no separate sort
+    // step to disagree with the grouping.
+    private static IReadOnlyList<AggregateStatlineEntry> BuildStatlines(ICombatUnit combatUnit)
+    {
+        var components = ComponentDisplayOrder(combatUnit);
 
         var entries = new List<AggregateStatlineEntry>();
         foreach (var component in components)
@@ -111,25 +115,30 @@ public static class AttachedUnitAggregator
             .ToList();
     }
 
-    private static IReadOnlyList<Ability> BuildUnitScopedAbilities(
-        ICombatUnit combatUnit, List<(Unit Unit, ModelLine ModelLine)> presentLines)
+    // Walks components in display order; for each present component, reports its Datasheet's own
+    // Abilities (component-wide, StatlineName: null) and each of its present ModelLines' own
+    // Abilities (StatlineName: that line's own name) - regardless of Scope, and with no
+    // cross-component combination or deduplication. The explicit IsPresent guard is needed only
+    // for Datasheet-sourced entries: unlike BuildStatlines, where a fully-dead component naturally
+    // produces zero entries through its per-statline RemainingCount check, a Datasheet ability has
+    // no statline-level gate of its own to fall through.
+    private static IReadOnlyList<AggregateAbilityEntry> BuildAbilities(ICombatUnit combatUnit)
     {
-        var presentUnits = combatUnit.Components.Where(u => u.IsPresent);
+        var entries = new List<AggregateAbilityEntry>();
 
-        var fromDatasheets = presentUnits.SelectMany(u => u.Datasheet.Abilities);
-        var fromModelLines = presentLines.SelectMany(x => x.ModelLine.Abilities);
+        foreach (var component in ComponentDisplayOrder(combatUnit))
+        {
+            if (!component.IsPresent)
+                continue;
 
-        return fromDatasheets.Concat(fromModelLines)
-            .Where(a => a.Scope == AbilityScope.Unit)
-            .Distinct()
-            .ToList();
+            foreach (var ability in component.Datasheet.Abilities)
+                entries.Add(new AggregateAbilityEntry(component.Datasheet.Name, StatlineName: null, ability));
+
+            foreach (var modelLine in component.ModelLines.Where(ml => ml.RemainingCount > 0))
+            foreach (var ability in modelLine.Abilities)
+                entries.Add(new AggregateAbilityEntry(component.Datasheet.Name, modelLine.StatlineName, ability));
+        }
+
+        return entries;
     }
-
-    private static IReadOnlyList<ModelScopedAbilityEntry> BuildModelScopedAbilities(
-        List<(Unit Unit, ModelLine ModelLine)> presentLines) =>
-        presentLines
-            .SelectMany(x => x.ModelLine.Abilities
-                .Where(a => a.Scope == AbilityScope.Model)
-                .Select(a => new ModelScopedAbilityEntry(x.ModelLine, a)))
-            .ToList();
 }

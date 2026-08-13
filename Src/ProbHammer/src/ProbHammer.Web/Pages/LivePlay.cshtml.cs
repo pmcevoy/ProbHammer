@@ -28,13 +28,14 @@ public class LivePlayModel : PageModel
             .OrderByDescending(w => w.TotalAttacks.ExpectedValue())
             .ToList();
 
+        var statlineBlocks = GroupStatlines(view.Statlines, view.Abilities);
+
         return new(
             Name: view.Name,
-            Statlines: GroupStatlines(view.Statlines),
+            Statlines: statlineBlocks,
             RangedWeapons: orderedWeapons.Where(w => w.Profile.Type == WeaponType.Ranged).ToList(),
             MeleeWeapons: orderedWeapons.Where(w => w.Profile.Type == WeaponType.Melee).ToList(),
-            UnitScopedAbilities: view.UnitScopedAbilities,
-            ModelScopedAbilityGroups: GroupModelScopedAbilities(view.ModelScopedAbilities),
+            ComponentAbilitySpans: BuildComponentAbilitySpans(statlineBlocks, view.Abilities),
             Keywords: view.Keywords.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList());
     }
 
@@ -42,8 +43,10 @@ public class LivePlayModel : PageModel
     // running group's first entry (equivalently, from the immediately preceding entry, since a
     // group's entries always already match each other) - never a global by-value regroup, only
     // adjacency in the already-established component/declared-order sequence from BuildStatlines.
+    // Row-bound (StatlineName != null) abilities attach to whichever run contains a matching
+    // (ComponentName, StatlineName) entry, split into ModelAbilities/UnitAbilities by Scope.
     private static IReadOnlyList<StatlineBlockViewModel> GroupStatlines(
-        IReadOnlyList<AggregateStatlineEntry> statlines)
+        IReadOnlyList<AggregateStatlineEntry> statlines, IReadOnlyList<AggregateAbilityEntry> abilities)
     {
         var groups = new List<List<AggregateStatlineEntry>>();
 
@@ -62,34 +65,69 @@ public class LivePlayModel : PageModel
             }
         }
 
-        return groups.Select(g => new StatlineBlockViewModel(g)).ToList();
+        return groups.Select(g => new StatlineBlockViewModel(
+                Entries: g,
+                ModelAbilities: RowBoundAbilities(g, abilities, AbilityScope.Model),
+                UnitAbilities: RowBoundAbilities(g, abilities, AbilityScope.Unit)))
+            .ToList();
     }
 
-    private static IReadOnlyList<ModelAbilityGroupViewModel> GroupModelScopedAbilities(
-        IReadOnlyList<ModelScopedAbilityEntry> entries) =>
-        entries
-            .GroupBy(entry => entry.ModelLine)
-            .Select(group => new ModelAbilityGroupViewModel(
-                ModelLineLabel: group.Key.StatlineName,
-                Abilities: group.Select(entry => entry.Ability).ToList()))
+    private static IReadOnlyList<Ability> RowBoundAbilities(
+        List<AggregateStatlineEntry> runEntries, IReadOnlyList<AggregateAbilityEntry> abilities, AbilityScope scope) =>
+        abilities
+            .Where(a => a.Ability.Scope == scope && a.StatlineName != null)
+            .Where(a => runEntries.Any(e => e.ComponentName == a.ComponentName && e.StatlineName == a.StatlineName))
+            .Select(a => a.Ability)
+            .ToList();
+
+    // Component-wide (Datasheet-sourced, StatlineName == null) abilities span every run belonging
+    // to their component - from the index of that component's first rendered run through its last.
+    private static IReadOnlyList<ComponentAbilitySpanViewModel> BuildComponentAbilitySpans(
+        IReadOnlyList<StatlineBlockViewModel> statlineBlocks, IReadOnlyList<AggregateAbilityEntry> abilities) =>
+        abilities
+            .Where(a => a.StatlineName == null)
+            .GroupBy(a => a.ComponentName)
+            .Select(group =>
+            {
+                var runIndices = statlineBlocks
+                    .Select((block, index) => (block, index))
+                    .Where(x => x.block.Entries[0].ComponentName == group.Key)
+                    .Select(x => x.index)
+                    .ToList();
+
+                return new ComponentAbilitySpanViewModel(
+                    FirstRunIndex: runIndices.Min(),
+                    LastRunIndex: runIndices.Max(),
+                    ModelAbilities: group.Where(a => a.Ability.Scope == AbilityScope.Model).Select(a => a.Ability).ToList(),
+                    UnitAbilities: group.Where(a => a.Ability.Scope == AbilityScope.Unit).Select(a => a.Ability).ToList());
+            })
             .ToList();
 }
 
-public sealed record ModelAbilityGroupViewModel(string ModelLineLabel, IReadOnlyList<Ability> Abilities);
-
 /// <summary>A contiguous, same-component, value-identical run of statline entries sharing one
 /// rendered stat-tile. <see cref="Entries"/> is never empty - every group is seeded with at least
-/// one entry at creation.</summary>
-public sealed record StatlineBlockViewModel(IReadOnlyList<AggregateStatlineEntry> Entries)
+/// one entry at creation. <see cref="ModelAbilities"/>/<see cref="UnitAbilities"/> are the
+/// row-bound (ModelLine-sourced) abilities matching this specific run.</summary>
+public sealed record StatlineBlockViewModel(
+    IReadOnlyList<AggregateStatlineEntry> Entries,
+    IReadOnlyList<Ability> ModelAbilities,
+    IReadOnlyList<Ability> UnitAbilities)
 {
     public Statline Statline => Entries[0].Statline;
 }
+
+/// <summary>A Datasheet-sourced (component-wide) ability group, rendered once beside the first of
+/// its component's rendered runs and visually spanning through the last.</summary>
+public sealed record ComponentAbilitySpanViewModel(
+    int FirstRunIndex,
+    int LastRunIndex,
+    IReadOnlyList<Ability> ModelAbilities,
+    IReadOnlyList<Ability> UnitAbilities);
 
 public sealed record UnitBlockViewModel(
     string Name,
     IReadOnlyList<StatlineBlockViewModel> Statlines,
     IReadOnlyList<AggregateWeaponEntry> RangedWeapons,
     IReadOnlyList<AggregateWeaponEntry> MeleeWeapons,
-    IReadOnlyList<Ability> UnitScopedAbilities,
-    IReadOnlyList<ModelAbilityGroupViewModel> ModelScopedAbilityGroups,
+    IReadOnlyList<ComponentAbilitySpanViewModel> ComponentAbilitySpans,
     IReadOnlyList<string> Keywords);
