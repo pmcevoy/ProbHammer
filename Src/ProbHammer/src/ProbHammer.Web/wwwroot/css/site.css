@@ -472,47 +472,178 @@ button[type="submit"]:hover { opacity: 0.85; }
 
 .sim-error { color: #e74c3c; padding: 0.5rem; font-size: 0.85rem; }
 
-/* ── Live Play page ── */
+/* ── Live Play page ──
+   GW-datasheet-inspired light theme, scoped entirely to this page: the seven design tokens are
+   redeclared locally so every rule below (and any shared selector like .weapon-table) resolves
+   against these values instead of the app-wide dark tokens on :root. See .claude/design-tokens.md
+   for the documented exception this page is. */
 
-.live-play-page { padding: 1rem; max-width: 900px; margin: 0 auto; }
+.live-play-page {
+    --bg: #eeece6;
+    --bg2: #fbfaf7;
+    --bg3: #24413f;
+    --accent: #24413f;
+    --text: #262622;
+    --text-dim: #6f6c62;
+    --amber: #a86a1d;
+    --border: #d9d5c9;
+
+    padding: 1rem;
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, sans-serif;
+}
+
+.live-play-page h1 { color: var(--text); }
 
 .unit-block {
     margin-bottom: 1.25rem;
-    padding: 0.75rem;
     background: var(--bg2);
     border: 1px solid var(--border);
     border-radius: 4px;
+    overflow: hidden;
 }
 
-.unit-block h2 { margin-bottom: 0.5rem; }
+.unit-block .unit-name {
+    margin: 0;
+    padding: 0.6rem 0.85rem;
+    background: var(--bg3);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
 
-.statline-table {
+.unit-block > .lp-section,
+.unit-block > .keywords {
+    margin: 0.6rem 0.85rem;
+}
+.unit-block > .lp-section:last-of-type { margin-bottom: 0.85rem; }
+
+/* ── Section disclosure ── */
+
+.lp-section summary {
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    padding: 0.35rem 0.6rem;
+    background: var(--bg3);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    border-radius: 3px;
+}
+.lp-section summary::-webkit-details-marker { display: none; }
+.lp-section summary::before { content: '▶'; display: inline-block; font-size: 0.6rem; margin-right: 0.4rem; transition: transform 0.15s; }
+.lp-section[open] summary::before { transform: rotate(90deg); }
+.lp-section[open] summary { border-radius: 3px 3px 0 0; }
+
+.lp-section > *:not(summary) { padding-top: 0.5rem; }
+
+/* ── Statline blocks ── */
+
+.statline-blocks { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.statline-block {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.4rem 0.6rem;
+}
+
+.statline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.35rem;
+}
+
+.statline-name { font-weight: 700; }
+.statline-count { font-size: 0.8rem; color: var(--text-dim); }
+
+.statline-tiles { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.stat-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 2.6rem;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: var(--bg);
+}
+
+.stat-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; }
+.stat-value { font-size: 0.95rem; font-weight: 700; }
+
+.loadout-breakdown {
+    list-style: none;
+    margin-top: 0.4rem;
+    padding-top: 0.35rem;
+    border-top: 1px dashed var(--border);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+.loadout-breakdown li { padding: 0.1rem 0; }
+
+/* ── Weapon table (scoped light restyle) ── */
+
+.live-play-page .weapon-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.78rem;
     margin-bottom: 0.5rem;
 }
 
-.statline-table th {
+.live-play-page .weapon-table th {
     text-align: left;
     color: var(--text-dim);
-    font-weight: 400;
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
     padding: 0.15rem 0.4rem;
     border-bottom: 1px solid var(--border);
     white-space: nowrap;
 }
 
-.statline-table td {
-    padding: 0.2rem 0.4rem;
-    border-bottom: 1px solid #1e1e3e;
+.live-play-page .weapon-table td {
+    padding: 0.3rem 0.4rem;
+    border-bottom: 1px solid var(--border);
     white-space: nowrap;
 }
 
-.statline-table td.statline-name { font-weight: 500; white-space: normal; }
+.live-play-page .weapon-table tbody tr:nth-child(even) td { background: var(--bg); }
 
-.live-play-page .weapon-table { margin-bottom: 0.5rem; }
-.live-play-page .abilities-section { margin-top: 0.25rem; }
-.live-play-page .keywords { margin-top: 0.5rem; margin-bottom: 0; }
+.live-play-page .weapon-table td.weapon-name { font-weight: 600; white-space: normal; }
+
+.weapon-tags {
+    display: block;
+    color: var(--text-dim);
+    font-size: 0.68rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+/* ── Abilities ── */
+
+.live-play-page .abilities-section { display: flex; flex-direction: column; gap: 0.5rem; }
+.live-play-page .ability-block.model-scoped { border-top: 1px dashed var(--border); padding-top: 0.4rem; }
+.live-play-page .model-scoped-heading { font-weight: 700; color: var(--amber); margin-bottom: 0.2rem; }
+.live-play-page .ability { margin: 0.2rem 0; line-height: 1.4; font-size: 0.82rem; }
+.live-play-page .ability strong { color: var(--text); }
+
+.live-play-page .keywords {
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+}
 
 /* ── Responsive ── */
 

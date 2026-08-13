@@ -212,6 +212,26 @@ public class AttachedUnitAggregatorTests
     }
 
     [Fact]
+    public void NameView_ForAPlainUnit_IsWiredToTheUnitsName()
+    {
+        var unit = UnitFixtures.CrusaderSquadMixedLoadout();
+
+        var view = AttachedUnitAggregator.Build(unit);
+
+        view.Name.Should().Be(unit.Name).And.Be("Crusader Squad");
+    }
+
+    [Fact]
+    public void NameView_ForAnAttachedUnit_IsWiredToTheComposedName()
+    {
+        var attachedUnit = AttachedUnitFixtures.DefaultAttachedUnit();
+
+        var view = AttachedUnitAggregator.Build(attachedUnit);
+
+        view.Name.Should().Be(attachedUnit.Name).And.Be("Crusader Squad with Chaplain and Servitor");
+    }
+
+    [Fact]
     public void KeywordView_IsWiredToTheLiveKeywordUnion()
     {
         var attachedUnit = AttachedUnitFixtures.DefaultAttachedUnit();

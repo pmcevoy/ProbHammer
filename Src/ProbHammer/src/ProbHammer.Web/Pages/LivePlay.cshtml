@@ -12,114 +12,159 @@
     {
         var unit = Model.Units[i];
         <section class="unit-block">
-            <h2>Unit @(i + 1)</h2>
+            <h2 class="unit-name">@unit.Name</h2>
 
             @if (unit.Statlines.Any())
             {
-                <table class="statline-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>M</th>
-                            <th>T</th>
-                            <th>Sv</th>
-                            <th>InSv</th>
-                            <th>W</th>
-                            <th>Ld</th>
-                            <th>OC</th>
-                            <th>Models</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var row in unit.Statlines)
+                <details class="lp-section">
+                    <summary>Statline</summary>
+                    <div class="statline-blocks">
+                        @foreach (var entry in unit.Statlines)
                         {
+                            <div class="statline-block">
+                                <div class="statline-header">
+                                    <span class="statline-name">@entry.StatlineName</span>
+                                    <span class="statline-count">@(entry.RemainingCount) / @(entry.InitialCount)</span>
+                                </div>
+                                <div class="statline-tiles">
+                                    <div class="stat-tile"><span class="stat-label">M</span><span class="stat-value">@(entry.Statline.M)"</span></div>
+                                    <div class="stat-tile"><span class="stat-label">T</span><span class="stat-value">@(entry.Statline.T)</span></div>
+                                    <div class="stat-tile"><span class="stat-label">Sv</span><span class="stat-value">@(entry.Statline.Sv)+</span></div>
+                                    @if (entry.Statline.InSv > 0)
+                                    {
+                                        <div class="stat-tile"><span class="stat-label">InvSv</span><span class="stat-value">@(entry.Statline.InSv)++</span></div>
+                                    }
+                                    <div class="stat-tile"><span class="stat-label">W</span><span class="stat-value">@(entry.Statline.W)</span></div>
+                                    <div class="stat-tile"><span class="stat-label">Ld</span><span class="stat-value">@(entry.Statline.Ld)+</span></div>
+                                    <div class="stat-tile"><span class="stat-label">OC</span><span class="stat-value">@(entry.Statline.Oc)</span></div>
+                                </div>
+                                @if (entry.Loadouts.Count > 1)
+                                {
+                                    <ul class="loadout-breakdown">
+                                        @foreach (var loadout in entry.Loadouts)
+                                        {
+                                            <li>@loadout.WeaponsLabel — @(loadout.RemainingCount) / @(loadout.InitialCount)</li>
+                                        }
+                                    </ul>
+                                }
+                            </div>
+                        }
+                    </div>
+                </details>
+            }
+
+            @if (unit.RangedWeapons.Any())
+            {
+                <details class="lp-section">
+                    <summary>Ranged Weapons</summary>
+                    <table class="weapon-table">
+                        <thead>
                             <tr>
-                                <td class="statline-name">@row.StatlineName</td>
-                                <td>@(row.Statline.M)"</td>
-                                <td>@row.Statline.T</td>
-                                <td>@(row.Statline.Sv)+</td>
-                                <td>@(row.Statline.InSv > 0 ? $"{row.Statline.InSv}++" : "")</td>
-                                <td>@row.Statline.W</td>
-                                <td>@row.Statline.Ld</td>
-                                <td>@row.Statline.Oc</td>
-                                <td>@(row.RemainingCount) / @(row.InitialCount)</td>
+                                <th>Weapon</th>
+                                <th>Rng</th>
+                                <th>A</th>
+                                <th>BS</th>
+                                <th>S</th>
+                                <th>AP</th>
+                                <th>D</th>
                             </tr>
-                            @if (row.Loadouts.Count > 1)
+                        </thead>
+                        <tbody>
+                            @foreach (var entry in unit.RangedWeapons)
                             {
-                                <tr class="loadout-row">
-                                    <td colspan="9">
-                                        <ul class="loadout-breakdown">
-                                            @foreach (var loadout in row.Loadouts)
-                                            {
-                                                <li>@loadout.WeaponsLabel — @(loadout.RemainingCount) / @(loadout.InitialCount)</li>
-                                            }
-                                        </ul>
+                                var weapon = entry.Profile;
+                                var tags = WeaponAbilityTags(weapon);
+                                <tr>
+                                    <td class="weapon-name">
+                                        @weapon.Name
+                                        @if (tags.Count > 0)
+                                        {
+                                            <span class="weapon-tags">[@string.Join(", ", tags)]</span>
+                                        }
                                     </td>
+                                    <td>@(weapon.Range)"</td>
+                                    <td>@entry.TotalAttacks</td>
+                                    <td>@(weapon.Skill)+</td>
+                                    <td>@weapon.S</td>
+                                    <td>@weapon.Ap</td>
+                                    <td>@weapon.D</td>
                                 </tr>
                             }
-                        }
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </details>
             }
 
-            @if (unit.Weapons.Any())
+            @if (unit.MeleeWeapons.Any())
             {
-                <table class="weapon-table">
-                    <thead>
-                        <tr>
-                            <th>Weapon</th>
-                            <th>Type</th>
-                            <th>Rng</th>
-                            <th>A</th>
-                            <th>Skill</th>
-                            <th>S</th>
-                            <th>AP</th>
-                            <th>D</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var entry in unit.Weapons)
-                        {
-                            var weapon = entry.Profile;
-                            var rangeText = weapon.Type == WeaponType.Ranged ? $"{weapon.Range}\"" : "Melee";
+                <details class="lp-section">
+                    <summary>Melee Weapons</summary>
+                    <table class="weapon-table">
+                        <thead>
                             <tr>
-                                <td class="weapon-name">@weapon.Name</td>
-                                <td>@weapon.Type</td>
-                                <td>@rangeText</td>
-                                <td>@entry.TotalAttacks</td>
-                                <td>@(weapon.Skill)+</td>
-                                <td>@weapon.S</td>
-                                <td>@weapon.Ap</td>
-                                <td>@weapon.D</td>
+                                <th>Weapon</th>
+                                <th>Rng</th>
+                                <th>A</th>
+                                <th>WS</th>
+                                <th>S</th>
+                                <th>AP</th>
+                                <th>D</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (var entry in unit.MeleeWeapons)
+                            {
+                                var weapon = entry.Profile;
+                                var tags = WeaponAbilityTags(weapon);
+                                <tr>
+                                    <td class="weapon-name">
+                                        @weapon.Name
+                                        @if (tags.Count > 0)
+                                        {
+                                            <span class="weapon-tags">[@string.Join(", ", tags)]</span>
+                                        }
+                                    </td>
+                                    <td>Melee</td>
+                                    <td>@entry.TotalAttacks</td>
+                                    <td>@(weapon.Skill)+</td>
+                                    <td>@weapon.S</td>
+                                    <td>@weapon.Ap</td>
+                                    <td>@weapon.D</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </details>
             }
 
-            <div class="abilities-section">
-                @if (unit.UnitScopedAbilities.Any())
-                {
-                    <details class="ability-block" open>
-                        <summary>Unit Abilities</summary>
-                        @foreach (var ability in unit.UnitScopedAbilities)
+            @if (unit.UnitScopedAbilities.Any() || unit.ModelScopedAbilityGroups.Any())
+            {
+                <details class="lp-section">
+                    <summary>Abilities</summary>
+                    <div class="abilities-section">
+                        @if (unit.UnitScopedAbilities.Any())
                         {
-                            <p class="ability"><strong>@ability.Name:</strong> @ability.Text</p>
+                            <div class="ability-block">
+                                @foreach (var ability in unit.UnitScopedAbilities)
+                                {
+                                    <p class="ability"><strong>@ability.Name:</strong> @ability.Text</p>
+                                }
+                            </div>
                         }
-                    </details>
-                }
 
-                @foreach (var group in unit.ModelScopedAbilityGroups)
-                {
-                    <details class="ability-block">
-                        <summary>@group.ModelLineLabel</summary>
-                        @foreach (var ability in group.Abilities)
+                        @foreach (var group in unit.ModelScopedAbilityGroups)
                         {
-                            <p class="ability"><strong>@ability.Name:</strong> @ability.Text</p>
+                            <div class="ability-block model-scoped">
+                                <div class="model-scoped-heading">@group.ModelLineLabel</div>
+                                @foreach (var ability in group.Abilities)
+                                {
+                                    <p class="ability"><strong>@ability.Name:</strong> @ability.Text</p>
+                                }
+                            </div>
                         }
-                    </details>
-                }
-            </div>
+                    </div>
+                </details>
+            }
 
             @if (unit.Keywords.Any())
             {
@@ -128,3 +173,25 @@
         </section>
     }
 </main>
+
+@functions {
+    static List<string> WeaponAbilityTags(WeaponProfile w)
+    {
+        var tags = new List<string>();
+        if (w.Torrent) tags.Add("TORRENT");
+        if (w.Blast) tags.Add("BLAST");
+        if (w.Melta > 0) tags.Add($"MELTA {w.Melta}");
+        if (w.RapidFire > 0) tags.Add($"RAPID FIRE {w.RapidFire}");
+        if (w.SustainedHits > 0) tags.Add($"SUSTAINED HITS {w.SustainedHits}");
+        if (w.LethalHits) tags.Add("LETHAL HITS");
+        if (w.DevastatingWounds) tags.Add("DEVASTATING WOUNDS");
+        if (w.TwinLinked) tags.Add("TWIN-LINKED");
+        if (w.IndirectFire) tags.Add("INDIRECT FIRE");
+        if (w.Pistol) tags.Add("PISTOL");
+        if (w.IgnoresCover) tags.Add("IGNORES COVER");
+        if (w.Assault) tags.Add("ASSAULT");
+        foreach (var (keyword, threshold) in w.Anti)
+            tags.Add($"ANTI-{keyword.ToUpperInvariant()} {threshold}+");
+        return tags;
+    }
+}

@@ -8,6 +8,24 @@ Nothing in progress.
 
 ## Recently Completed
 
+- OpenSpec change `live-play-gw-layout` implemented (all 28 tasks): `/LivePlay` rewritten around a
+  GW-datasheet-inspired light theme, scoped entirely to that page via locally-redeclared CSS
+  tokens (`.claude/design-tokens.md` now documents this as an explicit exception). `ICombatUnit`
+  gained a computed `Name` (`Unit.Name` from its Datasheet; `AttachedUnit.Name` a humanized join of
+  Bodyguard + Attached Datasheet names, Oxford-comma at 3+), threaded through
+  `AttachedUnitAggregateView.Name` and rendered as each unit block's header, replacing the old
+  "Unit N" ordinal. Statlines render as one header+stat-tile block per `AggregateStatlineEntry`
+  (GW mobile-app pattern, never merged by matching value — reinforces the existing no-merge rule
+  from `render-aggregate-view`). Weapons split into Ranged/Melee sections ordered by descending
+  `DiceExpression.ExpectedValue()` (new helper, added because `DiceExpression` has no natural total
+  order for sorting); weapon ability flags render as inline bracketed tags instead of a separate
+  column. Each unit block's statline/ranged/melee/abilities sections are independent `<details>`,
+  collapsed by default. Still read-only, still rebuilt fresh from `Examples.View.MyArmy()` per
+  request — no session/persistence added. Explicitly deferred to a future change: phase-level
+  section toggling, Core/Faction/Psychic ability source tagging, per-`ModelLine` keywords (needed
+  for a leader's personal keyword to leave the unit when that model is removed), a multi-profile-
+  weapon disclaimer, and live casualty mutation itself. Docs: `.claude/domain-model-11e.md` and
+  `.claude/design-tokens.md` updated.
 - OpenSpec change `promote-dice-expression-to-domain` implemented (all 19 tasks): `DiceExpression`
   moved from `ProbHammer.Core.Simulation` into `ProbHammer.Core.Domain.Catalogue` — it's a
   game-rules value type (`WeaponProfile.A`/`D` already depended on it), not a simulation-owned

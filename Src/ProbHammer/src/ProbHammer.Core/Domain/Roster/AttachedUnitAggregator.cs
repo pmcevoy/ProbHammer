@@ -18,6 +18,7 @@ public static class AttachedUnitAggregator
         var presentLines = allLines.Where(x => x.ModelLine.RemainingCount > 0).ToList();
 
         return new AttachedUnitAggregateView(
+            Name: combatUnit.Name,
             Statlines: BuildStatlines(allLines),
             Weapons: BuildWeapons(presentLines),
             UnitScopedAbilities: BuildUnitScopedAbilities(combatUnit, presentLines),

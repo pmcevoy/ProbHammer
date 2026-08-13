@@ -74,4 +74,9 @@ public record DiceExpression
         Count == 1 ? $"D{Sides}+{Modifier}" :
         Modifier == 0 ? $"{Count}D{Sides}" :
         $"{Count}D{Sides}+{Modifier}";
+
+    /// <summary>Expected value, used only to order weapons by aggregate attacks - DiceExpression
+    /// has no natural total order (e.g. "3D6" vs. "12").</summary>
+    public double ExpectedValue() =>
+        Count == 0 ? Modifier : Count * (Sides + 1) / 2.0 + Modifier;
 }

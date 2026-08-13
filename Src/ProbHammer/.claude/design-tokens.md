@@ -69,3 +69,22 @@ Single breakpoint at 700px:
 - **Below 700px:** everything stacks into a single column; catalogue bar wraps
 
 No other breakpoints. The combat panel sticks to the bottom of the viewport at all sizes.
+
+---
+
+## Live Play Page Exception
+
+`/LivePlay` (`live-play-page`) is a deliberate, scoped exception to every rule above. It follows a
+GW-datasheet-inspired **light** theme instead of the dark tactical theme, and does **not** use
+monospace for stat/weapon numbers — both intentional, matching the GW references this page's
+layout was designed against (see `openspec/changes/live-play-gw-layout/design.md`, Decision 6).
+
+Mechanism: the same seven token names (`--bg`, `--bg2`, `--bg3`, `--accent`, `--text`,
+`--text-dim`, `--amber`, `--border`) are redeclared locally on the `.live-play-page` selector in
+`site.css`, so every rule scoped under it (including the shared `.weapon-table` selector) resolves
+against the light palette instead of the `:root` dark one. No other page is affected, and reverting
+`/LivePlay` to the app-wide theme is deleting that one block.
+
+If a future change extends this pattern to another page, promote it out of this "exception" note
+into a proper second theme in the Colour Palette / Typography sections above instead of copying
+this note a second time.

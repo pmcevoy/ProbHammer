@@ -14,13 +14,21 @@ public class LivePlayModel : PageModel
         Units = View.MyArmy().Select(BuildUnitBlock).ToList();
     }
 
-    private static UnitBlockViewModel BuildUnitBlock(AttachedUnitAggregateView view) =>
-        new(
+    private static UnitBlockViewModel BuildUnitBlock(AttachedUnitAggregateView view)
+    {
+        var orderedWeapons = view.Weapons
+            .OrderByDescending(w => w.TotalAttacks.ExpectedValue())
+            .ToList();
+
+        return new(
+            Name: view.Name,
             Statlines: view.Statlines,
-            Weapons: view.Weapons,
+            RangedWeapons: orderedWeapons.Where(w => w.Profile.Type == WeaponType.Ranged).ToList(),
+            MeleeWeapons: orderedWeapons.Where(w => w.Profile.Type == WeaponType.Melee).ToList(),
             UnitScopedAbilities: view.UnitScopedAbilities,
             ModelScopedAbilityGroups: GroupModelScopedAbilities(view.ModelScopedAbilities),
             Keywords: view.Keywords.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList());
+    }
 
     private static IReadOnlyList<ModelAbilityGroupViewModel> GroupModelScopedAbilities(
         IReadOnlyList<ModelScopedAbilityEntry> entries) =>
@@ -35,8 +43,10 @@ public class LivePlayModel : PageModel
 public sealed record ModelAbilityGroupViewModel(string ModelLineLabel, IReadOnlyList<Ability> Abilities);
 
 public sealed record UnitBlockViewModel(
+    string Name,
     IReadOnlyList<AggregateStatlineEntry> Statlines,
-    IReadOnlyList<AggregateWeaponEntry> Weapons,
+    IReadOnlyList<AggregateWeaponEntry> RangedWeapons,
+    IReadOnlyList<AggregateWeaponEntry> MeleeWeapons,
     IReadOnlyList<Ability> UnitScopedAbilities,
     IReadOnlyList<ModelAbilityGroupViewModel> ModelScopedAbilityGroups,
     IReadOnlyList<string> Keywords);

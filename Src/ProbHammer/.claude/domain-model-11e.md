@@ -41,6 +41,9 @@ DiceExpression(Count, Sides, Modifier)   // value object — a fixed integer (Co
   D3, D6                                 // static presets for the common single-die case
   operator +(DiceExpression, int)        // e.g. DiceExpression.D6 + 2 → "D6+2"; non-mutating
   Scale(n), Add(other)                   // multi-model attack/damage aggregation
+  ExpectedValue() -> double               // Count==0 ? Modifier : Count*(Sides+1)/2.0 + Modifier;
+                                           // used only to order weapons by aggregate attacks in
+                                           // /LivePlay - DiceExpression has no natural total order
 
 WeaponProfile(Name, Type, Range, A, S, Ap, D)   // abstract value object; A and D are
                                                  // DiceExpression (Attacks/Damage can be fixed
@@ -136,6 +139,7 @@ AttachedUnit : ICombatUnit
 ICombatUnit
   Components: IReadOnlyList<Unit>   // Composite-pattern shape; lets aggregate-view logic
                                      // treat a plain Unit and an AttachedUnit uniformly
+  Name: string                      // computed, not stored - see Pure functions below
 ```
 
 **Pure functions (not stored state):**
@@ -146,10 +150,22 @@ ICombatUnit
 - `ToughnessResolution.ResolveDefendingToughness(AttachedUnit)` — highest Toughness among the
   Bodyguard's present models if any remain, else highest among present Leader/Support models.
   Domain fact only; not wired to `Simulation/*` in this change.
+- `ICombatUnit.Name` — computed on read, not stored, same rationale as the two rules above: neither
+  BattleScribe/NewRecruit exports nor GW's own app support free-form per-instance unit naming, so
+  there is no external source a stored value could ever be populated from. `Unit.Name` is its
+  Datasheet's name. `AttachedUnit.Name` is a humanized join of the Bodyguard's name with the
+  Attached units' names: none attached → Bodyguard name alone; one → `"{Bodyguard} with {A}"`; two
+  → `"{Bodyguard} with {A} and {B}"` (no comma); three or more → an Oxford-comma join
+  (`"{Bodyguard} with {A}, {B}, and {C}"`). Duplicate attached-leader names are not deduplicated
+  (e.g. two Marshals render as `"...with Marshal and Marshal"`) — a known, accepted limitation.
 
 **Aggregate view** (`AttachedUnitAggregator.Build(ICombatUnit) -> AttachedUnitAggregateView`):
 
 ```
+AttachedUnitAggregateView(Name: string, Statlines, Weapons, UnitScopedAbilities,
+                           ModelScopedAbilities, Keywords)
+  // Name is the source combatUnit.Name (see ICombatUnit above), copied through unchanged.
+
 ModelLineLoadout(WeaponsLabel, RemainingCount, InitialCount)
   // WeaponsLabel is ModelLine.Weapons comma-joined, e.g. "Bolt pistol, Heavy Bolt pistol, Power fist"
 

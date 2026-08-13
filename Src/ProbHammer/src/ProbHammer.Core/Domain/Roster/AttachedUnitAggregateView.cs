@@ -31,6 +31,7 @@ public sealed record AggregateWeaponEntry(
 public sealed record ModelScopedAbilityEntry(ModelLine ModelLine, Ability Ability);
 
 public sealed record AttachedUnitAggregateView(
+    string Name,
     IReadOnlyList<AggregateStatlineEntry> Statlines,
     IReadOnlyList<AggregateWeaponEntry> Weapons,
     IReadOnlyList<Ability> UnitScopedAbilities,

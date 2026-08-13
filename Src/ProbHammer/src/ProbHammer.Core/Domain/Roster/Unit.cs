@@ -20,5 +20,7 @@ public sealed class Unit : ICombatUnit
     /// <summary>A Unit is a single-component combat unit for aggregate-view purposes.</summary>
     public IReadOnlyList<Unit> Components => [this];
 
+    public string Name => Datasheet.Name;
+
     public bool IsPresent => ModelLines.Any(ml => ml.RemainingCount > 0);
 }

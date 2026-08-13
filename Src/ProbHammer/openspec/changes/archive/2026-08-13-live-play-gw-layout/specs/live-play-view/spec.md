@@ -1,8 +1,5 @@
-# live-play-view Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change render-aggregate-view. Update Purpose after archive.
-## Requirements
 ### Requirement: Live Play Page Lists Example Army Units
 The `/LivePlay` page SHALL render one block per `AttachedUnitAggregateView` returned by
 `Examples.View.MyArmy()`, in the order returned, and SHALL label each block with that view's
@@ -93,30 +90,7 @@ entry SHALL display a raw per-model Attacks value alongside a separate model cou
 - **THEN** the rendered entry shows those abilities as tags immediately alongside the weapon's
   name, not in a separate table column
 
-### Requirement: Ability Section Rendering
-Each unit block SHALL render `UnitScopedAbilities` as one combined list, and SHALL render `ModelScopedAbilities` grouped under the name of their owning model-line, separately from the combined list.
-
-#### Scenario: Unit-scoped ability appears once in the combined section
-- **WHEN** a unit's aggregate view has a non-empty `UnitScopedAbilities` list
-- **THEN** each ability appears once in the block's combined-abilities section
-
-#### Scenario: Model-scoped ability appears under its own model-line
-- **WHEN** a unit's aggregate view has a `ModelScopedAbilities` entry tied to a specific model-line
-- **THEN** that ability is rendered under that model-line's own heading, not in the combined-abilities section
-
-### Requirement: Keyword Section Rendering
-Each unit block SHALL render the view's `Keywords` as a single list of the unit's effective keywords.
-
-#### Scenario: Keywords render when present
-- **WHEN** a unit's aggregate view has a non-empty `Keywords` set
-- **THEN** every keyword in that set is rendered somewhere in the unit's block
-
-### Requirement: Empty Sections Render Without Error
-If any of `Statlines`, `Weapons`, `UnitScopedAbilities`, `ModelScopedAbilities`, or `Keywords` is empty for a given unit, the page SHALL render that unit's block without error, omitting or clearly marking the empty section.
-
-#### Scenario: Unit with no unit-scoped abilities
-- **WHEN** a unit's aggregate view has an empty `UnitScopedAbilities` list
-- **THEN** the page renders that unit's block successfully, with no exception and no blank/broken markup in the abilities section
+## ADDED Requirements
 
 ### Requirement: Per-Section Disclosure Defaults to Collapsed
 Each unit block's statline, ranged-weapons, melee-weapons, and abilities sections SHALL be

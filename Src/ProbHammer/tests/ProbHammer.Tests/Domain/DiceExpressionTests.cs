@@ -151,4 +151,14 @@ public class DiceExpressionTests
         original.Should().Be(DiceExpression.D6);
         original.Modifier.Should().Be(0);
     }
+
+    [Theory]
+    [InlineData("12", 12.0)]
+    [InlineData("D6", 3.5)]
+    [InlineData("D3", 2.0)]
+    [InlineData("2D6+1", 8.0)]
+    public void ExpectedValue_ComputesMeanAcrossDiceAndFixedValues(string input, double expected)
+    {
+        DiceExpression.Parse(input).ExpectedValue().Should().Be(expected);
+    }
 }
