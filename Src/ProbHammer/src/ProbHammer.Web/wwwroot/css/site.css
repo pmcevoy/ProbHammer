@@ -557,8 +557,9 @@ button[type="submit"]:hover { opacity: 0.85; }
 
 .statline-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: baseline;
+    gap: 0.35rem;
     margin-bottom: 0.35rem;
 }
 
@@ -584,13 +585,12 @@ button[type="submit"]:hover { opacity: 0.85; }
 
 .loadout-breakdown {
     list-style: none;
-    margin-top: 0.4rem;
-    padding-top: 0.35rem;
-    border-top: 1px dashed var(--border);
+    margin: 0 0 0.35rem;
+    padding-left: 1rem;
     font-size: 0.75rem;
     color: var(--text-dim);
 }
-.loadout-breakdown li { padding: 0.1rem 0; }
+.loadout-breakdown li { padding: 0.05rem 0; }
 
 /* ── Weapon table (scoped light restyle) ── */
 

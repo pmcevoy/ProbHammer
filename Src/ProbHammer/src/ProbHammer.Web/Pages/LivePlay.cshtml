@@ -26,14 +26,14 @@
                                 {
                                     <div class="statline-header">
                                         <span class="statline-name">@entry.StatlineName</span>
-                                        <span class="statline-count">@(entry.RemainingCount) / @(entry.InitialCount)</span>
+                                        <span class="statline-count">(@(entry.RemainingCount)/@(entry.InitialCount))</span>
                                     </div>
                                     @if (entry.Loadouts.Count > 1)
                                     {
                                         <ul class="loadout-breakdown">
                                             @foreach (var loadout in entry.Loadouts)
                                             {
-                                                <li>@loadout.WeaponsLabel — @(loadout.RemainingCount) / @(loadout.InitialCount)</li>
+                                                <li>@loadout.WeaponsLabel (@(loadout.RemainingCount)/@(loadout.InitialCount))</li>
                                             }
                                         </ul>
                                     }
