@@ -2,12 +2,30 @@
 
 ## Active Work
 
-Nothing in progress.
+Three OpenSpec changes are drafted (proposal/specs/design/tasks written and validated) but not
+yet implemented, queued in dependency order: `order-live-play-unit-cards` (reorder unit-card
+blocks: attached-sourced first, then largest-to-smallest by model count, ties broken by name),
+`order-statlines-by-declaration` (make `Datasheet.Statlines` an ordered collection and render each
+unit-card's statlines in that declared order, scoped per component), and
+`merge-adjacent-live-play-statlines` (render adjacent same-component, value-identical statline
+rows under one shared stat-tile — depends on the previous change landing first).
 
 ---
 
 ## Recently Completed
 
+- OpenSpec change `drop-melee-range-column` implemented and archived: the Melee Weapons table on
+  `/LivePlay` no longer shows a Range column (always read "Melee", pure noise). Two further
+  `/LivePlay` display tweaks landed alongside it (no spec impact — pure CSS/markup): the
+  invulnerable save now renders as a smaller sub-line nested under the Sv stat-tile instead of its
+  own separate tile (`.stat-subvalue`, matching GW card style more closely), and both weapon
+  tables now use `table-layout: fixed` with a shared `<colgroup>` column-width scheme (`.col-weapon`
+  / `.col-weapon-melee` / `.col-slot`) so the two independent `<table>` elements' shared columns
+  stay pixel-aligned regardless of each table's own content-driven width. All three fixes were
+  visually verified against a real Firefox instance via the `firefox-devtools-mcp` MCP server
+  (Mozilla's official Firefox DevTools MCP) — Melee Weapons shows no Rng column, the High Marshal
+  Helbrecht statline's Sv tile shows a nested `4++` under `2+`, and the Assault Intercessor Squad
+  card's Ranged/Melee weapon-table columns (A/S/AP/D) align across both tables.
 - OpenSpec change `live-play-gw-layout` implemented (all 28 tasks): `/LivePlay` rewritten around a
   GW-datasheet-inspired light theme, scoped entirely to that page via locally-redeclared CSS
   tokens (`.claude/design-tokens.md` now documents this as an explicit exception). `ICombatUnit`

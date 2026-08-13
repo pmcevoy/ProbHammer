@@ -62,15 +62,26 @@ Each unit block SHALL group the view's `Weapons` into a Ranged section and a Mel
 entry's `Profile.Type`, rendering the Ranged section before the Melee section, and SHALL omit
 either section entirely when it has no entries. Within each section, entries SHALL be ordered by
 descending expected value of their aggregated `TotalAttacks`. Each entry SHALL show the weapon's
-name, Range, Skill, Strength, AP, Damage, and the aggregated total Attacks value, with any ability
-tags rendered inline immediately next to the weapon's name rather than in a separate column. No
-entry SHALL display a raw per-model Attacks value alongside a separate model count.
+name, Skill, Strength, AP, Damage, the aggregated total Attacks value, and any ability tags
+rendered inline immediately next to the weapon's name rather than in a separate column. Ranged
+weapon entries SHALL additionally show Range; Melee weapon entries SHALL NOT show a Range value,
+since it is always the fixed literal "Melee" for that weapon type and carries no information
+beyond the section it's already listed under. No entry SHALL display a raw per-model Attacks value
+alongside a separate model count.
 
 #### Scenario: Weapon count reflects aggregation across components
 - **WHEN** a unit's aggregate view has a weapon entry whose total Attacks was built from
   contributions with different per-model Attacks values
 - **THEN** the rendered entry shows only that entry's aggregated total Attacks, and does not show
   any individual contribution's per-model Attacks value or a separate model count
+
+#### Scenario: Ranged weapons show their Range value
+- **WHEN** a unit block renders its Ranged Weapons section
+- **THEN** each entry shows that weapon's Range value
+
+#### Scenario: Melee weapons omit the Range column
+- **WHEN** a unit block renders its Melee Weapons section
+- **THEN** no entry shows a Range value or column, since it would always read "Melee"
 
 #### Scenario: Ranged weapons render before Melee weapons
 - **WHEN** a unit's aggregate view has both Ranged- and Melee-typed weapon entries

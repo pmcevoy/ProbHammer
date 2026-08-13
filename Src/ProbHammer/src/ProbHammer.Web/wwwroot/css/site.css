@@ -580,6 +580,7 @@ button[type="submit"]:hover { opacity: 0.85; }
 
 .stat-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; }
 .stat-value { font-size: 0.95rem; font-weight: 700; }
+.stat-subvalue { font-size: 0.68rem; font-weight: 700; color: var(--accent); margin-top: 0.05rem; }
 
 .loadout-breakdown {
     list-style: none;
@@ -595,10 +596,18 @@ button[type="submit"]:hover { opacity: 0.85; }
 
 .live-play-page .weapon-table {
     width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     font-size: 0.78rem;
     margin-bottom: 0.5rem;
 }
+
+/* Fixed, shared column widths so Ranged and Melee weapon tables (two independent <table>
+   elements) don't drift apart under content-driven auto-layout - a Melee row with no ability
+   tag and a Ranged row with one otherwise compute different Weapon-column widths per table. */
+.live-play-page .weapon-table col.col-weapon { width: 34%; }
+.live-play-page .weapon-table col.col-weapon-melee { width: 45%; }
+.live-play-page .weapon-table col.col-slot { width: 11%; }
 
 .live-play-page .weapon-table th {
     text-align: left;
