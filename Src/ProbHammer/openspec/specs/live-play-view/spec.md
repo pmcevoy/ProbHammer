@@ -110,6 +110,15 @@ with exactly one loadout (which renders no nested breakdown, per the existing si
 below) has only the fully-selected/fully-deselected states, toggled directly by activating its own
 header line.
 
+A run's shared stat-tile SHALL collapse to a header-only presentation — every entry's header line
+(and nested loadout breakdown, when rendered) still shown, but the M/T/Sv/W/Ld/Oc stat-tile itself
+hidden — whenever every entry belonging to that run is in the fully-deselected state. The stat-tile
+SHALL expand back to its full presentation the moment any one entry in the run becomes selected or
+partial. A run of one entry collapses under the same rule using that entry's own state. This
+collapse is purely a rendering consequence of the entries' existing selection states; it never
+changes which weapons render in the Ranged/Melee sections beyond what "Selection-Scoped Weapon
+Filtering" already governs.
+
 #### Scenario: Squad with a distinct sergeant statline sharing the same values
 - **WHEN** a unit's aggregate view contains two consecutive same-component statline entries with
   identical M/T/Sv/W/Ld/Oc values but different names (e.g. "Sword Brother" and "Initiate", both
@@ -192,6 +201,28 @@ header line.
 - **THEN** every one of its loadouts becomes deselected, and the entry's own state becomes fully
   deselected
 
+#### Scenario: A single-entry run collapses when its one entry is fully deselected
+- **WHEN** a run has exactly one entry (e.g. Helbrecht, a unique character with no loadout
+  variants) and the player deselects it
+- **THEN** the run's stat-tile hides, leaving only that entry's own header line (name and count)
+  visible in the statline column
+
+#### Scenario: A multi-entry run stays expanded while any of its entries is still selected
+- **WHEN** a run has two entries (e.g. Sword Brother and Initiate sharing one Sv3+ stat-tile) and
+  the player deselects only one of them
+- **THEN** the run's stat-tile remains fully visible, since Initiate is still selected — only once
+  Sword Brother and Initiate are both fully deselected does the shared stat-tile hide
+
+#### Scenario: Deselecting one loadout of a multi-loadout entry does not collapse that entry's run
+- **WHEN** a statline entry has two loadouts and the player deselects only one, leaving the entry in
+  its partial state
+- **THEN** the entry's run does not collapse, since a partial entry counts as not fully deselected
+
+#### Scenario: Reselecting any entry in a collapsed run expands it immediately
+- **WHEN** a run's stat-tile is currently collapsed because every entry in it is fully deselected,
+  and the player reselects any one entry (or any one of its loadouts)
+- **THEN** the run's stat-tile becomes visible again immediately
+
 ### Requirement: Statline Ability Column Rendering
 Each unit block's Statline area SHALL render two additional columns alongside the statline column:
 a Model Abilities column for entries whose Ability has Scope Model, and a Unit Abilities column for
@@ -200,6 +231,13 @@ statline row SHALL render beside that row only; an ability entry with no statlin
 component-wide ability) SHALL render beside the first rendered statline row belonging to its
 component, and SHALL visually span every row belonging to that component. Each ability SHALL
 render by Name only; ability descriptive Text is not rendered by this requirement.
+
+A row-bound ability cell SHALL collapse (hide its ability names) whenever its own row's run is
+collapsed, per "Statline Section Rendering" — i.e. whenever every entry in that run is fully
+deselected. A component-wide, row-spanning ability cell SHALL collapse whenever every run within
+its visual span is collapsed — i.e. every entry of every row it spans is fully deselected. It SHALL
+remain fully expanded as long as at least one entry in at least one row within its span is selected
+or partial. This applies identically to the Model Abilities and Unit Abilities columns.
 
 #### Scenario: A row-bound ability renders beside its own statline row
 - **WHEN** an ability entry carries the name of a specific statline
@@ -221,6 +259,21 @@ render by Name only; ability descriptive Text is not rendered by this requiremen
 #### Scenario: Only the ability name renders
 - **WHEN** an ability entry renders in either column
 - **THEN** only its Name is shown; its descriptive Text is not rendered
+
+#### Scenario: A row-bound ability cell collapses with its own row
+- **WHEN** a row-bound ability entry's own row is collapsed because every entry in that row's run
+  is fully deselected
+- **THEN** that ability's name is hidden along with the rest of the row's collapsed content
+
+#### Scenario: A component-wide ability cell stays expanded while any spanned row is still selected
+- **WHEN** a component-wide ability visually spans three statline rows and only two of those rows
+  are fully deselected, with the third still selected or partial
+- **THEN** the ability cell remains fully expanded
+
+#### Scenario: A component-wide ability cell collapses once every spanned row is fully deselected
+- **WHEN** a component-wide ability visually spans three statline rows and every entry in all three
+  rows becomes fully deselected
+- **THEN** the ability cell collapses (its ability names hide)
 
 ### Requirement: Weapon Section Rendering
 Each unit block SHALL group the view's `Weapons` into a Ranged section and a Melee section by each

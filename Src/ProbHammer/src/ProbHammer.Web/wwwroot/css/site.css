@@ -612,7 +612,25 @@ button.filter-flag:hover { opacity: 0.8; }
 .statline-name { font-weight: 700; }
 .statline-count { font-size: 0.8rem; color: var(--text-dim); }
 
-.statline-tiles { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.statline-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    max-height: 6rem;
+    overflow: hidden;
+    opacity: 1;
+    transition: max-height 0.15s, opacity 0.15s, margin-top 0.15s;
+}
+
+/* A run collapses to header-only (name/count lines stay, per .statline-header/.loadout-breakdown
+   above) once every entry sharing it is fully deselected - see live-play.js updateRunCollapse().
+   Only the shared stat-tile hides; it never removes the .statline-cell from the grid or touches
+   its grid-row, so spans-component ability cells keep the row indices they rely on. */
+.statline-cell.col-statline.run-collapsed .statline-tiles {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+}
 
 .stat-tile {
     display: flex;
@@ -772,11 +790,28 @@ button.filter-flag:hover { opacity: 0.8; }
     border-radius: 3px;
     padding: 0.4rem 0.5rem;
     font-size: 0.78rem;
+    max-height: 10rem;
+    overflow: hidden;
+    opacity: 1;
+    transition: max-height 0.15s, opacity 0.15s, padding 0.15s, border-color 0.15s;
 }
 
 /* Component-wide (Datasheet-sourced) abilities spanning multiple statline rows get a subtle fill
    so the taller cell visibly reads as "covering" its span, not just an odd empty gap. */
 .statline-cell.spans-component { background: var(--bg); }
+
+/* Unlike .col-statline (which keeps its header lines visible and only hides the stat-tile beneath
+   them), an ability cell has no header content of its own - it collapses in full, per
+   live-play.js updateRunCollapse(). A row-bound cell collapses with its own run; a
+   .spans-component cell collapses only once every run in its span is collapsed. */
+.statline-cell.col-model-abilities.run-collapsed,
+.statline-cell.col-unit-abilities.run-collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-color: transparent;
+}
 
 .ability-name-line { padding: 0.1rem 0; font-weight: 600; }
 

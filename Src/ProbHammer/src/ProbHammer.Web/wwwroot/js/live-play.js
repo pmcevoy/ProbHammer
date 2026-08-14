@@ -23,6 +23,18 @@ function initUnitSelection(unitEl) {
     const entries = [...unitEl.querySelectorAll('.statline-entry')];
     const clearBtn = unitEl.querySelector('.clear-filter-btn');
 
+    // Groups entries by their enclosing run's data-run-index (set on col-statline and its per-row
+    // ability cells in LivePlay.cshtml), so a run's collapse state - "every entry in this run is
+    // fully deselected" - can be derived without re-deriving run membership from grid-row styling.
+    const entriesByRun = new Map();
+    entries.forEach(entryEl => {
+        const runCell = entryEl.closest('[data-run-index]');
+        if (!runCell) return;
+        const runIndex = runCell.dataset.runIndex;
+        if (!entriesByRun.has(runIndex)) entriesByRun.set(runIndex, []);
+        entriesByRun.get(runIndex).push(entryEl);
+    });
+
     entries.forEach(entryEl => {
         const singleToggle = entryEl.querySelector(':scope > .statline-toggle');
         const groupHeader = entryEl.querySelector(':scope > .statline-toggle-group');
@@ -76,32 +88,72 @@ function initUnitSelection(unitEl) {
 
     function refresh() {
         updateIndicators();
+        updateRunCollapse();
         recomputeWeaponSections();
         if (clearBtn) clearBtn.hidden = deselected.size === 0;
     }
 
+    // Single definition of an entry's own selected/deselected/partial state, shared by
+    // updateIndicators (which renders it) and isEntryFullyDeselected (which run-collapse uses to
+    // decide whether every entry in a run has gone quiet).
+    function entryState(entryEl) {
+        const singleToggle = entryEl.querySelector(':scope > .statline-toggle');
+        if (singleToggle) {
+            return { toggle: singleToggle, loadouts: [], state: deselected.has(singleToggle.dataset.selectKey) ? 'deselected' : 'selected' };
+        }
+
+        const groupHeader = entryEl.querySelector(':scope > .statline-toggle-group');
+        const loadouts = [...entryEl.querySelectorAll(':scope > .loadout-breakdown > .loadout-toggle')];
+        const selectedCount = loadouts.filter(li => !deselected.has(li.dataset.selectKey)).length;
+        const state = selectedCount === 0 ? 'deselected' : selectedCount === loadouts.length ? 'selected' : 'partial';
+        return { toggle: groupHeader, loadouts, state };
+    }
+
+    function isEntryFullyDeselected(entryEl) {
+        return entryState(entryEl).state === 'deselected';
+    }
+
     function updateIndicators() {
         entries.forEach(entryEl => {
-            const singleToggle = entryEl.querySelector(':scope > .statline-toggle');
-            const groupHeader = entryEl.querySelector(':scope > .statline-toggle-group');
-            const loadouts = [...entryEl.querySelectorAll(':scope > .loadout-breakdown > .loadout-toggle')];
-
-            if (singleToggle) {
-                setState(singleToggle, deselected.has(singleToggle.dataset.selectKey) ? 'deselected' : 'selected');
-            }
-
-            if (groupHeader) {
-                loadouts.forEach(li => setState(li, deselected.has(li.dataset.selectKey) ? 'deselected' : 'selected'));
-                const selectedCount = loadouts.filter(li => !deselected.has(li.dataset.selectKey)).length;
-                const state = selectedCount === 0 ? 'deselected' : selectedCount === loadouts.length ? 'selected' : 'partial';
-                setState(groupHeader, state);
-            }
+            const { toggle, loadouts, state } = entryState(entryEl);
+            if (!toggle) return;
+            loadouts.forEach(li => setState(li, deselected.has(li.dataset.selectKey) ? 'deselected' : 'selected'));
+            setState(toggle, state);
         });
     }
 
     function setState(el, state) {
         el.classList.remove('select-selected', 'select-deselected', 'select-partial');
         el.classList.add(`select-${state}`);
+    }
+
+    // A run collapses to header-only once every entry sharing it (its col-statline cell and any
+    // per-row ability cells at the same data-run-index) is fully deselected; a spans-component
+    // ability cell collapses only once every run in its [data-first-run-index, data-last-run-index]
+    // range is collapsed. Grid-row indices themselves are never touched - only the run-collapsed
+    // class, which CSS uses to shrink cell content.
+    function updateRunCollapse() {
+        const runCollapsed = new Map();
+        entriesByRun.forEach((entryEls, runIndex) => {
+            runCollapsed.set(runIndex, entryEls.every(isEntryFullyDeselected));
+        });
+
+        unitEl.querySelectorAll('.statline-cell[data-run-index]').forEach(cell => {
+            cell.classList.toggle('run-collapsed', runCollapsed.get(cell.dataset.runIndex) === true);
+        });
+
+        unitEl.querySelectorAll('.statline-cell[data-first-run-index]').forEach(cell => {
+            const first = Number(cell.dataset.firstRunIndex);
+            const last = Number(cell.dataset.lastRunIndex);
+            let allCollapsed = true;
+            for (let i = first; i <= last; i++) {
+                if (runCollapsed.get(String(i)) !== true) {
+                    allCollapsed = false;
+                    break;
+                }
+            }
+            cell.classList.toggle('run-collapsed', allCollapsed);
+        });
     }
 
     function recomputeWeaponSections() {
