@@ -23,18 +23,21 @@
                         {
                             var block = unit.Statlines[runIndex];
                             <div class="statline-cell col-statline" style="grid-row: @(runIndex + 1); grid-column: 1;">
-                                @foreach (var entry in block.Entries)
+                                @for (var entryIndex = 0; entryIndex < block.Entries.Count; entryIndex++)
                                 {
+                                    var entry = block.Entries[entryIndex];
                                     <div class="statline-header">
                                         <span class="statline-name">@entry.StatlineName</span>
                                         <span class="statline-count">(@(entry.RemainingCount)/@(entry.InitialCount))</span>
                                     </div>
                                     @if (entry.Loadouts.Count > 1)
                                     {
+                                        var loadoutLabels = block.LoadoutLabels[entryIndex];
                                         <ul class="loadout-breakdown">
-                                            @foreach (var loadout in entry.Loadouts)
+                                            @for (var loadoutIndex = 0; loadoutIndex < entry.Loadouts.Count; loadoutIndex++)
                                             {
-                                                <li>@loadout.WeaponsLabel (@(loadout.RemainingCount)/@(loadout.InitialCount))</li>
+                                                var loadout = entry.Loadouts[loadoutIndex];
+                                                <li>@loadoutLabels[loadoutIndex] (@(loadout.RemainingCount)/@(loadout.InitialCount))</li>
                                             }
                                         </ul>
                                     }

@@ -2,7 +2,8 @@ using ProbHammer.Core.Domain.Catalogue;
 
 namespace ProbHammer.Core.Domain.Roster;
 
-public sealed record ModelLineLoadout(string WeaponsLabel, int RemainingCount, int InitialCount);
+public sealed record ModelLineLoadout(
+    string WeaponsLabel, IReadOnlyList<string> Weapons, int RemainingCount, int InitialCount);
 
 public sealed record AggregateStatlineEntry(
     string ComponentName,

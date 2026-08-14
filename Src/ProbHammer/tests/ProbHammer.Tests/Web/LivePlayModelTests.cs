@@ -237,6 +237,61 @@ public class LivePlayModelTests
         unit.MeleeWeapons.Should().OnlyContain(w => w.Breakdown.Count == 0);
     }
 
+    [Fact]
+    public void CompressLoadoutLabels_CompressesCrusaderSquadInitiateLoadouts_ToDistinguishingWeaponsOnly()
+    {
+        // Real fixture: both Initiate loadouts also carry Bolt pistol and Heavy Bolt pistol, so
+        // only the weapon that actually differs (Power fist / Astartes chainsword) should render.
+        var view = AttachedUnitAggregator.Build(Units.CrusaderSquad_Helbrecht_Ancient());
+        var initiate = view.Statlines.Single(s => s.StatlineName == "Initiate");
+
+        var labels = LivePlayModel.CompressLoadoutLabels(initiate.Loadouts);
+
+        labels.Should().Equal("Power fist", "Astartes chainsword");
+    }
+
+    [Fact]
+    public void CompressLoadoutLabels_ExcludesSharedWeapons_RegardlessOfListPosition()
+    {
+        // Shared weapons ("Chainsword", "Frag grenades") appear at different positions in each
+        // loadout's list - proves a true multiset intersection, not a common-prefix strip.
+        var loadouts = new[]
+        {
+            new ModelLineLoadout("", ["Bolt pistol", "Chainsword", "Frag grenades"], 1, 1),
+            new ModelLineLoadout("", ["Chainsword", "Plasma pistol", "Frag grenades"], 1, 1)
+        };
+
+        var labels = LivePlayModel.CompressLoadoutLabels(loadouts);
+
+        labels.Should().Equal("Bolt pistol", "Plasma pistol");
+    }
+
+    [Fact]
+    public void CompressLoadoutLabels_KeepsAGenuinelyExtraCopy_OfAnOtherwiseSharedWeapon()
+    {
+        // Loadout A carries two Chainswords, loadout B carries one - the shared multiset only
+        // covers one copy, so A's second copy is genuinely distinguishing and must survive.
+        var loadouts = new[]
+        {
+            new ModelLineLoadout("", ["Chainsword", "Chainsword"], 1, 1),
+            new ModelLineLoadout("", ["Chainsword"], 1, 1)
+        };
+
+        var labels = LivePlayModel.CompressLoadoutLabels(loadouts);
+
+        labels.Should().Equal("Chainsword", "");
+    }
+
+    [Fact]
+    public void CompressLoadoutLabels_LeavesASingleLoadoutStatlineUnaffected()
+    {
+        var loadouts = new[] { new ModelLineLoadout("Bolt pistol, Chainsword", ["Bolt pistol", "Chainsword"], 1, 1) };
+
+        var labels = LivePlayModel.CompressLoadoutLabels(loadouts);
+
+        labels.Should().Equal("Bolt pistol, Chainsword");
+    }
+
     private static int TotalModelLines(AttachedUnitAggregateView view) =>
         view.Statlines.Sum(s => Math.Max(s.Loadouts.Count, 1));
 }

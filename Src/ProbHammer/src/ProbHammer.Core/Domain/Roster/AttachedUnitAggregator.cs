@@ -57,6 +57,7 @@ public static class AttachedUnitAggregator
                 var loadouts = lines
                     .Select(ml => new ModelLineLoadout(
                         WeaponsLabel: string.Join(", ", ml.Weapons),
+                        Weapons: ml.Weapons,
                         RemainingCount: ml.RemainingCount,
                         InitialCount: ml.Count))
                     .ToList();

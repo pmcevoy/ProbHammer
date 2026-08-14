@@ -129,9 +129,57 @@ public class LivePlayModel : PageModel
 
         return groups.Select(g => new StatlineBlockViewModel(
                 Entries: g,
+                LoadoutLabels: g.Select(entry => CompressLoadoutLabels(entry.Loadouts)).ToList(),
                 ModelAbilities: RowBoundAbilities(g, abilities, AbilityScope.Model),
                 UnitAbilities: RowBoundAbilities(g, abilities, AbilityScope.Unit)))
             .ToList();
+    }
+
+    // Multiset (bag) intersection across every loadout under one statline entry, then per-loadout
+    // multiset subtraction - a loadout's compressed label is only the weapons that distinguish it
+    // from its siblings. Must be a true multiset operation, not a common-prefix strip: shared
+    // weapons need not appear at the same list position in each loadout, and a loadout carrying an
+    // extra copy of an otherwise-shared weapon must keep that one extra copy visible. A statline
+    // with exactly one loadout has nothing to compress against, so its full WeaponsLabel passes
+    // through unchanged (matches the existing Loadouts.Count > 1 render guard in LivePlay.cshtml -
+    // this function's result is only ever read when there's more than one loadout to distinguish).
+    internal static IReadOnlyList<string> CompressLoadoutLabels(IReadOnlyList<ModelLineLoadout> loadouts)
+    {
+        if (loadouts.Count <= 1)
+            return loadouts.Select(l => l.WeaponsLabel).ToList();
+
+        var shared = CountWeapons(loadouts[0].Weapons);
+        foreach (var loadout in loadouts.Skip(1))
+        {
+            var counts = CountWeapons(loadout.Weapons);
+            foreach (var weapon in shared.Keys.ToList())
+                shared[weapon] = Math.Min(shared[weapon], counts.GetValueOrDefault(weapon));
+        }
+
+        return loadouts.Select(loadout => string.Join(", ", DistinguishingWeapons(loadout.Weapons, shared))).ToList();
+    }
+
+    private static Dictionary<string, int> CountWeapons(IReadOnlyList<string> weapons)
+    {
+        var counts = new Dictionary<string, int>();
+        foreach (var weapon in weapons)
+            counts[weapon] = counts.GetValueOrDefault(weapon) + 1;
+        return counts;
+    }
+
+    // Walks a loadout's own weapon list in order, consuming one shared-multiset copy per matching
+    // weapon before falling back to yielding it as distinguishing - so only weapons beyond what's
+    // actually shared across every sibling loadout are kept.
+    private static IEnumerable<string> DistinguishingWeapons(IReadOnlyList<string> weapons, Dictionary<string, int> shared)
+    {
+        var remaining = new Dictionary<string, int>(shared);
+        foreach (var weapon in weapons)
+        {
+            if (remaining.TryGetValue(weapon, out var count) && count > 0)
+                remaining[weapon] = count - 1;
+            else
+                yield return weapon;
+        }
     }
 
     private static IReadOnlyList<Ability> RowBoundAbilities(
@@ -168,10 +216,14 @@ public class LivePlayModel : PageModel
 
 /// <summary>A contiguous, same-component, value-identical run of statline entries sharing one
 /// rendered stat-tile. <see cref="Entries"/> is never empty - every group is seeded with at least
-/// one entry at creation. <see cref="ModelAbilities"/>/<see cref="UnitAbilities"/> are the
-/// row-bound (ModelLine-sourced) abilities matching this specific run.</summary>
+/// one entry at creation. <see cref="LoadoutLabels"/> is parallel to <see cref="Entries"/> - each
+/// element is that entry's own <c>Loadouts</c> compressed to their distinguishing weapons via
+/// <see cref="LivePlayModel.CompressLoadoutLabels"/>, in the same order. <see cref="ModelAbilities"/>/
+/// <see cref="UnitAbilities"/> are the row-bound (ModelLine-sourced) abilities matching this
+/// specific run.</summary>
 public sealed record StatlineBlockViewModel(
     IReadOnlyList<AggregateStatlineEntry> Entries,
+    IReadOnlyList<IReadOnlyList<string>> LoadoutLabels,
     IReadOnlyList<Ability> ModelAbilities,
     IReadOnlyList<Ability> UnitAbilities)
 {
