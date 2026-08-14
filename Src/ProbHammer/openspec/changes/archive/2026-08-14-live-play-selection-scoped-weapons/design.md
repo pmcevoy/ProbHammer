@@ -1,14 +1,15 @@
 ## Context
 
-See proposal.md - Why. **This change depends on `compress-loadout-labels` being implemented and
-archived first.** Its own spec delta in this change (`specs/live-play-view/spec.md`) was written
-against the *current* main spec (uncompressed loadout labels) so it validates independently right
-now — it does not yet encode compress-loadout-labels' compressed-label wording. Before this change
-is applied, its spec/design must be reconciled to build on top of whatever `Statline Section
-Rendering` reads after compress-loadout-labels archives (almost certainly via
-`openspec-update-change`, a short sync pass, not a rewrite — the behavioral additions in this
-change's delta don't depend on the exact loadout-label wording, only on loadouts being individually
-addressable, which is already true today).
+See proposal.md - Why. **This change depended on `compress-loadout-labels` being implemented and
+archived first — that has now happened.** This change's spec delta (`specs/live-play-view/spec.md`)
+has been reconciled via `openspec-update-change` to build on top of the compressed-label baseline
+`compress-loadout-labels` merged into the main spec: the "Statline Section Rendering" requirement's
+description and its "Loadout breakdown lists every contributing model-line" scenario (plus its two
+sibling scenarios) now match the main spec's compressed-label wording, with this change's own
+tri-state-selection paragraph and four selection scenarios layered on top unchanged. That
+reconciliation was a wording sync only — none of this change's own behavioral additions depended on
+the exact loadout-label wording, only on loadouts being individually addressable, which was already
+true before `compress-loadout-labels` landed.
 
 `AggregateWeaponEntry.Contributions` (`WeaponContribution(ComponentName, StatlineName, Count,
 PerModelAttacks)`) is built once per contributing `ModelLine` in `AttachedUnitAggregator
@@ -16,8 +17,9 @@ PerModelAttacks)`) is built once per contributing `ModelLine` in `AttachedUnitAg
 `(ComponentName, StatlineName)` and renders them into the DOM as `<tr class="weapon-contribution-
 row">` elements (see `LivePlay.cshtml`), toggled by the existing `live-play.js` (a single
 click-to-expand/collapse script, `/LivePlay`'s only JS today). `AggregateStatlineEntry.Loadouts`
-(`ModelLineLoadout(WeaponsLabel, RemainingCount, InitialCount)`) is already an ordered list — one
-entry per contributing `ModelLine` under that statline name, in the same order `BuildStatlines`
+(`ModelLineLoadout(WeaponsLabel, Weapons, RemainingCount, InitialCount)` — `Weapons` and the
+compressed-label computation over it added by `compress-loadout-labels`) is already an ordered
+list — one entry per contributing `ModelLine` under that statline name, in the same order `BuildStatlines`
 walks them.
 
 ## Goals / Non-Goals
@@ -49,12 +51,26 @@ loadout's DOM element and a weapon contribution's DOM row can both carry as a `d
 and match on directly, with no dependency on weapon-list content (which `compress-loadout-labels`
 deliberately makes non-unique-per-loadout as a *display* label) or on `Count` (which two loadouts
 can coincidentally share).
-Alternative considered: derive identity from the loadout's raw weapon list (already exposed once
-`compress-loadout-labels` lands). Rejected — two genuinely different loadouts could theoretically
+Alternative considered: derive identity from the loadout's raw weapon list (already exposed by
+`compress-loadout-labels`). Rejected — two genuinely different loadouts could theoretically
 carry an identical raw weapon list (the same "input anomaly" case `compress-loadout-labels`
 already declines to defend against for its own purposes), and even where lists differ, string-list
 equality is a heavier and less direct identity key than an ordinal the aggregator already
 implicitly has.
+
+**A split-out loadout row's Label is `"{StatlineName} w/ {compressed label}"`, not the bare
+compressed label.**
+The Statline section renders a loadout's compressed label (from `compress-loadout-labels`) alone,
+e.g. `"Astartes chainsword"`, and that reads fine there because it's visually nested directly under
+its statline's own header line (`"Initiate (5/5)"` above it). A weapon-breakdown row has no such
+nesting - it's a flat list of rows under the weapon's own name - so the bare compressed label alone
+misreads as if the weapon itself were the contributor, not a specific squad member. Prefixing with
+the statline name (`"Initiate w/ Astartes chainsword"`) fixes this while leaving the Statline
+section's own rendering untouched: the prefix is applied only in `BuildLoadoutLabelLookup`, which
+exclusively feeds `BuildContributionBreakdown`'s raw rows - `GroupStatlines` computes the Statline
+section's own loadout labels separately, straight from `CompressLoadoutLabels`, and never reads this
+lookup. Caught via hands-on review after the first implementation pass rendered the bare compressed
+label in both places.
 
 **Selection state model: per-unit-block, keyed by `(ComponentName, StatlineName, LoadoutIndex |
 null)`.**
@@ -87,13 +103,38 @@ value — a weapon could theoretically have a real zero-Attacks contribution, th
 practice); otherwise show the row with the recomputed total. Breakdown-row visibility follows the
 same per-contribution check independently.
 
-**Badges are computed, not toggled by hand.**
-The Statline section's "N/M selected" count is `total keys - deselected.size` — read directly off
-the Set. The Ranged/Melee "filtered" indicator is computed by checking whether *any* row in that
-specific section was hidden or had its total changed by the current selection, evaluated after each
-recompute pass rather than tracked as separate state — keeps the source of truth singular (the
-deselected-keys Set) and avoids the badge logic silently drifting out of sync with what actually
-rendered.
+**Indicators are computed, not toggled by hand.**
+The Ranged/Melee "filtered" flag is computed by checking whether *any* row in that specific section
+was hidden or had its total changed by the current selection, evaluated after each recompute pass
+rather than tracked as separate state — keeps the source of truth singular (the deselected-keys Set)
+and avoids the indicator logic silently drifting out of sync with what actually rendered.
+
+**One unified glyph flag, right-justified, in all three section bars — no numeric "N/M selected"
+badge, no separate text "Clear filter" button.**
+Went through two rounds of hands-on layout feedback. First: Clear filter moved from beside the unit
+name (outside every `<details>` section) into the Statline `<summary>` itself, since the filter it
+clears is conceptually part of the Statline area — it's still always visible regardless of the
+section's collapsed state, since `<summary>` content renders whether or not its `<details>` is open.
+Second, and more substantial: the Statline "N/M selected" count was dropped entirely once Clear
+filter's own visibility already answers "is anything filtered right now" — the numeric fraction
+added no actionable information beyond that (knowing *how many* are deselected doesn't tell you
+*which* ones without opening the section anyway). At the same time, the Ranged/Melee "filtered" text
+badges were replaced with a compact funnel icon, dropping their amber pill background in favor of
+plain text/background matching the bar's own chrome — and the *same* icon now does double duty as
+the Statline bar's control: it both indicates filtering is active and, being a `<button>` there,
+clears it on click. One visual language for "filtered" across all three bars, one of the three
+instances also interactive. Placing that interactive instance inside `<summary>` needs one extra
+step: the browser's default action for any click inside a `<summary>` is to toggle its `<details>`
+open/closed, so the button's click handler calls `event.preventDefault()` to suppress that before
+applying its own Clear-filter behavior.
+
+The funnel icon itself went through one more iteration: the first attempt overlaid two Unicode
+characters via CSS (see `site.css` history) to fake a funnel shape, since no single codepoint
+renders one reliably. That depended on both characters' font-specific glyph metrics staying aligned
+across browsers/OSes/fonts — fragile, and it showed on review. Replaced with a small inline SVG
+(`.filter-flag-icon`, a plain closed polygon path) instead: renders identically everywhere, and
+`fill: currentColor` inherits the bar's own text color automatically, removing the need for any
+separate color-matching rule.
 
 ## Risks / Trade-offs
 
@@ -113,6 +154,17 @@ rendered.
   ever needs to show/hide/re-merge pre-rendered rows — never synthesize new DOM content. This
   mirrors the existing shipped design (`add-live-play-weapon-provenance` already renders hidden
   breakdown rows for JS to reveal) and keeps this change from needing client-side DOM templating.
+- [Contribution/breakdown rows carry `data-weapon-id` too (needed to correlate them to their primary
+  row for the existing expand/collapse toggle), which made them match `recomputeWeaponSections`'s
+  original `tbody > tr[data-weapon-id]` selector as if they were primary rows in their own right.
+  Recomputing a breakdown row this way ran its group-processing step correctly, then immediately
+  undid the correct per-contribution hide via that same pass's trailing
+  `row.classList.toggle('selection-excluded', !anySelected)` - `anySelected` there reflects the
+  *whole weapon's* selection state, not that specific contribution's, so a still-selected sibling
+  elsewhere in the breakdown would re-show a contribution that had just been correctly hidden. Found
+  via hands-on repro (Crusader Squad, deselect Crusade Ancient: total correctly dropped 10→9, but its
+  breakdown row stayed visible) → Scoped the selector to `tbody > tr[data-weapon-id]
+  :not(.weapon-contribution-row)`, matching only true primary rows.]
 
 ## Open Questions
 

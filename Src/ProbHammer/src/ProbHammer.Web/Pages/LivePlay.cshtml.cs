@@ -32,10 +32,13 @@ public class LivePlayModel : PageModel
         // each with >=1 ModelLine, is >=2 by construction) - only a single-ModelLine plain Unit
         // (e.g. Impulsor) can.
         var totalModelLines = view.Statlines.Sum(s => Math.Max(s.Loadouts.Count, 1));
+        var showsBreakdownTrigger = totalModelLines > 1;
+
+        var loadoutLabels = BuildLoadoutLabelLookup(view.Statlines);
 
         var orderedWeapons = view.Weapons
             .OrderByDescending(w => w.TotalAttacks.ExpectedValue())
-            .Select(w => new WeaponRowViewModel(w, BuildContributionBreakdown(w, totalModelLines)))
+            .Select(w => new WeaponRowViewModel(w, BuildContributionBreakdown(w, loadoutLabels), showsBreakdownTrigger))
             .ToList();
 
         var statlineBlocks = GroupStatlines(view.Statlines, view.Abilities);
@@ -49,25 +52,65 @@ public class LivePlayModel : PageModel
             Keywords: view.Keywords.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList());
     }
 
+    // Selection-key convention shared between the Statline section's toggle targets and weapon
+    // contribution rows' filtering data, so both sides address the exact same loadout unambiguously.
+    // A LoadoutIndex of -1 means "the whole statline" (single-ModelLine statlines have no
+    // independently-addressable loadouts - see WeaponContribution.LoadoutIndex).
+    internal static string SelectKey(string componentName, string statlineName, int loadoutIndex) =>
+        loadoutIndex < 0 ? $"{componentName}::{statlineName}" : $"{componentName}::{statlineName}::{loadoutIndex}";
+
+    // One label per (ComponentName, StatlineName, LoadoutIndex) across the whole unit, used by
+    // weapon-breakdown raw rows. For a single-loadout statline (LoadoutIndex -1) the label is just
+    // the StatlineName itself, matching the existing (unmodified) single-contributor breakdown-row
+    // convention (e.g. "Neophyte", "Crusade Ancient"). For a loadout under a multi-loadout statline,
+    // the label is "{StatlineName} w/ {compressed label}" (e.g. "Initiate w/ Astartes chainsword") -
+    // in the Statline section the compressed label alone reads fine because it's visually nested
+    // under its statline's own header line, but a weapon breakdown row has no such nesting (it's a
+    // flat list under the weapon's name), so the compressed label alone there would read as if the
+    // weapon itself were the contributor rather than a specific squad member. This lookup is only
+    // consumed by BuildContributionBreakdown - GroupStatlines computes the Statline section's own
+    // (unprefixed) loadout labels separately via CompressLoadoutLabels directly.
+    internal static Dictionary<(string ComponentName, string StatlineName, int LoadoutIndex), string> BuildLoadoutLabelLookup(
+        IReadOnlyList<AggregateStatlineEntry> statlines)
+    {
+        var lookup = new Dictionary<(string, string, int), string>();
+        foreach (var entry in statlines)
+        {
+            if (entry.Loadouts.Count <= 1)
+            {
+                lookup[(entry.ComponentName, entry.StatlineName, -1)] = entry.StatlineName;
+                continue;
+            }
+
+            var compressed = CompressLoadoutLabels(entry.Loadouts);
+            for (var i = 0; i < entry.Loadouts.Count; i++)
+                lookup[(entry.ComponentName, entry.StatlineName, i)] = $"{entry.StatlineName} w/ {compressed[i]}";
+        }
+
+        return lookup;
+    }
+
     // Rendering-only grouping over data AttachedUnitAggregator already computed correctly (mirrors
     // GroupStatlines/StatlineBlockViewModel's precedent - the domain retains ungrouped, per-
     // ModelLine provenance; only the display grouping is page-layer work). Groups Contributions by
-    // (ComponentName, StatlineName) in first-seen order. A group collapses to one row when every
-    // contribution shares the same PerModelAttacks; otherwise each contributing ModelLine renders
-    // as its own row, so no subtotal is ever shown that isn't verifiable from the numbers beside it.
-    // Label is StatlineName alone (no ComponentName prefix) - matches the validated UI shape and
-    // accepts the same known limitation as ICombatUnit.Name's duplicate-leader case: two components
-    // sharing a statline name would render identically-labeled rows.
-    //
-    // Trigger is the unit's total ModelLine count, not entry.Contributions.Count: knowing "this
-    // came from the Sword Brother" is useful even when only one ModelLine carries a weapon, as
-    // long as the unit has more than one ModelLine to distinguish it from. A unit with only one
-    // ModelLine overall returns no rows for any of its weapons - there's no second source to name.
+    // (ComponentName, StatlineName) in first-seen order. Every contribution always gets its own raw
+    // row (SelectKey set, GroupKey shared with its siblings) - client-side filtering needs this
+    // granularity regardless of whether the group visually merges. When a group's contributions all
+    // share the same PerModelAttacks and there's more than one of them, an additional merged row
+    // (SelectKey null) is emitted alongside the raw rows: the merged row is what renders by default
+    // (matching the pre-selection-filtering shipped behavior exactly), and only gives way to its raw
+    // siblings once the client detects the group's selection state has diverged - see live-play.js.
+    // A group of exactly one contribution never gets a merged row (nothing to merge - its lone raw
+    // row already is the single rendered row, matching the pre-existing "single contribution still
+    // renders as one row" behavior). Label is StatlineName for a merged row (matches the validated
+    // UI shape, and accepts the same known limitation as ICombatUnit.Name's duplicate-leader case:
+    // two components sharing a statline name would render identically-labeled rows); a raw row's
+    // Label is looked up per its own (ComponentName, StatlineName, LoadoutIndex) so a split-out row
+    // shows its distinguishing-weapons loadout label rather than the bare statline name.
     internal static IReadOnlyList<WeaponContributionRow> BuildContributionBreakdown(
-        AggregateWeaponEntry entry, int totalModelLinesInUnit)
+        AggregateWeaponEntry entry,
+        IReadOnlyDictionary<(string ComponentName, string StatlineName, int LoadoutIndex), string> loadoutLabels)
     {
-        if (totalModelLinesInUnit <= 1) return [];
-
         var groups = new List<List<WeaponContribution>>();
         var groupIndex = new Dictionary<(string ComponentName, string StatlineName), List<WeaponContribution>>();
         foreach (var contribution in entry.Contributions)
@@ -85,16 +128,31 @@ public class LivePlayModel : PageModel
         var rows = new List<WeaponContributionRow>();
         foreach (var group in groups)
         {
-            if (group.All(c => c.PerModelAttacks == group[0].PerModelAttacks))
+            var groupKey = $"{group[0].ComponentName}::{group[0].StatlineName}";
+            var uniform = group.All(c => c.PerModelAttacks == group[0].PerModelAttacks);
+
+            if (uniform && group.Count > 1)
             {
                 var count = group.Sum(c => c.Count);
-                rows.Add(new WeaponContributionRow(group[0].StatlineName, count, group[0].PerModelAttacks,
-                    group[0].PerModelAttacks.Scale(count)));
+                rows.Add(new WeaponContributionRow(
+                    Label: group[0].StatlineName,
+                    Count: count,
+                    PerModelAttacks: group[0].PerModelAttacks,
+                    Subtotal: group[0].PerModelAttacks.Scale(count),
+                    GroupKey: groupKey,
+                    SelectKey: null));
             }
-            else
+
+            foreach (var c in group)
             {
-                rows.AddRange(group.Select(c =>
-                    new WeaponContributionRow(c.StatlineName, c.Count, c.PerModelAttacks, c.PerModelAttacks.Scale(c.Count))));
+                var label = loadoutLabels.GetValueOrDefault((c.ComponentName, c.StatlineName, c.LoadoutIndex), c.StatlineName);
+                rows.Add(new WeaponContributionRow(
+                    Label: label,
+                    Count: c.Count,
+                    PerModelAttacks: c.PerModelAttacks,
+                    Subtotal: c.PerModelAttacks.Scale(c.Count),
+                    GroupKey: groupKey,
+                    SelectKey: SelectKey(c.ComponentName, c.StatlineName, c.LoadoutIndex)));
             }
         }
 
@@ -238,15 +296,33 @@ public sealed record ComponentAbilitySpanViewModel(
     IReadOnlyList<Ability> ModelAbilities,
     IReadOnlyList<Ability> UnitAbilities);
 
-/// <summary>One collapsed-or-expanded row of a weapon entry's contribution breakdown. Label is a
-/// StatlineName (see <see cref="LivePlayModel.BuildContributionBreakdown"/> for the grouping
-/// rule). Subtotal is always <c>PerModelAttacks.Scale(Count)</c> - safe to render standalone since
-/// every row's own Count/PerModelAttacks are shown right beside it.</summary>
-public sealed record WeaponContributionRow(string Label, int Count, DiceExpression PerModelAttacks, DiceExpression Subtotal);
+/// <summary>One row of a weapon entry's contribution breakdown - either a merged display row
+/// (<see cref="SelectKey"/> null, spans every raw contribution in <see cref="GroupKey"/>) or a raw
+/// per-contribution row (<see cref="SelectKey"/> set - see <see cref="LivePlayModel.SelectKey"/>).
+/// See <see cref="LivePlayModel.BuildContributionBreakdown"/> for the grouping rule. Subtotal is
+/// always <c>PerModelAttacks.Scale(Count)</c> - safe to render standalone since every row's own
+/// Count/PerModelAttacks are shown right beside it. Raw rows always exist (used by live-play.js for
+/// selection-driven filtering/recompute regardless of whether a visible expand trigger exists for
+/// this weapon - see <see cref="WeaponRowViewModel.ShowsBreakdownTrigger"/>).</summary>
+public sealed record WeaponContributionRow(
+    string Label, int Count, DiceExpression PerModelAttacks, DiceExpression Subtotal, string GroupKey, string? SelectKey)
+{
+    /// <summary>The plain integer value of <see cref="Subtotal"/> when it's a fixed (non-dice)
+    /// expression, for live-play.js to sum without needing any <see cref="DiceExpression"/>
+    /// semantics client-side; null when Subtotal is dice-based (e.g. a lone D6 contribution) - see
+    /// design.md's Risks section for the accepted scope limit this implies for client-side
+    /// recompute of a dice-valued contribution sharing a weapon with others.</summary>
+    public int? SubtotalValue => Subtotal.Count == 0 ? Subtotal.Modifier : null;
+}
 
-/// <summary>A weapon entry plus its (possibly empty) contribution breakdown. Empty means the entry
-/// has zero or one contributions - nothing to break down, so the page renders no toggle at all.</summary>
-public sealed record WeaponRowViewModel(AggregateWeaponEntry Entry, IReadOnlyList<WeaponContributionRow> Breakdown);
+/// <summary>A weapon entry plus its contribution breakdown (always at least one row - see
+/// <see cref="LivePlayModel.BuildContributionBreakdown"/>). <see cref="ShowsBreakdownTrigger"/>
+/// gates only the visible click-to-expand affordance (true when the unit has more than one
+/// ModelLine in total); <see cref="Breakdown"/> itself is always populated regardless, since
+/// live-play.js needs its rows' selection keys to filter/recompute this entry even when no user-
+/// facing trigger exists for it.</summary>
+public sealed record WeaponRowViewModel(
+    AggregateWeaponEntry Entry, IReadOnlyList<WeaponContributionRow> Breakdown, bool ShowsBreakdownTrigger);
 
 public sealed record UnitBlockViewModel(
     string Name,

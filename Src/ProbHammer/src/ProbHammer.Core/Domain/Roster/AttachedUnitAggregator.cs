@@ -96,7 +96,8 @@ public static class AttachedUnitAggregator
                     ComponentName: unit.Datasheet.Name,
                     StatlineName: modelLine.StatlineName,
                     Count: modelLine.RemainingCount,
-                    PerModelAttacks: profile.A);
+                    PerModelAttacks: profile.A,
+                    LoadoutIndex: LoadoutIndexOf(unit, modelLine));
                 var scaledAttacks = profile.A.Scale(modelLine.RemainingCount);
 
                 if (groups.TryGetValue(key, out var existing))
@@ -114,6 +115,19 @@ public static class AttachedUnitAggregator
         return groups.Values
             .Select(v => new AggregateWeaponEntry(v.Profile, v.TotalAttacks, v.Contributions))
             .ToList();
+    }
+
+    // Mirrors the same (unfiltered by RemainingCount) statline-name match BuildStatlines uses to
+    // build a statline entry's Loadouts list, so this index always lines up with that ModelLine's
+    // position in Loadouts - including when a dead sibling loadout still occupies an earlier slot.
+    // -1 when the statline has only one ModelLine (BuildStatlines renders no Loadouts breakdown at
+    // all in that case, so there is nothing to index).
+    private static int LoadoutIndexOf(Unit unit, ModelLine modelLine)
+    {
+        var lines = unit.ModelLines
+            .Where(ml => string.Equals(ml.StatlineName, modelLine.StatlineName, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        return lines.Count <= 1 ? -1 : lines.IndexOf(modelLine);
     }
 
     // Walks components in display order; for each present component, reports its Datasheet's own

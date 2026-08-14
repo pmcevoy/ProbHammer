@@ -46,9 +46,11 @@ one shared stat-tile showing that run's M/T/Sv/W/Ld/Oc values (and InSv when pre
 render one header line per entry in the run — showing that entry's own name and remaining/initial
 model count as its own distinct element, never concatenated with another entry's header — above
 the shared stat-tile, in the run's order. Each entry's header line SHALL render its own nested
-loadout breakdown listing every entry in that statline's `Loadouts`, showing each loadout's weapon
-list and its own remaining/initial count, unaffected by whether it is sharing a stat-tile with
-other entries. This statline rendering occupies the first of three columns in the unit block's
+loadout breakdown listing every entry in that statline's `Loadouts`, showing each loadout's own
+remaining/initial count and a weapon label computed as that loadout's weapon list with the multiset
+(bag) intersection of weapons shared by every loadout in that same statline entry's `Loadouts`
+subtracted out — i.e. only the weapons that distinguish this loadout from its siblings under the
+same entry. This statline rendering occupies the first of three columns in the unit block's
 Statline area — see "Statline Ability Column Rendering" for the other two.
 
 Each entry's header line, and each of its nested loadout lines when rendered, SHALL act as an
@@ -62,9 +64,7 @@ SHALL select all of its loadouts if the entry's current state is anything other 
 selected, or deselect all of them if the entry's current state is fully selected. A statline entry
 with exactly one loadout (which renders no nested breakdown, per the existing single-loadout rule
 below) has only the fully-selected/fully-deselected states, toggled directly by activating its own
-header line. The Statline section's disclosure `<summary>` SHALL render a live count of the unit
-block's currently-selected statline/loadout entries out of their total whenever that count is not
-the total, and SHALL render no such count when everything is selected.
+header line.
 
 #### Scenario: Squad with a distinct sergeant statline sharing the same values
 - **WHEN** a unit's aggregate view contains two consecutive same-component statline entries with
@@ -94,8 +94,28 @@ the total, and SHALL render no such count when everything is selected.
   appearance to how a single entry rendered before this change
 
 #### Scenario: Loadout breakdown lists every contributing model-line
-- **WHEN** a statline entry's `Loadouts` contains two entries with different weapon lists and counts
-- **THEN** that entry's header line's nested breakdown shows both, each with its own weapon list and remaining/initial count, regardless of whether the entry is sharing a stat-tile with others
+- **WHEN** a statline entry's `Loadouts` contains two entries whose weapon lists share some but not
+  all weapons (e.g. one loadout carries `[Bolt pistol, Heavy Bolt pistol, Power fist]` and the other
+  carries `[Bolt pistol, Heavy Bolt pistol, Astartes chainsword]`)
+- **THEN** that entry's header line's nested breakdown shows both, each labeled with only the
+  weapons not shared by every loadout in that entry (`"Power fist"` and `"Astartes chainsword"`
+  respectively) alongside its own remaining/initial count, regardless of whether the entry is
+  sharing a stat-tile with others
+
+#### Scenario: Shared weapons need not be contiguous or equally ordered to be excluded
+- **WHEN** a statline entry's `Loadouts` contains two entries whose weapon lists share weapons that
+  do not appear at the same list position in each (e.g. one loadout carries
+  `[Bolt pistol, Chainsword, Frag grenades]` and the other carries
+  `[Chainsword, Plasma pistol, Frag grenades]`)
+- **THEN** the shared weapons (`Chainsword`, `Frag grenades`) are excluded from both loadouts'
+  labels regardless of position, leaving `"Bolt pistol"` and `"Plasma pistol"` respectively
+
+#### Scenario: A loadout keeps its genuinely-extra copy of an otherwise-shared weapon
+- **WHEN** a statline entry's `Loadouts` contains one loadout carrying two copies of a weapon and a
+  sibling loadout carrying only one copy of that same weapon
+- **THEN** the shared multiset subtracted from each loadout's label contains only one copy of that
+  weapon, so the loadout carrying two copies still shows one remaining copy in its label; the
+  subtraction never removes more copies of a weapon than a loadout's siblings collectively share
 
 #### Scenario: Single-loadout entry has no redundant breakdown row
 - **WHEN** a statline entry's `Loadouts` contains exactly one entry
@@ -127,12 +147,6 @@ the total, and SHALL render no such count when everything is selected.
   entry's own header line
 - **THEN** every one of its loadouts becomes deselected, and the entry's own state becomes fully
   deselected
-
-#### Scenario: Statline section badge reflects the current selection count
-- **WHEN** a unit block's current selection has fewer statline/loadout entries selected than its
-  total
-- **THEN** the Statline section's disclosure summary shows the current selected count alongside the
-  total; once every entry is selected again, the count no longer renders
 
 ### Requirement: Weapon Section Rendering
 Each unit block SHALL group the view's `Weapons` into a Ranged section and a Melee section by each

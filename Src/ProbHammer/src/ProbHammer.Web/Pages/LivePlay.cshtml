@@ -16,8 +16,14 @@
 
             @if (unit.Statlines.Any())
             {
-                <details class="lp-section">
-                    <summary>Statline</summary>
+                <details class="lp-section" data-section="statline">
+                    <summary>
+                        <span class="section-title">Statline</span>
+                        <button type="button" class="filter-flag clear-filter-btn" hidden
+                                aria-label="Filtered - click to clear" title="Filtered - click to clear">
+                            <svg class="filter-flag-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2 L15 2 L10 8 L10 13 L6 15 L6 8 Z" /></svg>
+                        </button>
+                    </summary>
                     <div class="statline-grid">
                         @for (var runIndex = 0; runIndex < unit.Statlines.Count; runIndex++)
                         {
@@ -26,21 +32,36 @@
                                 @for (var entryIndex = 0; entryIndex < block.Entries.Count; entryIndex++)
                                 {
                                     var entry = block.Entries[entryIndex];
-                                    <div class="statline-header">
-                                        <span class="statline-name">@entry.StatlineName</span>
-                                        <span class="statline-count">(@(entry.RemainingCount)/@(entry.InitialCount))</span>
+                                    var multiLoadout = entry.Loadouts.Count > 1;
+                                    <div class="statline-entry">
+                                        @if (multiLoadout)
+                                        {
+                                            <div class="statline-header statline-toggle-group">
+                                                <span class="select-indicator" aria-hidden="true"></span>
+                                                <span class="statline-name">@entry.StatlineName</span>
+                                                <span class="statline-count">(@(entry.RemainingCount)/@(entry.InitialCount))</span>
+                                            </div>
+                                            var loadoutLabels = block.LoadoutLabels[entryIndex];
+                                            <ul class="loadout-breakdown">
+                                                @for (var loadoutIndex = 0; loadoutIndex < entry.Loadouts.Count; loadoutIndex++)
+                                                {
+                                                    var loadout = entry.Loadouts[loadoutIndex];
+                                                    <li class="loadout-toggle" data-select-key="@LivePlayModel.SelectKey(entry.ComponentName, entry.StatlineName, loadoutIndex)">
+                                                        <span class="select-indicator" aria-hidden="true"></span>
+                                                        @loadoutLabels[loadoutIndex] (@(loadout.RemainingCount)/@(loadout.InitialCount))
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+                                        else
+                                        {
+                                            <div class="statline-header statline-toggle" data-select-key="@LivePlayModel.SelectKey(entry.ComponentName, entry.StatlineName, -1)">
+                                                <span class="select-indicator" aria-hidden="true"></span>
+                                                <span class="statline-name">@entry.StatlineName</span>
+                                                <span class="statline-count">(@(entry.RemainingCount)/@(entry.InitialCount))</span>
+                                            </div>
+                                        }
                                     </div>
-                                    @if (entry.Loadouts.Count > 1)
-                                    {
-                                        var loadoutLabels = block.LoadoutLabels[entryIndex];
-                                        <ul class="loadout-breakdown">
-                                            @for (var loadoutIndex = 0; loadoutIndex < entry.Loadouts.Count; loadoutIndex++)
-                                            {
-                                                var loadout = entry.Loadouts[loadoutIndex];
-                                                <li>@loadoutLabels[loadoutIndex] (@(loadout.RemainingCount)/@(loadout.InitialCount))</li>
-                                            }
-                                        </ul>
-                                    }
                                 }
                                 <div class="statline-tiles">
                                     <div class="stat-tile"><span class="stat-label">M</span><span class="stat-value">@(block.Statline.M)"</span></div>
@@ -108,8 +129,13 @@
 
             @if (unit.RangedWeapons.Any())
             {
-                <details class="lp-section">
-                    <summary>Ranged Weapons</summary>
+                <details class="lp-section" data-section="ranged">
+                    <summary>
+                        <span class="section-title">Ranged Weapons</span>
+                        <span class="filter-flag filtered-badge" hidden aria-label="Filtered" title="Filtered">
+                            <svg class="filter-flag-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2 L15 2 L10 8 L10 13 L6 15 L6 8 Z" /></svg>
+                        </span>
+                    </summary>
                     <table class="weapon-table">
                         <colgroup>
                             <col class="col-weapon" />
@@ -138,9 +164,9 @@
                                 var weapon = row.Entry.Profile;
                                 var tags = WeaponAbilityTags(weapon);
                                 var weaponId = $"w-{i}-r-{w}";
-                                <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")">
+                                <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId">
                                     <td class="weapon-name">
-                                        @if (row.Breakdown.Count > 0)
+                                        @if (row.ShowsBreakdownTrigger)
                                         {
                                             <button type="button" class="weapon-name-toggle" data-weapon-id="@weaponId" aria-expanded="false">
                                                 @weapon.Name
@@ -160,7 +186,7 @@
                                         }
                                     </td>
                                     <td>@(weapon.Range)"</td>
-                                    <td>@row.Entry.TotalAttacks</td>
+                                    <td class="weapon-attacks-value">@row.Entry.TotalAttacks</td>
                                     <td>@(weapon.Skill)+</td>
                                     <td>@weapon.S</td>
                                     <td>@weapon.Ap</td>
@@ -168,7 +194,10 @@
                                 </tr>
                                 @foreach (var breakdown in row.Breakdown)
                                 {
-                                    <tr class="weapon-contribution-row @(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId" hidden>
+                                    <tr class="weapon-contribution-row @(breakdown.SelectKey == null ? "contribution-merged" : "") @(w % 2 == 1 ? "weapon-row-alt" : "")"
+                                        data-weapon-id="@weaponId" data-group-key="@breakdown.GroupKey"
+                                        data-merged="@(breakdown.SelectKey == null ? "true" : "false")"
+                                        data-select-key="@breakdown.SelectKey" data-subtotal-value="@breakdown.SubtotalValue" hidden>
                                         <td class="weapon-contribution-label">@breakdown.Label (@(breakdown.Count)&times;@(breakdown.PerModelAttacks))</td>
                                         <td></td>
                                         <td>@breakdown.Subtotal</td>
@@ -186,8 +215,13 @@
 
             @if (unit.MeleeWeapons.Any())
             {
-                <details class="lp-section">
-                    <summary>Melee Weapons</summary>
+                <details class="lp-section" data-section="melee">
+                    <summary>
+                        <span class="section-title">Melee Weapons</span>
+                        <span class="filter-flag filtered-badge" hidden aria-label="Filtered" title="Filtered">
+                            <svg class="filter-flag-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2 L15 2 L10 8 L10 13 L6 15 L6 8 Z" /></svg>
+                        </span>
+                    </summary>
                     <table class="weapon-table">
                         <colgroup>
                             <col class="col-weapon-melee" />
@@ -214,9 +248,9 @@
                                 var weapon = row.Entry.Profile;
                                 var tags = WeaponAbilityTags(weapon);
                                 var weaponId = $"w-{i}-m-{w}";
-                                <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")">
+                                <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId">
                                     <td class="weapon-name">
-                                        @if (row.Breakdown.Count > 0)
+                                        @if (row.ShowsBreakdownTrigger)
                                         {
                                             <button type="button" class="weapon-name-toggle" data-weapon-id="@weaponId" aria-expanded="false">
                                                 @weapon.Name
@@ -235,7 +269,7 @@
                                             }
                                         }
                                     </td>
-                                    <td>@row.Entry.TotalAttacks</td>
+                                    <td class="weapon-attacks-value">@row.Entry.TotalAttacks</td>
                                     <td>@(weapon.Skill)+</td>
                                     <td>@weapon.S</td>
                                     <td>@weapon.Ap</td>
@@ -243,7 +277,10 @@
                                 </tr>
                                 @foreach (var breakdown in row.Breakdown)
                                 {
-                                    <tr class="weapon-contribution-row @(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId" hidden>
+                                    <tr class="weapon-contribution-row @(breakdown.SelectKey == null ? "contribution-merged" : "") @(w % 2 == 1 ? "weapon-row-alt" : "")"
+                                        data-weapon-id="@weaponId" data-group-key="@breakdown.GroupKey"
+                                        data-merged="@(breakdown.SelectKey == null ? "true" : "false")"
+                                        data-select-key="@breakdown.SelectKey" data-subtotal-value="@breakdown.SubtotalValue" hidden>
                                         <td class="weapon-contribution-label">@breakdown.Label (@(breakdown.Count)&times;@(breakdown.PerModelAttacks))</td>
                                         <td>@breakdown.Subtotal</td>
                                         <td></td>

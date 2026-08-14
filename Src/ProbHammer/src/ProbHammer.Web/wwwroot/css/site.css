@@ -517,6 +517,36 @@ button[type="submit"]:hover { opacity: 0.85; }
     letter-spacing: 0.02em;
 }
 
+/* One unified glyph flag across all three section bars (Statline/Ranged/Melee), right-justified via
+   margin-left: auto in the flex summary. Plain text/background matching the bar itself - not a
+   colored pill - so it reads as part of the bar's own chrome rather than a separate notification.
+   The Statline instance is a real <button> (doubles as the Clear-filter control - clicking it
+   resets that unit block's selection); the Ranged/Melee instances are plain, non-interactive <span>s
+   (indicator only - see .filtered-badge below). Both share this base so they render identically. */
+.filter-flag {
+    margin-left: auto;
+    padding: 0;
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    font-size: 0.85rem;
+    line-height: 1;
+}
+button.filter-flag { cursor: pointer; }
+button.filter-flag:hover { opacity: 0.8; }
+
+/* Funnel icon as inline SVG rather than a Unicode-glyph trick: renders identically across
+   browsers/fonts instead of depending on two overlaid characters' font-specific metrics staying
+   aligned. fill: currentColor inherits the bar's own text color automatically - no separate
+   color-matching rule needed, and it stays correct if the bar's color ever changes. */
+.filter-flag-icon {
+    width: 0.8em;
+    height: 0.8em;
+    fill: currentColor;
+    vertical-align: -0.05em;
+}
+
 .unit-block > .lp-section,
 .unit-block > .keywords {
     margin: 0.6rem 0.85rem;
@@ -525,7 +555,12 @@ button[type="submit"]:hover { opacity: 0.85; }
 
 /* ── Section disclosure ── */
 
+/* display: flex lets .filter-flag push to the far right via margin-left: auto, while the ::before
+   disclosure arrow and .section-title stay left-aligned together - the browser generates ::before
+   as the first flex item automatically. */
 .lp-section summary {
+    display: flex;
+    align-items: center;
     cursor: pointer;
     user-select: none;
     list-style: none;
@@ -602,6 +637,45 @@ button[type="submit"]:hover { opacity: 0.85; }
     color: var(--text-dim);
 }
 .loadout-breakdown li { padding: 0.05rem 0; }
+
+/* ── Selection toggles (Statline section) ──
+   .statline-toggle: single-loadout statline, binary selected/deselected, toggled directly.
+   .statline-toggle-group: multi-loadout statline header - tri-state, derived from its loadouts,
+   never an independently-stored state (see live-play.js updateIndicators). .loadout-toggle: one
+   per loadout under a .statline-toggle-group, binary. All three are full-row tap targets, not
+   small checkbox hit-targets - the visual glyph is .select-indicator, not the click boundary. */
+.statline-toggle, .statline-toggle-group, .loadout-toggle {
+    cursor: pointer;
+    user-select: none;
+}
+.statline-toggle:hover, .statline-toggle-group:hover, .loadout-toggle:hover { opacity: 0.8; }
+
+.loadout-toggle { display: flex; align-items: center; }
+
+.select-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.8rem;
+    height: 0.8rem;
+    border: 1px solid var(--text-dim);
+    border-radius: 2px;
+    margin-right: 0.35rem;
+    font-size: 0.6rem;
+    line-height: 1;
+    color: #fff;
+    flex-shrink: 0;
+}
+.select-selected .select-indicator { background: var(--accent); border-color: var(--accent); }
+.select-selected .select-indicator::after { content: '\2713'; }
+.select-deselected .select-indicator { background: transparent; }
+.select-partial .select-indicator { background: var(--text-dim); border-color: var(--text-dim); }
+.select-partial .select-indicator::after { content: '\2013'; }
+
+/* Client-side selection filtering (live-play.js) - deliberately separate from the [hidden]
+   attribute, which the existing weapon-name-toggle expand/collapse feature already owns; a row can
+   be independently hidden by either mechanism without the two fighting over the same attribute. */
+.selection-excluded { display: none; }
 
 /* ── Weapon table (scoped light restyle) ── */
 

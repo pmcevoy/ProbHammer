@@ -29,14 +29,18 @@ without doing that arithmetic by hand.
   `(ComponentName, StatlineName)` group shares the same `PerModelAttacks`. This adds selection
   agreement to that same condition — a group whose members currently agree (all selected or all
   deselected) still merges exactly as it does today; a group whose members disagree splits into one
-  row per loadout (reusing `compress-loadout-labels`' compressed per-loadout label), showing only
-  the still-selected member(s) — a deselected sibling's row disappears from the breakdown rather
-  than rendering struck through, matching how a fully-excluded weapon's row disappears outright.
-  Worked example against the real Crusader Squad fixture: with nothing filtered, Bolt Pistol still
-  reads as one merged `"Initiate (5×1)"` row inside a total of 10 (Neophyte 4 + Initiate 5 +
-  Crusade Ancient 1), exactly as today; deselecting only the Power-fist-armed Initiate loadout (2 of
-  those 5 models) drops the total to 8 and splits the breakdown to show `"Neophyte (4×1)"`,
-  `"Astartes chainsword (3×1)"`, and `"Crusade Ancient (1×1)"` — the Power-fist loadout's row is
+  row per loadout, each labeled `"{StatlineName} w/ {compressed per-loadout label}"` (e.g. `"Initiate
+  w/ Astartes chainsword"`) rather than the bare compressed label alone (`compress-loadout-labels`'
+  compressed label reads fine in the Statline section because it's visually nested under its
+  statline's own header line; a weapon breakdown row has no such nesting, so the bare label alone
+  would misread as if the weapon itself were the contributor), showing only the still-selected
+  member(s) — a deselected sibling's row disappears from the breakdown rather than rendering struck
+  through, matching how a fully-excluded weapon's row disappears outright. Worked example against
+  the real Crusader Squad fixture: with nothing filtered, Bolt Pistol still reads as one merged
+  `"Initiate (5×1)"` row inside a total of 10 (Neophyte 4 + Initiate 5 + Crusade Ancient 1), exactly
+  as today; deselecting only the Power-fist-armed Initiate loadout (2 of those 5 models) drops the
+  total to 8 and splits the breakdown to show `"Neophyte (4×1)"`, `"Initiate w/ Astartes chainsword
+  (3×1)"`, and `"Crusade Ancient (1×1)"` — the Power-fist loadout's row is
   simply absent.
 - An explicit "Clear filter" control resets every statline/loadout back to fully selected. Visible
   only while a filter is currently active.

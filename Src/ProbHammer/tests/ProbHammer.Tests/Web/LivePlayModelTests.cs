@@ -114,18 +114,30 @@ public class LivePlayModelTests
         // both differently-loadout Initiate lines (Power-fist x2 / Astartes-chainsword x3, both
         // still carrying the same Bolt pistol entry) - plus the attached Crusade Ancient's own
         // "Bolt Pistol" (x1), which is structurally EqualityKey-equal (same Skill/S/Ap/D/Pistol)
-        // and so merges into the same AggregateWeaponEntry from a different component.
+        // and so merges into the same AggregateWeaponEntry from a different component. The
+        // uniform Initiate group now always emits its merged row (SelectKey null) *and* its two raw
+        // per-loadout rows (SelectKey set, Label the compressed distinguishing weapon) - the raw
+        // rows exist for live-play.js's selection filtering even though they stay hidden by default
+        // whenever the group's loadouts currently agree (see live-play.js recomputeWeaponRow).
         var view = AttachedUnitAggregator.Build(Units.CrusaderSquad_Helbrecht_Ancient());
         var boltPistol = view.Weapons.Single(w =>
             w.Profile.Name.Equals("Bolt pistol", StringComparison.OrdinalIgnoreCase));
+        var loadoutLabels = LivePlayModel.BuildLoadoutLabelLookup(view.Statlines);
 
-        var breakdown = LivePlayModel.BuildContributionBreakdown(boltPistol, TotalModelLines(view));
+        var breakdown = LivePlayModel.BuildContributionBreakdown(boltPistol, loadoutLabels);
 
         breakdown.Should().BeEquivalentTo(
         [
-            new WeaponContributionRow("Neophyte", 4, DiceExpression.Fixed(1), DiceExpression.Fixed(4)),
-            new WeaponContributionRow("Initiate", 5, DiceExpression.Fixed(1), DiceExpression.Fixed(5)),
-            new WeaponContributionRow("Crusade Ancient", 1, DiceExpression.Fixed(1), DiceExpression.Fixed(1))
+            new WeaponContributionRow("Neophyte", 4, DiceExpression.Fixed(1), DiceExpression.Fixed(4),
+                "Crusader Squad::Neophyte", "Crusader Squad::Neophyte"),
+            new WeaponContributionRow("Initiate", 5, DiceExpression.Fixed(1), DiceExpression.Fixed(5),
+                "Crusader Squad::Initiate", null),
+            new WeaponContributionRow("Initiate w/ Power fist", 2, DiceExpression.Fixed(1), DiceExpression.Fixed(2),
+                "Crusader Squad::Initiate", "Crusader Squad::Initiate::0"),
+            new WeaponContributionRow("Initiate w/ Astartes chainsword", 3, DiceExpression.Fixed(1), DiceExpression.Fixed(3),
+                "Crusader Squad::Initiate", "Crusader Squad::Initiate::1"),
+            new WeaponContributionRow("Crusade Ancient", 1, DiceExpression.Fixed(1), DiceExpression.Fixed(1),
+                "Crusade Ancient::Crusade Ancient", "Crusade Ancient::Crusade Ancient")
         ]);
     }
 
@@ -134,6 +146,8 @@ public class LivePlayModelTests
     {
         // Synthetic: EqualityKey excludes Attacks, so two contributions sharing a StatlineName
         // could in principle disagree on PerModelAttacks even though no real fixture produces this.
+        // No merged row is possible for a disagreeing group - both contributions render as their
+        // own raw row, exactly as before this change, now each also carrying its GroupKey/SelectKey.
         var profile = new RangedWeapon("Test Weapon", 12, DiceExpression.Fixed(1), 3, 4, 0, 1);
         var entry = new AggregateWeaponEntry(
             Profile: profile,
@@ -144,44 +158,36 @@ public class LivePlayModelTests
                 new WeaponContribution("Squad A", "Initiate", 1, DiceExpression.Fixed(5))
             ]);
 
-        var breakdown = LivePlayModel.BuildContributionBreakdown(entry, totalModelLinesInUnit: 3);
+        var breakdown = LivePlayModel.BuildContributionBreakdown(entry, EmptyLoadoutLabels);
 
         breakdown.Should().BeEquivalentTo(
         [
-            new WeaponContributionRow("Initiate", 2, DiceExpression.Fixed(1), DiceExpression.Fixed(2)),
-            new WeaponContributionRow("Initiate", 1, DiceExpression.Fixed(5), DiceExpression.Fixed(5))
+            new WeaponContributionRow("Initiate", 2, DiceExpression.Fixed(1), DiceExpression.Fixed(2),
+                "Squad A::Initiate", "Squad A::Initiate"),
+            new WeaponContributionRow("Initiate", 1, DiceExpression.Fixed(5), DiceExpression.Fixed(5),
+                "Squad A::Initiate", "Squad A::Initiate")
         ]);
     }
 
     [Fact]
-    public void BuildContributionBreakdown_ReturnsOneRow_WhenEntryHasSingleContribution_AndUnitHasMultipleModelLines()
+    public void BuildContributionBreakdown_ReturnsOneRow_WhenEntryHasSingleContribution()
     {
-        // A single contributor is still worth naming - e.g. "it was the Sword Brother" - as long
-        // as the unit has more than one ModelLine to distinguish it from.
+        // A group of exactly one contribution never gets a merged row alongside it - its lone raw
+        // row already is the single rendered row, matching the pre-existing "single contribution
+        // still renders as one row" behavior (now also carrying its GroupKey/SelectKey).
         var profile = new RangedWeapon("Test Weapon", 12, DiceExpression.Fixed(1), 3, 4, 0, 1);
         var entry = new AggregateWeaponEntry(
             Profile: profile,
             TotalAttacks: DiceExpression.Fixed(3),
             Contributions: [new WeaponContribution("Squad A", "Sword Brother", 3, DiceExpression.Fixed(1))]);
 
-        var breakdown = LivePlayModel.BuildContributionBreakdown(entry, totalModelLinesInUnit: 2);
+        var breakdown = LivePlayModel.BuildContributionBreakdown(entry, EmptyLoadoutLabels);
 
         breakdown.Should().BeEquivalentTo(
         [
-            new WeaponContributionRow("Sword Brother", 3, DiceExpression.Fixed(1), DiceExpression.Fixed(3))
+            new WeaponContributionRow("Sword Brother", 3, DiceExpression.Fixed(1), DiceExpression.Fixed(3),
+                "Squad A::Sword Brother", "Squad A::Sword Brother")
         ]);
-    }
-
-    [Fact]
-    public void BuildContributionBreakdown_ReturnsEmpty_WhenUnitHasOnlyOneModelLineTotal()
-    {
-        var profile = new RangedWeapon("Test Weapon", 12, DiceExpression.Fixed(1), 3, 4, 0, 1);
-        var entry = new AggregateWeaponEntry(
-            Profile: profile,
-            TotalAttacks: DiceExpression.Fixed(3),
-            Contributions: [new WeaponContribution("Squad A", "Initiate", 3, DiceExpression.Fixed(1))]);
-
-        LivePlayModel.BuildContributionBreakdown(entry, totalModelLinesInUnit: 1).Should().BeEmpty();
     }
 
     [Fact]
@@ -197,9 +203,16 @@ public class LivePlayModelTests
 
         boltPistolRow.Breakdown.Should().BeEquivalentTo(
         [
-            new WeaponContributionRow("Neophyte", 4, DiceExpression.Fixed(1), DiceExpression.Fixed(4)),
-            new WeaponContributionRow("Initiate", 5, DiceExpression.Fixed(1), DiceExpression.Fixed(5)),
-            new WeaponContributionRow("Crusade Ancient", 1, DiceExpression.Fixed(1), DiceExpression.Fixed(1))
+            new WeaponContributionRow("Neophyte", 4, DiceExpression.Fixed(1), DiceExpression.Fixed(4),
+                "Crusader Squad::Neophyte", "Crusader Squad::Neophyte"),
+            new WeaponContributionRow("Initiate", 5, DiceExpression.Fixed(1), DiceExpression.Fixed(5),
+                "Crusader Squad::Initiate", null),
+            new WeaponContributionRow("Initiate w/ Power fist", 2, DiceExpression.Fixed(1), DiceExpression.Fixed(2),
+                "Crusader Squad::Initiate", "Crusader Squad::Initiate::0"),
+            new WeaponContributionRow("Initiate w/ Astartes chainsword", 3, DiceExpression.Fixed(1), DiceExpression.Fixed(3),
+                "Crusader Squad::Initiate", "Crusader Squad::Initiate::1"),
+            new WeaponContributionRow("Crusade Ancient", 1, DiceExpression.Fixed(1), DiceExpression.Fixed(1),
+                "Crusade Ancient::Crusade Ancient", "Crusade Ancient::Crusade Ancient")
         ]);
     }
 
@@ -218,23 +231,27 @@ public class LivePlayModelTests
 
         pyrePistolRow.Breakdown.Should().BeEquivalentTo(
         [
-            new WeaponContributionRow("Sword Brother", 1, DiceExpression.D6, DiceExpression.D6)
+            new WeaponContributionRow("Sword Brother", 1, DiceExpression.D6, DiceExpression.D6,
+                "Crusader Squad::Sword Brother", "Crusader Squad::Sword Brother")
         ]);
     }
 
     [Fact]
-    public void OnGet_AttachesNoBreakdown_ForAnyWeapon_WhenUnitHasOnlyOneModelLineTotal()
+    public void OnGet_HidesBreakdownTrigger_ForAnyWeapon_WhenUnitHasOnlyOneModelLineTotal()
     {
         // Impulsor is a single-model, single-ModelLine Unit - there's no second source any of its
-        // weapons could be distinguished from, so no weapon on it should ever show a toggle.
+        // weapons could be distinguished from, so no weapon on it should ever show a clickable
+        // expand trigger. Breakdown itself still has one raw row per weapon (its own SelectKey) -
+        // that data isn't gated by ShowsBreakdownTrigger, since selection-scoped filtering still
+        // needs it even for a unit with only one addressable statline.
         var model = new LivePlayModel();
 
         model.OnGet();
 
         var unit = model.Units.Single(u => u.Name == "Impulsor");
 
-        unit.RangedWeapons.Should().OnlyContain(w => w.Breakdown.Count == 0);
-        unit.MeleeWeapons.Should().OnlyContain(w => w.Breakdown.Count == 0);
+        unit.RangedWeapons.Should().OnlyContain(w => !w.ShowsBreakdownTrigger && w.Breakdown.Count == 1);
+        unit.MeleeWeapons.Should().OnlyContain(w => !w.ShowsBreakdownTrigger && w.Breakdown.Count == 1);
     }
 
     [Fact]
@@ -292,6 +309,10 @@ public class LivePlayModelTests
         labels.Should().Equal("Bolt pistol, Chainsword");
     }
 
-    private static int TotalModelLines(AttachedUnitAggregateView view) =>
-        view.Statlines.Sum(s => Math.Max(s.Loadouts.Count, 1));
+    // Synthetic BuildContributionBreakdown tests construct WeaponContribution directly, with no
+    // backing AggregateStatlineEntry/Loadouts data to look a compressed label up from - an empty
+    // lookup falls back to each contribution's own StatlineName (GetValueOrDefault), matching what
+    // these tests already expect for their Label assertions.
+    private static readonly IReadOnlyDictionary<(string ComponentName, string StatlineName, int LoadoutIndex), string>
+        EmptyLoadoutLabels = new Dictionary<(string, string, int), string>();
 }

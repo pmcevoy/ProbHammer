@@ -13,11 +13,22 @@ public sealed record AggregateStatlineEntry(
     int InitialCount,
     IReadOnlyList<ModelLineLoadout> Loadouts);
 
+/// <summary>
+/// <see cref="LoadoutIndex"/> is the contributing <c>ModelLine</c>'s position within its
+/// statline's <see cref="AggregateStatlineEntry.Loadouts"/> list (same ordering
+/// <c>AttachedUnitAggregator.BuildStatlines</c> already establishes) - lets a consumer correlate a
+/// specific contribution to a specific loadout unambiguously, since two sibling loadouts under the
+/// same statline name are otherwise indistinguishable by <see cref="ComponentName"/>/
+/// <see cref="StatlineName"/> alone, and <see cref="Count"/> is not reliable (two loadouts can
+/// coincidentally share a model count). <c>-1</c> when the statline has only one <c>ModelLine</c>
+/// (no <c>Loadouts</c> rendered at all, so there is nothing to index).
+/// </summary>
 public sealed record WeaponContribution(
     string ComponentName,
     string StatlineName,
     int Count,
-    DiceExpression PerModelAttacks);
+    DiceExpression PerModelAttacks,
+    int LoadoutIndex = -1);
 
 /// <summary>
 /// <see cref="Profile"/> is retained for its identity fields (Name/Type/Range/Skill/S/Ap/D/ability

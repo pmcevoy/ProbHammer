@@ -217,6 +217,36 @@ public class AttachedUnitAggregatorTests
     }
 
     [Fact]
+    public void WeaponContribution_LoadoutIndexIsMinusOne_WhenItsStatlineHasOnlyOneModelLine()
+    {
+        // Sword Brother/Marshal each have exactly one ModelLine in WeaponAggregationAttachedUnit -
+        // no independently-addressable loadout to index, so LoadoutIndex is the -1 sentinel.
+        var attachedUnit = AggregateViewFixtures.WeaponAggregationAttachedUnit();
+
+        var view = AttachedUnitAggregator.Build(attachedUnit);
+
+        var entry = view.Weapons.Single();
+        entry.Contributions.Should().OnlyContain(c => c.LoadoutIndex == -1);
+    }
+
+    [Fact]
+    public void WeaponContribution_LoadoutIndexMatchesPositionWithinItsStatlinesLoadouts()
+    {
+        // Two "Initiate" ModelLines, declared Power fist first, Master-crafted Power Weapon second -
+        // the same order AttachedUnitAggregator.BuildStatlines already establishes for Loadouts.
+        var unit = UnitFixtures.CrusaderSquadMixedLoadout();
+
+        var view = AttachedUnitAggregator.Build(unit);
+
+        var powerFistContribution = view.Weapons.Single(w => w.Profile.Name == "Power fist").Contributions.Single();
+        powerFistContribution.LoadoutIndex.Should().Be(0);
+
+        var masterCraftedContribution = view.Weapons
+            .Single(w => w.Profile.Name == "Master-crafted Power Weapon").Contributions.Single();
+        masterCraftedContribution.LoadoutIndex.Should().Be(1);
+    }
+
+    [Fact]
     public void WeaponView_DifferentlyModifiedSameNamedWeapons_StaySeparate()
     {
         var attachedUnit = AggregateViewFixtures.DifferentlyModifiedWeaponsAttachedUnit();
