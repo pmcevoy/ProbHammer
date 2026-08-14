@@ -547,6 +547,35 @@ button.filter-flag:hover { opacity: 0.8; }
     vertical-align: -0.05em;
 }
 
+/* Groups the Statline summary's two right-aligned controls (casualty-reset, clear-filter) so they
+   push right together (margin-left: auto on the wrapper, not each child - two auto-margined
+   siblings would split the bar's remaining free space between them instead of sitting a fixed
+   distance apart) with a deliberate, fixed gap between them regardless of which one is currently
+   hidden - the whole point being enough separation that clearing a filter can't fat-finger a
+   casualty reset, or vice versa (casualty-tracking follow-up, reported from hands-on play). */
+.statline-flags {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+}
+.statline-flags .filter-flag { margin-left: 0; }
+
+/* --amber (this page's existing "pay attention, this is different from normal" token - While
+   Leading abilities, active modifier summaries) rather than introducing an eighth colour into the
+   seven-colour palette (.claude/design-tokens.md). Kept even though the emoji glyph below ignores
+   it in practice - harmless, and still applies if this button's icon ever changes to something
+   that does respect currentColor. */
+.casualty-reset-btn { color: var(--amber); }
+
+/* U+1F480 (SKULL): considered an inline SVG mask instead (matching .filter-flag-icon's own
+   reasoning - a platform emoji ignores currentColor and its shape/style varies by OS), tried both
+   side by side, and the emoji was the one kept after review. Font-size trimmed down since emoji
+   glyphs render visually larger than the other flat-vector icons at the same size. */
+.casualty-reset-btn-emoji {
+    font-size: 0.75rem;
+}
+
 .unit-block > .lp-section,
 .unit-block > .keywords {
     margin: 0.6rem 0.85rem;

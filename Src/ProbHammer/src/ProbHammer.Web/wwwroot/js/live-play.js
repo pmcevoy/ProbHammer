@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function initUnitBlock(unitEl) {
     initWeaponProvenanceToggles(unitEl);
     initCasualtyControls(unitEl);
+    initCasualtyReset(unitEl);
     initUnitSelection(unitEl);
 }
 
@@ -67,6 +68,43 @@ function initCasualtyControls(unitEl) {
     });
 }
 
+// Reset-casualties control (casualty-tracking follow-up). Confirms first - this can revert several
+// taps' worth of marking at once, and is deliberately spaced away from the Clear-filter button (see
+// .statline-flags in site.css) so the two can't be fat-fingered for each other. Resets every
+// model-line this specific unit currently has a casualty control for, regardless of whether that
+// one is actually adjusted right now - simpler than diffing, and a no-op remaining==initial send is
+// harmless (SetRemainingCount is idempotent).
+function initCasualtyReset(unitEl) {
+    const button = unitEl.querySelector('.casualty-reset-btn');
+    if (!button) return;
+
+    button.addEventListener('click', async event => {
+        event.stopPropagation();
+        if (button.disabled) return;
+        if (!confirm('Reset all casualties for this unit? This cannot be undone.')) return;
+
+        const keysToReset = new Map(); // key -> initial value, deduped (dec/inc buttons share a key)
+        unitEl.querySelectorAll('.casualty-btn').forEach(btn => {
+            keysToReset.set(btn.dataset.casualtyKey, Number(btn.dataset.initial));
+        });
+        if (keysToReset.size === 0) return;
+
+        const stored = getStoredCasualties();
+        keysToReset.forEach((initialValue, key) => { stored[key] = initialValue; });
+        setStoredCasualties(stored);
+
+        const succeeded = await syncCasualties();
+        if (!succeeded) return;
+
+        // Prune this unit's now-pristine entries so localStorage doesn't carry redundant
+        // "reset to initial" markers forever - safe to do only after a confirmed successful sync,
+        // since the swapped-in fragment already reflects the reset regardless of what's stored.
+        const afterReset = getStoredCasualties();
+        keysToReset.forEach((_, key) => { delete afterReset[key]; });
+        setStoredCasualties(afterReset);
+    });
+}
+
 function getStoredCasualties() {
     try {
         return JSON.parse(localStorage.getItem(CASUALTY_STORAGE_KEY) || '{}');
@@ -102,7 +140,9 @@ function parseCasualtyKey(key) {
 // server is stateless and always rebuilds from a pristine roster, so a request carrying only one
 // adjustment would discard every earlier casualty from the same session (see casualty-tracking's
 // design.md - "every request carries the full current map"). A no-op when the map is empty, so a
-// browser with no recorded adjustments never issues a request at all.
+// browser with no recorded adjustments never issues a request at all. Returns whether the sync
+// actually completed (used by initCasualtyReset to know when it's safe to prune storage) - true
+// for the empty-map no-op too, since there was nothing to fail.
 async function syncCasualties() {
     const stored = getStoredCasualties();
     const adjustments = Object.entries(stored)
@@ -112,7 +152,7 @@ async function syncCasualties() {
         })
         .filter(entry => entry !== null);
 
-    if (adjustments.length === 0) return;
+    if (adjustments.length === 0) return true;
 
     let response;
     try {
@@ -122,12 +162,13 @@ async function syncCasualties() {
             body: JSON.stringify(adjustments)
         });
     } catch {
-        return; // offline/network failure - leave the DOM as-is, localStorage still holds the state
+        return false; // offline/network failure - leave the DOM as-is, localStorage still holds the state
     }
-    if (!response.ok) return;
+    if (!response.ok) return false;
 
     const fragments = await response.json();
     Object.entries(fragments).forEach(([unitIndex, html]) => swapUnitBlock(unitIndex, html));
+    return true;
 }
 
 // Replaces one unit-block's markup with server-rendered HTML and re-initializes only that node -

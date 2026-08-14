@@ -12,10 +12,15 @@
         <details class="lp-section" data-section="statline">
             <summary>
                 <span class="section-title">Statline</span>
-                <button type="button" class="filter-flag clear-filter-btn" hidden
-                        aria-label="Filtered - click to clear" title="Filtered - click to clear">
-                    <svg class="filter-flag-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2 L15 2 L10 8 L10 13 L6 15 L6 8 Z" /></svg>
-                </button>
+                <span class="statline-flags">
+                    <button type="button" class="filter-flag clear-filter-btn" hidden
+                            aria-label="Filtered - click to clear" title="Filtered - click to clear">
+                        <svg class="filter-flag-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2 L15 2 L10 8 L10 13 L6 15 L6 8 Z" /></svg>
+                    </button>
+                    <button type="button" class="filter-flag casualty-reset-btn casualty-reset-btn-emoji" hidden="@(!unit.HasCasualties)"
+                            data-unit-index="@i"
+                            aria-label="Reset casualties for this unit" title="Reset casualties for this unit">&#x1F480;</button>
+                </span>
             </summary>
             <div class="statline-grid">
                 @for (var runIndex = 0; runIndex < unit.Statlines.Count; runIndex++)

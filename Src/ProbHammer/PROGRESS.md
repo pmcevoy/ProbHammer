@@ -8,6 +8,40 @@ Nothing in progress.
 
 ## Recently Completed
 
+- Follow-up patch on `casualty-tracking` (no separate OpenSpec change — small enough to land
+  directly): a "reset casualties" control per unit block, requested after hands-on play surfaced
+  that reverting several taps' worth of casualties one at a time was tedious. Lives in the
+  Statline `<summary>` bar alongside the existing Clear-filter funnel, wrapped in a new
+  `.statline-flags` flex container so the two push right *together* (a single `margin-left: auto`
+  on the wrapper, not on each button — two auto-margined siblings would have split the bar's free
+  space between them instead of sitting a fixed distance apart) with a deliberate `0.75rem` gap
+  between them, so clearing a filter and resetting casualties can't be fat-fingered for each other.
+  Ordering was flipped after review: Clear-filter sits left, casualty-reset sits rightmost, since
+  casualties persist far longer than a per-turn filter and the rightmost slot won't visually shift
+  every time the filter toggles on/off. Confirms via a native `window.confirm()` before doing
+  anything — no custom modal, matching this project's zero-dependency JS approach. On confirm,
+  `live-play.js` collects every casualty coordinate currently rendered for that unit (deduped
+  across each pair's dec/inc buttons), resets each to its own `data-initial` value through the
+  same `syncCasualties()`/`swapUnitBlock()` path a normal casualty tap already uses (no new
+  server-side verb needed), and prunes those now-pristine keys back out of `localStorage` once the
+  sync confirms success — `syncCasualties()` gained a boolean return for exactly this. Only
+  visible while the unit actually has a casualty (`UnitBlockViewModel.HasCasualties`, computed
+  server-side from `RemainingCount != InitialCount` across the unit's statline entries), server-
+  rendered the same way the run-collapse "dead" state already is, so no client-side visibility
+  scan is needed either.
+  **Icon went through two iterations, both tried live in-browser rather than guessed at**: first
+  an inline SVG skull built from an `<svg><mask>` (white cranium path, black circular eye-socket
+  and triangular nose cutouts) — same reasoning that already ruled out a Unicode glyph for the
+  Ranged/Melee funnel icon (a mask composites correctly against `currentColor` regardless of what's
+  behind it, where a font/emoji glyph varies by platform and can't punch true holes). Scaled 6× in
+  a live Firefox session to confirm the shape actually read as a skull before settling on it — it
+  did. The user then asked to compare against the U+1F480 (💀) emoji directly; tried it the same
+  way (scaled 6× live), confirmed it renders as a full-color platform glyph that ignores
+  `--amber`/`currentColor` entirely (as expected, but worth seeing rather than assuming), and after
+  reviewing both side by side the user kept the emoji anyway — small enough of a style
+  inconsistency to accept for a control this size. The SVG mask code was removed rather than kept
+  dead/commented-out once the emoji was chosen.
+
 - Post-implementation fix on `casualty-tracking`, reported from hands-on play: a casualty tap on
   one statline entry was resetting *every* entry's weapon-selection filter in the same unit block
   back to fully-selected, not just the adjusted entry's — jarring mid-combat (deselect several

@@ -424,7 +424,15 @@ public sealed record UnitBlockViewModel(
     IReadOnlyList<WeaponRowViewModel> RangedWeapons,
     IReadOnlyList<WeaponRowViewModel> MeleeWeapons,
     IReadOnlyList<ComponentAbilitySpanViewModel> ComponentAbilitySpans,
-    IReadOnlyList<string> Keywords);
+    IReadOnlyList<string> Keywords)
+{
+    /// <summary>True once at least one statline entry in this unit has taken a casualty
+    /// (RemainingCount != InitialCount somewhere) - gates the "reset casualties" control's
+    /// visibility, mirroring the Clear-filter button's own "only shown while active" precedent.
+    /// A entry's RemainingCount is already summed across its own loadouts, so checking entries
+    /// alone is sufficient - no need to drill into individual Loadouts.</summary>
+    public bool HasCasualties => Statlines.Any(block => block.Entries.Any(e => e.RemainingCount != e.InitialCount));
+}
 
 /// <summary>Wraps a <see cref="UnitBlockViewModel"/> with its position in
 /// <see cref="LivePlayModel.Units"/> for the <c>_UnitBlock</c> partial - needed for the weapon-row
