@@ -43,4 +43,46 @@ public class ModelLineTests
 
         modelLine.RemainingCount.Should().Be(0);
     }
+
+    [Fact]
+    public void SetRemainingCount_IncreasesRemainingCount_ToCorrectAMistakenRemoval()
+    {
+        var modelLine = new ModelLine("Initiate", ["Bolt Rifle"], count: 5);
+        modelLine.RemoveCasualties(2);
+
+        modelLine.SetRemainingCount(4);
+
+        modelLine.RemainingCount.Should().Be(4);
+    }
+
+    [Fact]
+    public void SetRemainingCount_ClampsAtTheOriginalCount()
+    {
+        var modelLine = new ModelLine("Initiate", ["Bolt Rifle"], count: 5);
+
+        modelLine.SetRemainingCount(99);
+
+        modelLine.RemainingCount.Should().Be(5);
+    }
+
+    [Fact]
+    public void SetRemainingCount_ClampsAtZero()
+    {
+        var modelLine = new ModelLine("Initiate", ["Bolt Rifle"], count: 5);
+
+        modelLine.SetRemainingCount(-1);
+
+        modelLine.RemainingCount.Should().Be(0);
+    }
+
+    [Fact]
+    public void SetRemainingCount_ARoundTrip_ReturnsToTheStartingCount()
+    {
+        var modelLine = new ModelLine("Initiate", ["Bolt Rifle"], count: 5);
+
+        modelLine.SetRemainingCount(2);
+        modelLine.SetRemainingCount(5);
+
+        modelLine.RemainingCount.Should().Be(5);
+    }
 }

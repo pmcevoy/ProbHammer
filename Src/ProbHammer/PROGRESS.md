@@ -8,6 +8,98 @@ Nothing in progress.
 
 ## Recently Completed
 
+- Post-implementation fix on `casualty-tracking`, reported from hands-on play: a casualty tap on
+  one statline entry was resetting *every* entry's weapon-selection filter in the same unit block
+  back to fully-selected, not just the adjusted entry's — jarring mid-combat (deselect several
+  entries to focus on one ongoing fight, then an unrelated casualty tap on a different entry
+  reselects them all). Root cause: `live-play.js`'s `initUnitSelection` built a fresh, empty
+  `deselected` `Set` on every call, including the re-init `swapUnitBlock` triggers after a casualty
+  round-trip — this directly contradicted the already-written "Casualty Tracking Is Independent of
+  Selection Filtering" requirement's own "Marking a casualty does not change the current filter"
+  scenario, not a new judgment call. Fixed by moving the `Set` into a module-scope
+  `deselectedByUnit` `Map` keyed by `data-unit-index`, reused (not recreated) across a swap of the
+  same unit — safe because a casualty adjustment never changes a select-key's shape
+  (`ComponentName`/`StatlineName`/`LoadoutIndex`), only `RemainingCount`. Page-load-ephemeral filter
+  behavior (`live-play-selection-scoped-weapons`) is unchanged — only in-session swaps now preserve
+  selection state. Also fixed in the same session, from a separate contrast-nit report: the
+  casualty `−`/`+` buttons' text was near-black (`.mod-step-btn`'s inherited `color: var(--text)`)
+  on a bottle-green background, unreadable — overridden to white for `.casualty-btn` specifically.
+  `openspec/changes/casualty-tracking/design.md` updated (Decisions/Risks corrected to describe the
+  fix instead of the old, spec-contradicting "accepted trade-off" framing).
+- OpenSpec change `casualty-tracking` implemented and applied (all 29 tasks): `/LivePlay` gains its
+  first mutation and first persistence — a `−`/`+` casualty control on every single-loadout
+  statline entry's header line and on every loadout line of a multi-loadout entry (never on a
+  multi-loadout entry's own summed header, which has no single `ModelLine` to adjust). Architecture
+  decided over several rounds of discussion (initially explored, then backed away from, a Blazor
+  WASM rewrite; settled on keeping the page server-rendered): the browser persists a coordinate →
+  remaining-count map to `localStorage`, POSTs the *entire* current map to a new
+  `POST /api/live-play/casualties` endpoint on every load and every tap (never just the newest
+  change — a stateless-server bug where a tap-only-adjustment request would discard earlier-session
+  casualties was caught mid-implementation and fixed by always resending the full map), and the
+  server rebuilds the roster from scratch (`View.MyArmyRoster()` — a new raw-`ICombatUnit` export
+  alongside the existing pre-aggregated `View.MyArmy()`), reapplies every adjustment via
+  `ModelLine.SetRemainingCount` (a new clamped `[0, Count]` setter both directions reduce to;
+  `RemoveCasualties` is now a thin wrapper over it), and returns rendered `_UnitBlock.cshtml`
+  fragments (a new partial extracted from `LivePlay.cshtml`'s per-unit markup, rendered to a string
+  via a new `IRazorPartialRenderer` — the standard `IRazorViewEngine`/`ITempDataProvider`/hand-built
+  `ViewContext` pattern for rendering a partial outside an MVC action) for whichever units the
+  batch addresses — the client only ever swaps pre-rendered HTML, no aggregation logic duplicated
+  in JS. The casualty coordinate `(UnitIndex, ComponentName, StatlineName, LoadoutIndex)` reuses
+  the existing `LivePlayModel.SelectKey` convention unchanged, adding only a `UnitIndex` qualifier
+  (`LivePlayModel.CasualtyKey`); `UnitIndex` is stable across a pristine GET and an adjusted rebuild
+  because `LivePlayModel.SortRoster`'s sort keys (`IsAttachedUnit`, initial model count, `Name`) are
+  all pristine, remaining-count-independent properties — factored out of `OnGet()` into a shared
+  method precisely so the rebuild path can't drift from it.
+  **A real domain-model behavior reversal, exposed by trying to build the "revert a mis-tap"
+  story**: `AttachedUnitAggregator.BuildStatlines` used to drop a statline entry from the aggregate
+  view entirely once every one of its model-lines reached 0 remaining — with nothing rendered,
+  there'd be no row left for the new casualty control to revert from. Fixed by narrowing the drop
+  condition from "no survivors" to "never referenced at all" (`lines.Count == 0`), so an entry
+  persists at 0/`InitialCount` once it's ever had model-lines — this is now a documented,
+  MODIFIED-and-tested requirement (`attached-unit-tracker`'s "Aggregate Statline View"), not a
+  quiet implementation change. `AttachedUnitAggregator.BuildWeapons`/`BuildAbilities` needed no
+  equivalent fix — both already correctly excluded `RemainingCount == 0` lines via the existing
+  `presentLines` filter; that behavior only gained explicit spec scenarios, confirmed via a live
+  browser check (killing a shared loadout dropped a weapon's total from 10 to 7 and removed its
+  breakdown row entirely, never showing a `0×` row).
+  A statline run now collapses to header-only under **two independent triggers**: the pre-existing
+  client-only "every entry fully deselected" one, and a new server-computed "every entry fully
+  dead" one (`StatlineBlockViewModel.IsFullyDead`, and `ComponentAbilitySpanViewModel.IsFullyDead`
+  for component-wide ability cells) — baked into the initial server-rendered markup (`data-dead`
+  attribute + `.run-collapsed` class) so a fully-dead run renders already collapsed after a reload,
+  not something a player must re-trigger. `live-play.js`'s `updateRunCollapse()` now ORs its
+  existing deselection-based per-run boolean with each run's `data-dead` marker rather than
+  resetting the class from scratch, so reselecting a dead entry cannot un-collapse it — only
+  reverting the casualty (increasing `RemainingCount` back above 0) does. `live-play.js` also
+  consolidates what used to be two independent `DOMContentLoaded`-time passes (a page-wide
+  `.weapon-name-toggle` query, and a per-unit-block `initUnitSelection` call) into one
+  `initUnitBlock(unitEl)`, now re-run on a casualty-triggered swap's replacement node — a gap
+  caught during design review (a swap that only re-ran `initUnitSelection` would leave the swapped
+  unit's provenance-breakdown toggles with no click handler at all). A second gap surfaced only by
+  hands-on browser testing, not the design discussion: replacing a whole `.unit-block`'s markup
+  also discarded every `<details>` section's open/closed state, so tapping a casualty control
+  visually snapped an expanded Statline section shut — fixed by having `swapUnitBlock` carry
+  forward which sections were open across the swap.
+  Casualty controls sit inside their row's existing whole-row selection-toggle click target, so
+  their click handlers call `event.stopPropagation()` first (same shape as the pre-existing
+  Clear-filter button's `event.preventDefault()` inside `<summary>`) and are visually built from
+  the same `.mod-step-btn` step-control class ArmyView's combat panel already uses — safe to reuse
+  directly because `.live-play-page` locally redeclares the same `--bg3`/`--text`/`--border` custom
+  properties `.mod-step-btn` reads, so it automatically renders in this page's light theme rather
+  than ArmyView's dark one.
+  Verified via `firefox-devtools-mcp` against the real example army end to end: marked High Marshal
+  Helbrecht as a casualty, watched its run collapse and its "LEADER" ability cell collapse with it;
+  reloaded the page and confirmed both the mark and the collapse persisted with no re-marking
+  needed; reverted via `+` and watched both expand again; reduced the Crusader Squad's
+  Astartes-chainsword Initiate loadout from 3/3 to 0/3 across three separate taps (each its own
+  round trip) and watched the parent "Initiate" entry correctly re-sum to 2/5, the Bolt pistol
+  weapon row's total drop from 10 to 7, its breakdown lose the dead loadout's row entirely, and its
+  merged "Initiate" breakdown row correctly demote to a single raw "Initiate w/ Power fist (2×1)"
+  row now that only one contribution remained in that group. 276 tests, all passing — includes a
+  new `Microsoft.AspNetCore.Mvc.Testing`-based integration test suite (`WebApplicationFactory`,
+  the project's first) exercising the casualty endpoint end to end, including the Razor-partial-to-
+  string rendering path. Docs: `.claude/domain-model-11e.md` updated (`ModelLine.SetRemainingCount`,
+  the `Statlines`-persist-at-zero behavior change); this entry is the `PROGRESS.md` record.
 - OpenSpec change `add-live-play-weapon-provenance` implemented: weapon rows on `/LivePlay` now
   expand on click to show which `(ComponentName, StatlineName)` groups contributed how much,
   instead of only ever showing the aggregated total. Contributions sharing a group collapse to one

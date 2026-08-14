@@ -309,6 +309,91 @@ public class LivePlayModelTests
         labels.Should().Equal("Bolt pistol, Chainsword");
     }
 
+    [Fact]
+    public void CasualtyKey_ForASingleLoadoutEntry_PrependsUnitIndexToSelectKey()
+    {
+        var key = LivePlayModel.CasualtyKey(0, "Crusader Squad", "Neophyte", -1);
+
+        key.Should().Be("0::Crusader Squad::Neophyte");
+    }
+
+    [Fact]
+    public void CasualtyKey_ForALoadoutLine_IncludesTheLoadoutIndex()
+    {
+        var key = LivePlayModel.CasualtyKey(2, "Crusader Squad", "Initiate", 1);
+
+        key.Should().Be("2::Crusader Squad::Initiate::1");
+    }
+
+    [Fact]
+    public void RebuildRoster_WithNoAdjustments_MatchesThePristineSortedRoster()
+    {
+        var pristine = LivePlayModel.SortRoster(View.MyArmyRoster()).Select(AttachedUnitAggregator.Build).ToList();
+
+        var rebuilt = LivePlayModel.RebuildRoster([]);
+
+        rebuilt.Select(v => v.Name).Should().Equal(pristine.Select(v => v.Name));
+    }
+
+    [Fact]
+    public void RebuildRoster_AppliesAnAdjustment_ToTheSingleModelLineItAddresses()
+    {
+        // Index 0 in the sorted roster is "Crusader Squad with High Marshal Helbrecht and Crusade
+        // Ancient" (see OnGet_OrdersAttachedUnitsBeforePlainUnits...); Neophyte is a single-ModelLine
+        // statline (count 4) on the Crusader Squad bodyguard, so LoadoutIndex is the -1 sentinel.
+        var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1), RemainingCount: 2);
+
+        var rebuilt = LivePlayModel.RebuildRoster([adjustment]);
+
+        var unit = rebuilt[0];
+        unit.Name.Should().Be("Crusader Squad with High Marshal Helbrecht and Crusade Ancient");
+        unit.Statlines.Single(s => s.StatlineName == "Neophyte").RemainingCount.Should().Be(2);
+    }
+
+    [Fact]
+    public void RebuildRoster_AppliesAnAdjustment_ToASpecificLoadout()
+    {
+        // Initiate has two loadouts on the Crusader Squad bodyguard (Power fist at index 0,
+        // Astartes chainsword at index 1 - see AttachedUnitAggregatorTests' LoadoutIndex tests).
+        var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Initiate", 0), RemainingCount: 0);
+
+        var rebuilt = LivePlayModel.RebuildRoster([adjustment]);
+
+        var initiate = rebuilt[0].Statlines.Single(s => s.StatlineName == "Initiate");
+        initiate.Loadouts[0].RemainingCount.Should().Be(0); // Power fist loadout, fully removed
+        initiate.Loadouts[1].RemainingCount.Should().Be(3); // Astartes chainsword loadout, unaffected
+        initiate.RemainingCount.Should().Be(3); // summed across loadouts
+    }
+
+    [Fact]
+    public void RebuildRoster_ClampsAnOutOfRangeRemainingCount_RatherThanThrowing()
+    {
+        var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1), RemainingCount: 99);
+
+        var rebuilt = LivePlayModel.RebuildRoster([adjustment]);
+
+        rebuilt[0].Statlines.Single(s => s.StatlineName == "Neophyte").RemainingCount.Should().Be(4); // clamped at Count
+    }
+
+    [Theory]
+    [InlineData(99, "Crusader Squad", "Neophyte", -1)] // out-of-range UnitIndex
+    [InlineData(0, "No Such Component", "Neophyte", -1)] // unknown ComponentName
+    [InlineData(0, "Crusader Squad", "No Such Statline", -1)] // unknown StatlineName
+    [InlineData(0, "Crusader Squad", "Initiate", 99)] // out-of-range LoadoutIndex
+    public void RebuildRoster_IgnoresAnAdjustment_ThatDoesNotResolveToARealModelLine(
+        int unitIndex, string componentName, string statlineName, int loadoutIndex)
+    {
+        var adjustment = new CasualtyAdjustment(
+            new CasualtyCoordinate(unitIndex, componentName, statlineName, loadoutIndex), RemainingCount: 0);
+
+        var act = () => LivePlayModel.RebuildRoster([adjustment]);
+
+        act.Should().NotThrow();
+        var pristine = LivePlayModel.SortRoster(View.MyArmyRoster()).Select(AttachedUnitAggregator.Build).ToList();
+        act().Select(v => v.Statlines.Sum(s => s.RemainingCount))
+            .Should().Equal(pristine.Select(v => v.Statlines.Sum(s => s.RemainingCount)));
+    }
+
     // Synthetic BuildContributionBreakdown tests construct WeaponContribution directly, with no
     // backing AggregateStatlineEntry/Loadouts data to look a compressed label up from - an empty
     // lookup falls back to each contribution's own StatlineName (GetValueOrDefault), matching what

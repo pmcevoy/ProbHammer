@@ -23,7 +23,7 @@ public class AttachedUnitAggregatorTests
     }
 
     [Fact]
-    public void StatlineView_DropsAStatlineOnceAllItsModelsAreGone()
+    public void StatlineView_PersistsAStatlineAtZero_OnceAllItsModelsAreGone()
     {
         var unit = UnitFixtures.AssaultIntercessorSquadWithUnitLeader();
         var sergeant = unit.ModelLines.Single(x => x.StatlineName == "Assault Intercessor Sergeant");
@@ -31,8 +31,28 @@ public class AttachedUnitAggregatorTests
 
         var after = AttachedUnitAggregator.Build(unit);
 
-        after.Statlines.Should().HaveCount(1);
+        after.Statlines.Should().HaveCount(2);
         after.Statlines.Should().ContainSingle(s => s.StatlineName == "Assault Intercessor");
+        var sergeantEntry = after.Statlines.Single(s => s.StatlineName == "Assault Intercessor Sergeant");
+        sergeantEntry.RemainingCount.Should().Be(0);
+        sergeantEntry.InitialCount.Should().Be(1);
+    }
+
+    [Fact]
+    public void StatlineView_OmitsAStatlineName_NeverReferencedByAnyModelLine()
+    {
+        var statline = new Statline(6, 4, 3, 2, 6, 2);
+        var datasheet = new Datasheet(
+            "Test Squad", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Sergeant", statline), ("Trooper", statline), ("Never Taken", statline)],
+            weaponProfiles: []);
+        var unit = new Unit(
+            datasheet, [],
+            [new ModelLine("Sergeant", [], count: 1), new ModelLine("Trooper", [], count: 4)]);
+
+        var view = AttachedUnitAggregator.Build(unit);
+
+        view.Statlines.Select(s => s.StatlineName).Should().Equal("Sergeant", "Trooper");
     }
 
     [Fact]
@@ -71,7 +91,7 @@ public class AttachedUnitAggregatorTests
     }
 
     [Fact]
-    public void StatlineView_DisappearsEntirelyOnceEveryModelLineSharingItIsGone()
+    public void StatlineView_PersistsAtZero_OnceEveryModelLineSharingItIsGone()
     {
         var unit = UnitFixtures.CrusaderSquadMixedLoadout();
         foreach (var modelLine in unit.ModelLines)
@@ -79,7 +99,11 @@ public class AttachedUnitAggregatorTests
 
         var view = AttachedUnitAggregator.Build(unit);
 
-        view.Statlines.Should().BeEmpty();
+        view.Statlines.Should().ContainSingle();
+        var initiate = view.Statlines.Single(s => s.StatlineName == "Initiate");
+        initiate.RemainingCount.Should().Be(0);
+        initiate.InitialCount.Should().Be(5); // 2 (Power fist) + 3 (Master-crafted Power Weapon)
+        initiate.Loadouts.Should().OnlyContain(l => l.RemainingCount == 0);
     }
 
     [Fact]

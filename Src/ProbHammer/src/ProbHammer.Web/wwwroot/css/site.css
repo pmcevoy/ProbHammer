@@ -690,10 +690,45 @@ button.filter-flag:hover { opacity: 0.8; }
 .select-partial .select-indicator { background: var(--text-dim); border-color: var(--text-dim); }
 .select-partial .select-indicator::after { content: '\2013'; }
 
+/* Deselected or fully-dead (entry-dead/loadout-dead, RemainingCount == 0 - casualty-tracking)
+   statline/loadout names fade toward the same muted tone the disabled casualty buttons already use
+   (--bg3, the bottle-green accent, faded via opacity rather than a separate grey token) so an
+   inactive name reads consistently with an inactive control right beside it, and active names stand
+   out by contrast. Partial (some but not all loadouts selected) is deliberately excluded - a
+   partially-selected entry still has models in play. */
+.select-deselected .statline-name,
+.select-deselected .loadout-label,
+.entry-dead .statline-name,
+.loadout-dead .loadout-label {
+    color: var(--bg3);
+    opacity: 0.55;
+}
+
 /* Client-side selection filtering (live-play.js) - deliberately separate from the [hidden]
    attribute, which the existing weapon-name-toggle expand/collapse feature already owns; a row can
    be independently hidden by either mechanism without the two fighting over the same attribute. */
 .selection-excluded { display: none; }
+
+/* ── Casualty controls (Statline section) ──
+   Right-aligned via margin-left: auto on the flex row (.statline-header/.loadout-toggle are both
+   already display: flex). Buttons reuse .mod-step-btn's existing "− +1 +" step-control sizing
+   (ArmyView's combat panel) rather than a new size scale - safe here because .live-play-page
+   locally redeclares the same --bg3/--text/--border custom properties .mod-step-btn reads, so it
+   renders in this page's light theme automatically, not ArmyView's dark one. A casualty control's
+   click handler calls stopPropagation() before anything else (live-play.js), since it sits inside
+   its row's own selection-toggle click target. */
+.casualty-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: auto;
+}
+/* .mod-step-btn's own `color: var(--text)` is near-black - correct on ArmyView's dark --bg3, but
+   unreadable here: .live-play-page's --bg3 is a mid-dark bottle green, not dark enough for
+   near-black text to read against. Override to white, the inverse of the light statline-header
+   background these buttons sit on. */
+.casualty-btn { color: #fff; }
+.casualty-btn:disabled { opacity: 0.4; cursor: default; }
 
 /* ── Weapon table (scoped light restyle) ── */
 

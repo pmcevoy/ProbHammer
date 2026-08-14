@@ -51,7 +51,7 @@ public static class AttachedUnitAggregator
                     .Where(ml => string.Equals(ml.StatlineName, statlineName, StringComparison.OrdinalIgnoreCase))
                     .ToList();
 
-                if (!lines.Any(ml => ml.RemainingCount > 0))
+                if (lines.Count == 0)
                     continue;
 
                 var loadouts = lines

@@ -1,11 +1,5 @@
-# attached-unit-tracker
+## MODIFIED Requirements
 
-## Purpose
-
-Tracks live game state for an Attached Unit (casualties, and the aggregate statline/weapon/ability
-view derived from its currently-present components) as play proceeds. TBD: expand as this
-capability grows beyond its initial domain-model scope.
-## Requirements
 ### Requirement: Model-Line Remaining Count
 Each model-line SHALL track a remaining count, initialized to the model-line's original Count.
 The remaining count SHALL be adjustable in both directions: it can be decreased to reflect
@@ -74,19 +68,27 @@ in its Datasheet's declared order.
   alongside its unchanged initial count
 
 #### Scenario: Statline survives while any one of its model-lines has models remaining
-- **WHEN** a statline name is shared by two model-lines of the same component Unit, and one of them reaches a remaining count of 0 while the other still has models remaining
-- **THEN** that statline still appears in the aggregate view, with its remaining count reflecting only the surviving model-line(s)
+- **WHEN** a statline name is shared by two model-lines of the same component Unit, and one of them
+  reaches a remaining count of 0 while the other still has models remaining
+- **THEN** that statline still appears in the aggregate view, with its remaining count reflecting
+  only the surviving model-line(s)
 
 #### Scenario: Initial count reflects starting strength, not just surviving model-lines
-- **WHEN** a statline name is shared by two model-lines of the same component Unit with initial counts of 2 and 3, and the model-line with an initial count of 2 is fully removed as casualties
-- **THEN** the aggregate view's initial count for that statline name is still 5 (2 + 3), while its remaining count is 3
+- **WHEN** a statline name is shared by two model-lines of the same component Unit with initial
+  counts of 2 and 3, and the model-line with an initial count of 2 is fully removed as casualties
+- **THEN** the aggregate view's initial count for that statline name is still 5 (2 + 3), while its
+  remaining count is 3
 
 #### Scenario: Loadout breakdown lists every model-line sharing a statline name, including a fully-removed one
-- **WHEN** a statline name is shared by two model-lines of the same component Unit with different weapon selections, and one of them has been fully removed as casualties
-- **THEN** the loadout breakdown includes both model-lines: the removed one showing a remaining count of 0 alongside its original initial count, and the other showing its own current remaining/initial counts
+- **WHEN** a statline name is shared by two model-lines of the same component Unit with different
+  weapon selections, and one of them has been fully removed as casualties
+- **THEN** the loadout breakdown includes both model-lines: the removed one showing a remaining
+  count of 0 alongside its original initial count, and the other showing its own current
+  remaining/initial counts
 
 #### Scenario: Distinct statline names with identical values are not collapsed
-- **WHEN** two model-lines reference different statline names whose M/T/Sv/W/Ld/Oc values happen to be identical
+- **WHEN** two model-lines reference different statline names whose M/T/Sv/W/Ld/Oc values happen to
+  be identical
 - **THEN** the aggregate view lists them as two separate statline entries, not merged into one
 
 #### Scenario: Two components sharing a statline name are not merged
@@ -128,12 +130,15 @@ valued entry nor any entry — regardless of whether that statline name's entry 
 Aggregate Statline View.
 
 #### Scenario: Same weapon profile from different components is combined
-- **WHEN** the Bodyguard unit has 4 models carrying a weapon profile with 3 Attacks each, and the attached Leader carries a wargear item with an identical structural profile but 7 Attacks
-- **THEN** the aggregate view shows one combined entry with a total Attacks value of 19 (4 × 3 + 7), not the Attacks value of either contributor alone
+- **WHEN** the Bodyguard unit has 4 models carrying a weapon profile with 3 Attacks each, and the
+  attached Leader carries a wargear item with an identical structural profile but 7 Attacks
+- **THEN** the aggregate view shows one combined entry with a total Attacks value of 19 (4 × 3 + 7),
+  not the Attacks value of either contributor alone
 
 #### Scenario: Weapon count reflects casualties
 - **WHEN** 2 of the 4 Bodyguard models carrying a given weapon profile are removed as casualties
-- **THEN** the aggregate view's total Attacks for that weapon profile decreases by the removed models' share
+- **THEN** the aggregate view's total Attacks for that weapon profile decreases by the removed
+  models' share
 
 #### Scenario: A fully-removed loadout contributes no row to a shared weapon's breakdown
 - **WHEN** a statline entry has two loadouts sharing a weapon (e.g. both carry a Bolt Pistol), one
@@ -144,60 +149,18 @@ Aggregate Statline View.
   fully-removed loadout — not a contribution showing a Count of 0
 
 #### Scenario: Differently-modified copies of a same-named weapon are not combined
-- **WHEN** two components each carry a same-named weapon, but one copy has an ability (e.g. Lethal Hits) that the other does not
+- **WHEN** two components each carry a same-named weapon, but one copy has an ability (e.g. Lethal
+  Hits) that the other does not
 - **THEN** the aggregate view shows them as two separate entries, each with its own total Attacks
 
 #### Scenario: Weapons differing only by a targeting/eligibility keyword are not combined
-- **WHEN** two weapons match on Type, Skill, Strength, AP, and Damage, but differ in a keyword flag such as Pistol, Assault, or Ignores Cover
-- **THEN** the aggregate view shows them as two separate entries, each with its own total Attacks — a targeting/eligibility keyword is as much a part of the weapon's identity as a damage-modifying one
+- **WHEN** two weapons match on Type, Skill, Strength, AP, and Damage, but differ in a keyword flag
+  such as Pistol, Assault, or Ignores Cover
+- **THEN** the aggregate view shows them as two separate entries, each with its own total Attacks —
+  a targeting/eligibility keyword is as much a part of the weapon's identity as a damage-modifying
+  one
 
 #### Scenario: Contributions are retained on a merged entry
 - **WHEN** two or more model-lines contribute to the same aggregated weapon entry
-- **THEN** the entry's contribution list includes one item per contributing model-line, each reporting that model-line's own remaining count and per-model Attacks
-
-### Requirement: Aggregate Ability View
-The Attached Unit aggregate view SHALL report abilities per present component Unit, without
-combining or deduplicating across components. For each present component, the aggregate view
-SHALL report abilities from two sources: the component's Datasheet-level Abilities (not tied to
-any one model-line) and abilities carried by any of the component's own present model-lines (e.g.
-granted by an Enhancement). Each reported entry SHALL carry the owning component's name, the
-Ability itself, and — only for model-line-sourced abilities — the name of the specific statline
-that bears it; Datasheet-sourced abilities carry no statline name, since they belong to the
-component as a whole rather than to any one of its statlines. This applies uniformly to both
-Model-scoped and Unit-scoped abilities — the Ability's own Scope alone determines which of the two
-an entry is; the reporting rule itself does not depend on Scope.
-
-#### Scenario: Unit-scoped ability appears in the combined list
-- **WHEN** a component Unit has a Unit-scoped Ability, whether Datasheet-sourced or carried by one
-  of its own model-lines
-- **THEN** that ability appears in the aggregate view, reported against its owning component —
-  this reverses the prior behavior of combining every component's Unit-scoped abilities into one
-  cross-component list, now that each entry stays attributable to the component (and, when
-  applicable, the specific statline) it came from
-
-#### Scenario: Model-scoped ability stays with its model
-- **WHEN** a component's model-line carries its own Ability (e.g. granted by an Enhancement),
-  regardless of whether that Ability's Scope is Model or Unit
-- **THEN** the aggregate view reports that ability with the name of the specific statline it is
-  tied to, so it stays attributable to that one model-line rather than any other in the component
-
-#### Scenario: Model-scoped ability disappears when its bearer is removed
-- **WHEN** the model-line carrying a model-line-sourced Ability has its remaining count reduced to
-  0, regardless of that Ability's Scope
-- **THEN** that ability no longer appears anywhere in the aggregate view
-
-#### Scenario: Datasheet-sourced ability is reported without a statline name
-- **WHEN** a component's Datasheet has an Ability not tied to any specific model-line
-- **THEN** the aggregate view reports that ability for that component with no statline name,
-  regardless of its Scope
-
-#### Scenario: Abilities are not combined across components
-- **WHEN** two different component Units of an AttachedUnit each have an Ability with the same Name
-- **THEN** the aggregate view reports them as two separate entries, one per component, never
-  combined into one
-
-#### Scenario: A Datasheet-sourced ability persists while any of its component's model-lines remain
-- **WHEN** a component has multiple model-lines and only some of them reach a remaining count of 0
-- **THEN** the component's Datasheet-sourced abilities still appear in the aggregate view, as long
-  as the component itself is still present
-
+- **THEN** the entry's contribution list includes one item per contributing model-line, each
+  reporting that model-line's own remaining count and per-model Attacks

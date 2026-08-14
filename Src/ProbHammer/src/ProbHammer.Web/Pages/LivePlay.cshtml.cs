@@ -14,12 +14,80 @@ public class LivePlayModel : PageModel
 
     public void OnGet()
     {
-        Units = View.MyArmy()
-            .OrderByDescending(v => v.IsAttachedUnit)
-            .ThenByDescending(v => v.Statlines.Sum(s => s.InitialCount))
-            .ThenBy(v => v.Name, StringComparer.OrdinalIgnoreCase)
+        Units = SortRoster(View.MyArmyRoster())
+            .Select(AttachedUnitAggregator.Build)
             .Select(BuildUnitBlock)
             .ToList();
+    }
+
+    // Sorts the raw roster using the same criteria OnGet() has always applied to the built views
+    // (IsAttachedUnit, initial total model count, Name) - factored out so a casualty-adjusted
+    // rebuild (RebuildRoster) assigns each unit the same UnitIndex a pristine GET would, without
+    // duplicating the sort key logic. Safe to sort by a pristine build's keys even when adjustments
+    // are pending: none of the three keys depend on RemainingCount (see design.md's Risks section).
+    internal static List<ICombatUnit> SortRoster(IEnumerable<ICombatUnit> roster) =>
+        roster
+            .Select(unit => (Unit: unit, View: AttachedUnitAggregator.Build(unit)))
+            .OrderByDescending(x => x.View.IsAttachedUnit)
+            .ThenByDescending(x => x.View.Statlines.Sum(s => s.InitialCount))
+            .ThenBy(x => x.View.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(x => x.Unit)
+            .ToList();
+
+    // Reuses SelectKey's (ComponentName, StatlineName, LoadoutIndex) convention, extended with a
+    // UnitIndex qualifier - SelectKey alone is ambiguous across the whole page (it's scoped to one
+    // unit block's own client-side selection Set), but a casualty coordinate is page-wide. Used both
+    // as the data-* attribute value the casualty controls carry and as the localStorage map's key.
+    internal static string CasualtyKey(int unitIndex, string componentName, string statlineName, int loadoutIndex) =>
+        $"{unitIndex}::{SelectKey(componentName, statlineName, loadoutIndex)}";
+
+    // No server-side counterpart to parse CasualtyKey back into its parts: the client (live-play.js)
+    // POSTs already-structured JSON (a CasualtyAdjustment list), built directly from the same four
+    // values it used to construct the key - CasualtyKey exists only for the DOM data-* attribute and
+    // the localStorage map's key, both client-side-only concerns.
+
+    // Rebuilds the roster from scratch (View.MyArmyRoster() - a fresh, pristine ICombatUnit graph
+    // every call, per Examples.Units) and replays every adjustment in the batch onto it before
+    // aggregating. The server holds no state between requests, so the caller (the casualty sync
+    // endpoint) must always pass the *entire* current adjustment set, not just the newest one - see
+    // design.md's "every request carries the full current map" decision, added after this exact bug
+    // was caught mid-implementation. An adjustment whose coordinate doesn't resolve to a real
+    // model-line (out-of-range UnitIndex, unknown ComponentName/StatlineName/LoadoutIndex) is
+    // silently ignored rather than throwing - defensive against stale localStorage from a roster
+    // shape that no longer matches (e.g. after Examples.Units changes).
+    internal static List<AttachedUnitAggregateView> RebuildRoster(IReadOnlyList<CasualtyAdjustment> adjustments)
+    {
+        var sortedUnits = SortRoster(View.MyArmyRoster());
+
+        for (var unitIndex = 0; unitIndex < sortedUnits.Count; unitIndex++)
+        {
+            var unit = sortedUnits[unitIndex];
+            foreach (var adjustment in adjustments.Where(a => a.Coordinate.UnitIndex == unitIndex))
+                ApplyAdjustment(unit, adjustment.Coordinate, adjustment.RemainingCount);
+        }
+
+        return sortedUnits.Select(AttachedUnitAggregator.Build).ToList();
+    }
+
+    private static void ApplyAdjustment(ICombatUnit unit, CasualtyCoordinate coordinate, int remainingCount)
+    {
+        var component = unit.Components.FirstOrDefault(c =>
+            string.Equals(c.Datasheet.Name, coordinate.ComponentName, StringComparison.OrdinalIgnoreCase));
+        if (component is null)
+            return;
+
+        var lines = component.ModelLines
+            .Where(ml => string.Equals(ml.StatlineName, coordinate.StatlineName, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        // Mirrors AttachedUnitAggregator.LoadoutIndexOf's convention in reverse: -1 addresses a
+        // statline with exactly one model-line; a non-negative index addresses that position within
+        // the (unfiltered, StatlineName-matched) model-line list.
+        var line = coordinate.LoadoutIndex < 0
+            ? (lines.Count == 1 ? lines[0] : null)
+            : (coordinate.LoadoutIndex >= 0 && coordinate.LoadoutIndex < lines.Count ? lines[coordinate.LoadoutIndex] : null);
+
+        line?.SetRemainingCount(remainingCount);
     }
 
     internal static UnitBlockViewModel BuildUnitBlock(AttachedUnitAggregateView view)
@@ -267,10 +335,25 @@ public class LivePlayModel : PageModel
                     FirstRunIndex: runIndices.Min(),
                     LastRunIndex: runIndices.Max(),
                     ModelAbilities: group.Where(a => a.Ability.Scope == AbilityScope.Model).Select(a => a.Ability).ToList(),
-                    UnitAbilities: group.Where(a => a.Ability.Scope == AbilityScope.Unit).Select(a => a.Ability).ToList());
+                    UnitAbilities: group.Where(a => a.Ability.Scope == AbilityScope.Unit).Select(a => a.Ability).ToList(),
+                    IsFullyDead: runIndices.All(i => statlineBlocks[i].IsFullyDead));
             })
             .ToList();
 }
+
+/// <summary>Identifies one model-line - or one specific loadout within a multi-loadout statline
+/// entry - across separate requests. <see cref="UnitIndex"/> is the unit's position in the sorted
+/// roster (see <see cref="LivePlayModel.SortRoster"/>); <see cref="ComponentName"/>/
+/// <see cref="StatlineName"/>/<see cref="LoadoutIndex"/> reuse <see cref="LivePlayModel.SelectKey"/>'s
+/// convention unchanged (<c>-1</c> = the whole statline entry, valid only when it has exactly one
+/// model-line).</summary>
+public sealed record CasualtyCoordinate(int UnitIndex, string ComponentName, string StatlineName, int LoadoutIndex);
+
+/// <summary>One entry in a casualty sync request: the absolute (not delta) remaining count a
+/// specific model-line/loadout should be set to. The server always applies every adjustment in the
+/// request's full batch onto a freshly-rebuilt pristine roster - see
+/// <see cref="LivePlayModel.RebuildRoster"/>.</summary>
+public sealed record CasualtyAdjustment(CasualtyCoordinate Coordinate, int RemainingCount);
 
 /// <summary>A contiguous, same-component, value-identical run of statline entries sharing one
 /// rendered stat-tile. <see cref="Entries"/> is never empty - every group is seeded with at least
@@ -286,15 +369,26 @@ public sealed record StatlineBlockViewModel(
     IReadOnlyList<Ability> UnitAbilities)
 {
     public Statline Statline => Entries[0].Statline;
+
+    /// <summary>True once every entry in this run has a remaining count of 0 - the server-computed
+    /// collapse trigger casualty-tracking adds alongside the existing client-only fully-deselected
+    /// one (see casualty-tracking's design.md - Decisions). Computed from <see cref="Entries"/>'
+    /// own summed <c>RemainingCount</c>, never stored independently.</summary>
+    public bool IsFullyDead => Entries.All(e => e.RemainingCount == 0);
 }
 
 /// <summary>A Datasheet-sourced (component-wide) ability group, rendered once beside the first of
-/// its component's rendered runs and visually spanning through the last.</summary>
+/// its component's rendered runs and visually spanning through the last. <see cref="IsFullyDead"/>
+/// is true only once every run within [<see cref="FirstRunIndex"/>, <see cref="LastRunIndex"/>] is
+/// itself fully dead - computed once in <see cref="LivePlayModel.BuildComponentAbilitySpans"/>
+/// (which already has the full statline-block list in scope) rather than as a self-computed
+/// property, since this record has no direct reference to the runs it spans.</summary>
 public sealed record ComponentAbilitySpanViewModel(
     int FirstRunIndex,
     int LastRunIndex,
     IReadOnlyList<Ability> ModelAbilities,
-    IReadOnlyList<Ability> UnitAbilities);
+    IReadOnlyList<Ability> UnitAbilities,
+    bool IsFullyDead);
 
 /// <summary>One row of a weapon entry's contribution breakdown - either a merged display row
 /// (<see cref="SelectKey"/> null, spans every raw contribution in <see cref="GroupKey"/>) or a raw
@@ -331,3 +425,9 @@ public sealed record UnitBlockViewModel(
     IReadOnlyList<WeaponRowViewModel> MeleeWeapons,
     IReadOnlyList<ComponentAbilitySpanViewModel> ComponentAbilitySpans,
     IReadOnlyList<string> Keywords);
+
+/// <summary>Wraps a <see cref="UnitBlockViewModel"/> with its position in
+/// <see cref="LivePlayModel.Units"/> for the <c>_UnitBlock</c> partial - needed for the weapon-row
+/// <c>data-weapon-id</c> derivation (<c>"w-{UnitIndex}-r-{w}"</c>/<c>"w-{UnitIndex}-m-{w}"</c>) and,
+/// from casualty-tracking onward, the casualty coordinate's unit-level qualifier.</summary>
+public sealed record UnitBlockRenderModel(int UnitIndex, UnitBlockViewModel Unit);

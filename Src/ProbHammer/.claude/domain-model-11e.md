@@ -138,8 +138,9 @@ Ability(Name, Text, Choices: IReadOnlyList<AbilityChoice>, Scope: Model | Unit)
 
 ```
 ModelLine(StatlineName, Weapons: IReadOnlyList<string>, Count, Abilities: IReadOnlyList<Ability>)
-  RemainingCount   // live, decrementing; alive/dead granularity only, floored at 0
-  RemoveCasualties(n)
+  RemainingCount   // live, adjustable in both directions; alive/dead granularity only, clamped to [0, Count]
+  SetRemainingCount(value)   // the one primitive both directions reduce to, clamped to [0, Count]
+  RemoveCasualties(n)         // thin wrapper: SetRemainingCount(RemainingCount - n)
 
 Unit : ICombatUnit
   Datasheet, Enhancements, ModelLines
@@ -229,8 +230,16 @@ AggregateAbilityEntry(ComponentName: string, StatlineName: string?, Ability: Abi
   rules attach by Leader/Support ability, not by name, and don't allow two identically-named
   Leader/Support units on the same Bodyguard, so this can't occur in valid data). A statline name's
   entry is built from *every* model-line of that component sharing the name, regardless of that
-  specific line's own `RemainingCount` (unlike `Weapons` below), and is included only while at
-  least one of its model-lines still has `RemainingCount > 0`.
+  specific line's own `RemainingCount` (unlike `Weapons` below), and — since `casualty-tracking`
+  (2026) — is included whenever the component has *any* model-line referencing that name at all,
+  even once every one of them reaches `RemainingCount == 0` (reporting `RemainingCount: 0` against
+  its unchanged `InitialCount`, rather than disappearing). It is omitted only when the name was
+  never referenced by any of the component's model-lines to begin with (unselected loadout
+  variant). This flip — from "drop once dead" to "persist at zero" — exists specifically so
+  `/LivePlay`'s casualty-marking control always has a row to revert from; see
+  `openspec/specs/live-play-view/spec.md`'s "Statline Section Rendering" for the paired UI behavior
+  (the run collapses to header-only once every entry in it is fully dead, a second trigger
+  alongside the pre-existing fully-deselected one) and PROGRESS.md for the implementation summary.
 - `Weapons` — grouped by `WeaponProfile.EqualityKey()` (Type/Skill/S/Ap/D/ability flags — excludes
   Name/Range/Attacks) across only `RemainingCount > 0` model-lines. `TotalAttacks` is computed per
   contribution as `PerModelAttacks.Scale(modelLine.RemainingCount)`, `Add`-reduced across every

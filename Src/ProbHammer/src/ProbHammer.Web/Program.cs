@@ -5,6 +5,7 @@ using ProbHammer.Core.Enrichment;
 using ProbHammer.Core.Parsing;
 using ProbHammer.Core.Simulation;
 using ProbHammer.Web.Helpers;
+using ProbHammer.Web.Pages;
 using ProbHammer.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,6 +34,8 @@ builder.Services.AddSingleton<IDiceRoller, DiceRoller>();
 builder.Services.AddSingleton<CombatSimulator>();
 builder.Services.AddSingleton<SimulationAdapter>();
 builder.Services.AddScoped<ISimulationService, SimulationService>();
+builder.Services.AddSingleton<IRazorPartialRenderer, RazorPartialRenderer>();
+builder.Services.AddScoped<ILivePlayCasualtyService, LivePlayCasualtyService>();
 
 // Initialise catalogue store on application startup
 builder.Services.AddHostedService<CatalogueStartupService>();
@@ -61,6 +64,10 @@ app.MapRazorPages();
 // Run Monte Carlo simulation
 app.MapPost("/api/simulate", async (HttpContext ctx, SimulationRequest simReq, ISimulationService svc) => await svc.RunAsync(ctx, simReq));
 
+// Sync /LivePlay casualty adjustments and return rendered fragments for the affected units
+app.MapPost("/api/live-play/casualties", async (HttpContext ctx, List<CasualtyAdjustment> adjustments, ILivePlayCasualtyService svc) =>
+    await svc.SyncAsync(ctx, adjustments));
+
 // Re-download catalogues used in the current session
 app.MapPost("/api/refresh-catalogues", async (HttpContext ctx, CatalogueStore store) =>
 {
@@ -74,3 +81,7 @@ app.MapPost("/api/refresh-catalogues", async (HttpContext ctx, CatalogueStore st
 });
 
 app.Run();
+
+// Exposes the top-level-statement-generated Program class to WebApplicationFactory<Program> in
+// ProbHammer.Tests' integration tests.
+public partial class Program;

@@ -1,30 +1,179 @@
+const CASUALTY_STORAGE_KEY = 'probhammer.livePlay.casualties';
+
+// Per-unit selection (deselected select-keys) state, keyed by data-unit-index and kept OUTSIDE
+// initUnitSelection's own closure so it survives a casualty-triggered swapUnitBlock - a casualty
+// adjustment on one entry (e.g. Crusade Ancient) must not reset an unrelated entry's (e.g. Sword
+// Brother, Initiate, Neophyte) filter in the same unit block. Select-keys themselves
+// (ComponentName/StatlineName/LoadoutIndex) never change from a casualty adjustment, only
+// RemainingCount does, so a persisted Set always still matches the swapped-in markup correctly.
+// A real page reload/navigation still starts every unit fully selected (this Map is reinitialized
+// empty on each page load), matching the existing "selection state does not persist across a page
+// reload" requirement - only in-session swaps of the same load now preserve it.
+const deselectedByUnit = new Map();
+
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.weapon-name-toggle').forEach(button => {
+    document.querySelectorAll('.unit-block').forEach(initUnitBlock);
+    void syncCasualties();
+});
+
+// One consolidated per-unit-block init, covering everything that attaches listeners to a
+// unit-block's own DOM subtree - re-run on a swapped-in unit block after a casualty adjustment
+// (see swapUnitBlock) so neither piece is left with dead listeners. Combines what used to be two
+// independent DOMContentLoaded passes (a page-wide .weapon-name-toggle query, and a per-unit-block
+// initUnitSelection call) plus this change's own casualty controls.
+function initUnitBlock(unitEl) {
+    initWeaponProvenanceToggles(unitEl);
+    initCasualtyControls(unitEl);
+    initUnitSelection(unitEl);
+}
+
+// Provenance breakdown expand/collapse (add-live-play-weapon-provenance). Scoped to unitEl (was a
+// page-wide query) so re-running this after a casualty swap only rewires the one affected unit.
+function initWeaponProvenanceToggles(unitEl) {
+    unitEl.querySelectorAll('.weapon-name-toggle').forEach(button => {
         button.addEventListener('click', () => {
             const weaponId = button.dataset.weaponId;
             const expanded = button.getAttribute('aria-expanded') === 'true';
 
-            document.querySelectorAll(`tr.weapon-contribution-row[data-weapon-id="${weaponId}"]`)
+            unitEl.querySelectorAll(`tr.weapon-contribution-row[data-weapon-id="${weaponId}"]`)
                 .forEach(row => { row.hidden = expanded; });
 
             button.setAttribute('aria-expanded', String(!expanded));
         });
     });
+}
 
-    document.querySelectorAll('.unit-block').forEach(initUnitSelection);
-});
+// Casualty marking controls (casualty-tracking). Each button carries its own coordinate
+// (data-casualty-key) and current remaining/initial counts as data-* attributes - stopPropagation
+// first, since these buttons sit inside their row's own selection-toggle click target.
+function initCasualtyControls(unitEl) {
+    unitEl.querySelectorAll('.casualty-btn').forEach(button => {
+        button.addEventListener('click', event => {
+            event.stopPropagation();
+            if (button.disabled) return;
+
+            const key = button.dataset.casualtyKey;
+            const remaining = Number(button.dataset.remaining);
+            const initial = Number(button.dataset.initial);
+            const isIncrease = button.classList.contains('casualty-inc');
+            const newValue = isIncrease ? Math.min(initial, remaining + 1) : Math.max(0, remaining - 1);
+
+            const stored = getStoredCasualties();
+            stored[key] = newValue;
+            setStoredCasualties(stored);
+
+            void syncCasualties();
+        });
+    });
+}
+
+function getStoredCasualties() {
+    try {
+        return JSON.parse(localStorage.getItem(CASUALTY_STORAGE_KEY) || '{}');
+    } catch {
+        return {};
+    }
+}
+
+function setStoredCasualties(map) {
+    localStorage.setItem(CASUALTY_STORAGE_KEY, JSON.stringify(map));
+}
+
+// Reverses LivePlayModel.CasualtyKey's "{unitIndex}::{componentName}::{statlineName}[::{loadoutIndex}]"
+// format. Returns null for a malformed key rather than throwing - defensive against a stale/
+// hand-edited localStorage payload.
+function parseCasualtyKey(key) {
+    const parts = key.split('::');
+    if (parts.length !== 3 && parts.length !== 4) return null;
+
+    const unitIndex = Number(parts[0]);
+    if (Number.isNaN(unitIndex)) return null;
+
+    const loadoutIndex = parts.length === 4 ? Number(parts[3]) : -1;
+    return {
+        unitIndex,
+        componentName: parts[1],
+        statlineName: parts[2],
+        loadoutIndex: Number.isNaN(loadoutIndex) ? -1 : loadoutIndex
+    };
+}
+
+// Posts the *entire* current localStorage map on every call, never just the newest change - the
+// server is stateless and always rebuilds from a pristine roster, so a request carrying only one
+// adjustment would discard every earlier casualty from the same session (see casualty-tracking's
+// design.md - "every request carries the full current map"). A no-op when the map is empty, so a
+// browser with no recorded adjustments never issues a request at all.
+async function syncCasualties() {
+    const stored = getStoredCasualties();
+    const adjustments = Object.entries(stored)
+        .map(([key, remainingCount]) => {
+            const coordinate = parseCasualtyKey(key);
+            return coordinate ? { coordinate, remainingCount } : null;
+        })
+        .filter(entry => entry !== null);
+
+    if (adjustments.length === 0) return;
+
+    let response;
+    try {
+        response = await fetch('/api/live-play/casualties', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(adjustments)
+        });
+    } catch {
+        return; // offline/network failure - leave the DOM as-is, localStorage still holds the state
+    }
+    if (!response.ok) return;
+
+    const fragments = await response.json();
+    Object.entries(fragments).forEach(([unitIndex, html]) => swapUnitBlock(unitIndex, html));
+}
+
+// Replaces one unit-block's markup with server-rendered HTML and re-initializes only that node -
+// every other unit-block's live listeners/selection state are untouched, and this unit's own
+// selection state (deselectedByUnit) survives the swap too - see initUnitSelection. Carries forward
+// which <details> sections (Statline/Ranged/Melee - each independently collapsible, closed by
+// default in fresh server-rendered markup) were open on the old node, so tapping a casualty control
+// doesn't visually snap an expanded section shut - caught via hands-on browser testing, not from
+// the spec discussion; a full markup swap has no other way to know a section was manually opened.
+function swapUnitBlock(unitIndex, html) {
+    const oldEl = document.querySelector(`.unit-block[data-unit-index="${unitIndex}"]`);
+    if (!oldEl) return;
+
+    const openSections = new Set(
+        [...oldEl.querySelectorAll('details.lp-section[open]')].map(details => details.dataset.section)
+    );
+
+    const template = document.createElement('template');
+    template.innerHTML = html.trim();
+    const newEl = template.content.firstElementChild;
+    if (!newEl) return;
+
+    newEl.querySelectorAll('details.lp-section').forEach(details => {
+        if (openSections.has(details.dataset.section)) details.open = true;
+    });
+
+    oldEl.replaceWith(newEl);
+    initUnitBlock(newEl);
+}
 
 // One independent selection state per unit block: a Set of currently-deselected select-keys
 // (see LivePlayModel.SelectKey - "{Component}::{Statline}" for a single-loadout statline,
 // "{Component}::{Statline}::{LoadoutIndex}" for a loadout under a multi-loadout statline). Empty
-// Set = everything selected = today's pre-filtering default rendering, unchanged.
+// Set = everything selected = today's pre-filtering default rendering, unchanged. The Set itself
+// lives in deselectedByUnit (module scope), keyed by this unit's data-unit-index, so it survives
+// a casualty-triggered re-init of this same unit block (see swapUnitBlock) instead of resetting.
 function initUnitSelection(unitEl) {
-    const deselected = new Set();
+    const unitIndex = unitEl.dataset.unitIndex;
+    const deselected = deselectedByUnit.get(unitIndex) ?? new Set();
+    deselectedByUnit.set(unitIndex, deselected);
+
     const entries = [...unitEl.querySelectorAll('.statline-entry')];
     const clearBtn = unitEl.querySelector('.clear-filter-btn');
 
     // Groups entries by their enclosing run's data-run-index (set on col-statline and its per-row
-    // ability cells in LivePlay.cshtml), so a run's collapse state - "every entry in this run is
+    // ability cells in _UnitBlock.cshtml), so a run's collapse state - "every entry in this run is
     // fully deselected" - can be derived without re-deriving run membership from grid-row styling.
     const entriesByRun = new Map();
     entries.forEach(entryEl => {
@@ -95,7 +244,9 @@ function initUnitSelection(unitEl) {
 
     // Single definition of an entry's own selected/deselected/partial state, shared by
     // updateIndicators (which renders it) and isEntryFullyDeselected (which run-collapse uses to
-    // decide whether every entry in a run has gone quiet).
+    // decide whether every entry in a run has gone quiet). Selection state alone - a fully-dead
+    // entry (see updateRunCollapse) can still be independently selected/deselected/partial, per
+    // "Casualty Tracking Is Independent of Selection Filtering".
     function entryState(entryEl) {
         const singleToggle = entryEl.querySelector(':scope > .statline-toggle');
         if (singleToggle) {
@@ -127,15 +278,25 @@ function initUnitSelection(unitEl) {
         el.classList.add(`select-${state}`);
     }
 
-    // A run collapses to header-only once every entry sharing it (its col-statline cell and any
-    // per-row ability cells at the same data-run-index) is fully deselected; a spans-component
-    // ability cell collapses only once every run in its [data-first-run-index, data-last-run-index]
-    // range is collapsed. Grid-row indices themselves are never touched - only the run-collapsed
-    // class, which CSS uses to shrink cell content.
+    // A run collapses to header-only once every entry sharing it meets either of two independent
+    // conditions: it's fully deselected (this Set, ephemeral/client-side), or it's fully dead -
+    // read from data-dead, rendered server-side from RemainingCount (casualty-tracking) - so a
+    // dead run stays collapsed regardless of reselection, and a reload shows it already collapsed
+    // without needing this function to have run first. The two are combined per-run (OR), never
+    // merged into the deselected Set itself, so neither can accidentally suppress the other; a
+    // spans-component ability cell collapses only once every run in its
+    // [data-first-run-index, data-last-run-index] range is collapsed by that same combined rule.
     function updateRunCollapse() {
-        const runCollapsed = new Map();
+        const runDeselected = new Map();
         entriesByRun.forEach((entryEls, runIndex) => {
-            runCollapsed.set(runIndex, entryEls.every(isEntryFullyDeselected));
+            runDeselected.set(runIndex, entryEls.every(isEntryFullyDeselected));
+        });
+
+        const runCollapsed = new Map();
+        unitEl.querySelectorAll('.statline-cell.col-statline[data-run-index]').forEach(cell => {
+            const runIndex = cell.dataset.runIndex;
+            const dead = cell.dataset.dead === 'true';
+            runCollapsed.set(runIndex, dead || runDeselected.get(runIndex) === true);
         });
 
         unitEl.querySelectorAll('.statline-cell[data-run-index]').forEach(cell => {
@@ -185,6 +346,9 @@ function initUnitSelection(unitEl) {
     // never struck through. A group with no merged alternative (a lone contribution, or contributions
     // that already disagreed on PerModelAttacks before any filtering) shows exactly its selected raw
     // rows the same way. The primary row hides entirely once no contribution anywhere is selected.
+    // A fully-dead loadout/model-line never has a contribution row to begin with (excluded
+    // server-side - see the Aggregate Weapon Count View requirement), so casualty state needs no
+    // special-casing here at all.
     function recomputeWeaponRow(row) {
         const weaponId = row.dataset.weaponId;
         const breakdownRows = [...unitEl.querySelectorAll(`tr.weapon-contribution-row[data-weapon-id="${weaponId}"]`)];

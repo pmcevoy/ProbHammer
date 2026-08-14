@@ -25,6 +25,10 @@ public sealed class ModelLine
         RemainingCount = count;
     }
 
+    /// <summary>Sets the remaining count directly, clamped to <c>[0, Count]</c>. The single primitive
+    /// both casualty removal and mis-tap correction reduce to.</summary>
+    public void SetRemainingCount(int value) => RemainingCount = Math.Clamp(value, 0, Count);
+
     /// <summary>Removes up to <paramref name="count"/> models as casualties. Clamped at a floor of 0.</summary>
-    public void RemoveCasualties(int count) => RemainingCount = Math.Max(0, RemainingCount - count);
+    public void RemoveCasualties(int count) => SetRemainingCount(RemainingCount - count);
 }
