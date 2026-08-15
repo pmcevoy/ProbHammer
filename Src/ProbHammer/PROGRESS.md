@@ -8,6 +8,26 @@ Nothing in progress.
 
 ## Recently Completed
 
+- Second follow-up on `archive-10e-pipeline`, prompted by direct feedback: banner-then-old-
+  content in `CLAUDE.md` (added in the prior follow-up) still meant the file described
+  archived behavior, which defeats the point — `CLAUDE.md`'s own stated job is describing
+  *current* intent and architecture. Rewrote rather than banner-annotated: removed the
+  "Architecture Overview" pipeline diagram and the entire "User Flow" section (both 100%
+  archived-flow narrative with no live equivalent); trimmed "Key Design Constraints" to just
+  the one constraint still true (AP sign convention, reworded to cite the live
+  `WeaponProfile.Ap` instead of the archived `SimWeaponProfile.Ap`); dropped the dead
+  `Enricher:CachePath` note from "Running Locally" entirely rather than explaining that it's
+  dead; removed `FuzzySharp` from "Key dependencies" (no longer a live dependency once
+  `Enricher.cs` moved). "Architecture Overview" now describes the actual live architecture
+  (11e domain model + `/LivePlay`) instead of the retired pipeline.
+  **Real side effect, not just tidying**: `CLAUDE.md` used `@`-import syntax
+  (`@.claude/domain-model.md` etc.) on four now-archived docs, which force-loads their full
+  content into *every* session's context automatically regardless of relevance — confirmed
+  by their appearance in this session's own system prompt. Dropped the `@` on all four
+  archived docs plus `combat-rules.md` (also archived-flagged), replaced with a plain
+  "read on demand" pointer list. `domain-model-11e.md` and `implementation-notes.md` (already
+  trimmed to current-state entries in the prior follow-up) keep their `@`-imports since
+  they're genuinely live and commonly needed.
 - Follow-up documentation cleanup on `archive-10e-pipeline` (no separate OpenSpec change —
   doc-only, zero build/behavior risk, landed directly): archived the remaining legacy
   documentation that the code-only move left behind. `REGENERATION.md` (a full build journal
