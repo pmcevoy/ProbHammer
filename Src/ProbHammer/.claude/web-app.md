@@ -1,10 +1,16 @@
 # Web Application
 
+> **Archived reference material, not the live app.** As of the `archive-10e-pipeline`
+> change, `/Index` and `/ArmyView` — everything this file describes below — moved to
+> `legacy/10e-pipeline/src/ProbHammer.Web/`, excluded from compilation; the app no longer
+> serves these routes. `/LivePlay` is the only live page today; its behavior is tracked as
+> a proper spec at `openspec/specs/live-play-view/spec.md`, not in this file.
+
 ## Purpose
 
 ASP.NET Core Razor Pages application. Live-game tool for phone/tablet use at the Warhammer 40K table.
 
-## Pages
+## Pages (archived)
 
 - `/` (Index) — paste two army list exports, submit to enrich
 - `/ArmyView` — side-by-side unit cards, weapon selection, simulation panel

@@ -16,12 +16,21 @@ A live-game tool for use on a phone or tablet at the Warhammer 40K table. The us
 
 ```
 wh40k-army-enricher/
-  ProbHammer.Web/        ASP.NET Core web application (Razor Pages + JS)
-  ProbHammer.Core/       Domain logic: parsing, enrichment, simulation
-    Simulation/                 Monte Carlo engine (ported from retired wh40k-sim)
+  ProbHammer.Web/        ASP.NET Core web application (Razor Pages + JS) — /LivePlay only
+  ProbHammer.Core/       Domain logic — the live 11e model (Domain/Catalogue, Domain/Roster,
+                          Domain/Examples) plus Parsing/ArmyListParser.cs (kept, pending an
+                          11e rewrite)
   ProbHammer.Tests/      xUnit test suite
+  legacy/10e-pipeline/   Archived 10th-edition pipeline (Contracts/Catalogue/Enrichment/
+                          Simulation + the old Index/ArmyView Web pages) — excluded from
+                          compilation, kept for reference only; see .claude/domain-model.md,
+                          .claude/web-app.md, .claude/simulation-engine.md,
+                          .claude/bsdata-parsing.md
   data/                         Sample army list exports for manual testing
 ```
+
+`/Index` and `/ArmyView` are no longer live routes — the app serves `/LivePlay` only, as of
+the `archive-10e-pipeline` change.
 
 - **Language:** C# 12, `net8.0`, nullable reference types enabled, implicit usings enabled
 - **Key dependencies:** `FuzzySharp` (name matching), `xunit` + `FluentAssertions` + `Moq` (tests)
@@ -64,6 +73,9 @@ Implementation gotchas and defensive notes: @.claude/implementation-notes.md
 ---
 
 ## User Flow
+
+> **Archived — describes the retired `/Index`/`/ArmyView` flow, not the live app.** See
+> `legacy/10e-pipeline/` and `.claude/web-app.md`. The live app today is `/LivePlay` only.
 
 1. **Index page** — paste attacker and defender army list text, submit
 2. Server enriches both lists and stores `List<UnitProfile>` in session

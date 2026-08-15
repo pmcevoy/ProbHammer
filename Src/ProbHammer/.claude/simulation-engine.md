@@ -1,5 +1,11 @@
 # Simulation Engine
 
+> **Archived reference material, not live code.** As of the `archive-10e-pipeline` change,
+> `Simulation/*` moved to `legacy/10e-pipeline/src/ProbHammer.Core/Simulation/`, excluded
+> from compilation. This file documents that archived engine, kept as reference for a
+> future change that rebuilds simulation on the 11e domain model
+> (`ProbHammer.Core.Domain.*` — see `.claude/domain-model-11e.md`).
+
 The full 40K combat rules and attack sequence spec: @rules/combat-rules.md
 
 ---

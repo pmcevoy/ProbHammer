@@ -33,8 +33,15 @@ entry once it's been turned into a change (archived changes remain the historica
   that ability text is never auto-parsed into behavior).
 - **Splitting `Keywords` into unit-wide-union vs. per-component, or adding `FactionKeywords`** —
   currently left as one unioned `IReadOnlySet<string>`.
-- **Markup convergence with `_UnitCard.cshtml`** — `/LivePlay`'s GW-style cards and the older 10e
-  `ArmyView` unit cards evolved separately; no attempt yet to share markup/partials between them.
+- **Split `wwwroot/css/site.css` into a `/LivePlay`-only stylesheet.** Deferred by
+  `archive-10e-pipeline`: the file's 10e-only, `/LivePlay`-only (`.live-play-page`-scoped),
+  and shared base rules are interleaved with no clean physical boundary, and the archive
+  change's own goal was safety (no risk to the one live page), not a redesign. `site.css`
+  currently still ships several hundred lines of now-dead 10e selectors (harmless — they
+  never match anything once `Index`/`ArmyView` markup is gone — but worth tidying up
+  eventually). Extracting `/LivePlay`'s rules into their own file would let `_Layout.cshtml`
+  stop loading dead CSS and make the stylesheet's scope match the app's actual scope
+  (`/LivePlay`-only).
 
 ## Domain / data pipeline
 

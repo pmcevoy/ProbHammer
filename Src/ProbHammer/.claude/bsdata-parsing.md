@@ -1,5 +1,11 @@
 # BSData Parsing & Catalogue Loading
 
+> **Archived reference material, not live code.** As of the `archive-10e-pipeline` change,
+> `Catalogue/*` moved to `legacy/10e-pipeline/src/ProbHammer.Core/Catalogue/`, excluded from
+> compilation. This file documents that archived BSData-loading pipeline; `/LivePlay` runs
+> entirely on hand-built fixture data (`Domain/Examples/`) today, with no BSData wiring —
+> see `.claude/domain-model-11e.md`.
+
 ## Data Source
 
 `https://github.com/BSData/wh40k-10e` — approximately 46 `.cat` files, ~35 MB total.

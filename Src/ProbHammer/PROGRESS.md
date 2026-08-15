@@ -8,6 +8,54 @@ Nothing in progress.
 
 ## Recently Completed
 
+- OpenSpec change `archive-10e-pipeline` implemented (all 34 tasks, `skip_specs: true` — the
+  archived code predates this project's spec-tracked capabilities and none of them describe
+  it): the entire live 10th-edition pipeline (`Contracts/UnitProfile.cs`+`ScalarValue.cs`,
+  `Catalogue/*`, `Enrichment/*`, `Simulation/*`, plus the dependent `Web` pages —
+  `Index`/`ArmyView`, `_UnitCard.cshtml`, `SimulationService`, `CatalogueStartupService`,
+  `SessionJson`, `army-view.js`) moved from `src/` to `legacy/10e-pipeline/` (mirroring
+  original relative paths), excluded from all three `.csproj` files' compilation. Done ahead
+  of rewiring `ArmyListParser` for the 11e export format, per `.claude/domain-model-11e.md`'s
+  standing plan to eventually rewire `ArmyListParser`, `Web`, and `Simulation` onto the 11e
+  domain model rather than patch the old `Contracts`-based pipeline in place — moving the
+  orphaned code aside first avoids it silently rotting half-broken mid-rewrite while still
+  keeping it intact as reference material.
+  **BREAKING**: `/Index`, `/ArmyView`, `POST /api/simulate`, and `POST /api/refresh-catalogues`
+  are gone from the running app — it serves `/LivePlay` only now. `Program.cs` lost the DI
+  registrations, ASP.NET Session wiring (`AddDistributedMemoryCache`/`AddSession`/
+  `UseSession` — confirmed as exclusively a 10e-pipeline consumer; `/LivePlay`'s casualty
+  persistence uses client-`localStorage` + a full-map POST instead, per
+  `.claude/domain-model-11e.md`), and the `github` named `HttpClient`, all for the same
+  reason.
+  Mechanism turned out simpler than the proposal first assumed: both `.csproj` files use
+  the SDK's default file glob rooted at each project's own directory, so moving files
+  outside `src/` excludes them from compilation with **zero** `<Compile Remove>` edits — the
+  only `.csproj` change was dropping the now-unused `FuzzySharp` package reference (used only
+  by the moved `Enricher.cs`; the pre-existing, unrelated unused `YamlDotNet` reference was
+  left alone, out of scope).
+  Two things were deliberately kept in `src/`, not archived, found by actually reading the
+  files rather than assuming: `Contracts/ArmyList.cs` (the `ArmyList`/`UnitEntry`/
+  `ModelEntry`/`WeaponEntry` records) stays, since it's `ArmyListParser.cs`'s own return type
+  and that parser is explicitly untouched by this change, kept as the 11e rewrite's starting
+  point; `wwwroot/css/site.css` stays unsplit, since its 10e-only and `/LivePlay`-only
+  (`.live-play-page`-scoped) rules are interleaved with no clean physical boundary and
+  splitting it risked a real visual regression on the one page still in active use, for a
+  change whose entire point was archival safety, not a redesign (flagged as a
+  `.claude/vnext-ideas.md` follow-up instead). `wwwroot/js/army-view.js`, by contrast, had no
+  such mixing (100% ArmyView-only logic) and moved wholesale, with its dead `<script>` tag
+  removed from `_Layout.cshtml`.
+  Verified via `dotnet build` (0 errors/warnings, nothing under `legacy/` touched — it has no
+  `.csproj`/`.sln` of its own) and `dotnet test` (126/126 passing, down from 276 — the exact
+  drop expected from moving `Simulation/*`'s and `Catalogue/*`'s and the 10e-format
+  `Parsing/*Tests.cs`' test files). Live-checked via `dotnet run` + `curl` rather than
+  `firefox-devtools-mcp` (not connected this session): `/LivePlay` → 200 with real content;
+  `POST /api/live-play/casualties` round-tripped a casualty adjustment correctly; `/Index`,
+  `/ArmyView`, and `/` all → 404 as expected, not a crash. `.claude/domain-model.md`,
+  `.claude/web-app.md`, `.claude/simulation-engine.md`, `.claude/bsdata-parsing.md`,
+  `.claude/rules/combat-rules.md`, and `CLAUDE.md` (Solution Structure + User Flow sections)
+  all gained banner notes pointing readers at the new `legacy/` location instead of being
+  rewritten or deleted — matching `domain-model.md`'s pre-existing pattern for flagging
+  superseded-but-retained code.
 - Follow-up patch on `casualty-tracking` (no separate OpenSpec change — small enough to land
   directly): a "reset casualties" control per unit block, requested after hands-on play surfaced
   that reverting several taps' worth of casualties one at a time was tedious. Lives in the

@@ -1,5 +1,12 @@
 # Combat Rules Specification — WH40K 10th Edition
 
+> **Documents archived code.** As of the `archive-10e-pipeline` change, the `Simulation/*`
+> engine that implements this spec moved to
+> `legacy/10e-pipeline/src/ProbHammer.Core/Simulation/`, excluded from compilation. The
+> rules themselves are unchanged and remain the authoritative reference for a future change
+> that rebuilds simulation on the 11e domain model — only the implementation's location
+> moved.
+
 This file is the authoritative reference for all simulation logic. Follow it exactly when
 implementing or modifying any combat-related code.
 

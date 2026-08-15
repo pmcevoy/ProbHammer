@@ -1,11 +1,17 @@
 # Domain Model & Army List Parser
 
-> **10th-edition shape.** Still what the live Web app, `Enricher`, and `Simulation/*` use.
-> A separate 11th-edition domain model (Attached Units) is being built alongside it in
-> `ProbHammer.Core.Domain.*` — see `.claude/domain-model-11e.md`. This file's `Contracts/*`,
-> `Catalogue/*`, and `Enrichment/Enricher.cs` are superseded in spec but remain in the tree,
-> untouched, until a later change rewires `ArmyListParser`, `Web`, and `Simulation` onto the
-> new model.
+> **10th-edition shape — archived reference material, not live code.** As of the
+> `archive-10e-pipeline` change, `Catalogue/*`, `Enrichment/Enricher.cs`, and `Simulation/*`
+> (along with the old `Index`/`ArmyView` Web pages that consumed them) live at
+> `legacy/10e-pipeline/src/ProbHammer.Core/` and `legacy/10e-pipeline/src/ProbHammer.Web/`,
+> excluded from compilation — this file documents that archived code, not the live tree.
+> `Contracts/ArmyList.cs` (the `ArmyList`/`UnitEntry`/`ModelEntry`/`WeaponEntry` records
+> below) is the one exception and stays in `src/ProbHammer.Core/Contracts/`: it's
+> `ArmyListParser.cs`'s own return type, and `ArmyListParser.cs` itself stays live as the
+> starting point for an 11e export-format rewrite. `Contracts/UnitProfile.cs`/`ScalarValue.cs`
+> moved with the rest of Enrichment's output side. The separate 11th-edition domain model
+> (Attached Units) in `ProbHammer.Core.Domain.*` — see `.claude/domain-model-11e.md` — is the
+> live target for future work.
 
 ## Core Domain Records
 
