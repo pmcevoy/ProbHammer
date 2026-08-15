@@ -8,6 +8,28 @@ Nothing in progress.
 
 ## Recently Completed
 
+- Third follow-up on `archive-10e-pipeline`: moved the remaining fully-archived `.claude` docs
+  (`domain-model.md`, `web-app.md`, `simulation-engine.md`, `bsdata-parsing.md`,
+  `rules/combat-rules.md`) from banner-noted-but-in-place to
+  `legacy/10e-pipeline/.claude/`, prompted by the user asking whether banner-only docs should
+  physically move too. **Surfaced and deliberately accepted a real gap along the way**: this
+  session's earlier archive pass had moved `ArmyListParserTests.cs` +
+  `ArmyListParserAndroidTests.cs` (38 tests) to `legacy/` even though `ArmyListParser.cs`
+  itself stays live and unmodified in `src/ProbHammer.Core/Parsing/` — meaning the live
+  parser currently has zero test coverage. Raised this with the user explicitly; decision was
+  to leave the tests archived rather than restore them, accepting the coverage gap until the
+  planned 11e `ArmyListParser` rewrite replaces them anyway. **`domain-model.md` moved
+  wholesale despite documenting some still-live behavior** (its "Core Domain Records"/"Army
+  List Export Formats" sections describe the exact live `ArmyListParser.cs` parsing rules,
+  not just the archived `Enricher`/`UnitProfile` schema) — user's explicit call, preferring
+  simplicity over a doc split, on the basis that `ArmyListParser.cs` is short enough to read
+  directly when needed.
+  `design-tokens.md` was **not** moved, unlike the others — its "Live Play Page Exception"
+  section documents the still-live `.live-play-page` CSS token-override mechanism (in the
+  still-unsplit `site.css`), which isn't written down anywhere else; moving the whole file
+  would have deleted that documentation, unlike the parser docs the user just chose to let go
+  of. `CLAUDE.md` updated to point at the new `legacy/10e-pipeline/.claude/...` paths.
+  `dotnet build` reconfirmed clean.
 - Second follow-up on `archive-10e-pipeline`, prompted by direct feedback: banner-then-old-
   content in `CLAUDE.md` (added in the prior follow-up) still meant the file described
   archived behavior, which defeats the point — `CLAUDE.md`'s own stated job is describing

@@ -27,9 +27,9 @@ wh40k-army-enricher/
                           11e rewrite)
   ProbHammer.Tests/      xUnit test suite
   legacy/10e-pipeline/   Retired 10th-edition pipeline — excluded from compilation, kept only
-                          for reference (see .claude/domain-model.md, .claude/web-app.md,
-                          .claude/simulation-engine.md, .claude/bsdata-parsing.md, each banner-
-                          noted as archived)
+                          for reference, including its own .claude/ docs (domain-model.md,
+                          web-app.md, simulation-engine.md, bsdata-parsing.md, rules/combat-
+                          rules.md)
 ```
 
 - **Language:** C# 12, `net8.0`, nullable reference types enabled, implicit usings enabled
@@ -49,10 +49,12 @@ that rebuilds and re-renders server-side — no session state).
 
 Full domain model detail: @.claude/domain-model-11e.md  
 Implementation gotchas and defensive notes: @.claude/implementation-notes.md  
+Visual design tokens (mostly the archived dark theme; the "Live Play Page Exception" section is
+current): `.claude/design-tokens.md`
 
-Not auto-loaded, read on demand: combat rules reference (`.claude/rules/combat-rules.md`, not yet
-wired to any simulator); the archived 10e docs (`.claude/domain-model.md`, `.claude/web-app.md`,
-`.claude/simulation-engine.md`, `.claude/bsdata-parsing.md`, `.claude/design-tokens.md`).
+Archived 10e docs, kept only as reference material, not auto-loaded:
+`legacy/10e-pipeline/.claude/domain-model.md`, `web-app.md`, `simulation-engine.md`,
+`bsdata-parsing.md`, `rules/combat-rules.md`.
 
 ---
 
