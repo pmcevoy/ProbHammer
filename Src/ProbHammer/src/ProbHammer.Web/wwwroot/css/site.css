@@ -473,10 +473,11 @@ button[type="submit"]:hover { opacity: 0.85; }
 .sim-error { color: #e74c3c; padding: 0.5rem; font-size: 0.85rem; }
 
 /* ── Live Play page ──
-   GW-datasheet-inspired light theme, scoped entirely to this page: the seven design tokens are
+   GW-datasheet-inspired light theme, scoped entirely to this page: the eight design tokens are
    redeclared locally so every rule below (and any shared selector like .weapon-table) resolves
-   against these values instead of the app-wide dark tokens on :root. See .claude/design-tokens.md
-   for the documented exception this page is. */
+   against these values instead of the unused dark-theme tokens still declared on :root (see
+   legacy/10e-pipeline/.claude/design-tokens.md - the archived pages that used those). Documented
+   at .claude/design-tokens.md. */
 
 .live-play-page {
     --bg: #eeece6;

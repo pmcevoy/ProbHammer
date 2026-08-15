@@ -1,97 +1,60 @@
 # Visual Design Specification
 
-> **Everything below except "Live Play Page Exception" describes the archived dark-tactical
-> theme** (`/Index`/`/ArmyView`, now at `legacy/10e-pipeline/`) — kept in place rather than
-> split out because `wwwroot/css/site.css` itself was deliberately left unsplit (10e-only and
-> `/LivePlay`-only rules are interleaved with no clean boundary — see `archive-10e-pipeline`'s
-> design.md). The "Live Play Page Exception" section is the one part of this file that
-> documents live, current styling.
-
-Dark tactical theme. Feels like a military operations display — dark backgrounds, muted text, red accent for action and selection. Designed for phone/tablet in low-light conditions at a gaming table.
-
-No web fonts. System font throughout. Monospace for all game statistics.
+GW-datasheet-inspired light theme for `/LivePlay`, the only live page today. No web fonts —
+system font throughout. No monospace — stat/weapon numbers render in the regular body weight.
 
 ---
 
 ## Colour Palette
 
-Seven semantic colours cover the whole UI. Use named variables (`--bg`, `--accent`, etc.) — do not hardcode hex values in components.
+Eight semantic colours cover the page. Named as CSS custom properties — do not hardcode hex
+values in components.
 
 | Name | Value | Semantic role |
 |---|---|---|
-| `--bg` | `#1a1a2e` | Page background |
-| `--bg2` | `#16213e` | Card headers, panels, surfaces |
-| `--bg3` | `#0f3460` | Hover state for headers, pill chips, modifier section headers |
-| `--accent` | `#c0392b` | Primary action: selected attacker weapons, run button, headings |
-| `--text` | `#e0e0e0` | Primary text |
-| `--text-dim` | `#a0a0b0` | Labels, stat line, dim info, most table headers |
-| `--amber` | `#f1a94e` | "While Leading" abilities, active modifier summaries, multi-weapon group headers |
-| `--border` | `#2a2a4e` | All borders and dividers |
+| `--bg` | `#eeece6` | Page background |
+| `--bg2` | `#fbfaf7` | Card/panel surfaces |
+| `--bg3` | `#24413f` | Section header bars |
+| `--accent` | `#24413f` | Emphasis: stat sub-values (e.g. invulnerable save), primary headings |
+| `--text` | `#262622` | Primary text |
+| `--text-dim` | `#6f6c62` | Labels, counts, dim info |
+| `--amber` | `#a86a1d` | Draw-the-eye controls (e.g. the casualty-reset icon) |
+| `--border` | `#d9d5c9` | Borders and dividers |
 
-Three additional semantic colours that don't need to be variables (used in one place each):
+## Mechanism
 
-- **Invulnerable save** — sky blue; distinguishes the invuln stat from the armour save in the unit header
-- **Feel No Pain** — light green; same role for FNP stat
-- **Selected defender** — a blue highlight (header tint + left border) when a defender card is chosen
+Declared by redeclaring all eight custom properties locally on the `.live-play-page` selector in
+`site.css`, rather than as a separate stylesheet — every rule scoped under it (including shared
+selectors like `.weapon-table`) resolves against these values. `site.css` is not split by page; if
+a second page with its own theme is ever added, promote this into a proper multi-theme structure
+instead of copying the pattern a second time.
 
 ---
 
 ## Typography
 
-- **Font:** `system-ui, sans-serif` — no loading, no fallback issues
-- **Base size:** 14px body
-- **Line height:** 1.4
-- **Monospace:** used for the stat line (T/Sv/W), all numeric weapon stats (A/S/AP/D), step-control values, and simulation results
-- **Scale:** use relative sizing — section titles slightly larger than body, labels and secondary text slightly smaller. Avoid more than three distinct sizes on any one screen.
+- **Font:** `system-ui, sans-serif`
+- **Scale:** compact — section headers `0.82rem` bold uppercase, stat labels `0.65rem` uppercase,
+  stat values `0.95rem` bold, stat sub-values `0.68rem` bold in `--accent`, most secondary text in
+  the `0.6–0.78rem` range. No more than a handful of distinct sizes on any one screen.
 
 ---
 
 ## Spacing & Shape
 
-- Spacing is tight — this is a game tool, not a marketing page. Prefer compact padding over generous whitespace.
-- Border radius is consistent: `4px` on cards and main containers, `3px` on chips/buttons/controls.
-- All borders use `--border` colour. No drop shadows.
+- Spacing is tight — this is a game tool, not a marketing page.
+- Border radius: `4px` on unit-block cards, `3px` on section/chip/control surfaces, `2px` on the
+  smallest inline controls.
+- All borders use `--border`. No drop shadows.
 
 ---
 
 ## Interaction States
 
-Describe intent — the exact CSS values should follow from the palette above:
+- **Hover** (toggles, disclosure controls): opacity fades to `0.8`
+- **Disabled** (e.g. a casualty control at its bound): opacity `0.4`–`0.55`, cursor `default`
+- **Zebra striping** (weapon tables): alternate rows tinted `var(--bg)` against the card's `--bg2`
+  base — driven by each row's own list index server-side, not DOM child-position, so hidden
+  breakdown rows can't shift the parity of rows after them
 
-- **Hover (headers, rows):** surface lifts from `--bg2` to `--bg3`
-- **Selected weapon (attacker):** row tinted with a low-opacity wash of `--accent`
-- **Selected defender (unit card):** left border in a distinct blue; header background darkened
-- **Locked weapon row (wrong phase):** faded to ~40% opacity, cursor becomes not-allowed
-- **Active modifier toggle:** filled with a dim blue, brighter border — clearly "on" without being garish
-- **Disabled button:** faded to ~60% opacity
-- **Focused textarea:** thin `--accent` outline
-
----
-
-## Responsive Behaviour
-
-Single breakpoint at 700px:
-
-- **Above 700px:** two-column army layout side by side; two-column army-input layout side by side
-- **Below 700px:** everything stacks into a single column; catalogue bar wraps
-
-No other breakpoints. The combat panel sticks to the bottom of the viewport at all sizes.
-
----
-
-## Live Play Page Exception
-
-`/LivePlay` (`live-play-page`) is a deliberate, scoped exception to every rule above. It follows a
-GW-datasheet-inspired **light** theme instead of the dark tactical theme, and does **not** use
-monospace for stat/weapon numbers — both intentional, matching the GW references this page's
-layout was designed against (see `openspec/changes/live-play-gw-layout/design.md`, Decision 6).
-
-Mechanism: the same seven token names (`--bg`, `--bg2`, `--bg3`, `--accent`, `--text`,
-`--text-dim`, `--amber`, `--border`) are redeclared locally on the `.live-play-page` selector in
-`site.css`, so every rule scoped under it (including the shared `.weapon-table` selector) resolves
-against the light palette instead of the `:root` dark one. No other page is affected, and reverting
-`/LivePlay` to the app-wide theme is deleting that one block.
-
-If a future change extends this pattern to another page, promote it out of this "exception" note
-into a proper second theme in the Colour Palette / Typography sections above instead of copying
-this note a second time.
+No dedicated responsive breakpoint today — the page is a single centered column, `max-width: 900px`.

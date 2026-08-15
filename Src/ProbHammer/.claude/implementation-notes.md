@@ -2,13 +2,13 @@
 
 Defensive knowledge accumulated during development. Import this file when debugging or working on the relevant subsystem.
 
-> Entries specific to the archived 10th-edition pipeline (Session JSON serialisation,
-> BSData XML parsing, `Enricher`-side name resolution, `Simulation/*`) moved to
-> `legacy/10e-pipeline/.claude/implementation-notes.md` alongside that code — see
-> `archive-10e-pipeline`. What remains below still applies to live code: `Parsing/ArmyListParser.cs`
-> is kept and unmodified pending an 11e rewrite; the AP convention and the generic C#/Razor gotchas
-> apply to the current codebase (including the 11e domain model and `/LivePlay`) regardless of
-> which pipeline touches them.
+> Entries specific to the archived 10th-edition pipeline (Session JSON serialisation, BSData XML
+> parsing, `Enricher`-side name resolution, `Simulation/*`, and — once it was confirmed the 11e
+> `ArmyListParser` work is a full reimplementation rather than a refactor — the two 10e-format
+> `ArmyListParser.cs` gotchas) moved to `legacy/10e-pipeline/.claude/implementation-notes.md`
+> alongside that code. What remains below is confirmed still applicable regardless of which
+> pipeline touches it: the AP sign convention (verified against the live 11e domain model) and
+> generic C#/Razor gotchas (verified still exercised by `/LivePlay`'s own templates).
 
 ---
 
@@ -21,18 +21,6 @@ convention originated in the archived 10e pipeline (`WeaponVariantProfile.Ap` /
 unchanged into the live 11e domain model: `WeaponProfile.Ap` (`Domain/Catalogue/WeaponProfile.cs`)
 also uses negative integers (`Examples/Datasheets.cs` weapons are authored as `-1`/`-2` etc.). Any
 future save-resolution logic built on the 11e model should keep `effectiveSave = save - ap`.
-
----
-
-## Army List Parser — iOS Current Format
-
-`◦` (U+25E6) is **always** a weapon regardless of indent depth. Check for it before the indent-based `•` branching in `ClassifyBulletLine`. Failing to do this causes weapons to be misclassified as model entries on deeply indented lines.
-
----
-
-## Android Detachment Field
-
-The detachment line appears **after** the force-size line in Android exports (unlike iOS where it appears before). After consuming the force-size line, if `detachment` is still empty, scan forward for the next non-empty, non-points-header line.
 
 ---
 

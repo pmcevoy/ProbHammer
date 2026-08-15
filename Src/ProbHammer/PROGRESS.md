@@ -8,6 +8,28 @@ Nothing in progress.
 
 ## Recently Completed
 
+- Fourth follow-up on `archive-10e-pipeline`, correcting a reasoning error from the third:
+  `design-tokens.md` had been left in `.claude/` on the assumption that `site.css` being
+  unsplit meant the doc couldn't cleanly split either (its "Live Play Page Exception" section
+  was written as a contrast against the dark-theme content above it). Checked `site.css`
+  directly rather than continuing to assume: `.live-play-page`'s CSS block turned out to be
+  fully self-contained — its own independently-declared border-radius/spacing/hover values,
+  and the file's one `@media` breakpoint targets only the archived
+  `.army-columns`/`.army-inputs`/`.catalogue-bar` selectors, not `.live-play-page` — so
+  nothing in the "dark theme" sections was actually load-bearing for `/LivePlay`, contrary
+  to the earlier assumption. Rewrote `.claude/design-tokens.md` from scratch as a standalone,
+  current-state `/LivePlay` visual design doc (palette, typography, spacing, interaction
+  states — all read directly off the live CSS, not inferred by contrast); moved the original
+  file's full content to `legacy/10e-pipeline/.claude/design-tokens.md`. Updated the
+  `site.css` comment above `.live-play-page` to match (dropped "documented exception this
+  page is" framing).
+  Also pruned `.claude/implementation-notes.md`'s two `ArmyListParser.cs` iOS/Android
+  format-gotcha entries to the legacy copy, prompted by explicit confirmation that the
+  planned 11e `ArmyListParser` work is a full reimplementation rather than a refactor — these
+  notes describe internals of the current 10e-format parser that won't carry forward, unlike
+  the AP sign convention and generic Razor/C# gotchas that remain. `CLAUDE.md`'s doc-pointer
+  list updated to match (design-tokens.md restored to an `@`-import, now that it's fully
+  live). `dotnet build` reconfirmed clean.
 - Third follow-up on `archive-10e-pipeline`: moved the remaining fully-archived `.claude` docs
   (`domain-model.md`, `web-app.md`, `simulation-engine.md`, `bsdata-parsing.md`,
   `rules/combat-rules.md`) from banner-noted-but-in-place to

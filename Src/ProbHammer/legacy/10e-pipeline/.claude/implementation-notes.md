@@ -1,11 +1,26 @@
 # Implementation Notes & Gotchas — Archived 10th-Edition Pipeline
 
-> Archived alongside the code these notes describe, by the `archive-10e-pipeline` change.
-> The live counterpart, `.claude/implementation-notes.md`, keeps only the entries that still
-> apply to current code (the AP sign convention, `ArmyListParser.cs` gotchas, and generic
+> Archived alongside the code these notes describe, by the `archive-10e-pipeline` change and
+> its follow-ups. The live counterpart, `.claude/implementation-notes.md`, keeps only the
+> entries confirmed still applicable to current code (the AP sign convention, and generic
 > C#/Razor gotchas). Everything below is defensive knowledge for the archived
 > `Contracts`/`Catalogue`/`Enrichment`/`Simulation`/`Web` (`Index`/`ArmyView`) pipeline, kept
-> for reference only.
+> for reference only — including the two `ArmyListParser.cs` iOS/Android format gotchas, moved
+> here once it became clear the parser is being **fully reimplemented** for the 11e export
+> format rather than incrementally modified, so these notes about its current 10e-format
+> internals won't carry forward.
+
+---
+
+## Army List Parser — iOS Current Format
+
+`◦` (U+25E6) is **always** a weapon regardless of indent depth. Check for it before the indent-based `•` branching in `ClassifyBulletLine`. Failing to do this causes weapons to be misclassified as model entries on deeply indented lines.
+
+---
+
+## Android Detachment Field
+
+The detachment line appears **after** the force-size line in Android exports (unlike iOS where it appears before). After consuming the force-size line, if `detachment` is still empty, scan forward for the next non-empty, non-points-header line.
 
 ---
 

@@ -49,12 +49,12 @@ that rebuilds and re-renders server-side — no session state).
 
 Full domain model detail: @.claude/domain-model-11e.md  
 Implementation gotchas and defensive notes: @.claude/implementation-notes.md  
-Visual design tokens (mostly the archived dark theme; the "Live Play Page Exception" section is
-current): `.claude/design-tokens.md`
+`/LivePlay` visual design tokens: @.claude/design-tokens.md  
 
 Archived 10e docs, kept only as reference material, not auto-loaded:
 `legacy/10e-pipeline/.claude/domain-model.md`, `web-app.md`, `simulation-engine.md`,
-`bsdata-parsing.md`, `rules/combat-rules.md`.
+`bsdata-parsing.md`, `rules/combat-rules.md`, `design-tokens.md`,
+`implementation-notes.md`.
 
 ---
 
