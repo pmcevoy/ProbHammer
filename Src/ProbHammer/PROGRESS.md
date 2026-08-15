@@ -8,6 +8,38 @@ Nothing in progress.
 
 ## Recently Completed
 
+- Follow-up documentation cleanup on `archive-10e-pipeline` (no separate OpenSpec change —
+  doc-only, zero build/behavior risk, landed directly): archived the remaining legacy
+  documentation that the code-only move left behind. `REGENERATION.md` (a full build journal
+  from an earlier "regenerate the app from spec files only" experiment, predating this
+  project's OpenSpec adoption) and `.claude/features/*.feature` (its Gherkin acceptance
+  criteria — referenced only by that journal) both moved wholesale to
+  `legacy/10e-pipeline/`, mirroring their original root-level/`​.claude/` paths. `data/`
+  (10e-format sample army list exports, referenced from nowhere in code) moved the same way.
+  `.claude/implementation-notes.md` was split by triage rather than moved wholesale: entries
+  tied purely to the archived `Enrichment`/`Catalogue`/`Simulation` code (Session JSON
+  serialisation, BSData XML parsing gotchas, fuzzy-matching/`name_overrides.json`,
+  sub-ability/multi-profile weapon parsing, `Cover`/`SimDefenderProfile.Save`) moved to
+  `legacy/10e-pipeline/.claude/implementation-notes.md`; entries confirmed still live were
+  kept — the two `ArmyListParser.cs` iOS/Android gotchas (that parser stays unmodified in
+  `src/`), the generic Static-Classes-and-`ILogger` and three Razor gotchas (confirmed still
+  exercised: `/LivePlay`'s `_UnitBlock.cshtml` already uses the same `@(expr)` wrapping the
+  Razor-email-heuristic/WH40K-notation notes describe), and the AP sign-convention note
+  (reworded — confirmed the 11e domain model's `WeaponProfile.Ap` uses the same
+  negative-integer convention as the archived `SimWeaponProfile.Ap`, so the rule carries
+  forward rather than being purely historical).
+  `.claude/design-tokens.md` was **not** split — its "Live Play Page Exception" section
+  (documenting `/LivePlay`'s light-theme token override) is live and necessary, but has no
+  clean physical boundary from the rest of the file's archived dark-theme content, mirroring
+  the earlier decision to leave `site.css` itself unsplit. Got a banner note instead.
+  `CLAUDE.md` gained banner notes on its "Architecture Overview" and "Key Design Constraints"
+  sections (matching the "User Flow" banner from the original `archive-10e-pipeline` session),
+  a correction to its `.claude/domain-model.md` pointer line ("current Web app" → "archived"),
+  an updated `Solution Structure` tree (folds `REGENERATION.md`/`.claude/features/`/`data/`
+  into the `legacy/10e-pipeline/` entry instead of listing `data/` separately), and a note
+  that `Enricher:CachePath` in `appsettings.json` is now dead config (left in `appsettings.json`
+  itself, untouched, consistent with the original change's decision not to touch app config).
+  `dotnet build` reconfirmed clean (0 errors/warnings) after the moves.
 - OpenSpec change `archive-10e-pipeline` implemented (all 34 tasks, `skip_specs: true` — the
   archived code predates this project's spec-tracked capabilities and none of them describe
   it): the entire live 10th-edition pipeline (`Contracts/UnitProfile.cs`+`ScalarValue.cs`,

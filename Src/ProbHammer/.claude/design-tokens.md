@@ -1,5 +1,12 @@
 # Visual Design Specification
 
+> **Everything below except "Live Play Page Exception" describes the archived dark-tactical
+> theme** (`/Index`/`/ArmyView`, now at `legacy/10e-pipeline/`) — kept in place rather than
+> split out because `wwwroot/css/site.css` itself was deliberately left unsplit (10e-only and
+> `/LivePlay`-only rules are interleaved with no clean boundary — see `archive-10e-pipeline`'s
+> design.md). The "Live Play Page Exception" section is the one part of this file that
+> documents live, current styling.
+
 Dark tactical theme. Feels like a military operations display — dark backgrounds, muted text, red accent for action and selection. Designed for phone/tablet in low-light conditions at a gaming table.
 
 No web fonts. System font throughout. Monospace for all game statistics.

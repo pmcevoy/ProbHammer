@@ -1,0 +1,79 @@
+# Implementation Notes & Gotchas — Archived 10th-Edition Pipeline
+
+> Archived alongside the code these notes describe, by the `archive-10e-pipeline` change.
+> The live counterpart, `.claude/implementation-notes.md`, keeps only the entries that still
+> apply to current code (the AP sign convention, `ArmyListParser.cs` gotchas, and generic
+> C#/Razor gotchas). Everything below is defensive knowledge for the archived
+> `Contracts`/`Catalogue`/`Enrichment`/`Simulation`/`Web` (`Index`/`ArmyView`) pipeline, kept
+> for reference only.
+
+---
+
+## Session JSON Serialisation
+
+- `ScalarValueJsonConverter` is mandatory — without it `DiceExpression` fields serialise to `{}` and `DiceExpression.Parse` throws on deserialisation.
+- `PropertyNamingPolicy = CamelCase` must **not** be set on `SessionJson.Options` — it causes all `WeaponAbilities` booleans to deserialise as `false`.
+- The `data-unit` attribute on `ArmyView.cshtml` uses a separate `camelCaseJson` variable for JavaScript. This is independent of session serialisation.
+
+---
+
+## BSData XML Parsing
+
+- All `typeName` comparisons (e.g. `"Ranged Weapons"`, `"Unit"`) **must use `StringComparison.OrdinalIgnoreCase`** — case variation has been observed in the wild and silently drops profiles if compared with `==`.
+- `.catz` files are raw deflate compressed — use `DeflateStream`. **Not** `ZLibStream` or `GZipStream`.
+- `<selectionEntryGroups>` must be traversed recursively. Double nesting exists in practice (e.g. Repulsor Executioner → Wargear → Turret Weapon → Heavy Laser Destroyer). Stop at depth 6.
+- `_globalProfiles` must be retained as a field on `CatalogueStore` after `InitialiseAsync` completes — `RefreshCataloguesAsync` needs it. Do not scope it to `InitialiseAsync` only.
+- GitHub raw URL: spaces in filenames must be `%20` — use `Uri.EscapeDataString(filename)`.
+- Set a `User-Agent` header on all GitHub API requests — the API rejects requests without one.
+- **Do not** use the GitHub Commits API for staleness checking — aggressively rate-limited.
+
+---
+
+## Single-Model Unit Ability Upgrades
+
+For single-model units (`type="model"`, e.g. Impulsor), `unitEntry.Statline` is non-null, so `defenderStatline` is pre-initialised before the model loop. A null-check guard (`if defenderStatline == null`) skips the update entirely, losing ability upgrades (e.g. Shield Dome → 5+ invuln) applied inside the loop. Use a `defenderStatlineSet` boolean flag instead.
+
+---
+
+## Fuzzy Name Matching
+
+Log fuzzy matches at `Information` level for scores ≥ 90, `Warning` level for scores 85–89. Include input name, matched BSData name, and score in all cases. Consider writing a `resolution_report.json` alongside the main output for review.
+
+---
+
+## Non-Weapon Army List Entries
+
+Ability upgrades (e.g. "Shield Dome", "Icon of Despair") appear alongside weapons in the army export using the same bullet characters. If an army list item resolves to an entry with no weapon profiles, treat it silently — do not emit a warning. The ability-only check must match **either** the catalogue entry name **or** any ability profile name within that entry (e.g. entry `"Icon of Despair"` contains profile `"Icon of Despair (Aura)"`).
+
+---
+
+## Cover and SimDefenderProfile.Save
+
+Cover in 40K adds +1 to the defender's armour save roll (i.e. the die result is easier to meet the threshold). In `SimulationAdapter`, this is implemented by **subtracting 1 from `SimDefenderProfile.Save`** before the run. `effectiveSave = save - ap`; a lower `save` means a lower threshold, so the defender needs to roll less to succeed.
+
+Do **not** add 1 to `Save` for cover — adding 1 raises the threshold, making the save harder.
+
+Cover does not affect invulnerable saves.
+
+---
+
+## name_overrides.json
+
+Must be present in the **current working directory** when the web app starts. Example entry: `{ "Deathshroud Champion": "Deathshroud Terminator Champion" }`. The file is optional — if absent, resolution proceeds without overrides.
+
+---
+
+## Sub-Ability Profiles (Non-Standard typeName)
+
+BSData profiles with a `typeName` that is not one of the four standard values (`"Unit"`, `"Ranged Weapons"`, `"Melee Weapons"`, `"Abilities"`) represent named sub-ability groups. There are approximately 20 such custom types across the 10e catalogues (e.g. `"Lord of the Death Guard"`, `"Crimson King"`, `"Blessings of Khorne"`).
+
+- Their text lives in the `"Effect"` characteristic, not `"Description"`.
+- Some have additional characteristics (e.g. `"Roll"` encoding a required dice result) — join **all** characteristic values with `" — "` in document order.
+- `ParseProfiles()` must do a second pass to collect and link these after the first pass collects standard ability profiles. This ordering is required because sub-ability profiles sometimes appear before their named parent in the XML.
+- Parent-ability matching is opportunistic: if an `AbilityProfile` with `Name == typeName` exists from the first pass, append to it; otherwise create a new `AbilityProfile` named `typeName`. Do **not** attempt to link by scanning parent ability text — the connection is sometimes implicit (e.g. `typeName="Crimson King"` belongs to the ability named `"Unearthly Power"`).
+
+---
+
+## Multi-Profile Weapon Variant Labels
+
+BSData prefixes variant profiles with `➤ ` followed by the weapon entry name and ` - variantname`. Strip `➤ ` and the weapon entry name prefix to derive the variant label. Example: `"➤ Hellforged weapons - strike"` → `"strike"`.
