@@ -9,18 +9,6 @@ entry once it's been turned into a change (archived changes remain the historica
 
 ## `/LivePlay` — Attached Unit view
 
-- **Selection-scoped weapon aggregation.** Add toggles to the Statline section — at the
-  statline-title level (e.g. "Initiate", "Helbrecht") and optionally down to individual
-  loadout-breakdown lines — so the player can select just the components/model-lines currently
-  relevant (e.g. an `AttachedUnit` split across two simultaneous combats) and have the Ranged/
-  Melee sections re-filter to show only weapons those selections carry, with totals recomputed
-  from only the selected contributions. Real client-side state (which titles are checked), unlike
-  the read-only breakdown below — a bigger interaction surface, first thing on `/LivePlay` to need
-  actual UI state rather than per-row toggle behavior. Directly reuses `WeaponContribution`'s
-  per-`ModelLine` granularity (already fine enough to filter by, not just display), so it's a
-  natural follow-on once the weapon-contribution breakdown UI (below) has proven out the
-  grouping/rendering logic — sequenced deliberately after it, not before. Still wanted even with
-  the breakdown UI in place; the two are complementary, not redundant.
 - **Ability/weapon-keyword definitions popup.** A genuine centre-screen popup (not an inline
   `<details>` disclosure) triggered by clicking an ability name or a weapon keyword tag (e.g.
   `[SUSTAINED HITS 1]`), showing its full descriptive text. Distinct in kind from the
@@ -30,12 +18,6 @@ entry once it's been turned into a change (archived changes remain the historica
   `web-app.md`'s "Ability rendering is name-only for now; full-text-on-demand is explicitly
   deferred" note (currently `/LivePlay` renders `ability.Name` only, no way to see `ability.Text`
   at all).
-- **Live casualty mutation/removal.** Tap-to-remove (count=1 lines, e.g. a Leader) or a spinner
-  (count>1 lines, e.g. a squad), calling `ModelLine.RemoveCasualties`. The view already carries
-  the right granularity (per-`ModelLine` loadout breakdown) to target this correctly. `/LivePlay`
-  is currently read-only, rebuilt fresh from `Examples.View.MyArmy()` every request.
-- **Session/state persistence for casualty tracking across page loads** — depends on the above;
-  currently every request rebuilds a fresh army with no memory of prior removals.
 - **Phase-level section toggling across all units at once** — collapse/expand every unit's
   statline/ranged/melee/abilities section together, reusing the same disclosure unit each
   section already uses individually.
