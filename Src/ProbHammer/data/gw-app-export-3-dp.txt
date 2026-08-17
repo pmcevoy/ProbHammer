@@ -1,0 +1,69 @@
+Crusade with me (575 Points)
+
+Space Marines
+Black Templars
+Fulguris Task Force, Marshal's Household, and Subversion Assets (3 Detachment Points)
+Reconnaissance
+Strike Force (2,000 Points)
+
+ATTACHED UNITS
+
+Attached unit 1
+
+Ancient (40 Points)
+  • Attached as: Support (Character)
+  • 1x Bolt pistol
+  • 1x Bolt rifle
+  • 1x Close combat weapon
+
+Crusader Squad (150 Points)
+  • Attached as: Bodyguard (Battleline)
+  • 1x Sword Brother
+     ◦ 1x Heavy bolt pistol
+     ◦ 1x Master-crafted power weapon
+  • 5x Initiate
+     ◦ 5x Bolt pistol
+     ◦ 5x Bolt rifle
+     ◦ 5x Close combat weapon
+  • 4x Neophyte
+     ◦ 4x Astartes chainsword
+     ◦ 4x Bolt pistol
+
+CHARACTERS
+
+Captain in Gravis Armour (80 Points)
+  • 1x Master-crafted heavy bolt rifle
+  • 1x Master-crafted power weapon
+
+High Marshal Helbrecht (110 Points)
+  • Warlord
+  • 1x Ferocity
+  • 1x Sword of the High Marshals
+
+OTHER DATASHEETS
+
+Company Heroes (105 Points)
+  • 1x Ancient
+     ◦ 1x Bolt pistol
+     ◦ 1x Bolt rifle
+     ◦ 1x Close combat weapon
+  • 1x Company Champion
+     ◦ 1x Bolt pistol
+     ◦ 1x Master-crafted power weapon
+  • 2x Company Veteran
+     ◦ 2x Bolt pistol
+     ◦ 2x Close combat weapon
+     ◦ 1x Master-crafted bolt rifle
+     ◦ 1x Master-crafted heavy bolter
+
+Eradicator Squad (90 Points)
+  • 1x Eradicator Sergeant
+     ◦ 1x Bolt pistol
+     ◦ 1x Close combat weapon
+     ◦ 1x Melta rifle
+  • 2x Eradicator
+     ◦ 2x Bolt pistol
+     ◦ 2x Close combat weapon
+     ◦ 2x Melta rifle
+
+Exported with App Version: v2.4.0 (1), Data Version: v925

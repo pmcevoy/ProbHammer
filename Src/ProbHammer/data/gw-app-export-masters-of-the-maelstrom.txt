@@ -1,0 +1,84 @@
+YO HO HO (700 Points)
+
+Chaos Space Marines
+Cabal of Chaos and Devotees of Destruction (2 Detachment Points)
+Priority Assets
+Incursion (1,000 Points)
+
+ATTACHED UNITS
+
+Attached unit 1
+
+Masters of the Maelstrom (145 Points)
+  • Attached as: Support
+  • 1x Garreon the Corpsemaster
+     ◦ 1x Absolvor bolt pistol
+     ◦ 1x Reductor array
+  • 1x Garlon Souleater
+     ◦ 1x Force stave
+     ◦ 1x Mind Wrench
+  • 1x Katar Garrix
+     ◦ 1x Axe of Ending
+     ◦ 1x Bolt pistol
+  • 1x Captain Sargotta
+     ◦ 1x Laspistol
+     ◦ 1x Power sabre
+  • 1x The Enforcer
+     ◦ 1x Bionic gauntlet
+     ◦ 1x Londaxi maimer
+
+Legionaries (90 Points)
+  • Attached as: Bodyguard (Battleline)
+  • 1x Aspiring Champion
+     ◦ 1x Bolt pistol
+     ◦ 1x Boltgun
+     ◦ 1x Close combat weapon
+  • 4x Legionary
+     ◦ 4x Bolt pistol
+     ◦ 4x Boltgun
+     ◦ 4x Close combat weapon
+
+Attached unit 2
+
+Red Corsairs Reave-Captain (70 Points)
+  • Attached as: Leader (Character)
+  • 1x Bolt Pistol
+  • 1x Power sword
+  • Enhancements: Touched by the Warp
+
+Red Corsairs Raiders (110 Points)
+  • Attached as: Bodyguard
+  • 1x Red Corsairs Raider Champion
+     ◦ 1x Bolt pistol
+     ◦ 1x Boltgun
+     ◦ 1x Reaver’s blade
+  • 4x Red Corsairs Raider
+     ◦ 4x Bolt pistol
+     ◦ 4x Boltgun
+     ◦ 4x Reaver’s blade
+
+CHARACTERS
+
+Huron Blackheart (130 Points)
+  • 1x Tyrant’s Claw and exalted power weapon
+  • 1x Tyrant’s Claw heavy flamer
+
+BATTLELINE
+
+Legionaries (90 Points)
+  • 1x Aspiring Champion
+     ◦ 1x Bolt pistol
+     ◦ 1x Boltgun
+     ◦ 1x Close combat weapon
+  • 4x Legionary
+     ◦ 4x Bolt pistol
+     ◦ 4x Boltgun
+     ◦ 4x Close combat weapon
+
+DEDICATED TRANSPORTS
+
+Chaos Rhino (65 Points)
+  • 1x Armoured tracks
+  • 1x Combi-bolter
+
+Exported with App Version: v2.4.0 (1), Data Version: v925
