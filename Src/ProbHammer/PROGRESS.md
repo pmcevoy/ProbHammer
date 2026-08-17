@@ -8,7 +8,29 @@ Nothing in progress.
 
 ## Recently Completed
 
-- OpenSpec change `add-army-roster-container` implemented (all 10 tasks, not yet archived): new
+- OpenSpec change `add-modelline-keywords` implemented (all 10 tasks, not yet archived):
+  `ModelLine` gains its own `Keywords` (`IReadOnlySet<string>`, `StringComparer.OrdinalIgnoreCase`,
+  matching `Datasheet.Keywords`'s convention, optional constructor parameter so every existing
+  call site keeps compiling), and `KeywordResolution.EffectiveKeywords` now unions the `Keywords`
+  of every currently-present (`RemainingCount > 0`) `ModelLine` alongside the existing per-
+  component `Datasheet.Keywords` union. Motivated by a real datasheet ("Masters of the
+  Maelstrom") whose printed card scopes a `Psyker` keyword to one named individual
+  (`GARLON SOULEATER: PSYKER`) among three sharing an identical statline — this project's own
+  `ChaosSpaceMarineSquad` fixture has the same five-distinct-named-model shape and the same gap,
+  now fixed by a new `UnitFixtures.ChaosSpaceMarineSquadWithPsyker()` (one model-line per named
+  type, `Psyker` on only the Gunner's). **A related assumption from this change's own proposal
+  draft turned out wrong and was corrected before implementation**: BSData does carry `Leader`/
+  `Support` as static keywords on most datasheets (confirmed present on Emperor's Champion even
+  while unattached in an export) — not "never," as first assumed. Masters of the Maelstrom itself
+  has no static `Support` keyword despite always requiring attachment in practice (both apps
+  reject it standing alone), so whether our own model should ever synthesize a role keyword for
+  that exceptional case is genuinely unresolved and stays out of scope, deferred to whenever the
+  export parser exists to make it concrete. 133 tests, all passing (3 new, in a new
+  `KeywordResolutionTests.cs`: unit-level union includes a present model-line's own keyword,
+  model-level check doesn't leak to a sibling model-line, and the keyword drops from the union
+  once its model-line has no models remaining). Docs: `.claude/domain-model-11e.md` updated
+  (`ModelLine`'s shape, `KeywordResolution.EffectiveKeywords`'s pure-function description).
+- OpenSpec change `add-army-roster-container` implemented and archived (all 10 tasks): new
   `ArmyRoster` class in `ProbHammer.Core.Domain.Roster` wrapping the existing per-unit roster
   (`Units`) with army-level metadata that no `Unit`/`AttachedUnit`/`Datasheet` had anywhere to
   carry — `Name`, `PointsSpent`, `Faction` (ordered list, parent codex before sub-faction),

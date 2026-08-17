@@ -137,7 +137,11 @@ Ability(Name, Text, Choices: IReadOnlyList<AbilityChoice>, Scope: Model | Unit)
 ## Roster Context
 
 ```
-ModelLine(StatlineName, Weapons: IReadOnlyList<string>, Count, Abilities: IReadOnlyList<Ability>)
+ModelLine(StatlineName, Weapons: IReadOnlyList<string>, Count, Abilities: IReadOnlyList<Ability>,
+          Keywords: IReadOnlySet<string> = [])
+                     // Keywords scoped to this specific model-line, distinct from its Datasheet's
+                     // Keywords - e.g. a Psyker keyword on one named individual within a shared
+                     // statline. Case-insensitive, matching Datasheet.Keywords's convention.
   RemainingCount   // live, adjustable in both directions; alive/dead granularity only, clamped to [0, Count]
   SetRemainingCount(value)   // the one primitive both directions reduce to, clamped to [0, Count]
   RemoveCasualties(n)         // thin wrapper: SetRemainingCount(RemainingCount - n)
@@ -159,9 +163,12 @@ ICombatUnit
 
 **Pure functions (not stored state):**
 - `KeywordResolution.EffectiveKeywords(ICombatUnit)` — union of `Keywords` over currently-present
-  components. Recomputes live; never cached, so it can't go stale when a component is destroyed.
-  Model-level keyword checks must read a specific `Unit.Datasheet.Keywords` directly, never this
-  union.
+  components' Datasheets, plus the `Keywords` of whichever of those components' `ModelLine`s are
+  currently present (`RemainingCount > 0`) — e.g. a `Psyker` keyword scoped to one named
+  individual within a shared statline (`ChaosSpaceMarineSquad`-shaped fixtures). Recomputes live;
+  never cached, so it can't go stale when a component or model-line is destroyed. Model-level
+  keyword checks must read a specific `Unit.Datasheet.Keywords` together with that specific
+  model's own `ModelLine.Keywords` directly, never a sibling `ModelLine`'s and never this union.
 - `ToughnessResolution.ResolveDefendingToughness(AttachedUnit)` — highest Toughness among the
   Bodyguard's present models if any remain, else highest among present Leader/Support models.
   Domain fact only; not wired to `Simulation/*` in this change.

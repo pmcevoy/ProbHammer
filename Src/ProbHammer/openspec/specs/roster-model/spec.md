@@ -10,7 +10,7 @@ capability grows beyond its initial domain-model scope.
 ## Requirements
 
 ### Requirement: Unit Composition
-A Unit SHALL reference a single Datasheet and carry a list of model-lines, each specifying which named statline it uses, which weapons it is equipped with, and how many models share that combination, plus any Enhancements applied to the Unit.
+A Unit SHALL reference a single Datasheet and carry a list of model-lines, each specifying which named statline it uses, which weapons it is equipped with, how many models share that combination, and its own Keywords (distinct from the Datasheet's Keywords, for keyword variance scoped to specific named individuals or roles within a shared statline), plus any Enhancements applied to the Unit.
 
 #### Scenario: Unit with uniform loadout
 - **WHEN** a Unit's export data describes 5 models all equipped identically
@@ -23,6 +23,10 @@ A Unit SHALL reference a single Datasheet and carry a list of model-lines, each 
 #### Scenario: Statline reference is always explicit
 - **WHEN** a model-line is constructed
 - **THEN** its statline name is taken directly from the source data and is never inferred from the weapons or wargear selected
+
+#### Scenario: Named individuals sharing a statline are modeled as separate model-lines when a keyword differs
+- **WHEN** several named individuals within a Datasheet share an identical statline but only one of them carries a specific keyword (e.g. one of three same-statlined characters is a Psyker)
+- **THEN** each named individual is represented as its own model-line, so that keyword belongs to only that model-line's Keywords, not to the shared statline's other model-lines
 
 ### Requirement: Attached Unit Composite
 An AttachedUnit SHALL consist of exactly one Bodyguard Unit and an open collection of zero or more attached Units, and SHALL be treated as a single unit for the purposes of aggregate views and keyword resolution.
@@ -40,7 +44,7 @@ An AttachedUnit SHALL consist of exactly one Bodyguard Unit and an open collecti
 - **THEN** the model does not record whether it was attached via the Leader ability or the Support ability
 
 ### Requirement: Attached Unit Keyword Resolution
-An AttachedUnit's effective keyword set for unit-level rule checks SHALL be computed as the union of the Keywords of whichever component Units are currently present, and SHALL NOT be persisted as stored data. Model-level rule checks SHALL use only that specific model's own component Unit's Keywords, never the union.
+An AttachedUnit's effective keyword set for unit-level rule checks SHALL be computed as the union of the Keywords of whichever component Units are currently present, together with the Keywords of whichever of those components' model-lines are currently present, and SHALL NOT be persisted as stored data. Model-level rule checks SHALL use only that specific model's own component Unit's Keywords together with that specific model's own model-line's Keywords, never another model-line's Keywords even within the same component Unit, and never the union.
 
 #### Scenario: Union reflects all present components
 - **WHEN** an AttachedUnit's Bodyguard has Keywords {INFANTRY, BATTLELINE} and its attached Leader has Keywords {CHARACTER, INFANTRY}
@@ -53,6 +57,18 @@ An AttachedUnit's effective keyword set for unit-level rule checks SHALL be comp
 #### Scenario: Model-level checks do not see other components' keywords
 - **WHEN** a specific model in the Bodyguard Unit does not have the CHARACTER keyword itself
 - **THEN** a model-level check for keyword CHARACTER against that specific model fails, even though the AttachedUnit as a whole has the CHARACTER keyword via its attached Leader
+
+#### Scenario: Unit-level union includes a present model-line's own keyword
+- **WHEN** a component's Datasheet Keywords do not include PSYKER, but one of that component's currently-present model-lines has PSYKER in its own Keywords
+- **THEN** a unit-level check for keyword PSYKER against the AttachedUnit (or a plain Unit) succeeds
+
+#### Scenario: Model-level checks do not see a sibling model-line's keyword
+- **WHEN** two model-lines belong to the same component Unit and only one of them has PSYKER in its own Keywords
+- **THEN** a model-level check for keyword PSYKER against a model in the other model-line fails, even though both model-lines belong to the same Unit
+
+#### Scenario: A model-line's keyword drops out once it has no models remaining
+- **WHEN** a model-line whose own Keywords include PSYKER has its RemainingCount reduced to 0, and no other present component, model-line, or Datasheet contributes PSYKER
+- **THEN** the effective keyword union for that combat unit no longer includes PSYKER
 
 ### Requirement: Toughness Resolution Against an Attached Unit
 When an attack targets an AttachedUnit, the Toughness characteristic used to resolve that attack SHALL be the highest Toughness among the Bodyguard's currently-present models if any remain, otherwise the highest Toughness among the currently-present Leader/Support models.

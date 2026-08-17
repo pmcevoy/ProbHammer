@@ -55,4 +55,28 @@ public static class UnitFixtures
                 new ModelLine("Initiate", [WeaponFixtures.MasterCraftedPowerWeapon().Name], count: 3)
             ]);
     }
+
+    /// <summary>
+    ///     Chaos Space Marine Squad's five distinct named model types, one model-line each, with
+    ///     "Psyker" present only on the Gunner's own model-line - matches the "Masters of the
+    ///     Maelstrom" card's "GARLON SOULEATER: PSYKER" per-named-individual keyword scoping,
+    ///     proving it isn't per-statline-value (the Datasheet itself carries no PSYKER keyword).
+    /// </summary>
+    public static Unit ChaosSpaceMarineSquadWithPsyker()
+    {
+        var datasheet = DatasheetFixtures.ChaosSpaceMarineSquad();
+        var weapons = new[] { WeaponFixtures.ChainSword().Name, WeaponFixtures.BoltPistol().Name };
+
+        return new Unit(
+            datasheet,
+            enhancements: [],
+            modelLines:
+            [
+                new ModelLine("Chaos Space Marine", weapons, count: 1),
+                new ModelLine("Chaos Space Marine Champion", weapons, count: 1),
+                new ModelLine("Icon Bearer", weapons, count: 1),
+                new ModelLine("Chaos Space Marine Gunner", weapons, count: 1, keywords: ["Psyker"]),
+                new ModelLine("Chaos Space Marine Reaper", weapons, count: 1)
+            ]);
+    }
 }

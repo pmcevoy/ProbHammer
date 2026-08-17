@@ -14,14 +14,22 @@ public sealed class ModelLine
     public int Count { get; }
     public IReadOnlyList<Ability> Abilities { get; }
 
+    /// <summary>Keywords scoped to this specific model-line, distinct from its Datasheet's
+    /// Keywords - e.g. a keyword belonging to only one named individual within a shared statline
+    /// (see roster-model spec: "Named individuals sharing a statline are modeled as separate
+    /// model-lines when a keyword differs").</summary>
+    public IReadOnlySet<string> Keywords { get; }
+
     public int RemainingCount { get; private set; }
 
-    public ModelLine(string statlineName, IEnumerable<string> weapons, int count, IEnumerable<Ability>? abilities = null)
+    public ModelLine(string statlineName, IEnumerable<string> weapons, int count,
+        IEnumerable<Ability>? abilities = null, IEnumerable<string>? keywords = null)
     {
         StatlineName = statlineName;
         Weapons = weapons.ToList();
         Count = count;
         Abilities = abilities?.ToList() ?? [];
+        Keywords = new HashSet<string>(keywords ?? [], StringComparer.OrdinalIgnoreCase);
         RemainingCount = count;
     }
 
