@@ -1,4 +1,4 @@
-For the Emperor (975 Points)
+For the Emperor (1,065 Points)
 
 Space Marines
 Black Templars
@@ -75,6 +75,12 @@ Sword Brethren Squad (105 Points)
   • 4x Sword Brother
      ◦ 4x Heavy bolt pistol
      ◦ 4x Master-crafted power weapon
+
+CHARACTERS
+
+Emperor’s Champion (90 Points)
+  • 1x Black Sword
+  • 1x Bolt Pistol
 
 BATTLELINE
 
