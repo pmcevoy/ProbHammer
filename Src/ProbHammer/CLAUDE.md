@@ -23,8 +23,7 @@ simulation wired up yet.
 wh40k-army-enricher/
   ProbHammer.Web/        ASP.NET Core web application (Razor Pages + JS) — /LivePlay only
   ProbHammer.Core/       Domain logic — the live 11e model (Domain/Catalogue, Domain/Roster,
-                          Domain/Examples) plus Parsing/ArmyListParser.cs (kept, pending an
-                          11e rewrite)
+                          Domain/Examples)
   ProbHammer.Tests/      xUnit test suite
   legacy/10e-pipeline/   Retired 10th-edition pipeline — excluded from compilation, kept only
                           for reference, including its own .claude/ docs (domain-model.md,

@@ -287,5 +287,4 @@ than through the `presentLines` filter.
   wired to this domain model. The one exception is `DiceExpression`, which moved from
   `Simulation/*` into `Domain.Catalogue` (see Catalogue Context above); `Simulation/*` files were
   repointed to the relocated type via `using` statement only — no behavior, method signature, or
-  test change in `Simulation/*` itself. `Parsing/ArmyListParser.cs` is also untouched; fixtures
-  stand in for parsed input until the 11e export format is studied.
+  test change in `Simulation/*` itself.

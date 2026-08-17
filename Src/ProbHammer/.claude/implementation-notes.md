@@ -2,14 +2,6 @@
 
 Defensive knowledge accumulated during development. Import this file when debugging or working on the relevant subsystem.
 
-> Entries specific to the archived 10th-edition pipeline (Session JSON serialisation, BSData XML
-> parsing, `Enricher`-side name resolution, `Simulation/*`, and — once it was confirmed the 11e
-> `ArmyListParser` work is a full reimplementation rather than a refactor — the two 10e-format
-> `ArmyListParser.cs` gotchas) moved to `legacy/10e-pipeline/.claude/implementation-notes.md`
-> alongside that code. What remains below is confirmed still applicable regardless of which
-> pipeline touches it: the AP sign convention (verified against the live 11e domain model) and
-> generic C#/Razor gotchas (verified still exercised by `/LivePlay`'s own templates).
-
 ---
 
 ## AP Sign Convention
