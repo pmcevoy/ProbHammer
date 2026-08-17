@@ -272,6 +272,20 @@ no separate sort step that could disagree with the grouping. Unfiltered access t
 `Statlines`) happens naturally since `BuildStatlines` reads `component.ModelLines` directly rather
 than through the `presentLines` filter.
 
+**`ArmyRoster`** (`Domain/Roster/ArmyRoster.cs`) wraps the per-unit roster (`Units`, an
+`IReadOnlyList<ICombatUnit>`) with the army-level metadata no `Unit`/`AttachedUnit`/`Datasheet`
+carries: `Name`, `PointsSpent`, `Faction` (ordered — parent codex before sub-faction, e.g.
+`["Space Marines", "Black Templars"]`, or a single entry when there's no split), `Detachments`
+(ordered by selection, one entry per detachment a battle size's detachment points bought),
+`ForceDisposition`, `BattleSize`, and `PointsLimit`. Added ahead of the still-unbuilt GW-app
+export parser specifically so that future work has a settled target type instead of inventing
+one mid-parser-design; the shape and sample values (`Examples/View.Roster()`) were validated
+against a real captured export (`data/gw-app-export.txt`), not invented. `PointsSpent` is plain
+sample data — it is not derived from or reconciled against `Units`, since no points value is
+tracked anywhere below `ArmyRoster` (consistent with the no-points-modeling omission below).
+`View.MyArmyRoster()` is now a thin projection over `View.Roster().Units`, so its existing
+`List<ICombatUnit>` contract — and every `/LivePlay` call site — is unchanged.
+
 ---
 
 ## Deliberate Omissions

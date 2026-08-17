@@ -8,6 +8,28 @@ Nothing in progress.
 
 ## Recently Completed
 
+- OpenSpec change `add-army-roster-container` implemented (all 10 tasks, not yet archived): new
+  `ArmyRoster` class in `ProbHammer.Core.Domain.Roster` wrapping the existing per-unit roster
+  (`Units`) with army-level metadata that no `Unit`/`AttachedUnit`/`Datasheet` had anywhere to
+  carry — `Name`, `PointsSpent`, `Faction` (ordered list, parent codex before sub-faction),
+  `Detachments` (ordered list, one per selected detachment), `ForceDisposition`, `BattleSize`,
+  `PointsLimit`. Surfaced during exploratory design of a future GW-app export parser: real
+  exports (`data/gw-app-export.txt` and its `-3-dp`/`-masters-of-the-maelstrom` variants,
+  captured this session) carry all of this, and `Examples/View.MyArmyRoster()` had nowhere to
+  put it, returning a bare `List<ICombatUnit>`. `Faction`/`Detachments` are plain ordered
+  `IReadOnlyList<string>` rather than fixed named fields — real samples showed 1-2 Faction
+  entries and 1-3 Detachment entries, and a fixed-arity shape would break the moment a deeper
+  hierarchy or larger battle size showed up. `PointsSpent` and `PointsLimit` are deliberately
+  separate fields (975 spent vs. 1000 limit in the sample list) and neither is derived from or
+  validated against `Units`, since no points value is tracked anywhere below `ArmyRoster`.
+  `Examples/View.cs` gained `Roster()`, populated with literal values transcribed from
+  `data/gw-app-export.txt` (`"For the Emperor"`, `Space Marines`/`Black Templars`, `Companions
+  of Vehemence`, `Purge the Foe`, `Incursion`, 1000-point limit); `MyArmyRoster()` is now a thin
+  `Roster().Units.ToList()` projection, so its `List<ICombatUnit>` contract and both
+  `LivePlay.cshtml.cs` call sites are unchanged. 130 tests, all passing (4 new — two on
+  `View.Roster()` against the sample data, two on directly-constructed `ArmyRoster`s covering
+  the single-Faction/no-sub-faction case and a three-Detachment case, neither exercised by the
+  `View.cs` example itself). Doc: `.claude/domain-model-11e.md` updated.
 - Fourth follow-up on `archive-10e-pipeline`, correcting a reasoning error from the third:
   `design-tokens.md` had been left in `.claude/` on the assumption that `site.css` being
   unsplit meant the doc couldn't cleanly split either (its "Live Play Page Exception" section
