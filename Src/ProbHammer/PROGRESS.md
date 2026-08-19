@@ -8,6 +8,57 @@ Nothing in progress.
 
 ## Recently Completed
 
+- OpenSpec change `bsdata-corpus-scan-tests` implemented (all 20 tasks, not yet archived): two
+  permanent, manually-triggered xUnit v3 `[Fact(Explicit = true)]` tests
+  (`tests/ProbHammer.Tests/Domain/Catalogue/Bsdata/CorpusScan/`) replace the earlier one-off
+  full-corpus checks — a characteristic-resolution scan (every catalogue file gets a turn as its
+  own closure's starting file; every one of that file's own top-level entries attempted through
+  `BsdataDatasheetMapper.BuildDatasheet`, catching any exception) and a weapon-keyword-token scan
+  (walks each file's closure directly, collecting every `"Ranged Weapons"`/`"Melee Weapons"`
+  profile's `Keywords` text and running it through a new `WeaponKeywordParser.UnrecognizedTokens`).
+  Both check their results against a maintained, per-pattern allowlist (`AllowlistEntry<T>` +
+  `AllowlistCheck.AssertClean`) **bidirectionally** — an unmatched result or a stale (unhit)
+  allowlist entry both fail the test — and both `Assert.Skip` (not a silent pass) on a machine
+  without the local BSData clone. `WeaponKeywordParser.Apply` was refactored (behavior-preserving,
+  existing test suite unchanged) to share its token-recognition logic with the new
+  `UnrecognizedTokens` method via a private `TryRecognize` helper, so the scan can't silently drift
+  from what `Apply` actually recognizes. Docs: `.claude/domain-model-11e.md` updated ("Full-Corpus
+  Scan Tests" subsection; `ParseThreshold`'s existing paragraph corrected — see below).
+  **Two real findings from the first live-clone runs, neither anticipated going in:**
+  (1) The characteristic-resolution scan surfaced 54 failures, not just the 2 seeded multi-value-
+  InSv patterns — ~43 were a single trailing-`*` InSv footnote (e.g. `"5+*"` on Aeldari Rangers,
+  most Imperial/Chaos Knights, Judiciar, Astraeus) that `CharacteristicPattern`'s own doc comment
+  had incorrectly described as an accepted shape. Investigated properly rather than just "fixing
+  the regex to match the docs" (paused for explicit user review first, per the apply workflow's
+  guardrails, since the fix under consideration would have changed production parsing behavior):
+  resolving the linked ability behind several real examples showed the footnote almost always
+  restricts the save to one attack type (`"This model has a 5+ invulnerable save against ranged
+  attacks"`, confirmed on Aeldari Rangers and every sampled Imperial Knight) — the same
+  value-changes-by-context gap as the two already-known forms, just spelled differently in source
+  data (one exception, Ork's Makari, uses the same `*` for an unrelated "no re-rolls" caveat).
+  Conclusion: `ParseThreshold` throwing here is correct, working-as-intended behavior, not a bug —
+  only the (previously inaccurate) doc comments were corrected, parsing behavior is unchanged. The
+  3 known Ork dice-Strength weapons were confirmed to already throw `FormatException` via
+  `ParsePlainInt`, exactly as predicted by design-time code inspection — no separate flagging
+  mechanism was needed. (2) The weapon-keyword scan found 45 distinct unrecognized tokens on its
+  first run (the old `scratchpad/keywordscan/` prototype no longer exists, so this was a fresh
+  triage against new corpus content, not a re-check of the previously-found 43) — all added to the
+  allowlist, none fixed in `WeaponKeywordParser` (deliberately out of scope for this change): 3
+  already-documented no-flag tokens (Hazardous/Precision/Heavy), 7 case/punctuation variants of an
+  already-recognized token (a parser case-sensitivity gap, flagged below as a future fix
+  candidate), 4 dice-valued variants of an int-only mechanic (`Rapid Fire D3`/`D6`/`D6+3`,
+  `Sustained Hits D3`), and 31 genuinely unmodeled mechanics — most one-off weapon-specific flavor
+  abilities, but `Extra Attacks` (150+ occurrences), `Psychic`/`PSYCHIC` (~280 combined), `Lance`
+  (~70), and `One Shot` (~30+) are common enough to be real gaps worth a dedicated future flag.
+  Also found: `ANTI-non‑MONSTER/VEHICLE 2+` (Aeldari's Stone Stave) uses a U+2011 non-breaking
+  hyphen, not ASCII `-`, plus a dual slash-separated exclusion target — a different targeting shape
+  from the modeled Anti-X mechanic, not just a spelling variant.
+  **Tooling gotcha found during implementation**: on this machine, `dotnet test -- --help` (and
+  `Explicit`-passthrough via `dotnet test`'s own CLI) crashes the MTP wrapper outright; running the
+  built `ProbHammer.Tests.exe` directly with `-explicit only` is the reliable way to execute
+  `[Fact(Explicit = true)]` tests here — added alongside the existing `dotnet test`
+  no-`-v`/`--nologo` gotcha.
+
 - Parser-hardening follow-up on `catalogue-json-ingestion` (no new OpenSpec change): ran
   `BsdataDatasheetMapper` against every real file in the live BSData clone via a scratch scan tool
   (`scratchpad/keywordscan/`, not committed) and fixed the real bugs it found —
@@ -584,22 +635,30 @@ Nothing in progress.
 - 3 Ork weapons carry Strength as a dice expression (Battlewagon `D6+6`, Big Gunz [Legends] `2D6`,
   Deff Rolla Battle Fortress [Legends] `2D6`), which `WeaponProfile.S: int` can't represent. Needs a
   decision: leave failing / round to `DiceExpression.ExpectedValue()` / widen `S` to
-  `DiceExpression`.
-- Some datasheets give two different invulnerable saves by attack type (`"4+* / 5+"` on Wyches/
-  Howling Banshees; `"5+ (Ranged)"` on the four Titans + Stormbird). `Statline.InSv: int` can't
-  represent this. `BsdataDatasheetMapper.ParseThreshold` no longer silently keeps the first value —
-  it now throws `AmbiguousCharacteristicException` for these (and any other) unrecognized threshold
-  shapes, so this is tracked as a genuine parse failure rather than a silent loss. Same class of
-  problem as the Ork Strength issue above — decide together.
-- `Warhammer 40,000.json` in the live BSData clone isn't a real catalogue file (fails to
-  deserialize) and needs an explicit skip once a permanent full-corpus test exists.
-- The permanent "resolve every profile in every real catalogue file" test the corpus scan was a
-  prototype for hasn't been built yet — blocked on the two decisions above, and needs to no-op on
-  machines without the live clone.
-- The full-corpus scan also found 43 unrecognized weapon-keyword tokens, not yet triaged into
-  `WeaponKeywordParser` spelling/case bugs vs. genuinely new mechanics for a documented allowlist
-  (BSData keywords are confirmed to be added mid-edition, so this needs periodic re-scanning, not a
-  one-time fix).
+  `DiceExpression`. Tracked (not resolved) by `CharacteristicResolutionScanTests`'s allowlist.
+- Some datasheets give a conditional or multi-valued invulnerable save: two different values by
+  attack type, either `/`-split (`"4+* / 5+"` on Wyches/Howling Banshees) or parenthetical
+  (`"5+ (Ranged)"` on the four Titans + Stormbird); or — the most common shape by far, ~40 real
+  datasheets — a bare trailing `*` footnote (e.g. `"5+*"` on Aeldari Rangers, most Imperial/Chaos
+  Knights) that links to a separate ability restricting the save to one attack type (one exception,
+  Ork's Makari, uses the same `*` for an unrelated "no re-rolls" caveat instead). `Statline.InSv:
+  int` can't represent any of these. `BsdataDatasheetMapper.ParseThreshold` correctly throws
+  `AmbiguousCharacteristicException` for all of them rather than silently picking a value — this is
+  confirmed intended behavior, not a bug (see `bsdata-corpus-scan-tests`'s implementation notes) —
+  and is tracked (not resolved) by `CharacteristicResolutionScanTests`'s allowlist. Same class of
+  representation problem as the Ork Strength issue above — decide together.
+- The weapon-keyword-token scan (`WeaponKeywordScanTests`) found several tokens worth a dedicated
+  future `WeaponKeywordParser` fix rather than staying allowlisted forever: a handful of case/
+  punctuation variants of an already-recognized token (e.g. `"Devastating wounds"`, `"Ignores
+  cover"`, `"Rapid fire 2"` — parser vocabulary is case-sensitive); dice-valued variants of an
+  int-only mechanic (`"Rapid Fire D3"`/`"D6"`/`"D6+3"`, `"Sustained Hits D3"` — same class of gap as
+  the Ork Strength issue above); and real, widespread core mechanics with no flag at all yet
+  (`"Extra Attacks"` 150+ occurrences, `"Psychic"`/`"PSYCHIC"` ~280 combined, `"Lance"` ~70, `"One
+  Shot"` ~30+). `ANTI-non‑MONSTER/VEHICLE 2+` (Aeldari's Stone Stave) also uses a U+2011
+  non-breaking hyphen instead of ASCII `-`, plus a dual slash-separated exclusion target — a
+  different targeting shape from the modeled Anti-X mechanic, not a simple spelling fix. BSData
+  keywords are confirmed to be added mid-edition, so this needs periodic re-scanning via
+  `WeaponKeywordScanTests`, not a one-time fix.
 
 ---
 
@@ -615,6 +674,16 @@ Nothing outstanding.
 
 ## Next Session Prompt
 
-> Paste this at the start of the next Claude Code session:
+Nothing queued. `bsdata-corpus-scan-tests` is implemented (not yet archived — run
+`/opsx:archive bsdata-corpus-scan-tests` when ready) and both permanent scans pass against the live
+clone. Candidate follow-ups surfaced by this session, none scoped or agreed yet — raise with the
+user before starting any of them:
 
-"Read CLAUDE.md and all files in .claude/. Then read PROGRESS.md for current state."
+- Triage the "Known Issues" weapon-keyword findings into real `WeaponKeywordParser` fixes: a
+  case-insensitivity pass for the existing exact-match vocabulary, widening `RapidFire`/
+  `SustainedHits` to `DiceExpression` (same representation question as the parked Ork Strength
+  issue), and deciding whether `Extra Attacks`/`Psychic`/`Lance`/`One Shot` are common enough to
+  earn dedicated `WeaponProfile` flags.
+- The two parked representation decisions (Ork dice-Strength `WeaponProfile.S`, multi-value/
+  conditional `Statline.InSv`) — now better understood (the InSv footnote form usually means an
+  attack-type-restricted save, confirmed via real linked ability text) but still not decided.

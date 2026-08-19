@@ -213,22 +213,37 @@ public static class BsdataDatasheetMapper
     
     /// <summary>Parses a single-value threshold characteristic (Sv, InSv, BS, WS, LD) against the
     /// shape permitted for that specific characteristic (see <see cref="CharacteristicPattern"/>):
-    /// digits with an optional trailing "+" for all five, or a trailing "*" footnote marker for
-    /// InSv only (e.g. "5+*", confirmed on Wyches/Howling Banshees - not confirmed on the other
-    /// four, but no reason to assume they can't appear there too). An empty string (BSData's "no
+    /// digits with an optional trailing "+", for all five. An empty string (BSData's "no
     /// invulnerable save" representation), "N/A" (BSData's no-hit-roll-required marker on e.g. a
     /// Torrent weapon's BS/WS), or "-" (not applicable) parses as 0 regardless of characteristic.
-    /// Anything that doesn't match the allowed shape - including InSv's two known
-    /// two-different-values-by-context forms, either "/"-split (e.g. "4+* / 5+", confirmed on
-    /// Wyches and Howling Banshees) or a parenthetical annotation (e.g. "5+ (Ranged)", confirmed on
-    /// the four Titan datasheets and the Sokar-pattern Stormbird) - throws <see
-    /// cref="AmbiguousCharacteristicException"/> instead of silently keeping one value. This
-    /// reverses this method's earlier behavior of always taking the first/unparenthesized value:
-    /// Statline's single-int Sv/InSv fields have no way to represent two different values, and
-    /// picking one silently hid that loss instead of surfacing it. The corpus-wide resolution test
-    /// (PROGRESS.md's "Known Issues") is expected to catch this exception for the known
-    /// multi-value-InSv datasheets and check it against a maintained "known limitation" allowlist,
-    /// rather than this method quietly tolerating the ambiguity itself.</summary>
+    /// Anything that doesn't match the allowed shape - including every InSv form carrying a
+    /// caveat this method deliberately never resolves - throws <see
+    /// cref="AmbiguousCharacteristicException"/> instead of silently keeping one value. Confirmed
+    /// real-data InSv shapes that throw, none of them safe to collapse to a single int without
+    /// losing real game information: a "/"-split two-different-values-by-context form (e.g.
+    /// "4+* / 5+" on Wyches and Howling Banshees); a parenthetical annotation (e.g.
+    /// "5+ (Ranged)", confirmed on the four Titan datasheets and the Sokar-pattern Stormbird); and
+    /// - the most common by far in a full-corpus scan, ~40 real datasheets - a bare trailing "*"
+    /// footnote (e.g. "5+*" on Aeldari Rangers, every Imperial/Chaos Knight, both Titans-Library
+    /// entries, Judiciar, Astraeus). That footnote is not a harmless annotation: it links (via a
+    /// "profile"-type infoLink, sometimes resolving into the base rules catalogue
+    /// "Warhammer 40,000.json") to a small standard "Invulnerable Save (X+*)" Abilities profile
+    /// whose Description most often restricts the save to one attack type - "This model has a 5+
+    /// invulnerable save against ranged attacks" on Aeldari Rangers and every sampled Imperial
+    /// Knight - the exact same kind of value-changes-by-context gap as the two known forms above,
+    /// just spelled differently in source data, so it is deliberately treated the same way rather
+    /// than parsed as if the save applied unconditionally. (One sampled exception, Ork's Makari,
+    /// uses the same "*" convention for an unrelated caveat - "you cannot re-roll save rolls for
+    /// this unit" - that doesn't condition the value itself; still left unparsed here rather than
+    /// special-cased, since nothing about the characteristic text alone distinguishes the two
+    /// without resolving the linked ability first.) This reverses this method's original
+    /// behavior of always taking the first/unparenthesized value: Statline's single-int Sv/InSv
+    /// fields have no way to represent a conditional or multi-valued save, and picking one
+    /// silently hid that loss instead of surfacing it. The permanent full-BSData-corpus
+    /// characteristic-resolution scan (PROGRESS.md's "Known Issues";
+    /// tests/ProbHammer.Tests/Domain/Catalogue/Bsdata/CorpusScan/) catches this exception across
+    /// the whole corpus and checks it against a maintained "known limitation" allowlist, rather
+    /// than this method quietly tolerating the ambiguity itself.</summary>
     private static int ParseThreshold(string? text, CharacteristicPattern expectedPattern)
     {
         if (string.IsNullOrWhiteSpace(text)) return 0;
@@ -258,8 +273,13 @@ public static class BsdataDatasheetMapper
 /// accepts for one named characteristic, plus that name for use in a thrown
 /// <see cref="AmbiguousCharacteristicException"/>'s message and properties. Each of Sv/InSv/BS/
 /// WS/LD gets its own instance rather than sharing one regex so that InSv's extra trailing-"*"
-/// allowance (a footnoted/conditional save, e.g. "5+*") doesn't silently leak into the other four,
-/// where it has never been observed in real data.</summary>
+/// allowance doesn't silently leak into the other four, where it has never been observed in real
+/// data. In practice this allowance is never exercised by real BSData text either: real
+/// footnoted saves are written digit+"+"+"*" (e.g. "5+*"), two trailing characters, while this
+/// pattern only ever permits one of "+"/"*" alone - so every real footnoted InSv value still
+/// fails to match and throws via ParseThreshold, which is the correct outcome (see
+/// ParseThreshold's own doc comment for why a footnoted value must never be silently parsed as
+/// its bare digit).</summary>
 public partial class CharacteristicPattern
 {
     private CharacteristicPattern(string characteristic, Regex pattern)
@@ -290,8 +310,8 @@ public partial class CharacteristicPattern
 }
 
 /// <summary>Thrown by ParseThreshold when a threshold characteristic's text doesn't match its
-/// allowed single-value shape (see <see cref="CharacteristicPattern"/>) - most notably BSData's
-/// two-different-values-by-context InSv forms (see ParseThreshold's own doc comment). Carries both
+/// allowed single-value shape (see <see cref="CharacteristicPattern"/>) - most commonly BSData's
+/// caveated/multi-value InSv forms (see ParseThreshold's own doc comment). Carries both
 /// the characteristic name and the raw offending text as properties, not just baked into the
 /// message, so a catching corpus-wide test can check a failure against a maintained "known
 /// limitation" allowlist without needing to parse <see cref="Exception.Message"/>.</summary>

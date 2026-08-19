@@ -86,4 +86,24 @@ public class WeaponKeywordParserTests
         result.DevastatingWounds.Should().BeTrue();
         result.KeywordsText.Should().Equal("Devastating Wounds");
     }
+
+    [Fact]
+    public void UnrecognizedTokens_is_empty_when_every_token_is_recognized()
+    {
+        WeaponKeywordParser.UnrecognizedTokens("Anti-infantry 4+, Devastating Wounds, Pistol")
+            .Should().BeEmpty();
+    }
+
+    [Fact]
+    public void UnrecognizedTokens_returns_only_the_unrecognized_tokens_from_a_mixed_list()
+    {
+        WeaponKeywordParser.UnrecognizedTokens("Devastating Wounds, Hazardous, Precision, Cleave, Close Combat")
+            .Should().Equal("Hazardous", "Precision", "Cleave", "Close Combat");
+    }
+
+    [Fact]
+    public void UnrecognizedTokens_is_empty_for_no_keywords()
+    {
+        WeaponKeywordParser.UnrecognizedTokens("-").Should().BeEmpty();
+    }
 }

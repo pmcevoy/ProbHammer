@@ -217,21 +217,39 @@ WeaponKeywordParser.Apply(weapon, keywordsText) -> WeaponProfile
                                        // never sets Blast, "Close Combat" never sets Pistol - and a
                                        // token naming a mechanic with no flag at all (Hazardous,
                                        // Precision, Heavy) is retained verbatim with no flag set.
+WeaponKeywordParser.UnrecognizedTokens(keywordsText) -> IReadOnlyList<string>
+                                       // every token Apply would leave unflagged, for the same
+                                       // input - shares Apply's own token-recognition logic via a
+                                       // private TryRecognize helper rather than duplicating it,
+                                       // added so the full-BSData-corpus weapon-keyword scan (see
+                                       // "Full-Corpus Scan Tests" below) can't silently drift from
+                                       // what Apply actually recognizes.
 ```
 
 `BsdataDatasheetMapper.ParseThreshold(text, CharacteristicPattern)` (Sv/InSv/BS/WS/LD) validates
 against a per-characteristic allowlist regex (`CharacteristicPattern.Sv`/`.InvSv`/`.Bs`/`.Ws`/`.Ld`
-— digits with an optional trailing `+` for all five, or a trailing `*` footnote for InSv only,
-e.g. "5+*") rather than stripping known-bad separators, and throws
-`AmbiguousCharacteristicException` (carrying both the characteristic name and raw text as
-properties) for anything that doesn't match — most notably BSData's two-different-values-by-context
-InSv forms, either `/`-split (e.g. "4+* / 5+", confirmed on Wyches and Howling Banshees) or
-parenthetical (e.g. "5+ (Ranged)", confirmed on the four Titan datasheets and the Sokar-pattern
-Stormbird). This is a deliberate reversal of this method's original silently-keep-the-first-value
-behavior: `Statline`'s single-int `Sv`/`InSv` fields have no way to represent two different values,
-and picking one silently hid that loss. See PROGRESS.md's "Known Issues" — the corpus-wide
-resolution test is expected to catch this exception for the known multi-value-InSv datasheets and
-check it against a maintained "known limitation" allowlist, not yet built.
+— digits with an optional trailing `+` for all five) rather than stripping known-bad separators,
+and throws `AmbiguousCharacteristicException` (carrying both the characteristic name and raw text
+as properties) for anything that doesn't match. Three confirmed real-data InSv shapes throw, none
+safely collapsible to one int: a `/`-split two-different-values-by-context form (e.g. "4+* / 5+",
+confirmed on Wyches and Howling Banshees); a parenthetical annotation (e.g. "5+ (Ranged)",
+confirmed on the four Titan datasheets and the Sokar-pattern Stormbird); and — by far the most
+common in a full-corpus scan, ~40 real datasheets — a bare trailing `*` footnote (e.g. "5+*" on
+Aeldari Rangers, most Imperial/Chaos Knights, Judiciar, Astraeus). That footnote is not harmless:
+it links (via a `"profile"`-type infoLink, often into the base rules catalogue
+`Warhammer 40,000.json`) to a small standard "Invulnerable Save (X+*)" Abilities profile whose
+Description usually restricts the save to one attack type ("This model has a 5+ invulnerable save
+against ranged attacks," confirmed on Aeldari Rangers and every sampled Imperial Knight) — the
+same value-changes-by-context gap as the other two forms, just spelled differently in source data,
+so `ParseThreshold` deliberately throws for it too rather than parsing it as an unconditional save
+(one sampled exception, Ork's Makari, uses the same `*` for an unrelated "no re-rolls" caveat that
+doesn't condition the value itself — still left unparsed, since the characteristic text alone
+can't distinguish the two without resolving the linked ability). This is a deliberate reversal of
+this method's original silently-keep-the-first-value behavior: `Statline`'s single-int `Sv`/`InSv`
+fields have no way to represent a conditional or multi-valued save, and picking one silently hid
+that loss. See PROGRESS.md's "Known Issues" and "Full-Corpus Scan Tests" below — the permanent
+corpus-wide resolution scan catches this exception across the whole clone and checks it against a
+maintained "known limitation" allowlist.
 
 `WeaponProfile.KeywordsText` (`IReadOnlyList<string>`, in `Domain/Catalogue/WeaponProfile.cs`, not
 `Bsdata/`) is the one shape change this ingestion work made outside the new namespace: every
@@ -252,6 +270,57 @@ the live clone during implementation and passed, including a genuine finding not
 here: the captured export text uses a typographic apostrophe where the BSData JSON source uses a
 plain ASCII one (`Emperor's Champion`) — normalizing that is the future export-parser/enrichment
 step's problem, not this loader's, since this loader resolves against JSON names as-authored.
+
+### Full-Corpus Scan Tests
+
+`tests/ProbHammer.Tests/Domain/Catalogue/Bsdata/CorpusScan/` holds the permanent counterpart to
+that one-off smoke test — two xUnit v3 `[Fact(Explicit = true)]` tests (not run by `dotnet test`'s
+default invocation or CI; manually triggered), added by the `bsdata-corpus-scan-tests` change,
+that *do* read the live clone directly:
+
+```
+LiveClone.RequireSource() -> LocalDiskBsdataCatalogueSource
+                                       // Directory.Exists-guards the hardcoded clone path and
+                                       // calls Assert.Skip(...) (xUnit v3's dynamic skip) when
+                                       // absent, so a machine without the clone reports the scan
+                                       // as skipped, never as a bare pass.
+LiveClone.CatalogueFileNames(source) -> IReadOnlyList<string>
+                                       // every file via ListFileNames(), excluding the non-
+                                       // catalogue "Warhammer 40,000.json".
+AllowlistEntry<T>(Description, Matches: Func<T, bool>)
+AllowlistCheck.AssertClean(results, allowlist, describeResult)
+                                       // the bidirectional check shared by both scans: fails if
+                                       // any result is unmatched by the allowlist, or any
+                                       // allowlist entry matched nothing that run - so a fixed
+                                       // issue can't silently go stale on the allowlist either.
+
+CharacteristicResolutionScanTests.Full_corpus_characteristic_resolution_scan
+                                       // every catalogue file gets a turn as its own closure's
+                                       // starting file; every one of that file's own top-level
+                                       // SharedSelectionEntries is attempted through
+                                       // BsdataDatasheetMapper.BuildDatasheet, catching and
+                                       // collecting any exception. CharacteristicResolutionAllowlist.cs
+                                       // covers every confirmed InSv shape (see ParseThreshold
+                                       // above) plus dice-notation WeaponProfile.S text (e.g. Ork
+                                       // Battlewagon "D6+6") failing ParsePlainInt's int.Parse.
+
+WeaponKeywordScanTests.Full_corpus_weapon_keyword_token_scan
+                                       // walks each file's own closure directly (not through
+                                       // BuildDatasheet, which has no way to enumerate every
+                                       // weapon it resolves - Datasheet.ResolveWeaponProfile is
+                                       // deliberately on-demand-only), collecting every
+                                       // "Ranged Weapons"/"Melee Weapons" profile's Keywords text
+                                       // and running WeaponKeywordParser.UnrecognizedTokens over
+                                       // it. WeaponKeywordAllowlist.cs seeds 45 tokens found on
+                                       // the first real run, none fixed in WeaponKeywordParser
+                                       // (out of scope for the change that added this scan) -
+                                       // grouped into already-documented no-flag tokens, case/
+                                       // punctuation variants of a recognized token, dice-valued
+                                       // variants of an int-only mechanic, and genuinely
+                                       // unmodeled mechanics (a few widespread enough - Extra
+                                       // Attacks, Psychic, Lance, One Shot - to be worth a future
+                                       // dedicated addition). See PROGRESS.md's Known Issues.
+```
 
 ---
 

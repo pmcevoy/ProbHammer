@@ -38,45 +38,89 @@ public static partial class WeaponKeywordParser
         var tokens = keywordsText.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         weapon = weapon with { KeywordsText = tokens };
 
-        var anti = new Dictionary<string, int>(weapon.Anti);
-
         foreach (var token in tokens)
         {
-            Match m;
-            if ((m = AntiPattern().Match(token)).Success)
-            {
-                anti[m.Groups[1].Value.Trim().ToLowerInvariant()] = int.Parse(m.Groups[2].Value);
-            }
-            else if ((m = MeltaPattern().Match(token)).Success)
-            {
-                weapon = weapon with { Melta = int.Parse(m.Groups[1].Value) };
-            }
-            else if ((m = RapidFirePattern().Match(token)).Success)
-            {
-                weapon = weapon with { RapidFire = int.Parse(m.Groups[1].Value) };
-            }
-            else if ((m = SustainedHitsPattern().Match(token)).Success)
-            {
-                weapon = weapon with { SustainedHits = int.Parse(m.Groups[1].Value) };
-            }
-            else
-            {
-                weapon = token switch
-                {
-                    "Torrent" => weapon with { Torrent = true },
-                    "Blast" => weapon with { Blast = true },
-                    "Lethal Hits" => weapon with { LethalHits = true },
-                    "Devastating Wounds" => weapon with { DevastatingWounds = true },
-                    "Twin-linked" => weapon with { TwinLinked = true },
-                    "Indirect Fire" => weapon with { IndirectFire = true },
-                    "Pistol" => weapon with { Pistol = true },
-                    "Ignores Cover" => weapon with { IgnoresCover = true },
-                    "Assault" => weapon with { Assault = true },
-                    _ => weapon // unrecognized token: no flag set, verbatim text already retained
-                };
-            }
+            if (TryRecognize(token, weapon, out var updated))
+                weapon = updated;
         }
 
-        return weapon with { Anti = anti };
+        return weapon;
+    }
+
+    /// <summary>
+    /// Every token in <paramref name="keywordsText"/> that does not exactly match an existing
+    /// <see cref="WeaponProfile"/> flag - the same recognition rules <see cref="Apply"/> uses,
+    /// shared through <see cref="TryRecognize"/> rather than duplicated, so this can never drift
+    /// from what <see cref="Apply"/> actually recognizes (see the full-BSData-corpus scan's
+    /// design.md). A value of "-" (or blank) yields an empty list, matching <see cref="Apply"/>'s
+    /// own handling of "no keywords".
+    /// </summary>
+    public static IReadOnlyList<string> UnrecognizedTokens(string keywordsText)
+    {
+        if (string.IsNullOrWhiteSpace(keywordsText) || keywordsText.Trim() == "-")
+            return [];
+
+        var tokens = keywordsText.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        return tokens.Where(token => !TryRecognize(token, ProbeWeapon, out _)).ToList();
+    }
+
+    /// <summary>Throwaway concrete instance <see cref="UnrecognizedTokens"/> threads through
+    /// <see cref="TryRecognize"/> purely to satisfy its signature - <c>WeaponProfile</c> is
+    /// abstract, and the produced <c>updated</c> value is discarded, so only recognition (the
+    /// bool return) matters here.</summary>
+    private static readonly WeaponProfile ProbeWeapon = new RangedWeapon("", 0, 0, 0, 0, 0, 0);
+
+    /// <summary>Recognizes one token against the exact, unambiguous vocabulary this parser
+    /// models (see the class doc comment) and, if recognized, returns the flag mutation applied
+    /// to <paramref name="weapon"/> via <paramref name="updated"/>. Shared by <see cref="Apply"/>
+    /// (which threads <paramref name="weapon"/> through every token in a keyword list) and
+    /// <see cref="UnrecognizedTokens"/> (which only cares about the bool result) so both stay in
+    /// sync by construction.</summary>
+    private static bool TryRecognize(string token, WeaponProfile weapon, out WeaponProfile updated)
+    {
+        Match m;
+        if ((m = AntiPattern().Match(token)).Success)
+        {
+            var anti = new Dictionary<string, int>(weapon.Anti)
+            {
+                [m.Groups[1].Value.Trim().ToLowerInvariant()] = int.Parse(m.Groups[2].Value)
+            };
+            updated = weapon with { Anti = anti };
+            return true;
+        }
+
+        if ((m = MeltaPattern().Match(token)).Success)
+        {
+            updated = weapon with { Melta = int.Parse(m.Groups[1].Value) };
+            return true;
+        }
+
+        if ((m = RapidFirePattern().Match(token)).Success)
+        {
+            updated = weapon with { RapidFire = int.Parse(m.Groups[1].Value) };
+            return true;
+        }
+
+        if ((m = SustainedHitsPattern().Match(token)).Success)
+        {
+            updated = weapon with { SustainedHits = int.Parse(m.Groups[1].Value) };
+            return true;
+        }
+
+        switch (token)
+        {
+            case "Torrent": updated = weapon with { Torrent = true }; return true;
+            case "Blast": updated = weapon with { Blast = true }; return true;
+            case "Lethal Hits": updated = weapon with { LethalHits = true }; return true;
+            case "Devastating Wounds": updated = weapon with { DevastatingWounds = true }; return true;
+            case "Twin-linked": updated = weapon with { TwinLinked = true }; return true;
+            case "Indirect Fire": updated = weapon with { IndirectFire = true }; return true;
+            case "Pistol": updated = weapon with { Pistol = true }; return true;
+            case "Ignores Cover": updated = weapon with { IgnoresCover = true }; return true;
+            case "Assault": updated = weapon with { Assault = true }; return true;
+            default:
+                updated = weapon; // unrecognized token: no flag set, verbatim text already retained
+                return false;
+        }
     }
 }
