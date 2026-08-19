@@ -317,6 +317,82 @@ public static class Datasheets
         );
     }
 
+    /// <summary>Fixture added by `redesign-invulnerable-save-display` to give `/LivePlay` a second,
+    /// independently-sourced caveated invulnerable save alongside `CanisRex()` - real, verified
+    /// values (from the live BSData clone, traced during that change's design). Howling Banshees'
+    /// real InSv text `"4+* / 5+"` resolves, via the same entry-scoped ability resolution
+    /// `BsdataDatasheetMapper` uses, to a caveated save keeping only the unfootnoted `5+` digit
+    /// (duplicated into both `MeleeInSv`/`RangedInSv`), linked to the real base-rules ability
+    /// (id `9fa6-3128-6c5b-55f6`, `Warhammer 40,000.json`) whose text describes the melee-improved
+    /// condition the footnote actually means.</summary>
+    public static Datasheet HowlingBanshee()
+    {
+        var invulnerableSaveAbility = new Ability
+        {
+            Name = "Invulnerable Save (4+*)",
+            Text = "Models in this unit have a 4+ invulnerable save against melee attacks.",
+            Scope = AbilityScope.Unit
+        };
+
+        return new Datasheet(
+            name: "Howling Banshees",
+            statlines:
+            [
+                ("Howling Banshee", new Statline(8, 3, 4, 1, 6, 1)
+                {
+                    InSv = new InvulnerableSave(
+                        meleeInSv: 5,
+                        rangedInSv: 5,
+                        caveated: true,
+                        caveatAbility: invulnerableSaveAbility)
+                })
+            ],
+            weaponProfiles:
+            [
+                new RangedWeapon("Shuriken Pistol", 12, 1, 2, 4, -1, 1) { Assault = true, Pistol = true },
+                new MeleeWeapon("Aeldari power sword", A: 4, Ws: 2, S: 4, Ap: -2, D: 1)
+            ],
+            abilities: [invulnerableSaveAbility],
+            keywords: ["INFANTRY", "AELDARI", "HOWLING BANSHEES"],
+            factionKeywords: ["AELDARI", "ASURYANI"]
+        );
+    }
+
+    /// <summary>Explicitly synthetic fixture added by `redesign-invulnerable-save-display` to
+    /// exercise `/LivePlay`'s "differing, both known, non-caveated" invulnerable-save render case.
+    /// Unlike every other fixture in this file, its `InSv` value is hand-constructed and does NOT
+    /// come from any real BSData catalogue entry: tracing `BsdataDatasheetMapper
+    /// .ResolveInvulnerableSave` during this change's design confirmed no real source text can
+    /// currently produce two independently-known, non-zero, differing melee/ranged values - a
+    /// footnoted `/`-split always collapses to one duplicated (caveated) digit, and a parenthetical
+    /// restriction always zeroes the other side. This fixture exists purely so the render logic has
+    /// something to draw against; its name and numbers do not represent any real datasheet.</summary>
+    public static Datasheet TwinWardSentinel()
+    {
+        return new Datasheet(
+            name: "Twin-Ward Sentinel",
+            statlines:
+            [
+                ("Twin-Ward Sentinel", new Statline(6, 5, 3, 6, 7, 2)
+                {
+                    InSv = new InvulnerableSave(
+                        meleeInSv: 4,
+                        rangedInSv: 5,
+                        caveated: false,
+                        caveatAbility: null)
+                })
+            ],
+            weaponProfiles:
+            [
+                new RangedWeapon("Ward cannon", 24, 2, 3, 6, -1, 2),
+                new MeleeWeapon("Guardian spear", A: 4, Ws: 3, S: 6, Ap: -1, D: 2)
+            ],
+            abilities: [],
+            keywords: ["VEHICLE"],
+            factionKeywords: ["UNALIGNED FORCES"]
+        );
+    }
+
     public static Datasheet Impulsor()
     {
         return new Datasheet(

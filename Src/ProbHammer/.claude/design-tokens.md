@@ -18,7 +18,8 @@ values in components.
 | `--accent` | `#24413f` | Emphasis: stat sub-values (e.g. invulnerable save), primary headings |
 | `--text` | `#262622` | Primary text |
 | `--text-dim` | `#6f6c62` | Labels, counts, dim info |
-| `--amber` | `#a86a1d` | Draw-the-eye controls/values (e.g. the casualty-reset icon; a caveated invulnerable-save stat-subvalue, pointing at the unit's own abilities for the full condition) |
+| `--amber` | `#a86a1d` | Draw-the-eye controls/values (e.g. the casualty-reset icon, the filter badge, the caveated invulnerable-save box's border) |
+| `--amber-tint` | `color-mix(in srgb, var(--amber) 20%, white)` | Background only, for the caveated invulnerable-save box — a separate token from `--amber` itself, not a reinterpretation of it; `--amber`'s other uses stay foreground-only |
 | `--border` | `#d9d5c9` | Borders and dividers |
 
 ## Mechanism
@@ -35,8 +36,14 @@ instead of copying the pattern a second time.
 
 - **Font:** `system-ui, sans-serif`
 - **Scale:** compact — section headers `0.82rem` bold uppercase, stat labels `0.65rem` uppercase,
-  stat values `0.95rem` bold, stat sub-values `0.68rem` bold in `--accent`, most secondary text in
-  the `0.6–0.78rem` range. No more than a handful of distinct sizes on any one screen.
+  stat values `0.95rem` bold, most secondary text in the `0.6–0.78rem` range. No more than a
+  handful of distinct sizes on any one screen. The invulnerable-save box (below the main M/T/Sv/W/
+  Ld/Oc row, aligned under Sv specifically — a distinct box + side label, not a value stacked
+  inside a tile) reuses these same sizes: its value at `0.95rem` bold like a stat value, its label
+  at `0.65rem` like a stat label. A caveated save's box gets an off-color (`--amber-tint`)
+  background instead of the normal `--bg`, plus its linked ability's full text rendered in italics
+  beneath the box at `0.7rem` — the one place on `/LivePlay` that shows an ability's text rather
+  than only its name, scoped narrowly to this one case (see `.claude/domain-model-11e.md`).
 
 ---
 

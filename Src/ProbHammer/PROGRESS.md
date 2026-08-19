@@ -8,7 +8,81 @@ Nothing in progress.
 
 ## Recently Completed
 
-- OpenSpec change `structured-invulnerable-save` implemented (all 24 tasks, not yet archived):
+- OpenSpec change `redesign-invulnerable-save-display` implemented and archived (all 26 original
+  tasks plus two post-review refinement rounds — 7 tasks, then 8 more, 41 total — synced to
+  `openspec/specs/live-play-view/spec.md` before archiving): `/LivePlay`'s
+  invulnerable save now renders as its own tile in the same visual family as M/T/Sv/W/Ld/Oc (label
+  "InSv"/"InSv*" on top, value below, inside one bordered box), positioned below the main stat-tile
+  row and aligned under the Sv tile specifically via a `.statline-tiles` flex-wrap→CSS Grid change
+  (`grid-column: 3`, matching Sv). No domain-model change at all —
+  `InvulnerableSave`/`BsdataDatasheetMapper.ResolveInvulnerableSave` untouched throughout; this is a
+  `_UnitBlock.cshtml`/`site.css`-only change. Five render shapes, the label always plain "InSv" (or
+  "InSv*" caveated) and any attack-type icon riding inline next to the value it qualifies instead:
+  uniform (bare value, no icon); melee-only/ranged-only (value + one icon); differing-both-known
+  (two stacked rows inside the tile, ranged above melee, no separator — settled on this shape, over
+  an earlier single-line-joined-by-`/` version, specifically because it needs no separator at all
+  and because ranged-above-melee mirrors the page's own Ranged Weapons-before-Melee Weapons section
+  ordering, itself following the game's shooting-before-melee phase order; no real BSData text
+  produces this shape today, traced during design: a footnoted split always collapses to one
+  duplicated digit, a parenthetical restriction always zeroes the other side, so this is
+  forward-looking coverage of a value the type supports rather than real data); and caveated
+  (off-color `--amber-tint` tile background, the linked `CaveatAbility`'s full text rendered in
+  italics beneath the tile — the first and only place on this page rendering an ability's text
+  rather than only its name, a deliberately scoped exception, not a step toward the still-deferred
+  general full-text-on-demand idea in `vnext-ideas.md`).
+  **Icon choice took several live iterations, then a direct re-confirmation**: ⚔ (melee) reads fine
+  as plain Unicode text; the ranged glyph did not — ⌖, ◎, and ⊙ were each tried live and each read
+  ambiguously in this browser/OS font stack (a diamond, an "info" icon, a plain dot), so ranged uses
+  a small inline SVG crosshair instead, matching this file's own filter-flag icon precedent for the
+  same underlying reason (font/emoji glyphs can't be trusted to render as intended across
+  platforms). Re-proven a third time via a live side-by-side (⌖ vs. the SVG, identical tile styling)
+  after the user asked why the SVG was needed at all rather than just taking the earlier reasoning
+  on faith — the diamond reading held up.
+  **Two real bugs found only by looking at the rendered page, both from the same root cause**: the
+  first implementation's `.insv-row` spanned multiple grid columns to fit a horizontal
+  "InSv vs ⚔ / [icon]" label, which (1) silently clipped the caveated case's ability-text line off
+  the bottom of the card (`.statline-tiles`' pre-existing `max-height: 6rem`, sized for the old
+  single-line layout, confirmed via a live DOM bounding-box check — fixed by raising it to `12rem`)
+  and (2) bled its own width into every column it spanned, visibly bloating the W/Ld/Oc tiles'
+  padding above it. Moving the label inside the tile and confining it to `grid-column: 3` alone
+  fixed both at once. A third round of feedback, after even closer visual inspection, tightened
+  `.stat-tile`'s own `padding`/`min-width` ("very spacious" — applies to all six stat-tiles, not
+  InSv-specific) and replaced the differing-both-known case's single joined line with the final
+  two-stacked-rows shape, chosen over an "icon-over-value + `/`" alternative by mocking both up live
+  via temporary DOM injection (no source changes) before committing to either.
+  Two new fixtures added to `Examples/Datasheets.cs`/`Units.cs`, both wired into
+  `View.Roster()` (now nine units, up from seven): `HowlingBanshee()`, using real verified BSData
+  values (`M8" T3 Sv4+ W1 Ld6+ OC1`, real InSv text `"4+* / 5+"`, real linked-ability text "Models
+  in this unit have a 4+ invulnerable save against melee attacks." — traced to the base rules file's
+  shared `"Invulnerable Save (4+*)"` ability, id `9fa6-3128-6c5b-55f6`) — a second, independently-
+  sourced real caveated example alongside `CanisRex()` (left unchanged); and `TwinWardSentinel()`,
+  an explicitly synthetic fixture (doc comment states plainly it is hand-constructed, not from real
+  BSData) exercising the differing-both-known case no real corpus text can produce today. New test
+  file `tests/ProbHammer.Tests/Web/LivePlayInvulnerableSaveRenderingTests.cs` covers all five render
+  shapes by rendering `_UnitBlock.cshtml` directly through the real `IRazorPartialRenderer` path
+  against hand-built `AttachedUnitAggregateView` input (**adjusted from the original task plan**,
+  which assumed the existing `internal BuildUnitBlock` testing approach would suffice — it doesn't,
+  since the InSv branching lives entirely in the `.cshtml`, not in any C# method `BuildUnitBlock`
+  calls; its assertions were updated twice more across the refinement rounds, though the final
+  stacked-rows change needed no assertion changes at all — the text content it asserts on was
+  unaffected by the row-vs-line layout). Two pre-existing tests needed straightforward updates for
+  the roster's new unit count/order (`ViewTests.Roster_UnitsMatchesMyArmyRoster`, `LivePlayModelTests
+  .OnGet_OrdersAttachedUnitsBeforePlainUnits...`) — both confirmed the existing sort rule placed the
+  two new units correctly, not a behavior gap. 180 tests, all passing (178 run + 2 explicit-only
+  corpus scans skipped as expected) after every round. Visually verified via `firefox-devtools-mcp`
+  against the real example army repeatedly across all three rounds: uniform (High Marshal
+  Helbrecht), both caveated fixtures, the synthetic differing-both-known fixture, run-collapse
+  (marked a casualty, watched the InSv tile collapse and reappear correctly alongside the stat-tile,
+  no JS changes needed), plus two live mocked-up comparisons that needed no source changes at all —
+  the glyph re-confirmation and a bare-uniform-vs-ranged-only side-by-side (raised by the user
+  thinking ahead to a possible future where the still-deferred ability-text-interpretation pass
+  flips a caveated save like Canis Rex's to genuinely ranged-only; already correctly distinct today,
+  nothing to change). Docs: `.claude/design-tokens.md` updated (`--amber`'s row description, new
+  `--amber-tint` token, and the invulnerable-save tile's typography folded into the existing scale
+  description). `.claude/domain-model-11e.md` deliberately not touched — it covers the domain layer
+  only and doesn't catalog individual `Examples/` fixtures, and this change has no domain-model
+  surface at all.
+- OpenSpec change `structured-invulnerable-save` implemented and archived (all 24 tasks):
   `Statline.InSv: int` replaced with a dedicated `InvulnerableSave { MeleeInSv, RangedInSv,
   Caveated, CaveatAbility }` value (`src/ProbHammer.Core/Domain/Catalogue/InvulnerableSave.cs`),
   resolving the parked "Known Issues" InSv representation gap. Self-contained raw text (a plain
@@ -50,7 +124,7 @@ Nothing in progress.
   `.claude/domain-model-11e.md`'s "BSData JSON Ingestion" section rewritten for the new shape and
   resolution mechanism; `.claude/design-tokens.md` updated (`--amber`'s existing role now also
   covers the caveat indicator, no new token).
-- OpenSpec change `bsdata-corpus-scan-tests` implemented (all 20 tasks, not yet archived): two
+- OpenSpec change `bsdata-corpus-scan-tests` implemented and archived (all 20 tasks): two
   permanent, manually-triggered xUnit v3 `[Fact(Explicit = true)]` tests
   (`tests/ProbHammer.Tests/Domain/Catalogue/Bsdata/CorpusScan/`) replace the earlier one-off
   full-corpus checks — a characteristic-resolution scan (every catalogue file gets a turn as its
@@ -705,10 +779,26 @@ Nothing outstanding.
 
 ## Next Session Prompt
 
-Nothing queued. `structured-invulnerable-save` and `bsdata-corpus-scan-tests` are both implemented
-(neither yet archived — run `/opsx:archive <name>` when ready) and both permanent scans pass
-against the live clone. Candidate follow-ups surfaced by prior sessions, none scoped or agreed yet
-— raise with the user before starting any of them:
+**Agreed starting point for next session, explicitly requested by the user**: begin the first
+iteration of the "Ability-text interpretation pass" (`.claude/vnext-ideas.md`) — the deferred
+classifier that resolves a `Caveated = true` invulnerable save's linked `CaveatAbility.Text` against
+a small closed vocabulary of known real phrasings (see `structured-invulnerable-save`'s and
+`bsdata-corpus-scan-tests`' findings for confirmed real examples — e.g. `"This model has a 5+
+invulnerable save against ranged attacks."`, `"Models in this unit have a 4+ invulnerable save
+against melee attacks."`) and, where a pattern matches, flips the result to `Caveated: false` with
+the resolved `MeleeInSv`/`RangedInSv` split — not general ability-text-to-behavior parsing, which
+stays permanently out of scope. This is a natural first real consumer of
+`redesign-invulnerable-save-display`'s new render logic: a save the classifier resolves would flip
+from the caveated-tile rendering to one of the plain melee-only/ranged-only/differing-both-known
+tiles, the last of which (until now) had no real data to exercise it — worth checking live once this
+lands. Start with an `openspec explore`/`propose` pass before writing code, per this project's
+established pattern for InSv work. Longer-term motivation (unchanged, still out of scope for the
+first iteration): feeding ability-driven weapon-attack modifiers into aggregation.
+
+`redesign-invulnerable-save-display`, `structured-invulnerable-save`, and `bsdata-corpus-scan-tests`
+are all implemented, archived, and synced to main specs; both permanent scans pass against the live
+clone. Other candidate follow-ups surfaced by prior sessions, none scoped or agreed yet — raise with
+the user before starting any of them:
 
 - Triage the "Known Issues" weapon-keyword findings into real `WeaponKeywordParser` fixes: a
   case-insensitivity pass for the existing exact-match vocabulary, widening `RapidFire`/
@@ -717,7 +807,3 @@ against the live clone. Candidate follow-ups surfaced by prior sessions, none sc
   earn dedicated `WeaponProfile` flags.
 - The Ork dice-Strength `WeaponProfile.S` representation decision — same class of problem as the
   now-resolved `Statline.InSv` gap, deliberately handled separately.
-- The "Ability-text interpretation pass" vNext idea (`.claude/vnext-ideas.md`) — the deferred
-  classifier that would resolve a `Caveated = true` invulnerable save (and, longer-term, feed
-  ability-driven weapon-attack modifiers into aggregation) — explicitly flagged to revisit now that
-  `structured-invulnerable-save` is implemented.

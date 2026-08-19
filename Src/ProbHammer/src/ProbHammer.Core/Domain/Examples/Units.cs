@@ -137,6 +137,34 @@ public static class Units
             ]);
     }
 
+    public static Unit HowlingBanshee()
+    {
+        return new Unit(
+            datasheet: Datasheets.HowlingBanshee(),
+            enhancements: [],
+            modelLines:
+            [
+                new ModelLine(
+                    statlineName: "Howling Banshee",
+                    weapons: ["Shuriken Pistol", "Aeldari power sword"],
+                    count: 5)
+            ]);
+    }
+
+    public static Unit TwinWardSentinel()
+    {
+        return new Unit(
+            datasheet: Datasheets.TwinWardSentinel(),
+            enhancements: [],
+            modelLines:
+            [
+                new ModelLine(
+                    statlineName: "Twin-Ward Sentinel",
+                    weapons: ["Ward cannon", "Guardian spear"],
+                    count: 1)
+            ]);
+    }
+
     public static Unit Impulsor()
     {
         return new Unit(

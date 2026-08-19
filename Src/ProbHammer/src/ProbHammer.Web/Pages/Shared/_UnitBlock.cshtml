@@ -79,35 +79,86 @@
                         <div class="statline-tiles">
                             <div class="stat-tile"><span class="stat-label">M</span><span class="stat-value">@(block.Statline.M)"</span></div>
                             <div class="stat-tile"><span class="stat-label">T</span><span class="stat-value">@(block.Statline.T)</span></div>
-                            <div class="stat-tile">
-                                <span class="stat-label">Sv</span>
-                                <span class="stat-value">@(block.Statline.Sv)+</span>
-                                @{
-                                    var inv = block.Statline.InSv;
-                                }
-                                @if (inv.Caveated)
-                                {
-                                    <span class="stat-subvalue stat-subvalue-caveated" title="See unit abilities for the exact condition">@(inv.MeleeInSv)++*</span>
-                                }
-                                else if (inv.MeleeInSv == inv.RangedInSv)
-                                {
-                                    if (inv.MeleeInSv > 0)
-                                    {
-                                        <span class="stat-subvalue">@(inv.MeleeInSv)++</span>
-                                    }
-                                }
-                                else
-                                {
-                                    var parts = new List<string>();
-                                    if (inv.RangedInSv > 0) { parts.Add($"R{inv.RangedInSv}++"); }
-                                    if (inv.MeleeInSv > 0) { parts.Add($"M{inv.MeleeInSv}++"); }
-                                    var invLabel = string.Join(" / ", parts);
-                                    <span class="stat-subvalue stat-subvalue-invsv-split">@invLabel</span>
-                                }
-                            </div>
+                            <div class="stat-tile"><span class="stat-label">Sv</span><span class="stat-value">@(block.Statline.Sv)+</span></div>
                             <div class="stat-tile"><span class="stat-label">W</span><span class="stat-value">@(block.Statline.W)</span></div>
                             <div class="stat-tile"><span class="stat-label">Ld</span><span class="stat-value">@(block.Statline.Ld)+</span></div>
                             <div class="stat-tile"><span class="stat-label">OC</span><span class="stat-value">@(block.Statline.Oc)</span></div>
+                            @{
+                                var inv = block.Statline.InSv;
+                            }
+                            @* The invulnerable save renders as its own labeled box below the row, GW/Wahapedia-card
+                               style, rather than a value stacked inside the Sv tile. The caveated branch is the only
+                               place in this file that renders an Ability's Text rather than only its Name - see
+                               `redesign-invulnerable-save-display`'s design.md; this is a scoped exception to the
+                               page's otherwise name-only ability rendering, not a step toward rendering text
+                               generally, since only this one condition has no other way to be shown to the player. *@
+                            @{
+                                // Melee reads fine as the plain Unicode glyph (text-presentation by default, so it
+                                // inherits currentColor); Ranged does not - every text-glyph candidate tried live
+                                // (⌖, ◎, ⊙) rendered ambiguously in this browser/OS font stack (a diamond, an "info"
+                                // icon, a bullet), so Ranged is a small inline SVG crosshair instead, matching this
+                                // file's existing filter-flag icon precedent for exactly the same reason.
+                                var rangedIcon = "<svg class=\"insv-icon\" viewBox=\"0 0 16 16\" aria-hidden=\"true\">" +
+                                    "<circle cx=\"8\" cy=\"8\" r=\"5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
+                                    "<line x1=\"8\" y1=\"0\" x2=\"8\" y2=\"3\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
+                                    "<line x1=\"8\" y1=\"13\" x2=\"8\" y2=\"16\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
+                                    "<line x1=\"0\" y1=\"8\" x2=\"3\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
+                                    "<line x1=\"13\" y1=\"8\" x2=\"16\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
+                                    "</svg>";
+                            }
+                            @* The InSv box is a .stat-tile like M/T/Sv/W/Ld/Oc (label on top, value below, inside
+                               one bordered box), not a separate box+label pair beside each other - matches the
+                               other Statline attributes' own layout exactly, per direct user feedback. Any
+                               attack-type icon rides inside the value line itself (next to the number it
+                               qualifies), not the label, so the label is always just "InSv" (or "InSv*" when
+                               caveated) across every shape. *@
+                            @if (inv.Caveated)
+                            {
+                                <div class="stat-tile insv-tile insv-tile-caveated">
+                                    <span class="stat-label">InSv*</span>
+                                    <span class="stat-value">@(inv.MeleeInSv)+</span>
+                                </div>
+                                <p class="insv-caveat-text">@inv.CaveatAbility!.Text</p>
+                            }
+                            else if (inv.MeleeInSv == 0 && inv.RangedInSv == 0)
+                            {
+                                @* Absent - no invulnerable save box at all. *@
+                            }
+                            else if (inv.MeleeInSv == inv.RangedInSv)
+                            {
+                                @* Uniform - applies equally to both attack types, so no attack-type icon needed. *@
+                                <div class="stat-tile insv-tile">
+                                    <span class="stat-label">InSv</span>
+                                    <span class="stat-value">@(inv.MeleeInSv)+</span>
+                                </div>
+                            }
+                            else if (inv.RangedInSv == 0)
+                            {
+                                <div class="stat-tile insv-tile">
+                                    <span class="stat-label">InSv</span>
+                                    <span class="stat-value">⚔ @(inv.MeleeInSv)+</span>
+                                </div>
+                            }
+                            else if (inv.MeleeInSv == 0)
+                            {
+                                <div class="stat-tile insv-tile">
+                                    <span class="stat-label">InSv</span>
+                                    <span class="stat-value">@Html.Raw(rangedIcon) @(inv.RangedInSv)+</span>
+                                </div>
+                            }
+                            else
+                            {
+                                @* Two stacked rows (ranged above melee), not one line with a "/" separator - each
+                                   row reads as a complete, self-contained fact ("ranged: 5+", "melee: 4+") rather
+                                   than needing the eye to track a column pairing across a divider. *@
+                                <div class="stat-tile insv-tile">
+                                    <span class="stat-label">InSv</span>
+                                    <span class="stat-value stat-value-compact">
+                                        <span>@Html.Raw(rangedIcon) @(inv.RangedInSv)+</span>
+                                        <span>⚔ @(inv.MeleeInSv)+</span>
+                                    </span>
+                                </div>
+                            }
                         </div>
                     </div>
 

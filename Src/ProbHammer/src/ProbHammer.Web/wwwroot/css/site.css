@@ -487,6 +487,10 @@ button[type="submit"]:hover { opacity: 0.85; }
     --text: #262622;
     --text-dim: #6f6c62;
     --amber: #a86a1d;
+    /* A separate token from --amber, not a reinterpretation of it - --amber stays the foreground
+       colour for its existing uses (casualty-reset icon, filter badge); this is only a background
+       for the caveated invulnerable-save box, see .insv-box-caveated below. */
+    --amber-tint: color-mix(in srgb, var(--amber) 20%, white);
     --border: #d9d5c9;
 
     padding: 1rem;
@@ -642,11 +646,16 @@ button.filter-flag:hover { opacity: 0.8; }
 .statline-name { font-weight: 700; }
 .statline-count { font-size: 0.8rem; color: var(--text-dim); }
 
+/* Grid, not flex-wrap: the invulnerable save box (row 2) needs to sit directly under the Sv tile
+   (column 3 of the six M/T/Sv/W/Ld/Oc tiles in row 1), matching the real GW/Wahapedia card layout
+   - a flex row can't pin a second-row element under a specific first-row sibling's column.
+   grid-template-columns uses `auto` (shrink-to-fit), not `1fr`, so the six tiles keep their
+   existing compact, left-packed sizing rather than stretching to fill the row's full width. */
 .statline-tiles {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(6, auto);
     gap: 0.4rem;
-    max-height: 6rem;
+    max-height: 12rem;
     overflow: hidden;
     opacity: 1;
     transition: max-height 0.15s, opacity 0.15s, margin-top 0.15s;
@@ -666,8 +675,8 @@ button.filter-flag:hover { opacity: 0.8; }
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 2.6rem;
-    padding: 0.2rem 0.4rem;
+    min-width: 1.8rem;
+    padding: 0.05rem 0.2rem;
     border: 1px solid var(--border);
     border-radius: 3px;
     background: var(--bg);
@@ -675,13 +684,44 @@ button.filter-flag:hover { opacity: 0.8; }
 
 .stat-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; }
 .stat-value { font-size: 0.95rem; font-weight: 700; }
-.stat-subvalue { font-size: 0.68rem; font-weight: 700; color: var(--accent); margin-top: 0.05rem; }
-.stat-subvalue-invsv-split { white-space: nowrap; }
-/* --amber (this page's existing "pay attention, this is different from normal" token) rather than
-   a ninth colour - a caveated invulnerable save's melee/ranged split isn't fully resolved from
-   source text alone; the trailing "*" and the title tooltip point at the unit's own abilities for
-   the real condition, matching how a real GW card foots a caveated save. */
-.stat-subvalue-caveated { color: var(--amber); cursor: help; }
+
+/* Invulnerable save: a GW/Wahapedia-card-style box below the M/T/Sv/W/Ld/Oc row, aligned under Sv
+   specifically - see redesign-invulnerable-save-display's design.md. Reuses .stat-tile itself
+   (label-on-top, value-below, one bordered box) rather than a separate box+label pair beside each
+   other, so it matches the other Statline attributes' own layout exactly - direct user feedback.
+   Both this and .insv-caveat-text are direct children of .statline-tiles (a grid) so they fall
+   inside the same run-collapse mechanism that already hides/shows that container - no separate
+   collapse CSS. grid-column: 3 (Sv's own column, single-column not spanning) so only that column's
+   auto-width grows to fit a wider value/icon combination, leaving the other five tiles' widths
+   alone - a spanning row previously let a long value bleed its width into every column it crossed. */
+.insv-tile { grid-column: 3; }
+/* A separate background token (--amber-tint) rather than the page's existing --amber accent
+   itself, kept black-on-light like every other stat value on this page (not GW's inverted
+   dark-shield/white-text treatment) - explicit user call, see design.md's "Caveated box color". */
+.insv-tile-caveated { background: var(--amber-tint); border-color: var(--amber); }
+/* The differing-both-known case stacks its two icon+value pairs as two rows (ranged above melee)
+   rather than one line with a "/" separator - each row reads as a complete, self-contained fact,
+   and stacking keeps the tile from growing much wider than its neighbours (it grows taller
+   instead, which this column-based layout tolerates better). Smaller than the normal .stat-value
+   since two rows need to fit in the same tile height a single stat-value line normally takes. */
+.stat-value-compact {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.05rem;
+    font-size: 0.72rem;
+}
+.insv-icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
+/* The only place on this page rendering an Ability's Text rather than only its Name - see the
+   render-site comment in _UnitBlock.cshtml and design.md's "Caveated ability text". Full card
+   width, not constrained to .insv-tile's own column, since real caveat text runs a full sentence. */
+.insv-caveat-text {
+    grid-column: 1 / -1;
+    margin: 0.25rem 0 0;
+    font-size: 0.7rem;
+    font-style: italic;
+    color: var(--text-dim);
+}
 
 .loadout-breakdown {
     list-style: none;
