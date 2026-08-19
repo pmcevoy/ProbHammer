@@ -8,6 +8,48 @@ Nothing in progress.
 
 ## Recently Completed
 
+- OpenSpec change `structured-invulnerable-save` implemented (all 24 tasks, not yet archived):
+  `Statline.InSv: int` replaced with a dedicated `InvulnerableSave { MeleeInSv, RangedInSv,
+  Caveated, CaveatAbility }` value (`src/ProbHammer.Core/Domain/Catalogue/InvulnerableSave.cs`),
+  resolving the parked "Known Issues" InSv representation gap. Self-contained raw text (a plain
+  digit, a `"(Ranged)"`/`"(Melee)"` parenthetical) resolves directly; footnoted/ability-linked text
+  (a bare `"*"`, or a `"/"`-split with one footnoted side) always resolves `Caveated = true` with a
+  captured `Ability` reference — `BsdataDatasheetMapper` deliberately never reads what that
+  ability's Description text *means*, only which specific one is linked (by id, never name alone —
+  the real base catalogue has two different profiles both named `"Invulnerable Save (4+*)"` with
+  opposite meanings). Classifying the caveated ability's text is a new, explicitly deferred vNext
+  idea (`.claude/vnext-ideas.md`'s "Ability-text interpretation pass").
+  **Two real architectural gaps found only by re-running the permanent corpus scan** (not
+  anticipated by the change's own design — investigated, paused, and fixed generally rather than
+  allowlisted around, per explicit user direction): (1) the base rules game-system file
+  (`Warhammer 40,000.json`) — where the shared `"Invulnerable Save (X+*)"` abilities actually live
+  — was never reachable at all, since every catalogue references it via a separate `GameSystemId`
+  field, not a `catalogueLinks` entry `BsdataClosureResolver` follows; fixed by making one
+  `BsCatalogue` type model both real JSON root shapes (`{"catalogue":...}` and `{"gameSystem":...}`)
+  and resolving `GameSystemId` into a new `BsdataClosure.GameSystem` property, kept deliberately
+  separate from the general `Files` list (a first, broader attempt — folding it into `Files`
+  directly — regressed T'au weapon parsing, since it made previously-dangling `"Warlord"`/
+  `"Enhancements"`/`"Crusade"` entryLinks newly resolve into generic template wargear this loader
+  was never designed to map). (2) "owning entry" needed to become a full ancestry chain, not the
+  immediate entry: Howling Banshees' squad carries its ability infoLink on the top-level entry
+  while the footnoted `InSv` characteristic sits on a nested child model entry one level down.
+  **A second real ability-naming convention was also found this way**: alongside the
+  digit-parameterized `"Invulnerable Save ({digit}+*)"`, a generic `"*Invulnerable Save"` (no
+  digit) is also real (Space Marines' Judiciar/Astraeus, locally; Chaos Knights' War Dog family,
+  linked). One genuine data anomaly remains allowlisted, not fixed: Aeldari's Archon/Ynnari Archon
+  carry a footnoted InSv with no matching ability anywhere in the entry under either convention —
+  confirmed by direct inspection to be a real BSData authoring gap, correctly throwing via the "no
+  candidate ability found" path rather than silently guessing.
+  New fixture: `Examples.Datasheets.CanisRex()`/`Units.CanisRex()`, using real verified BSData
+  values, added as a 7th roster unit specifically so `/LivePlay` has a caveated invulnerable save
+  to render (the existing six-unit example army has none) — visually verified via
+  `firefox-devtools-mcp`: the Sv stat-tile shows a `5++*` amber sub-value with a tooltip pointing at
+  the unit's own abilities, and the linked `"Invulnerable Save (5+*)"` ability correctly appears in
+  the adjacent abilities column. 174 tests, all passing (172 run by default + both permanent
+  corpus-scan tests, explicit-only, also passing against the live clone). Docs:
+  `.claude/domain-model-11e.md`'s "BSData JSON Ingestion" section rewritten for the new shape and
+  resolution mechanism; `.claude/design-tokens.md` updated (`--amber`'s existing role now also
+  covers the caveat indicator, no new token).
 - OpenSpec change `bsdata-corpus-scan-tests` implemented (all 20 tasks, not yet archived): two
   permanent, manually-triggered xUnit v3 `[Fact(Explicit = true)]` tests
   (`tests/ProbHammer.Tests/Domain/Catalogue/Bsdata/CorpusScan/`) replace the earlier one-off
@@ -636,17 +678,6 @@ Nothing in progress.
   Deff Rolla Battle Fortress [Legends] `2D6`), which `WeaponProfile.S: int` can't represent. Needs a
   decision: leave failing / round to `DiceExpression.ExpectedValue()` / widen `S` to
   `DiceExpression`. Tracked (not resolved) by `CharacteristicResolutionScanTests`'s allowlist.
-- Some datasheets give a conditional or multi-valued invulnerable save: two different values by
-  attack type, either `/`-split (`"4+* / 5+"` on Wyches/Howling Banshees) or parenthetical
-  (`"5+ (Ranged)"` on the four Titans + Stormbird); or — the most common shape by far, ~40 real
-  datasheets — a bare trailing `*` footnote (e.g. `"5+*"` on Aeldari Rangers, most Imperial/Chaos
-  Knights) that links to a separate ability restricting the save to one attack type (one exception,
-  Ork's Makari, uses the same `*` for an unrelated "no re-rolls" caveat instead). `Statline.InSv:
-  int` can't represent any of these. `BsdataDatasheetMapper.ParseThreshold` correctly throws
-  `AmbiguousCharacteristicException` for all of them rather than silently picking a value — this is
-  confirmed intended behavior, not a bug (see `bsdata-corpus-scan-tests`'s implementation notes) —
-  and is tracked (not resolved) by `CharacteristicResolutionScanTests`'s allowlist. Same class of
-  representation problem as the Ork Strength issue above — decide together.
 - The weapon-keyword-token scan (`WeaponKeywordScanTests`) found several tokens worth a dedicated
   future `WeaponKeywordParser` fix rather than staying allowlisted forever: a handful of case/
   punctuation variants of an already-recognized token (e.g. `"Devastating wounds"`, `"Ignores
@@ -674,16 +705,19 @@ Nothing outstanding.
 
 ## Next Session Prompt
 
-Nothing queued. `bsdata-corpus-scan-tests` is implemented (not yet archived — run
-`/opsx:archive bsdata-corpus-scan-tests` when ready) and both permanent scans pass against the live
-clone. Candidate follow-ups surfaced by this session, none scoped or agreed yet — raise with the
-user before starting any of them:
+Nothing queued. `structured-invulnerable-save` and `bsdata-corpus-scan-tests` are both implemented
+(neither yet archived — run `/opsx:archive <name>` when ready) and both permanent scans pass
+against the live clone. Candidate follow-ups surfaced by prior sessions, none scoped or agreed yet
+— raise with the user before starting any of them:
 
 - Triage the "Known Issues" weapon-keyword findings into real `WeaponKeywordParser` fixes: a
   case-insensitivity pass for the existing exact-match vocabulary, widening `RapidFire`/
   `SustainedHits` to `DiceExpression` (same representation question as the parked Ork Strength
   issue), and deciding whether `Extra Attacks`/`Psychic`/`Lance`/`One Shot` are common enough to
   earn dedicated `WeaponProfile` flags.
-- The two parked representation decisions (Ork dice-Strength `WeaponProfile.S`, multi-value/
-  conditional `Statline.InSv`) — now better understood (the InSv footnote form usually means an
-  attack-type-restricted save, confirmed via real linked ability text) but still not decided.
+- The Ork dice-Strength `WeaponProfile.S` representation decision — same class of problem as the
+  now-resolved `Statline.InSv` gap, deliberately handled separately.
+- The "Ability-text interpretation pass" vNext idea (`.claude/vnext-ideas.md`) — the deferred
+  classifier that would resolve a `Caveated = true` invulnerable save (and, longer-term, feed
+  ability-driven weapon-attack modifiers into aggregation) — explicitly flagged to revisit now that
+  `structured-invulnerable-save` is implemented.

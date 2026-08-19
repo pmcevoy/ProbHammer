@@ -5,9 +5,12 @@ namespace ProbHammer.Core.Domain.Examples;
 
 public static class View
 {
-    /// <summary>The full army list - the same six-unit roster <see cref="MyArmyRoster"/> and
+    /// <summary>The full army list - the same seven-unit roster <see cref="MyArmyRoster"/> and
     /// <see cref="MyArmy"/> read from, wrapped with the army-level metadata a real GW app export
-    /// carries. Sample values transcribed from <c>data/gw-app-export.txt</c>.</summary>
+    /// carries. Sample values transcribed from <c>data/gw-app-export.txt</c>, except
+    /// <see cref="Units.CanisRex"/> - added by `structured-invulnerable-save`, not part of the
+    /// captured export, specifically so `/LivePlay` has a real caveated-invulnerable-save example
+    /// to render.</summary>
     public static ArmyRoster Roster() =>
         new(
             name: "For the Emperor",
@@ -24,7 +27,8 @@ public static class View
                 Units.CrusaderSquad_Helbrecht_Ancient(),
                 Units.CrusaderSquad_Marshal_Lieutenant(),
                 Units.Impulsor(),
-                Units.SwordBretheren_Marshal()
+                Units.SwordBretheren_Marshal(),
+                Units.CanisRex()
             ]);
 
     /// <summary>The raw, unaggregated roster - a fresh <see cref="ICombatUnit"/> object graph every

@@ -19,7 +19,7 @@ public static class BsdataCatalogueReader
     public static BsCatalogue Read(string json)
     {
         var file = JsonSerializer.Deserialize<BsCatalogueFile>(json, Options);
-        return file?.Catalogue
-            ?? throw new FormatException("BSData JSON file has no root 'catalogue' object.");
+        return file?.Catalogue ?? file?.GameSystem
+            ?? throw new FormatException("BSData JSON file has no root 'catalogue' or 'gameSystem' object.");
     }
 }

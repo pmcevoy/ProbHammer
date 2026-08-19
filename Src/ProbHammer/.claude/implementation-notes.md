@@ -40,4 +40,4 @@ T@(Model.Toughness) &nbsp;Sv@(Model.Save)+&nbsp;W@(Model.Wounds)
 
 ### Razor and WH40K game notation
 
-`@Model.InvulnerableSave++` and `@Model.FeelNoPain+++` are parsed as C# postfix increment expressions. Use `@(Model.InvulnerableSave)++` and `@(Model.FeelNoPain)+++` to get the `++`/`+++` as literal HTML text. `/LivePlay`'s `_UnitBlock.cshtml` applies this to `@(block.Statline.InSv)++` for the same reason.
+`@Model.SomeValue++` and `@Model.FeelNoPain+++` are parsed as C# postfix increment expressions. Use `@(Model.SomeValue)++` and `@(Model.FeelNoPain)+++` to get the `++`/`+++` as literal HTML text. `/LivePlay`'s `_UnitBlock.cshtml` applies this to `@(inv.MeleeInSv)++` (`inv` being `block.Statline.InSv`) for the same reason.

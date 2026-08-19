@@ -1,0 +1,310 @@
+{
+  "catalogue": {
+    "id": "fixture-invulnerable-save-scenarios",
+    "name": "Invulnerable Save Scenarios (fixture)",
+    "catalogueLinks": [],
+    "sharedSelectionEntries": [
+      {
+        "id": "ivs-plain",
+        "name": "Plain Save Model",
+        "type": "model",
+        "profiles": [
+          {
+            "name": "Plain Save Model",
+            "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "6\"" },
+              { "name": "T", "$text": "4" },
+              { "name": "Sv", "$text": "3+" },
+              { "name": "W", "$text": "3" },
+              { "name": "LD", "$text": "6+" },
+              { "name": "OC", "$text": "1" },
+              { "name": "InSv", "$text": "4+" }
+            ]
+          }
+        ],
+        "selectionEntries": [],
+        "selectionEntryGroups": [],
+        "entryLinks": [],
+        "infoLinks": []
+      },
+      {
+        "id": "ivs-parenthetical",
+        "name": "Parenthetical Ranged Save Model",
+        "type": "model",
+        "profiles": [
+          {
+            "name": "Parenthetical Ranged Save Model",
+            "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "14\"" },
+              { "name": "T", "$text": "13" },
+              { "name": "Sv", "$text": "2+" },
+              { "name": "W", "$text": "40" },
+              { "name": "LD", "$text": "6+" },
+              { "name": "OC", "$text": "16" },
+              { "name": "InSv", "$text": "5+ (Ranged)" }
+            ]
+          }
+        ],
+        "selectionEntries": [],
+        "selectionEntryGroups": [],
+        "entryLinks": [],
+        "infoLinks": []
+      },
+      {
+        "id": "ivs-local-ability",
+        "name": "Local Ability Save Model",
+        "type": "model",
+        "profiles": [
+          {
+            "name": "Local Ability Save Model",
+            "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "5\"" },
+              { "name": "T", "$text": "6" },
+              { "name": "Sv", "$text": "7+" },
+              { "name": "W", "$text": "1" },
+              { "name": "LD", "$text": "8+" },
+              { "name": "OC", "$text": "1" },
+              { "name": "InSv", "$text": "2+*" }
+            ]
+          },
+          {
+            "name": "Invulnerable Save (2+*)",
+            "typeName": "Abilities",
+            "characteristics": [
+              {
+                "name": "Description",
+                "$text": "While a friendly Local Ability Save Model is on the battlefield, you cannot re-roll save rolls for this unit."
+              }
+            ]
+          }
+        ],
+        "selectionEntries": [],
+        "selectionEntryGroups": [],
+        "entryLinks": [],
+        "infoLinks": []
+      },
+      {
+        "id": "ivs-linked-ability",
+        "name": "Linked Ability Save Model",
+        "type": "model",
+        "profiles": [
+          {
+            "name": "Linked Ability Save Model",
+            "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "8\"" },
+              { "name": "T", "$text": "11" },
+              { "name": "Sv", "$text": "3+" },
+              { "name": "W", "$text": "26" },
+              { "name": "LD", "$text": "6+" },
+              { "name": "OC", "$text": "10" },
+              { "name": "InSv", "$text": "5+*" }
+            ]
+          }
+        ],
+        "selectionEntries": [],
+        "selectionEntryGroups": [],
+        "entryLinks": [],
+        "infoLinks": [
+          {
+            "name": "Invulnerable Save (5+*)",
+            "type": "profile",
+            "id": "il-linked",
+            "targetId": "sp-5plus-ranged"
+          }
+        ]
+      },
+      {
+        "id": "ivs-split",
+        "name": "Split Save Model",
+        "type": "model",
+        "profiles": [
+          {
+            "name": "Split Save Model",
+            "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "7\"" },
+              { "name": "T", "$text": "3" },
+              { "name": "Sv", "$text": "5+" },
+              { "name": "W", "$text": "1" },
+              { "name": "LD", "$text": "6+" },
+              { "name": "OC", "$text": "1" },
+              { "name": "InSv", "$text": "4+* / 5+" }
+            ]
+          }
+        ],
+        "selectionEntries": [],
+        "selectionEntryGroups": [],
+        "entryLinks": [],
+        "infoLinks": [
+          {
+            "name": "Invulnerable Save (4+*)",
+            "type": "profile",
+            "id": "il-split",
+            "targetId": "sp-4plus-melee"
+          }
+        ]
+      },
+      {
+        "id": "ivs-collision-a",
+        "name": "Collision Model A",
+        "type": "model",
+        "profiles": [
+          {
+            "name": "Collision Model A",
+            "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "6\"" },
+              { "name": "T", "$text": "4" },
+              { "name": "Sv", "$text": "3+" },
+              { "name": "W", "$text": "3" },
+              { "name": "LD", "$text": "6+" },
+              { "name": "OC", "$text": "1" },
+              { "name": "InSv", "$text": "4+*" }
+            ]
+          }
+        ],
+        "selectionEntries": [],
+        "selectionEntryGroups": [],
+        "entryLinks": [],
+        "infoLinks": [
+          {
+            "name": "Invulnerable Save (4+*)",
+            "type": "profile",
+            "id": "il-collision-a",
+            "targetId": "sp-collision-ranged"
+          }
+        ]
+      },
+      {
+        "id": "ivs-collision-b",
+        "name": "Collision Model B",
+        "type": "model",
+        "profiles": [
+          {
+            "name": "Collision Model B",
+            "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "6\"" },
+              { "name": "T", "$text": "4" },
+              { "name": "Sv", "$text": "3+" },
+              { "name": "W", "$text": "3" },
+              { "name": "LD", "$text": "6+" },
+              { "name": "OC", "$text": "1" },
+              { "name": "InSv", "$text": "4+*" }
+            ]
+          }
+        ],
+        "selectionEntries": [],
+        "selectionEntryGroups": [],
+        "entryLinks": [],
+        "infoLinks": [
+          {
+            "name": "Invulnerable Save (4+*)",
+            "type": "profile",
+            "id": "il-collision-b",
+            "targetId": "sp-collision-melee"
+          }
+        ]
+      },
+      {
+        "id": "ivs-unrecognized",
+        "name": "Unrecognized Shape Model",
+        "type": "model",
+        "profiles": [
+          {
+            "name": "Unrecognized Shape Model",
+            "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "6\"" },
+              { "name": "T", "$text": "4" },
+              { "name": "Sv", "$text": "3+" },
+              { "name": "W", "$text": "3" },
+              { "name": "LD", "$text": "6+" },
+              { "name": "OC", "$text": "1" },
+              { "name": "InSv", "$text": "TBD" }
+            ]
+          }
+        ],
+        "selectionEntries": [],
+        "selectionEntryGroups": [],
+        "entryLinks": [],
+        "infoLinks": []
+      },
+      {
+        "id": "ivs-no-candidate",
+        "name": "No Candidate Ability Model",
+        "type": "model",
+        "profiles": [
+          {
+            "name": "No Candidate Ability Model",
+            "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "6\"" },
+              { "name": "T", "$text": "4" },
+              { "name": "Sv", "$text": "3+" },
+              { "name": "W", "$text": "3" },
+              { "name": "LD", "$text": "6+" },
+              { "name": "OC", "$text": "1" },
+              { "name": "InSv", "$text": "3+*" }
+            ]
+          }
+        ],
+        "selectionEntries": [],
+        "selectionEntryGroups": [],
+        "entryLinks": [],
+        "infoLinks": []
+      }
+    ],
+    "sharedSelectionEntryGroups": [],
+    "sharedProfiles": [
+      {
+        "id": "sp-5plus-ranged",
+        "name": "Invulnerable Save (5+*)",
+        "typeName": "Abilities",
+        "characteristics": [
+          {
+            "name": "Description",
+            "$text": "This model has a 5+ invulnerable save against ranged attacks."
+          }
+        ]
+      },
+      {
+        "id": "sp-4plus-melee",
+        "name": "Invulnerable Save (4+*)",
+        "typeName": "Abilities",
+        "characteristics": [
+          {
+            "name": "Description",
+            "$text": "Models in this unit have a 4+ invulnerable save against melee attacks."
+          }
+        ]
+      },
+      {
+        "id": "sp-collision-ranged",
+        "name": "Invulnerable Save (4+*)",
+        "typeName": "Abilities",
+        "characteristics": [
+          {
+            "name": "Description",
+            "$text": "This model has a 4+ invulnerable save against ranged attacks."
+          }
+        ]
+      },
+      {
+        "id": "sp-collision-melee",
+        "name": "Invulnerable Save (4+*)",
+        "typeName": "Abilities",
+        "characteristics": [
+          {
+            "name": "Description",
+            "$text": "This model has a 4+ invulnerable save against melee attacks."
+          }
+        ]
+      }
+    ]
+  }
+}

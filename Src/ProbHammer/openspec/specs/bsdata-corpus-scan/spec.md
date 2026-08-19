@@ -16,9 +16,15 @@ attempts to resolve every named entry in every real catalogue file in the clone 
 recognizable pattern rather than by the specific datasheet or entry that raised it.
 
 #### Scenario: A known ambiguous-InSv pattern is recorded
-- **WHEN** the scan resolves a datasheet whose `InSv` characteristic is one of the known
-  multi-value forms (e.g. `"4+* / 5+"` on Wyches/Howling Banshees, or `"5+ (Ranged)"` on a Titan
-  or the Stormbird)
+- **WHEN** the scan resolves a datasheet whose `InSv` characteristic is one of the forms that
+  previously required a dedicated allowlist entry (e.g. `"4+* / 5+"` on Wyches/Howling Banshees,
+  `"5+ (Ranged)"` on a Titan or the Stormbird, or a bare footnoted value like `"5+*"`)
+- **THEN** resolution now succeeds for all of them, so no exception is raised and nothing is
+  recorded against an InSv-specific allowlist pattern for these forms
+
+#### Scenario: A known dice-notation Strength pattern is recorded
+- **WHEN** the scan resolves a weapon profile whose `S` characteristic uses dice notation (e.g.
+  `"D6+6"` on the Ork Battlewagon)
 - **THEN** the resulting exception is recorded against the corresponding allowlist pattern, not
   treated as an unexpected failure
 

@@ -97,6 +97,12 @@ subtracted out — i.e. only the weapons that distinguish this loadout from its 
 same entry. This statline rendering occupies the first of three columns in the unit block's
 Statline area — see "Statline Ability Column Rendering" for the other two.
 
+A run's shared invulnerable save SHALL render as a single value when its melee and ranged values
+are equal and it is not caveated (the pre-existing rendering); otherwise it SHALL render both
+values distinguished by attack type, and, when caveated, a visual indicator — distinct from the
+non-caveated rendering — that the value depends on an associated ability not otherwise shown by
+this rendering.
+
 Each entry's header line, and each of its nested loadout lines when rendered, SHALL act as an
 independent selection toggle within the unit block's shared selection state (see "Selection-Scoped
 Weapon Filtering"). A statline entry with more than one loadout SHALL render one of three visually
@@ -187,12 +193,25 @@ requirement already govern.
   loadout breakdown, regardless of whether the entry is sharing a stat-tile with others
 
 #### Scenario: Invulnerable save renders when present
-- **WHEN** a run's shared Statline value has an `InSv` value set
-- **THEN** the rendered stat-tile displays that invulnerable save value
+- **WHEN** a run's shared Statline value has an invulnerable save whose melee and ranged values are
+  equal and non-caveated
+- **THEN** the rendered stat-tile displays that single value
 
 #### Scenario: Invulnerable save is omitted when absent
-- **WHEN** a run's shared Statline value has an unset `InSv` value (the default)
+- **WHEN** a run's shared Statline value has an invulnerable save whose melee and ranged values are
+  both 0 (the default)
 - **THEN** the rendered stat-tile does not display an invulnerable save value
+
+#### Scenario: Differing melee and ranged values render distinctly
+- **WHEN** a run's shared Statline value has a non-caveated invulnerable save whose melee and
+  ranged values differ
+- **THEN** the rendered stat-tile displays both values, distinguished by attack type, rather than a
+  single merged value
+
+#### Scenario: Caveated invulnerable save renders with an indicator
+- **WHEN** a run's shared Statline value has a caveated invulnerable save
+- **THEN** the rendered stat-tile displays its melee/ranged values together with a visual indicator
+  distinct from the non-caveated rendering, showing that additional information exists
 
 #### Scenario: Deselecting one loadout leaves its statline in a partial state
 - **WHEN** a statline entry has two loadouts, both currently selected, and the player deselects one

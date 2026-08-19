@@ -5,28 +5,26 @@ namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 
 /// <summary>
 /// Seed "known limitation" allowlist for <see cref="CharacteristicResolutionScanTests"/> - see
-/// PROGRESS.md's Known Issues and design.md's "Confirmed by code inspection" decision. Both
-/// parked representation questions (multi-value InSv, dice-notation Strength) stay unresolved;
-/// this only makes their resulting exceptions expected rather than unexplained failures.
+/// PROGRESS.md's Known Issues and design.md's "Confirmed by code inspection" decision. The
+/// InSv representation gap was resolved by the `structured-invulnerable-save` change (every
+/// confirmed real InSv shape now resolves into `InvulnerableSave` instead of throwing) except one
+/// genuine data anomaly (Aeldari's Archon/Ynnari Archon); the dice-notation Strength gap remains
+/// open separately, tracked here as before.
 /// </summary>
 public static partial class CharacteristicResolutionAllowlist
 {
     public static IReadOnlyList<AllowlistEntry<Exception>> Entries { get; } =
     [
         new AllowlistEntry<Exception>(
-            "InSv caveated/multi-value form ParseThreshold rejects - Statline.InSv is a plain " +
-            "int with no way to represent a conditional or multi-valued save. Covers all " +
-            "confirmed real-data shapes: a '/'-split two-different-values-by-context form (e.g. " +
-            "'4+* / 5+' on Wyches/Howling Banshees); a parenthetical annotation (e.g. " +
-            "'5+ (Ranged)' on the four Titans + the Stormbird); and a bare trailing '*' footnote " +
-            "(e.g. '5+*' on Aeldari Rangers and most Imperial/Chaos Knights) - the footnote form " +
-            "is by far the most common in a full-corpus scan (~40 of ~50 InSv failures) and " +
-            "usually links to a shared ability restricting the save to one attack type (ranged- " +
-            "or melee-only), though at least one case (Ork's Makari) uses the same '*' for an " +
-            "unrelated 'no re-rolls' caveat that doesn't condition the value itself - either way " +
-            "the raw characteristic text alone can't be resolved without losing information, so " +
-            "every InSv failure is treated as one class here; see PROGRESS.md's Known Issues.",
-            ex => ex is AmbiguousCharacteristicException { Characteristic: "InSv" }),
+            "Aeldari's Archon and Ynnari Archon both carry a footnoted InSv ('2+*') with no " +
+            "matching ability anywhere in the entry - neither a locally-nested 'Invulnerable " +
+            "Save ({digit}+*)'/'*Invulnerable Save' profile nor an InfoLink to one, under either " +
+            "confirmed real-corpus naming convention. None of the entry's own abilities " +
+            "(Leader/Overlord/Devious Mastermind/Hatred Eternal) mention an invulnerable save " +
+            "either. A genuine BSData data anomaly (the footnote may reference a physical-card " +
+            "note with no structured JSON equivalent), correctly resolved as unresolvable rather " +
+            "than guessed at; see PROGRESS.md's Known Issues.",
+            ex => ex is AmbiguousCharacteristicException { Characteristic: "InSv", Text: "2+*" }),
 
         new AllowlistEntry<Exception>(
             "Dice-notation Strength characteristic (e.g. Ork Battlewagon 'D6+6', Big Gunz " +

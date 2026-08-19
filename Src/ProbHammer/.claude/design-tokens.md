@@ -18,7 +18,7 @@ values in components.
 | `--accent` | `#24413f` | Emphasis: stat sub-values (e.g. invulnerable save), primary headings |
 | `--text` | `#262622` | Primary text |
 | `--text-dim` | `#6f6c62` | Labels, counts, dim info |
-| `--amber` | `#a86a1d` | Draw-the-eye controls (e.g. the casualty-reset icon) |
+| `--amber` | `#a86a1d` | Draw-the-eye controls/values (e.g. the casualty-reset icon; a caveated invulnerable-save stat-subvalue, pointing at the unit's own abilities for the full condition) |
 | `--border` | `#d9d5c9` | Borders and dividers |
 
 ## Mechanism

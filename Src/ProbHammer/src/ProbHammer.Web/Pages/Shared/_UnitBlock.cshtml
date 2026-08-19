@@ -82,9 +82,27 @@
                             <div class="stat-tile">
                                 <span class="stat-label">Sv</span>
                                 <span class="stat-value">@(block.Statline.Sv)+</span>
-                                @if (block.Statline.InSv > 0)
+                                @{
+                                    var inv = block.Statline.InSv;
+                                }
+                                @if (inv.Caveated)
                                 {
-                                    <span class="stat-subvalue">@(block.Statline.InSv)++</span>
+                                    <span class="stat-subvalue stat-subvalue-caveated" title="See unit abilities for the exact condition">@(inv.MeleeInSv)++*</span>
+                                }
+                                else if (inv.MeleeInSv == inv.RangedInSv)
+                                {
+                                    if (inv.MeleeInSv > 0)
+                                    {
+                                        <span class="stat-subvalue">@(inv.MeleeInSv)++</span>
+                                    }
+                                }
+                                else
+                                {
+                                    var parts = new List<string>();
+                                    if (inv.RangedInSv > 0) { parts.Add($"R{inv.RangedInSv}++"); }
+                                    if (inv.MeleeInSv > 0) { parts.Add($"M{inv.MeleeInSv}++"); }
+                                    var invLabel = string.Join(" / ", parts);
+                                    <span class="stat-subvalue stat-subvalue-invsv-split">@invLabel</span>
                                 }
                             </div>
                             <div class="stat-tile"><span class="stat-label">W</span><span class="stat-value">@(block.Statline.W)</span></div>

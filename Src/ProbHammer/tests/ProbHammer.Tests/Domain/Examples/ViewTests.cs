@@ -11,7 +11,7 @@ public class ViewTests
         var rosterUnits = View.Roster().Units;
         var myArmyRoster = View.MyArmyRoster();
 
-        rosterUnits.Should().HaveCount(6);
+        rosterUnits.Should().HaveCount(7);
         rosterUnits.Select(u => u.Name).Should().Equal(myArmyRoster.Select(u => u.Name));
     }
 

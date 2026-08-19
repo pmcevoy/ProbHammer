@@ -40,8 +40,9 @@ Datasheet
                                                       // weaponProfiles keyed internally by .Name
 
 Statline(M, T, Sv, W, Ld, Oc)   // value object — field names match official shorthand
-  InSv: int                     // init-only property, defaults to 0; 0 means "no invulnerable
-                                 // save" (consumers must treat 0 as absent, not as a 0+ save)
+  InSv: InvulnerableSave               // init-only property, defaults to a fresh (absent)
+                                       // instance; see "Invulnerable Save Resolution" below for
+                                       // the type's own shape and how BSData text resolves into it
 
 DiceExpression(Count, Sides, Modifier)   // value object — a fixed integer (Count=0) or a dice
                                           // roll ("D6", "2D3+1"); Parse/Fixed/Scale/Add unchanged
@@ -161,7 +162,14 @@ BsdataCatalogueReader.Read(json) -> BsCatalogue      // System.Text.Json; Json/B
                                                       // constraints/modifiers/conditionGroups/
                                                       // associations/costs are simply absent from
                                                       // those types, so real files deserialize
-                                                      // clean without special-casing them
+                                                      // clean without special-casing them. Reads
+                                                      // either JSON root shape a real BSData file
+                                                      // uses - a catalogueSchema document
+                                                      // ({ "catalogue": {...} }) or the single
+                                                      // game-system document ({ "gameSystem":
+                                                      // {...} }, e.g. "Warhammer 40,000.json") -
+                                                      // since both share the same nested shape for
+                                                      // every field this loader reads.
 
 BsdataClosureResolver.Resolve(source, startingFileName) -> BsdataClosure
                                        // BFS over catalogueLinks[].importRootEntries, starting
@@ -171,7 +179,25 @@ BsdataClosureResolver.Resolve(source, startingFileName) -> BsdataClosure
                                        // to "Chaos - Chaos Daemons Library.json") - falls back to
                                        // matching every available file's own top-level catalogue
                                        // `id` against the link's targetId when the name guess isn't
-                                       // present, which is what ListFileNames() is for
+                                       // present, which is what ListFileNames() is for. Also
+                                       // resolves the current catalogue's own `GameSystemId` (not
+                                       // a catalogueLink at all) against every available file's own
+                                       // `id` - added by `structured-invulnerable-save`, since the
+                                       // base rules file's shared "Invulnerable Save (X+*)"/
+                                       // "*Invulnerable Save" abilities live only there. Stored on
+                                       // the returned closure as a separate `BsdataClosure
+                                       // .GameSystem: BsCatalogue?` property, deliberately outside
+                                       // `Files` - its own SharedSelectionEntries/
+                                       // SharedSelectionEntryGroups are generic, cross-faction
+                                       // template content (Warlord traits, Enhancements, Crusade
+                                       // rules) this loader was never designed to walk as if they
+                                       // were real datasheet weapons/statlines (confirmed by a real
+                                       // corpus-scan regression when this was first tried more
+                                       // broadly - a T'au entry's dangling "Warlord"/"Enhancements"/
+                                       // "Crusade" entryLinks, previously silently unresolved by
+                                       // design, newly resolved into generic wargear with a literal
+                                       // "*" placeholder value this loader's weapon parsing can't
+                                       // handle). Only its SharedProfiles is actually needed.
 
 BsdataNameResolver.Resolve(closure, name) -> BsSelectionEntry?
                                        // walks closure.Files in resolution order, first
@@ -179,7 +205,17 @@ BsdataNameResolver.Resolve(closure, name) -> BsSelectionEntry?
                                        // beats imported
   .BuildIdIndex(closure) / .BuildGroupIdIndex(closure) / .BuildProfileIdIndex(closure)
                                        // id -> entry/group/profile maps spanning the whole closure,
-                                       // used only to follow entryLinks/infoLinks during mapping
+                                       // used only to follow entryLinks/infoLinks during mapping.
+                                       // BuildIdIndex/BuildGroupIdIndex read only closure.Files -
+                                       // the game system (closure.GameSystem) is deliberately never
+                                       // reachable through ordinary entryLink/link resolution, so a
+                                       // link that was always meant to dangle (e.g. into generic,
+                                       // cross-faction "Warlord"/"Enhancements"/"Crusade" template
+                                       // content this loader was never designed to map as weapons)
+                                       // keeps silently skipping exactly as before.
+                                       // BuildProfileIdIndex additionally merges in
+                                       // closure.GameSystem?.SharedProfiles when present - the one
+                                       // thing real catalogue entries actually link into there.
 
 BsdataDatasheetMapper.BuildDatasheet(entry, idIndex, groupIdIndex, profileIdIndex) -> Datasheet
                                        // single recursive walk of the resolved entry's full
@@ -206,6 +242,81 @@ BsdataDatasheetMapper.BuildDatasheet(entry, idIndex, groupIdIndex, profileIdInde
                                        // empty - BSData's categoryLinks could plausibly source
                                        // them, but no requirement in this change's spec governs
                                        // that mapping, so it's left unattempted rather than guessed.
+                                       // The walk also threads a per-branch ancestry list (every
+                                       // BsSelectionEntry from the walk root down to the current
+                                       // one, reset to a fresh chain on each entryLink hop) purely
+                                       // for InSv resolution - see "Invulnerable Save Resolution"
+                                       // below.
+
+InvulnerableSave(MeleeInSv, RangedInSv, Caveated, CaveatAbility)   // Domain/Catalogue/
+                                       // InvulnerableSave.cs; sealed record, non-nullable on
+                                       // Statline (0/0/false/null = absent, same convention as
+                                       // every other threshold field). CaveatAbility: Ability? is
+                                       // null except when Caveated == true, in which case it is
+                                       // always set - enforced by the 4-argument constructor (an
+                                       // object initializer or `with` expression can still bypass
+                                       // this, the same class of record-validation gap this
+                                       // project already accepts elsewhere).
+  implicit operator InvulnerableSave(int)   // uniform (melee == ranged, non-caveated) is the
+                                       // common case - mirrors DiceExpression's own implicit int
+                                       // conversion so a plain digit reads naturally at call sites
+                                       // (e.g. `new Statline(...) { InSv = 4 }`).
+
+BsdataDatasheetMapper.ResolveInvulnerableSave(text, ancestry, ctx) -> InvulnerableSave
+                                       // Resolves a Unit profile's raw InSv characteristic text.
+                                       // Self-contained shapes resolve directly, no ability
+                                       // involved: a plain digit ("4+"); a parenthetical
+                                       // attack-type restriction ("5+ (Ranged)", confirmed on the
+                                       // four Titans + the Sokar-pattern Stormbird) - the
+                                       // unrestricted attack type's value is set to 0. Footnoted
+                                       // shapes - a bare trailing "*" (e.g. "5+*", by far the most
+                                       // common real shape) or a "/"-split where exactly one side
+                                       // carries the marker (e.g. "4+* / 5+", confirmed on Howling
+                                       // Banshees/Wyches) - always resolve as Caveated = true: this
+                                       // method deliberately never reads what the linked ability's
+                                       // Description text says, only which specific ability is
+                                       // linked (see ResolveCaveatAbility) - classifying that text
+                                       // is a permanently deferred future capability (see
+                                       // .claude/vnext-ideas.md's "Ability-text interpretation
+                                       // pass"). Both MeleeInSv/RangedInSv are populated with the
+                                       // one value known without that interpretation - the
+                                       // unfootnoted side of a split when one exists, otherwise the
+                                       // footnoted value itself. Throws AmbiguousCharacteristicException
+                                       // for a raw shape matching none of the above.
+
+BsdataDatasheetMapper.ResolveCaveatAbility(digit, ancestry, ctx, rawText) -> Ability
+                                       // Resolves the specific Ability a footnoted InSv value is
+                                       // linked to, by id - never by name alone against the whole
+                                       // datasheet's flattened, name-deduped ability list, since
+                                       // the real base catalogue contains two different profiles
+                                       // both named "Invulnerable Save (4+*)" with opposite
+                                       // meanings (one "against ranged attacks", one "against melee
+                                       // attacks"). Two real naming conventions are recognized: the
+                                       // digit-parameterized "Invulnerable Save ({digit}+*)"
+                                       // (confirmed: Imperial Knights' Canis Rex, linked via
+                                       // infoLink into the base rules catalogue's shared profile;
+                                       // Howling Banshees, same shape) and the generic,
+                                       // unparameterized "*Invulnerable Save" (confirmed: Space
+                                       // Marines' Judiciar/Astraeus, defined locally; Chaos
+                                       // Knights' War Dog family, linked). Searches every entry in
+                                       // `ancestry` nearest-first (the entry that actually owns the
+                                       // Unit profile, then its container, and so on up to the walk
+                                       // root) - the real corpus doesn't always put the link/local
+                                       // ability on the same entry as the footnoted characteristic
+                                       // itself: confirmed on Howling Banshees, whose squad's own
+                                       // top-level entry carries the infoLink while the footnoted
+                                       // InSv sits on a nested child model entry one level down
+                                       // (inside a selectionEntryGroup). Each candidate entry's own
+                                       // locally-nested Abilities profiles are checked before its
+                                       // own "profile"-type InfoLinks (confirmed shape: Orks'
+                                       // Makari, whose "Invulnerable Save (2+*)" sits directly in
+                                       // his own entry.Profiles, not behind any link). Throws when
+                                       // no entry in the ancestry has a matching candidate under
+                                       // either naming convention - a footnote with no resolvable
+                                       // ability is a new, unprecedented shape (or, confirmed once
+                                       // in the real corpus - Aeldari's Archon/Ynnari Archon - a
+                                       // genuine BSData data anomaly with no ability anywhere in
+                                       // the entry at all), never guessed at.
 
 WeaponKeywordParser.Apply(weapon, keywordsText) -> WeaponProfile
                                        // splits a weapon's free-text Keywords characteristic
@@ -226,30 +337,13 @@ WeaponKeywordParser.UnrecognizedTokens(keywordsText) -> IReadOnlyList<string>
                                        // what Apply actually recognizes.
 ```
 
-`BsdataDatasheetMapper.ParseThreshold(text, CharacteristicPattern)` (Sv/InSv/BS/WS/LD) validates
-against a per-characteristic allowlist regex (`CharacteristicPattern.Sv`/`.InvSv`/`.Bs`/`.Ws`/`.Ld`
-— digits with an optional trailing `+` for all five) rather than stripping known-bad separators,
-and throws `AmbiguousCharacteristicException` (carrying both the characteristic name and raw text
-as properties) for anything that doesn't match. Three confirmed real-data InSv shapes throw, none
-safely collapsible to one int: a `/`-split two-different-values-by-context form (e.g. "4+* / 5+",
-confirmed on Wyches and Howling Banshees); a parenthetical annotation (e.g. "5+ (Ranged)",
-confirmed on the four Titan datasheets and the Sokar-pattern Stormbird); and — by far the most
-common in a full-corpus scan, ~40 real datasheets — a bare trailing `*` footnote (e.g. "5+*" on
-Aeldari Rangers, most Imperial/Chaos Knights, Judiciar, Astraeus). That footnote is not harmless:
-it links (via a `"profile"`-type infoLink, often into the base rules catalogue
-`Warhammer 40,000.json`) to a small standard "Invulnerable Save (X+*)" Abilities profile whose
-Description usually restricts the save to one attack type ("This model has a 5+ invulnerable save
-against ranged attacks," confirmed on Aeldari Rangers and every sampled Imperial Knight) — the
-same value-changes-by-context gap as the other two forms, just spelled differently in source data,
-so `ParseThreshold` deliberately throws for it too rather than parsing it as an unconditional save
-(one sampled exception, Ork's Makari, uses the same `*` for an unrelated "no re-rolls" caveat that
-doesn't condition the value itself — still left unparsed, since the characteristic text alone
-can't distinguish the two without resolving the linked ability). This is a deliberate reversal of
-this method's original silently-keep-the-first-value behavior: `Statline`'s single-int `Sv`/`InSv`
-fields have no way to represent a conditional or multi-valued save, and picking one silently hid
-that loss. See PROGRESS.md's "Known Issues" and "Full-Corpus Scan Tests" below — the permanent
-corpus-wide resolution scan catches this exception across the whole clone and checks it against a
-maintained "known limitation" allowlist.
+`BsdataDatasheetMapper.ParseThreshold(text, CharacteristicPattern)` (Sv/BS/WS/LD only — InSv is no
+longer one of its callers, see "Invulnerable Save Resolution" above) validates against a
+per-characteristic allowlist regex (`CharacteristicPattern.Sv`/`.Bs`/`.Ws`/`.Ld` — digits with an
+optional trailing `+`, identical today, kept as separate instances so a future divergence for one
+characteristic can't silently affect the others) rather than stripping known-bad separators, and
+throws `AmbiguousCharacteristicException` (carrying both the characteristic name and raw text as
+properties) for anything that doesn't match.
 
 `WeaponProfile.KeywordsText` (`IReadOnlyList<string>`, in `Domain/Catalogue/WeaponProfile.cs`, not
 `Bsdata/`) is the one shape change this ingestion work made outside the new namespace: every
@@ -300,9 +394,18 @@ CharacteristicResolutionScanTests.Full_corpus_characteristic_resolution_scan
                                        // SharedSelectionEntries is attempted through
                                        // BsdataDatasheetMapper.BuildDatasheet, catching and
                                        // collecting any exception. CharacteristicResolutionAllowlist.cs
-                                       // covers every confirmed InSv shape (see ParseThreshold
-                                       // above) plus dice-notation WeaponProfile.S text (e.g. Ork
-                                       // Battlewagon "D6+6") failing ParsePlainInt's int.Parse.
+                                       // covers dice-notation WeaponProfile.S text (e.g. Ork
+                                       // Battlewagon "D6+6") failing ParsePlainInt's int.Parse, plus
+                                       // one confirmed real data anomaly (Aeldari's Archon/Ynnari
+                                       // Archon - a footnoted InSv with no matching ability anywhere
+                                       // in the entry under either naming convention, see
+                                       // ResolveCaveatAbility above). `structured-invulnerable-save`
+                                       // resolved every other InSv shape the scan had previously
+                                       // allowlisted - this scan is what caught two real
+                                       // architectural gaps that change surfaced (the base rules
+                                       // game-system file being unreachable at all; the
+                                       // ancestor-vs-immediate-entry ability-resolution gap), each
+                                       // fixed generally rather than allowlisted around.
 
 WeaponKeywordScanTests.Full_corpus_weapon_keyword_token_scan
                                        // walks each file's own closure directly (not through

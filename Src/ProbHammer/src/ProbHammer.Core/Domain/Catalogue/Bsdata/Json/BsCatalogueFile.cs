@@ -3,7 +3,12 @@ using System.Text.Json.Serialization;
 namespace ProbHammer.Core.Domain.Catalogue.Bsdata.Json;
 
 /// <summary>
-/// Root wrapper for a BSData 11e catalogueSchema JSON file: { "catalogue": { ... } }.
+/// Root wrapper for a BSData 11e JSON file, either a catalogueSchema document
+/// ({ "catalogue": { ... } }) or the single game-system document
+/// ({ "gameSystem": { ... } }, e.g. "Warhammer 40,000.json") - both share the same nested shape
+/// for every field this loader reads (id, name, sharedSelectionEntries,
+/// sharedSelectionEntryGroups, sharedProfiles), so one <see cref="BsCatalogue"/> type models
+/// both; exactly one of <see cref="Catalogue"/>/<see cref="GameSystem"/> is populated per file.
 /// Only the fields this loader's resolution/mapping needs are modeled - constraints, modifiers,
 /// conditionGroups, associations, and costs are deliberately left unmapped (see design.md); with
 /// System.Text.Json's default behavior, unmapped JSON properties are silently ignored rather than
@@ -12,12 +17,21 @@ namespace ProbHammer.Core.Domain.Catalogue.Bsdata.Json;
 public sealed class BsCatalogueFile
 {
     public BsCatalogue? Catalogue { get; set; }
+    public BsCatalogue? GameSystem { get; set; }
 }
 
 public sealed class BsCatalogue
 {
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
+
+    /// <summary>Every catalogue file (never a game-system file itself) references its single game
+    /// system this way, not via <see cref="CatalogueLinks"/> - resolved by
+    /// BsdataClosureResolver into every closure regardless, since universal shared rules/profiles
+    /// (e.g. the base "Invulnerable Save (X+*)" abilities) live only there. Empty on a
+    /// game-system file's own deserialized <see cref="BsCatalogue"/>.</summary>
+    public string GameSystemId { get; set; } = "";
+
     public List<BsCatalogueLink> CatalogueLinks { get; set; } = [];
     public List<BsSelectionEntry> SharedSelectionEntries { get; set; } = [];
     public List<BsSelectionEntryGroup> SharedSelectionEntryGroups { get; set; } = [];

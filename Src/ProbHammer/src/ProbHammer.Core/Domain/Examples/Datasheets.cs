@@ -278,6 +278,45 @@ public static class Datasheets
         );
     }
 
+    /// <summary>Fixture added by `structured-invulnerable-save` specifically to give `/LivePlay`
+    /// a real example of a non-uniform/caveated invulnerable save to render, since none of the
+    /// existing example army's units have one. Uses real, verified values (from the live BSData
+    /// clone, investigated during that change's design): Canis Rex's real InSv text "5+*"
+    /// resolves - via the same entry-scoped ability resolution `BsdataDatasheetMapper` uses - to a
+    /// caveated save with the real linked ability's exact text.</summary>
+    public static Datasheet CanisRex()
+    {
+        var invulnerableSaveAbility = new Ability
+        {
+            Name = "Invulnerable Save (5+*)",
+            Text = "This model has a 5+ invulnerable save against ranged attacks.",
+            Scope = AbilityScope.Unit
+        };
+
+        return new Datasheet(
+            name: "Canis Rex",
+            statlines:
+            [
+                ("Canis Rex", new Statline(8, 11, 3, 26, 6, 10)
+                {
+                    InSv = new InvulnerableSave(
+                        meleeInSv: 5,
+                        rangedInSv: 5,
+                        caveated: true,
+                        caveatAbility: invulnerableSaveAbility)
+                })
+            ],
+            weaponProfiles:
+            [
+                new RangedWeapon("Rapid-fire battle cannon", 72, DiceExpression.D6 + 3, 3, 9, -2, 3) { Blast = true },
+                new MeleeWeapon("Reaper chainsword", A: 8, Ws: 3, S: 12, Ap: -3, D: 3)
+            ],
+            abilities: [invulnerableSaveAbility],
+            keywords: ["VEHICLE", "TITANIC", "IMPERIUM", "QUESTORIS", "CANIS REX"],
+            factionKeywords: ["IMPERIUM", "IMPERIAL KNIGHTS"]
+        );
+    }
+
     public static Datasheet Impulsor()
     {
         return new Datasheet(

@@ -53,15 +53,22 @@ public static class BsdataNameResolver
         return index;
     }
 
-    /// <summary>Indexes standalone profiles (BsCatalogue.SharedProfiles) by id across the closure -
-    /// a selectionEntry's infoLinks can reference one of these directly rather than nesting the
-    /// profile in its own Profiles list (see BsdataDatasheetMapper).</summary>
+    /// <summary>Indexes standalone profiles (BsCatalogue.SharedProfiles) by id across the closure,
+    /// plus the closure's GameSystem (if resolved) - a selectionEntry's infoLinks can reference
+    /// one of these directly rather than nesting the profile in its own Profiles list (see
+    /// BsdataDatasheetMapper), and the base "Invulnerable Save (X+*)" abilities a footnoted
+    /// invulnerable save links to live only in the game system's own SharedProfiles, not any
+    /// catalogue's.</summary>
     public static IReadOnlyDictionary<string, BsProfile> BuildProfileIdIndex(BsdataClosure closure)
     {
         var index = new Dictionary<string, BsProfile>(StringComparer.OrdinalIgnoreCase);
         foreach (var (_, catalogue) in closure.Files)
         foreach (var profile in catalogue.SharedProfiles)
             index.TryAdd(profile.Id, profile);
+
+        if (closure.GameSystem is not null)
+            foreach (var profile in closure.GameSystem.SharedProfiles)
+                index.TryAdd(profile.Id, profile);
 
         return index;
     }

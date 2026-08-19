@@ -8,5 +8,5 @@ public sealed record Statline(
     int Ld,
     int Oc)
 {
-    public int InSv { get; init; }
+    public InvulnerableSave InSv { get; init; } = new();
 }

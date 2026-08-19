@@ -123,6 +123,20 @@ public static class Units
 
     }
 
+    public static Unit CanisRex()
+    {
+        return new Unit(
+            datasheet: Datasheets.CanisRex(),
+            enhancements: [],
+            modelLines:
+            [
+                new ModelLine(
+                    statlineName: "Canis Rex",
+                    weapons: ["Rapid-fire battle cannon", "Reaper chainsword"],
+                    count: 1)
+            ]);
+    }
+
     public static Unit Impulsor()
     {
         return new Unit(

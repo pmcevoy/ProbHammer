@@ -29,8 +29,9 @@ entry once it's been turned into a change (archived changes remain the historica
 - **Multi-profile-weapon "select one profile" disclaimer** — some weapons have multiple firing
   profiles the player picks between; the view doesn't currently flag this.
 - **Ability-driven attack modifiers** — e.g. a unit-wide "+1 Attack to melee weapons" ability
-  changing a total from A28 to A35. Not modeled at all yet (consistent with the standing rule
-  that ability text is never auto-parsed into behavior).
+  changing a total from A28 to A35. Not modeled at all yet. Expected to be a consumer of the
+  "Ability-text interpretation pass" idea below, once that exists, rather than its own bespoke
+  parsing.
 - **Splitting `Keywords` into unit-wide-union vs. per-component, or adding `FactionKeywords`** —
   currently left as one unioned `IReadOnlySet<string>`.
 - **Split `wwwroot/css/site.css` into a `/LivePlay`-only stylesheet.** Deferred by
@@ -54,6 +55,21 @@ entry once it's been turned into a change (archived changes remain the historica
 - **Wire `Simulation`/`CombatSimulator` into `/LivePlay`** — today `/LivePlay` is a static
   per-request reference view, not a dice-rolling tool; this is separate from rebuilding the
   simulator itself.
+- **Ability-text interpretation pass.** A distinct pass, run *after* `BsdataDatasheetMapper
+  .BuildDatasheet` (not inside it), that classifies a specific ability's `Description` text
+  against a small closed vocabulary of known fixed phrasings and folds the result back into the
+  domain model as a new, immutable `Datasheet`. Explicitly **not** general ability-text-to-
+  behavior parsing (that stays permanently out of scope per `domain-model-11e.md`'s Deliberate
+  Omissions) — this is pattern-matching known, previously-catalogued sentences, not NLU. First
+  concrete driver: the InSv-caveat representation change (mapper always marks a footnoted/
+  ability-linked invulnerable save `Caveated = true` and captures the resolved ability rather
+  than interpreting it inline; this pass is what would later resolve the known cases and flip
+  `Caveated` back to `false`) — deliberately deferred out of that change's scope, to be designed
+  as its own change once the shape needed here is clearer. Longer-term motivation is the
+  "Ability-driven attack modifiers" idea above (e.g. folding a "+1 Attack to melee weapons"
+  ability into weapon-aggregation totals) — same class of problem, not yet designed together.
+  **Revisit once the InSv-caveat change is implemented/archived — explicitly asked to be
+  reminded.**
 
 ## Bigger picture
 
