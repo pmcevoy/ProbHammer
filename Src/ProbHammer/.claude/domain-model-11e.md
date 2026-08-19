@@ -219,6 +219,20 @@ WeaponKeywordParser.Apply(weapon, keywordsText) -> WeaponProfile
                                        // Precision, Heavy) is retained verbatim with no flag set.
 ```
 
+`BsdataDatasheetMapper.ParseThreshold(text, CharacteristicPattern)` (Sv/InSv/BS/WS/LD) validates
+against a per-characteristic allowlist regex (`CharacteristicPattern.Sv`/`.InvSv`/`.Bs`/`.Ws`/`.Ld`
+— digits with an optional trailing `+` for all five, or a trailing `*` footnote for InSv only,
+e.g. "5+*") rather than stripping known-bad separators, and throws
+`AmbiguousCharacteristicException` (carrying both the characteristic name and raw text as
+properties) for anything that doesn't match — most notably BSData's two-different-values-by-context
+InSv forms, either `/`-split (e.g. "4+* / 5+", confirmed on Wyches and Howling Banshees) or
+parenthetical (e.g. "5+ (Ranged)", confirmed on the four Titan datasheets and the Sokar-pattern
+Stormbird). This is a deliberate reversal of this method's original silently-keep-the-first-value
+behavior: `Statline`'s single-int `Sv`/`InSv` fields have no way to represent two different values,
+and picking one silently hid that loss. See PROGRESS.md's "Known Issues" — the corpus-wide
+resolution test is expected to catch this exception for the known multi-value-InSv datasheets and
+check it against a maintained "known limitation" allowlist, not yet built.
+
 `WeaponProfile.KeywordsText` (`IReadOnlyList<string>`, in `Domain/Catalogue/WeaponProfile.cs`, not
 `Bsdata/`) is the one shape change this ingestion work made outside the new namespace: every
 weapon's exact source keyword text, in source order, included in `EqualityKey()` so two weapons

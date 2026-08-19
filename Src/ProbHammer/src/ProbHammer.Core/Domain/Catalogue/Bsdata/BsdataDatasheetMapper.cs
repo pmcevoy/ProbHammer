@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using ProbHammer.Core.Domain.Catalogue.Bsdata.Json;
 
 namespace ProbHammer.Core.Domain.Catalogue.Bsdata;
@@ -142,12 +143,12 @@ public static class BsdataDatasheetMapper
         new(
             M: ParseMeasurement(profile.CharacteristicText("M")),
             T: ParsePlainInt(profile.CharacteristicText("T")),
-            Sv: ParseThreshold(profile.CharacteristicText("Sv")),
+            Sv: ParseThreshold(profile.CharacteristicText("Sv"),CharacteristicPattern.Sv),
             W: ParsePlainInt(profile.CharacteristicText("W")),
-            Ld: ParseThreshold(profile.CharacteristicText("LD")),
+            Ld: ParseThreshold(profile.CharacteristicText("LD"), CharacteristicPattern.Ld),
             Oc: ParsePlainInt(profile.CharacteristicText("OC")))
         {
-            InSv = ParseThreshold(profile.CharacteristicText("InSv"))
+            InSv = ParseThreshold(profile.CharacteristicText("InSv"), CharacteristicPattern.InvSv)
         };
 
     private static WeaponProfile MapRangedWeapon(BsProfile profile)
@@ -156,7 +157,7 @@ public static class BsdataDatasheetMapper
             profile.Name,
             ParseMeasurement(profile.CharacteristicText("Range")),
             DiceExpression.Parse(profile.CharacteristicText("A") ?? "0"),
-            ParseThreshold(profile.CharacteristicText("BS")),
+            ParseThreshold(profile.CharacteristicText("BS"), CharacteristicPattern.Bs),
             ParsePlainInt(profile.CharacteristicText("S")),
             ParsePlainInt(profile.CharacteristicText("AP")),
             DiceExpression.Parse(profile.CharacteristicText("D") ?? "0"));
@@ -169,7 +170,7 @@ public static class BsdataDatasheetMapper
         var weapon = new MeleeWeapon(
             profile.Name,
             DiceExpression.Parse(profile.CharacteristicText("A") ?? "0"),
-            ParseThreshold(profile.CharacteristicText("WS")),
+            ParseThreshold(profile.CharacteristicText("WS"), CharacteristicPattern.Ws),
             ParsePlainInt(profile.CharacteristicText("S")),
             ParsePlainInt(profile.CharacteristicText("AP")),
             DiceExpression.Parse(profile.CharacteristicText("D") ?? "0"));
@@ -209,24 +210,36 @@ public static class BsdataDatasheetMapper
         return int.Parse(text.TrimEnd('"', '+'));
     }
 
-    /// <summary>Strips a trailing "+" threshold marker (e.g. 2+, 6+) and parses the number. An
-    /// empty string (BSData's "no invulnerable save" representation), "N/A" (BSData's
-    /// no-hit-roll-required marker on e.g. a Torrent weapon's BS/WS), or "-" (not applicable)
-    /// parses as 0. A trailing "*" (a footnoted/conditional save, e.g. "5+*") is stripped along
-    /// with the "+", dropping the footnote rather than failing to parse. A value describing two
-    /// different saves depending on context - either split with "/" (e.g. "4+* / 5+", confirmed on
-    /// Wyches and Howling Banshees) or annotated with a parenthetical (e.g. "5+ (Ranged)",
-    /// confirmed on the four Titan datasheets) - has no representation in Statline's single-int
-    /// Sv/InSv fields; only the first/unparenthesized value is kept, and the conditional-context
-    /// nuance is a known, accepted loss until something downstream actually needs to represent
-    /// it.</summary>
-    private static int ParseThreshold(string? text)
+    
+    /// <summary>Parses a single-value threshold characteristic (Sv, InSv, BS, WS, LD) against the
+    /// shape permitted for that specific characteristic (see <see cref="CharacteristicPattern"/>):
+    /// digits with an optional trailing "+" for all five, or a trailing "*" footnote marker for
+    /// InSv only (e.g. "5+*", confirmed on Wyches/Howling Banshees - not confirmed on the other
+    /// four, but no reason to assume they can't appear there too). An empty string (BSData's "no
+    /// invulnerable save" representation), "N/A" (BSData's no-hit-roll-required marker on e.g. a
+    /// Torrent weapon's BS/WS), or "-" (not applicable) parses as 0 regardless of characteristic.
+    /// Anything that doesn't match the allowed shape - including InSv's two known
+    /// two-different-values-by-context forms, either "/"-split (e.g. "4+* / 5+", confirmed on
+    /// Wyches and Howling Banshees) or a parenthetical annotation (e.g. "5+ (Ranged)", confirmed on
+    /// the four Titan datasheets and the Sokar-pattern Stormbird) - throws <see
+    /// cref="AmbiguousCharacteristicException"/> instead of silently keeping one value. This
+    /// reverses this method's earlier behavior of always taking the first/unparenthesized value:
+    /// Statline's single-int Sv/InSv fields have no way to represent two different values, and
+    /// picking one silently hid that loss instead of surfacing it. The corpus-wide resolution test
+    /// (PROGRESS.md's "Known Issues") is expected to catch this exception for the known
+    /// multi-value-InSv datasheets and check it against a maintained "known limitation" allowlist,
+    /// rather than this method quietly tolerating the ambiguity itself.</summary>
+    private static int ParseThreshold(string? text, CharacteristicPattern expectedPattern)
     {
         if (string.IsNullOrWhiteSpace(text)) return 0;
         text = text.Trim();
         if (IsNotApplicable(text) || IsNA(text)) return 0;
-        var firstValue = text.Split('/', '(')[0].Trim();
-        return int.Parse(firstValue.TrimEnd('+', '*'));
+        
+        var match = expectedPattern.Pattern.Match(text);
+        if(!match.Success)
+            throw new AmbiguousCharacteristicException(expectedPattern.Characteristic, text);
+
+        return int.Parse(match.Groups[1].Value);
     }
 
     /// <summary>Parses a plain integer characteristic (W, OC, S, AP - AP already carries its own
@@ -239,4 +252,51 @@ public static class BsdataDatasheetMapper
         text = text.Trim();
         return IsNotApplicable(text) ? 0 : int.Parse(text.TrimEnd('+'));
     }
+}
+
+/// <summary>The exact single-value shape <see cref="BsdataDatasheetMapper"/>'s ParseThreshold
+/// accepts for one named characteristic, plus that name for use in a thrown
+/// <see cref="AmbiguousCharacteristicException"/>'s message and properties. Each of Sv/InSv/BS/
+/// WS/LD gets its own instance rather than sharing one regex so that InSv's extra trailing-"*"
+/// allowance (a footnoted/conditional save, e.g. "5+*") doesn't silently leak into the other four,
+/// where it has never been observed in real data.</summary>
+public partial class CharacteristicPattern
+{
+    private CharacteristicPattern(string characteristic, Regex pattern)
+    {
+        Characteristic = characteristic;
+        Pattern = pattern;
+    }
+
+    internal static readonly CharacteristicPattern Ws  = new ("Ws", WsRegex());
+    internal static readonly CharacteristicPattern Bs = new("Bs", BsRegex());
+    internal static readonly CharacteristicPattern Sv = new("Sv", SvRegex());
+    internal static readonly CharacteristicPattern Ld = new("Ld", LdRegex());
+    internal static readonly CharacteristicPattern InvSv = new("InSv", InvSvRegex());
+
+    public string Characteristic { get; init; }
+    public Regex Pattern { get; init; }
+
+    [GeneratedRegex(@"^(\d+)[+]?$")]
+    private static partial Regex WsRegex();
+    [GeneratedRegex(@"^(\d+)[+]?$")]
+    private static partial Regex BsRegex();
+    [GeneratedRegex(@"^(\d+)[+]?$")]
+    private static partial Regex SvRegex();
+    [GeneratedRegex(@"^(\d+)[+]?$")]
+    private static partial Regex LdRegex();
+    [GeneratedRegex(@"^(\d+)[+*]?$")]
+    private static partial Regex InvSvRegex();
+}
+
+/// <summary>Thrown by ParseThreshold when a threshold characteristic's text doesn't match its
+/// allowed single-value shape (see <see cref="CharacteristicPattern"/>) - most notably BSData's
+/// two-different-values-by-context InSv forms (see ParseThreshold's own doc comment). Carries both
+/// the characteristic name and the raw offending text as properties, not just baked into the
+/// message, so a catching corpus-wide test can check a failure against a maintained "known
+/// limitation" allowlist without needing to parse <see cref="Exception.Message"/>.</summary>
+public class AmbiguousCharacteristicException(string characteristic, string text) : Exception($"Unexpected text for characteristic: {characteristic}={text}")
+{
+    public string Text { get; } = text;
+    public string Characteristic { get; } = characteristic;
 }

@@ -587,8 +587,10 @@ Nothing in progress.
   `DiceExpression`.
 - Some datasheets give two different invulnerable saves by attack type (`"4+* / 5+"` on Wyches/
   Howling Banshees; `"5+ (Ranged)"` on the four Titans + Stormbird). `Statline.InSv: int` can't
-  represent this; `BsdataDatasheetMapper.ParseThreshold` keeps only the first value today. Same
-  class of problem as the Ork Strength issue above — decide together.
+  represent this. `BsdataDatasheetMapper.ParseThreshold` no longer silently keeps the first value —
+  it now throws `AmbiguousCharacteristicException` for these (and any other) unrecognized threshold
+  shapes, so this is tracked as a genuine parse failure rather than a silent loss. Same class of
+  problem as the Ork Strength issue above — decide together.
 - `Warhammer 40,000.json` in the live BSData clone isn't a real catalogue file (fails to
   deserialize) and needs an explicit skip once a permanent full-corpus test exists.
 - The permanent "resolve every profile in every real catalogue file" test the corpus scan was a
