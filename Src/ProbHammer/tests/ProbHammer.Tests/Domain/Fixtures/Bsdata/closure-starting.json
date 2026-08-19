@@ -1,0 +1,35 @@
+{
+  "catalogue": {
+    "id": "start-id",
+    "name": "Starting Faction",
+    "catalogueLinks": [
+      {
+        "name": "Imported Faction",
+        "targetId": "imported-id",
+        "importRootEntries": true
+      }
+    ],
+    "sharedSelectionEntries": [
+      {
+        "id": "s1",
+        "name": "Locally Defined Unit",
+        "type": "model",
+        "profiles": [
+          {
+            "name": "Locally Defined Unit",
+            "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "6\"" },
+              { "name": "T", "$text": "4" },
+              { "name": "Sv", "$text": "3+" },
+              { "name": "W", "$text": "2" },
+              { "name": "LD", "$text": "6+" },
+              { "name": "OC", "$text": "1" },
+              { "name": "InSv", "$text": "" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

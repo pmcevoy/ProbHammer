@@ -1,0 +1,572 @@
+{
+  "catalogue": {
+    "id": "fixture-black-templars",
+    "name": "Imperium - Black Templars (fixture)",
+    "catalogueLinks": [],
+    "sharedSelectionEntries": [
+      {
+        "id": "8bbe-e7fc-44b7-ed94",
+        "name": "Crusader Squad",
+        "type": "unit",
+        "profiles": [
+          {
+            "name": "Righteous Zeal",
+            "typeName": "Abilities",
+            "characteristics": [
+              {
+                "name": "Description",
+                "$text": "In your opponent\u0027s Shooting phase, each time an enemy unit has shot,\u00A0if any models in this unit were destroyed as a result of those attacks,\u00A0this unit can make a surge move of up to D6\u002B2."
+              }
+            ]
+          }
+        ],
+        "selectionEntries": [],
+        "selectionEntryGroups": [
+          {
+            "id": "6fc8-d787-7895-ec66",
+            "name": "Crusaders",
+            "selectionEntries": [
+              {
+                "id": "49a9-1a03-6520-3a64",
+                "name": "Sword Brother",
+                "type": "model",
+                "profiles": [
+                  {
+                    "name": "Sword Brother",
+                    "typeName": "Unit",
+                    "characteristics": [
+                      {
+                        "name": "M",
+                        "$text": "6\u0022"
+                      },
+                      {
+                        "name": "T",
+                        "$text": "4"
+                      },
+                      {
+                        "name": "Sv",
+                        "$text": "3\u002B"
+                      },
+                      {
+                        "name": "W",
+                        "$text": "2"
+                      },
+                      {
+                        "name": "LD",
+                        "$text": "6\u002B"
+                      },
+                      {
+                        "name": "OC",
+                        "$text": "2"
+                      },
+                      {
+                        "name": "InSv",
+                        "$text": ""
+                      }
+                    ]
+                  }
+                ],
+                "selectionEntries": [
+                  {
+                    "id": "ba6c-20c9-3cad-fa8b",
+                    "name": "Master-crafted Power Weapon",
+                    "type": "upgrade",
+                    "profiles": [
+                      {
+                        "name": "Master-crafted Power Weapon",
+                        "typeName": "Melee Weapons",
+                        "characteristics": [
+                          {
+                            "name": "Range",
+                            "$text": "Melee"
+                          },
+                          {
+                            "name": "A",
+                            "$text": "3"
+                          },
+                          {
+                            "name": "WS",
+                            "$text": "2\u002B"
+                          },
+                          {
+                            "name": "S",
+                            "$text": "5"
+                          },
+                          {
+                            "name": "AP",
+                            "$text": "-2"
+                          },
+                          {
+                            "name": "D",
+                            "$text": "2"
+                          },
+                          {
+                            "name": "Keywords",
+                            "$text": "Lethal Hits"
+                          }
+                        ]
+                      }
+                    ],
+                    "selectionEntries": [],
+                    "selectionEntryGroups": [],
+                    "entryLinks": [
+                      {
+                        "name": "Weapon Upgrades",
+                        "targetId": "8cf2-a48c-58d2-cb4e",
+                        "type": "selectionEntryGroup"
+                      }
+                    ]
+                  }
+                ],
+                "selectionEntryGroups": [
+                  {
+                    "id": "5c24-7e8d-159e-8aad",
+                    "name": "Pistol",
+                    "selectionEntries": [],
+                    "selectionEntryGroups": [],
+                    "entryLinks": [
+                      {
+                        "name": "Heavy Bolt Pistol",
+                        "targetId": "3b8f-1cb7-3c6e-4455",
+                        "type": "selectionEntry"
+                      },
+                      {
+                        "name": "Pyre Pistol",
+                        "targetId": "bb21-4114-6b0c-634d",
+                        "type": "selectionEntry"
+                      }
+                    ]
+                  }
+                ],
+                "entryLinks": [
+                  {
+                    "name": "Terminator Honours upgrade",
+                    "targetId": "e7f9-66f5-9b9e-c587",
+                    "type": "selectionEntry"
+                  }
+                ]
+              }
+            ],
+            "selectionEntryGroups": [
+              {
+                "id": "fa4d-97b8-a047-ebe9",
+                "name": "Initiates",
+                "selectionEntries": [
+                  {
+                    "id": "747-523d-b30c-f8e",
+                    "name": "Initiate w/Bolt Rifle",
+                    "type": "model",
+                    "profiles": [
+                      {
+                        "name": "Initiate",
+                        "typeName": "Unit",
+                        "characteristics": [
+                          {
+                            "name": "M",
+                            "$text": "6\u0022"
+                          },
+                          {
+                            "name": "T",
+                            "$text": "4"
+                          },
+                          {
+                            "name": "Sv",
+                            "$text": "3\u002B"
+                          },
+                          {
+                            "name": "W",
+                            "$text": "2"
+                          },
+                          {
+                            "name": "LD",
+                            "$text": "6\u002B"
+                          },
+                          {
+                            "name": "OC",
+                            "$text": "2"
+                          },
+                          {
+                            "name": "InSv",
+                            "$text": ""
+                          }
+                        ]
+                      }
+                    ],
+                    "selectionEntries": [],
+                    "selectionEntryGroups": [],
+                    "entryLinks": [
+                      {
+                        "name": "Close combat weapon",
+                        "targetId": "6c7d-af5b-482-6fbe",
+                        "type": "selectionEntry"
+                      },
+                      {
+                        "name": "Bolt Rifle",
+                        "targetId": "6155-c404-a228-cb72",
+                        "type": "selectionEntry"
+                      },
+                      {
+                        "name": "Bolt pistol",
+                        "targetId": "18b0-8c2-173f-5",
+                        "type": "selectionEntry"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "95a-584e-9cd9-b799",
+                    "name": "Initiate w/Chainsword \u0026 Heavy Bolt Pistol",
+                    "type": "model",
+                    "profiles": [
+                      {
+                        "name": "Initiate",
+                        "typeName": "Unit",
+                        "characteristics": [
+                          {
+                            "name": "M",
+                            "$text": "6\u0022"
+                          },
+                          {
+                            "name": "T",
+                            "$text": "4"
+                          },
+                          {
+                            "name": "Sv",
+                            "$text": "3\u002B"
+                          },
+                          {
+                            "name": "W",
+                            "$text": "2"
+                          },
+                          {
+                            "name": "LD",
+                            "$text": "6\u002B"
+                          },
+                          {
+                            "name": "OC",
+                            "$text": "2"
+                          },
+                          {
+                            "name": "InSv",
+                            "$text": ""
+                          }
+                        ]
+                      }
+                    ],
+                    "selectionEntries": [],
+                    "selectionEntryGroups": [],
+                    "entryLinks": [
+                      {
+                        "name": "Heavy Bolt Pistol",
+                        "targetId": "83a1-feb8-d495-aa28",
+                        "type": "selectionEntry"
+                      },
+                      {
+                        "name": "Bolt pistol",
+                        "targetId": "18b0-8c2-173f-5",
+                        "type": "selectionEntry"
+                      },
+                      {
+                        "name": "Astartes Chainsword",
+                        "targetId": "731a-79db-4259-2dd4",
+                        "type": "selectionEntry"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "78e6-1e4-33f8-36c7",
+                    "name": "Initiate w/Power Fist \u0026 Heavy Bolt Pistol",
+                    "type": "model",
+                    "profiles": [
+                      {
+                        "name": "Initiate",
+                        "typeName": "Unit",
+                        "characteristics": [
+                          {
+                            "name": "M",
+                            "$text": "6\u0022"
+                          },
+                          {
+                            "name": "T",
+                            "$text": "4"
+                          },
+                          {
+                            "name": "Sv",
+                            "$text": "3\u002B"
+                          },
+                          {
+                            "name": "W",
+                            "$text": "2"
+                          },
+                          {
+                            "name": "LD",
+                            "$text": "6\u002B"
+                          },
+                          {
+                            "name": "OC",
+                            "$text": "2"
+                          },
+                          {
+                            "name": "InSv",
+                            "$text": ""
+                          }
+                        ]
+                      }
+                    ],
+                    "selectionEntries": [],
+                    "selectionEntryGroups": [],
+                    "entryLinks": [
+                      {
+                        "name": "Heavy Bolt Pistol",
+                        "targetId": "83a1-feb8-d495-aa28",
+                        "type": "selectionEntry"
+                      },
+                      {
+                        "name": "Power fist",
+                        "targetId": "f8d8-7e77-4b71-faac",
+                        "type": "selectionEntry"
+                      },
+                      {
+                        "name": "Bolt pistol",
+                        "targetId": "18b0-8c2-173f-5",
+                        "type": "selectionEntry"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "81cc-3eb1-a384-ca9f",
+                    "name": "Initiate w/Pyreblaster",
+                    "type": "model",
+                    "profiles": [
+                      {
+                        "name": "Initiate",
+                        "typeName": "Unit",
+                        "characteristics": [
+                          {
+                            "name": "M",
+                            "$text": "6\u0022"
+                          },
+                          {
+                            "name": "T",
+                            "$text": "4"
+                          },
+                          {
+                            "name": "Sv",
+                            "$text": "3\u002B"
+                          },
+                          {
+                            "name": "W",
+                            "$text": "2"
+                          },
+                          {
+                            "name": "LD",
+                            "$text": "6\u002B"
+                          },
+                          {
+                            "name": "OC",
+                            "$text": "2"
+                          },
+                          {
+                            "name": "InSv",
+                            "$text": ""
+                          }
+                        ]
+                      }
+                    ],
+                    "selectionEntries": [],
+                    "selectionEntryGroups": [],
+                    "entryLinks": [
+                      {
+                        "name": "Close combat weapon",
+                        "targetId": "6c7d-af5b-482-6fbe",
+                        "type": "selectionEntry"
+                      },
+                      {
+                        "name": "Bolt pistol",
+                        "targetId": "18b0-8c2-173f-5",
+                        "type": "selectionEntry"
+                      },
+                      {
+                        "name": "Pyreblaster",
+                        "targetId": "2737-cb80-0c3a-3dfa",
+                        "type": "selectionEntry"
+                      }
+                    ]
+                  }
+                ],
+                "selectionEntryGroups": [],
+                "entryLinks": []
+              },
+              {
+                "id": "b4c3-ef4a-77d1-e814",
+                "name": "Neophytes",
+                "selectionEntries": [
+                  {
+                    "id": "dd70-8ed8-309c-1bf",
+                    "name": "Neophyte w/ Firearm",
+                    "type": "model",
+                    "profiles": [
+                      {
+                        "name": "Neophyte",
+                        "typeName": "Unit",
+                        "characteristics": [
+                          {
+                            "name": "M",
+                            "$text": "6\u0022"
+                          },
+                          {
+                            "name": "T",
+                            "$text": "4"
+                          },
+                          {
+                            "name": "Sv",
+                            "$text": "4\u002B"
+                          },
+                          {
+                            "name": "W",
+                            "$text": "2"
+                          },
+                          {
+                            "name": "LD",
+                            "$text": "6\u002B"
+                          },
+                          {
+                            "name": "OC",
+                            "$text": "2"
+                          },
+                          {
+                            "name": "InSv",
+                            "$text": ""
+                          }
+                        ]
+                      }
+                    ],
+                    "selectionEntries": [
+                      {
+                        "id": "cbdf-607e-32f5-964e",
+                        "name": "Neophyte Firearm",
+                        "type": "upgrade",
+                        "profiles": [
+                          {
+                            "name": "Neophyte Firearm",
+                            "typeName": "Ranged Weapons",
+                            "characteristics": [
+                              {
+                                "name": "Range",
+                                "$text": "18\u0022"
+                              },
+                              {
+                                "name": "A",
+                                "$text": "2"
+                              },
+                              {
+                                "name": "BS",
+                                "$text": "3\u002B"
+                              },
+                              {
+                                "name": "S",
+                                "$text": "4"
+                              },
+                              {
+                                "name": "AP",
+                                "$text": "0"
+                              },
+                              {
+                                "name": "D",
+                                "$text": "1"
+                              },
+                              {
+                                "name": "Keywords",
+                                "$text": "Assault"
+                              }
+                            ]
+                          }
+                        ],
+                        "selectionEntries": [],
+                        "selectionEntryGroups": [],
+                        "entryLinks": []
+                      }
+                    ],
+                    "selectionEntryGroups": [],
+                    "entryLinks": [
+                      {
+                        "name": "Close combat weapon",
+                        "targetId": "6c7d-af5b-482-6fbe",
+                        "type": "selectionEntry"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "9455-ced-8432-d4e8",
+                    "name": "Neophyte w/ Astartes Chainsword",
+                    "type": "model",
+                    "profiles": [
+                      {
+                        "name": "Neophyte",
+                        "typeName": "Unit",
+                        "characteristics": [
+                          {
+                            "name": "M",
+                            "$text": "6\u0022"
+                          },
+                          {
+                            "name": "T",
+                            "$text": "4"
+                          },
+                          {
+                            "name": "Sv",
+                            "$text": "4\u002B"
+                          },
+                          {
+                            "name": "W",
+                            "$text": "2"
+                          },
+                          {
+                            "name": "LD",
+                            "$text": "6\u002B"
+                          },
+                          {
+                            "name": "OC",
+                            "$text": "2"
+                          },
+                          {
+                            "name": "InSv",
+                            "$text": ""
+                          }
+                        ]
+                      }
+                    ],
+                    "selectionEntries": [],
+                    "selectionEntryGroups": [],
+                    "entryLinks": [
+                      {
+                        "name": "Bolt pistol",
+                        "targetId": "18b0-8c2-173f-5",
+                        "type": "selectionEntry"
+                      },
+                      {
+                        "name": "Astartes Chainsword",
+                        "targetId": "731a-79db-4259-2dd4",
+                        "type": "selectionEntry"
+                      }
+                    ]
+                  }
+                ],
+                "selectionEntryGroups": [],
+                "entryLinks": []
+              }
+            ],
+            "entryLinks": []
+          }
+        ],
+        "entryLinks": [
+          {
+            "name": "Crusade",
+            "targetId": "9a99-f13c-a667-e698",
+            "type": "selectionEntryGroup"
+          }
+        ]
+      }
+    ],
+    "sharedSelectionEntryGroups": []
+  }
+}

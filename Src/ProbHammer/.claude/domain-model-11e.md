@@ -3,11 +3,14 @@
 Full requirements: `openspec/changes/attached-unit-domain-model/` (proposal, design, specs,
 tasks). This file summarizes the shape that landed in code.
 
-**Status:** implemented and tested (`src/ProbHammer.Core/Domain/`), proven only against
-hand-built fixtures (`tests/ProbHammer.Tests/Domain/Fixtures/`) — no export parser or BSData
-wiring yet. Coexists with the 10th-edition model (`.claude/domain-model.md`), which remains
-in the tree, untouched, and is what the live Web app and `Simulation/*` still use. See
-`PROGRESS.md` for the supersession/pause status of that older code.
+**Status:** implemented and tested (`src/ProbHammer.Core/Domain/`), proven against hand-built
+fixtures (`tests/ProbHammer.Tests/Domain/Fixtures/`) plus, since `catalogue-json-ingestion`, a
+real BSData JSON loader (`Domain/Catalogue/Bsdata/` — see "BSData JSON Ingestion" below) that can
+populate `Datasheet` objects from a local BSData clone. Still no export parser or wiring into
+`ProbHammer.Web`/`/LivePlay` (both still run on `Examples/`-fixture data) — see that section's own
+"Deliberately Out of Scope" note. Coexists with the 10th-edition model (`.claude/domain-model.md`),
+which remains in the tree, untouched, and is what the live Web app and `Simulation/*` still use.
+See `PROGRESS.md` for the supersession/pause status of that older code.
 
 ---
 
@@ -131,6 +134,110 @@ Ability(Name, Text, Choices: IReadOnlyList<AbilityChoice>, Scope: Model | Unit)
   real BSData exports name "Assault Intercessor" and "Assault Intercessor Sergeant" separately even
   though they share a statline — which is exactly why `AttachedUnitAggregator.BuildStatlines`
   dedupes by name, not by value.
+
+---
+
+## BSData JSON Ingestion
+
+Full requirements: `openspec/changes/catalogue-json-ingestion/` (proposal, design, specs, tasks).
+Raw file format itself (not the C# types below): `.claude/bsdata-json-schema.md`.
+Namespace: `ProbHammer.Core.Domain.Catalogue.Bsdata`. Reads the BattleScribe `catalogueSchema` JSON
+shape (one file per faction/sub-faction) that BSData's 11th Edition repository publishes, and
+resolves it into the `Datasheet`/`Statline`/`WeaponProfile`/`Ability` shapes above. Not wired into
+`ProbHammer.Web`/`/LivePlay` (still runs on `Examples/` fixtures) and does not build the
+`Unit`/`AttachedUnit` graph — both are deliberately deferred to a future change; this loader only
+resolves names to rules data.
+
+```
+IBsdataCatalogueSource            // "get JSON content for this filename" boundary
+  GetJson(fileName) -> string
+  ListFileNames() -> IReadOnlyList<string>   // fallback path only, see below
+
+LocalDiskBsdataCatalogueSource(rootDirectory)   // only implementation today; rootDirectory is a
+                                                 // caller-supplied config value, never hardcoded
+
+BsdataCatalogueReader.Read(json) -> BsCatalogue      // System.Text.Json; Json/BsCatalogueFile.cs
+                                                      // models only the fields this loader needs -
+                                                      // constraints/modifiers/conditionGroups/
+                                                      // associations/costs are simply absent from
+                                                      // those types, so real files deserialize
+                                                      // clean without special-casing them
+
+BsdataClosureResolver.Resolve(source, startingFileName) -> BsdataClosure
+                                       // BFS over catalogueLinks[].importRootEntries, starting
+                                       // file first, nearer imports before farther ones; a link's
+                                       // cached `name` usually equals its target's file name, but
+                                       // can drift (real example: "Chaos - Daemons Library" links
+                                       // to "Chaos - Chaos Daemons Library.json") - falls back to
+                                       // matching every available file's own top-level catalogue
+                                       // `id` against the link's targetId when the name guess isn't
+                                       // present, which is what ListFileNames() is for
+
+BsdataNameResolver.Resolve(closure, name) -> BsSelectionEntry?
+                                       // walks closure.Files in resolution order, first
+                                       // SharedSelectionEntries name match wins - local always
+                                       // beats imported
+  .BuildIdIndex(closure) / .BuildGroupIdIndex(closure) / .BuildProfileIdIndex(closure)
+                                       // id -> entry/group/profile maps spanning the whole closure,
+                                       // used only to follow entryLinks/infoLinks during mapping
+
+BsdataDatasheetMapper.BuildDatasheet(entry, idIndex, groupIdIndex, profileIdIndex) -> Datasheet
+                                       // single recursive walk of the resolved entry's full
+                                       // descendant tree (profiles, selectionEntries,
+                                       // selectionEntryGroups, entryLinks, infoLinks); collects
+                                       // every "Unit"-typeName profile as a named Statline (deduped
+                                       // by name, first occurrence wins - this is what makes a
+                                       // single-model entry, whose Unit profile sits on itself, and
+                                       // a squad entry, whose distinct child model types each carry
+                                       // their own, fall out of the same code path with no explicit
+                                       // squad-vs-single branch), every "Ranged Weapons"/"Melee
+                                       // Weapons"-typeName profile as a resolvable WeaponProfile,
+                                       // and every "Abilities"-typeName profile as an Ability
+                                       // (Text carried through verbatim, Scope always AbilityScope
+                                       // .Unit - BSData JSON gives no per-ability scope signal).
+                                       // entryLinks are resolved via idIndex/groupIdIndex;
+                                       // infoLinks of type "profile" are resolved via
+                                       // profileIdIndex against BsCatalogue.SharedProfiles -
+                                       // some model statlines exist only this way (real example:
+                                       // Chaos - Chaos Space Marines.json's "Legionaries" squad
+                                       // reaches its troop model's Unit profile through a
+                                       // profile-type infoLink, not nested in any selectionEntry's
+                                       // own Profiles list). FactionKeywords/Keywords are always
+                                       // empty - BSData's categoryLinks could plausibly source
+                                       // them, but no requirement in this change's spec governs
+                                       // that mapping, so it's left unattempted rather than guessed.
+
+WeaponKeywordParser.Apply(weapon, keywordsText) -> WeaponProfile
+                                       // splits a weapon's free-text Keywords characteristic
+                                       // (e.g. "Anti-infantry 4+, Devastating Wounds") on commas;
+                                       // every token joins WeaponProfile.KeywordsText verbatim
+                                       // unconditionally, and separately, exact-match tokens also
+                                       // set the corresponding existing ability flag ("-" means no
+                                       // keywords at all). No alias/synonym recognition - "Cleave"
+                                       // never sets Blast, "Close Combat" never sets Pistol - and a
+                                       // token naming a mechanic with no flag at all (Hazardous,
+                                       // Precision, Heavy) is retained verbatim with no flag set.
+```
+
+`WeaponProfile.KeywordsText` (`IReadOnlyList<string>`, in `Domain/Catalogue/WeaponProfile.cs`, not
+`Bsdata/`) is the one shape change this ingestion work made outside the new namespace: every
+weapon's exact source keyword text, in source order, included in `EqualityKey()` so two weapons
+that are rules-identical but spelled differently in source data are never silently aggregated as
+one. Rendering (`_UnitBlock.cshtml`'s `WeaponAbilityTags`) still reconstructs text from the typed
+flags today — switching it to read `KeywordsText` instead is deliberately deferred, unconnected to
+`/LivePlay` still running on fixtures with no `KeywordsText` populated.
+
+Automated tests never read the external local clone (`C:\Users\Pete\wh40k-11e`, this machine only,
+not part of the repo) — they use trimmed real excerpts copied into
+`tests/ProbHammer.Tests/Domain/Fixtures/Bsdata/` (generated by deserializing a real file through
+these same reader types and re-serializing just the entries a test needs, which also strips every
+unmapped field automatically) plus a few small hand-built closure fixtures for the import-precedence
+scenarios. The full three-captured-export resolution smoke test (every named top-level unit in
+`data/gw-app-export*.txt` resolves against its faction's real BSData closure) was run once against
+the live clone during implementation and passed, including a genuine finding not worth chasing
+here: the captured export text uses a typographic apostrophe where the BSData JSON source uses a
+plain ASCII one (`Emperor's Champion`) — normalizing that is the future export-parser/enrichment
+step's problem, not this loader's, since this loader resolves against JSON names as-authored.
 
 ---
 

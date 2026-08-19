@@ -1,0 +1,159 @@
+{
+  "catalogue": {
+    "id": "fixture-imperial-fists",
+    "name": "Imperium - Adeptus Astartes - Imperial Fists (fixture)",
+    "catalogueLinks": [],
+    "sharedSelectionEntries": [
+      {
+        "id": "eecd-6976-6410-1e42",
+        "name": "Darnath Lysander",
+        "type": "model",
+        "profiles": [
+          {
+            "name": "Darnath Lysander",
+            "typeName": "Unit",
+            "characteristics": [
+              {
+                "name": "M",
+                "$text": "5\u0022"
+              },
+              {
+                "name": "T",
+                "$text": "5"
+              },
+              {
+                "name": "Sv",
+                "$text": "2\u002B"
+              },
+              {
+                "name": "W",
+                "$text": "7"
+              },
+              {
+                "name": "LD",
+                "$text": "6\u002B"
+              },
+              {
+                "name": "OC",
+                "$text": "1"
+              },
+              {
+                "name": "InSv",
+                "$text": "4\u002B"
+              }
+            ]
+          },
+          {
+            "name": "Icon of Obstinacy",
+            "typeName": "Abilities",
+            "characteristics": [
+              {
+                "name": "Description",
+                "$text": "Each time an attack targets this model\u0027s unit, if the Strength characteristic\u00A0of that attack is greater than or equal to the Toughness\u00A0characteristic of that unit, subtract 1 from the Wound roll."
+              }
+            ]
+          },
+          {
+            "name": "Rampart",
+            "typeName": "Abilities",
+            "characteristics": [
+              {
+                "name": "Description",
+                "$text": "Once per battle, at the start of any phase, this\u00A0model can use this ability. If it does, until the end of the\u00A0phase, this model has a 2\u002B invulnerable save."
+              }
+            ]
+          },
+          {
+            "name": "Leader",
+            "typeName": "Abilities",
+            "characteristics": [
+              {
+                "name": "Description",
+                "$text": "This model can be attached to the following units:\n\n\u25A0 TERMINATOR ASSAULT SQUAD\n\u25A0 TERMINATOR SQUAD"
+              }
+            ]
+          },
+          {
+            "name": "Inspiring Commander",
+            "typeName": "Abilities",
+            "characteristics": [
+              {
+                "name": "Description",
+                "$text": "\u2018If you include this model in your army, until the end\u00A0of the battle, non-Character models in Terminator\u00A0Assault Squad and Terminator Squad units from\u00A0your army have an Objective Control characteristic of\u00A02 while they are not Battle-shocked."
+              }
+            ]
+          }
+        ],
+        "selectionEntries": [
+          {
+            "id": "7560-433a-b4aa-94ca",
+            "name": "Fist of Dorn",
+            "type": "upgrade",
+            "profiles": [
+              {
+                "name": "Fist of Dorn",
+                "typeName": "Melee Weapons",
+                "characteristics": [
+                  {
+                    "name": "Range",
+                    "$text": "Melee"
+                  },
+                  {
+                    "name": "A",
+                    "$text": "5"
+                  },
+                  {
+                    "name": "WS",
+                    "$text": "2\u002B"
+                  },
+                  {
+                    "name": "S",
+                    "$text": "10"
+                  },
+                  {
+                    "name": "AP",
+                    "$text": "-3"
+                  },
+                  {
+                    "name": "D",
+                    "$text": "3"
+                  },
+                  {
+                    "name": "Keywords",
+                    "$text": "Devastating Wounds"
+                  }
+                ]
+              }
+            ],
+            "selectionEntries": [],
+            "selectionEntryGroups": [],
+            "entryLinks": []
+          }
+        ],
+        "selectionEntryGroups": [
+          {
+            "id": "053c-c279-e00d-2b81",
+            "name": "Crusade",
+            "selectionEntries": [],
+            "selectionEntryGroups": [],
+            "entryLinks": [
+              {
+                "name": "Mighty Champions",
+                "targetId": "f842-6e90-bc5a-80f1",
+                "type": "selectionEntryGroup"
+              }
+            ]
+          }
+        ],
+        "entryLinks": [
+          {
+            "name": "Warlord",
+            "targetId": "caa-f869-3cbd-b48e",
+            "type": "selectionEntry"
+          }
+        ]
+      }
+    ],
+    "sharedSelectionEntryGroups": []
+  }
+}

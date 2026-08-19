@@ -1,0 +1,1186 @@
+{
+  "catalogue": {
+    "id": "fixture-chaos-space-marines",
+    "name": "Chaos - Chaos Space Marines (fixture)",
+    "catalogueLinks": [],
+    "sharedSelectionEntries": [
+      {
+        "id": "615-e6bf-cfd2-9384",
+        "name": "Legionaries",
+        "type": "unit",
+        "profiles": [
+          {
+            "id": "f891-237b-ad65-8f4e",
+            "name": "Veterans of the Long War",
+            "typeName": "Abilities",
+            "characteristics": [
+              {
+                "name": "Description",
+                "$text": "Each time a model in this unit targets an enemy unit with a melee attack, re-roll a Wound roll of 1. If that enemy unit is within range of an objective marker, you can re-roll the Wound roll instead."
+              }
+            ]
+          }
+        ],
+        "selectionEntries": [
+          {
+            "id": "fecc-eb85-46b6-8f31",
+            "name": "Aspiring Champion",
+            "type": "model",
+            "profiles": [
+              {
+                "id": "9bbd-49f9-244b-b235",
+                "name": "Aspiring Champion",
+                "typeName": "Unit",
+                "characteristics": [
+                  {
+                    "name": "M",
+                    "$text": "6\u0022"
+                  },
+                  {
+                    "name": "T",
+                    "$text": "4"
+                  },
+                  {
+                    "name": "Sv",
+                    "$text": "3\u002B"
+                  },
+                  {
+                    "name": "W",
+                    "$text": "2"
+                  },
+                  {
+                    "name": "LD",
+                    "$text": "6\u002B"
+                  },
+                  {
+                    "name": "OC",
+                    "$text": "2"
+                  },
+                  {
+                    "name": "InSv",
+                    "$text": ""
+                  }
+                ]
+              }
+            ],
+            "selectionEntries": [],
+            "selectionEntryGroups": [
+              {
+                "id": "924c-1427-ca27-7531",
+                "name": "Wargear",
+                "selectionEntries": [],
+                "selectionEntryGroups": [
+                  {
+                    "id": "33b-6b32-5bd3-4358",
+                    "name": "Replace bolt pistol",
+                    "selectionEntries": [
+                      {
+                        "id": "ee07-1b83-5f90-4002",
+                        "name": "Accursed weapon",
+                        "type": "upgrade",
+                        "profiles": [
+                          {
+                            "id": "ef75-c544-6241-1281",
+                            "name": "Accursed weapon",
+                            "typeName": "Melee Weapons",
+                            "characteristics": [
+                              {
+                                "name": "Range",
+                                "$text": "Melee"
+                              },
+                              {
+                                "name": "A",
+                                "$text": "4"
+                              },
+                              {
+                                "name": "WS",
+                                "$text": "3\u002B"
+                              },
+                              {
+                                "name": "S",
+                                "$text": "5"
+                              },
+                              {
+                                "name": "AP",
+                                "$text": "-2"
+                              },
+                              {
+                                "name": "D",
+                                "$text": "1"
+                              },
+                              {
+                                "name": "Keywords",
+                                "$text": "-"
+                              }
+                            ]
+                          }
+                        ],
+                        "selectionEntries": [],
+                        "selectionEntryGroups": [],
+                        "entryLinks": [
+                          {
+                            "name": "Weapon Modifications",
+                            "targetId": "f9da-852a-d7f0-92e9",
+                            "type": "selectionEntryGroup"
+                          }
+                        ],
+                        "infoLinks": []
+                      },
+                      {
+                        "id": "c0f1-e498-b6a6-f7e9",
+                        "name": "Astartes chainsword",
+                        "type": "upgrade",
+                        "profiles": [],
+                        "selectionEntries": [],
+                        "selectionEntryGroups": [],
+                        "entryLinks": [
+                          {
+                            "name": "Weapon Modifications",
+                            "targetId": "f9da-852a-d7f0-92e9",
+                            "type": "selectionEntryGroup"
+                          }
+                        ],
+                        "infoLinks": [
+                          {
+                            "name": "Astartes chainsword",
+                            "targetId": "2d43-6b3b-7297-3604",
+                            "type": "profile"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "f033-7554-5561-7ec5",
+                        "name": "Heavy melee weapon",
+                        "type": "upgrade",
+                        "profiles": [],
+                        "selectionEntries": [],
+                        "selectionEntryGroups": [],
+                        "entryLinks": [
+                          {
+                            "name": "Weapon Modifications",
+                            "targetId": "f9da-852a-d7f0-92e9",
+                            "type": "selectionEntryGroup"
+                          }
+                        ],
+                        "infoLinks": [
+                          {
+                            "name": "Heavy melee weapon",
+                            "targetId": "54a-9461-807a-7750",
+                            "type": "profile"
+                          }
+                        ]
+                      }
+                    ],
+                    "selectionEntryGroups": [],
+                    "entryLinks": [
+                      {
+                        "name": "Bolt pistol",
+                        "targetId": "ce4a-6df3-3c24-621b",
+                        "type": "selectionEntry"
+                      },
+                      {
+                        "name": "Plasma pistol",
+                        "targetId": "14a5-4b2-415a-c1d",
+                        "type": "selectionEntry"
+                      }
+                    ],
+                    "infoLinks": []
+                  },
+                  {
+                    "id": "7fec-6d11-12ed-b41f",
+                    "name": "Replace boltgun",
+                    "selectionEntries": [
+                      {
+                        "id": "ecd7-1e10-bc63-c4c6",
+                        "name": "Accursed weapon",
+                        "type": "upgrade",
+                        "profiles": [
+                          {
+                            "id": "7c1f-e02-fe06-92fb",
+                            "name": "Accursed weapon",
+                            "typeName": "Melee Weapons",
+                            "characteristics": [
+                              {
+                                "name": "Range",
+                                "$text": "Melee"
+                              },
+                              {
+                                "name": "A",
+                                "$text": "4"
+                              },
+                              {
+                                "name": "WS",
+                                "$text": "3\u002B"
+                              },
+                              {
+                                "name": "S",
+                                "$text": "5"
+                              },
+                              {
+                                "name": "AP",
+                                "$text": "-2"
+                              },
+                              {
+                                "name": "D",
+                                "$text": "1"
+                              },
+                              {
+                                "name": "Keywords",
+                                "$text": "-"
+                              }
+                            ]
+                          }
+                        ],
+                        "selectionEntries": [],
+                        "selectionEntryGroups": [],
+                        "entryLinks": [
+                          {
+                            "name": "Weapon Modifications",
+                            "targetId": "f9da-852a-d7f0-92e9",
+                            "type": "selectionEntryGroup"
+                          }
+                        ],
+                        "infoLinks": []
+                      },
+                      {
+                        "id": "e01d-689a-d81-4123",
+                        "name": "Astartes chainsword",
+                        "type": "upgrade",
+                        "profiles": [],
+                        "selectionEntries": [],
+                        "selectionEntryGroups": [],
+                        "entryLinks": [
+                          {
+                            "name": "Weapon Modifications",
+                            "targetId": "f9da-852a-d7f0-92e9",
+                            "type": "selectionEntryGroup"
+                          }
+                        ],
+                        "infoLinks": [
+                          {
+                            "name": "Astartes chainsword",
+                            "targetId": "2d43-6b3b-7297-3604",
+                            "type": "profile"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "8dcc-b2c5-3e33-61ef",
+                        "name": "Heavy melee weapon",
+                        "type": "upgrade",
+                        "profiles": [],
+                        "selectionEntries": [],
+                        "selectionEntryGroups": [],
+                        "entryLinks": [
+                          {
+                            "name": "Weapon Modifications",
+                            "targetId": "f9da-852a-d7f0-92e9",
+                            "type": "selectionEntryGroup"
+                          },
+                          {
+                            "name": "Weapon Modifications",
+                            "targetId": "f9da-852a-d7f0-92e9",
+                            "type": "selectionEntryGroup"
+                          }
+                        ],
+                        "infoLinks": [
+                          {
+                            "name": "Heavy melee weapon",
+                            "targetId": "54a-9461-807a-7750",
+                            "type": "profile"
+                          }
+                        ]
+                      }
+                    ],
+                    "selectionEntryGroups": [],
+                    "entryLinks": [
+                      {
+                        "name": "Boltgun",
+                        "targetId": "96f5-8be7-2cd8-f84f",
+                        "type": "selectionEntry"
+                      },
+                      {
+                        "name": "Plasma pistol",
+                        "targetId": "14a5-4b2-415a-c1d",
+                        "type": "selectionEntry"
+                      }
+                    ],
+                    "infoLinks": []
+                  }
+                ],
+                "entryLinks": [
+                  {
+                    "name": "Close combat weapon",
+                    "targetId": "b12c-308b-9920-b09a",
+                    "type": "selectionEntry"
+                  }
+                ],
+                "infoLinks": []
+              }
+            ],
+            "entryLinks": [
+              {
+                "name": "Unholy Patronage upgrade",
+                "targetId": "070c-664e-3e05-b8e9",
+                "type": "selectionEntry"
+              }
+            ],
+            "infoLinks": []
+          }
+        ],
+        "selectionEntryGroups": [
+          {
+            "id": "8ff0-d411-a894-83b8",
+            "name": "4 - 9 Legionaries",
+            "selectionEntries": [
+              {
+                "id": "5b0b-fb3-69ec-310f",
+                "name": "Legionary w/ boltgun",
+                "type": "model",
+                "profiles": [],
+                "selectionEntries": [],
+                "selectionEntryGroups": [],
+                "entryLinks": [
+                  {
+                    "name": "Boltgun",
+                    "targetId": "b27c-673f-7c7f-cc78",
+                    "type": "selectionEntry"
+                  },
+                  {
+                    "name": "Bolt pistol",
+                    "targetId": "5541-daf-9f4a-ce3d",
+                    "type": "selectionEntry"
+                  },
+                  {
+                    "name": "Close combat weapon",
+                    "targetId": "3854-44a6-5746-d602",
+                    "type": "selectionEntry"
+                  }
+                ],
+                "infoLinks": [
+                  {
+                    "name": "Legionaries",
+                    "targetId": "b2ff-0104-48a5-6598",
+                    "type": "profile"
+                  }
+                ]
+              },
+              {
+                "id": "eb95-1c54-925f-28e4",
+                "name": "Legionary w/ chainsword",
+                "type": "model",
+                "profiles": [],
+                "selectionEntries": [],
+                "selectionEntryGroups": [],
+                "entryLinks": [
+                  {
+                    "name": "Astartes chainsword",
+                    "targetId": "c297-6f9c-b046-f2ad",
+                    "type": "selectionEntry"
+                  },
+                  {
+                    "name": "Bolt pistol",
+                    "targetId": "5541-daf-9f4a-ce3d",
+                    "type": "selectionEntry"
+                  },
+                  {
+                    "name": "Close combat weapon",
+                    "targetId": "3854-44a6-5746-d602",
+                    "type": "selectionEntry"
+                  }
+                ],
+                "infoLinks": [
+                  {
+                    "name": "Legionaries",
+                    "targetId": "b2ff-0104-48a5-6598",
+                    "type": "profile"
+                  }
+                ]
+              },
+              {
+                "id": "3ccb-a746-6319-3c5c",
+                "name": "Legionary w/ heavy melee weapon",
+                "type": "model",
+                "profiles": [],
+                "selectionEntries": [
+                  {
+                    "id": "67b6-1de0-7897-3019",
+                    "name": "Heavy melee weapon",
+                    "type": "upgrade",
+                    "profiles": [],
+                    "selectionEntries": [],
+                    "selectionEntryGroups": [],
+                    "entryLinks": [],
+                    "infoLinks": [
+                      {
+                        "name": "Heavy melee weapon",
+                        "targetId": "54a-9461-807a-7750",
+                        "type": "profile"
+                      }
+                    ]
+                  }
+                ],
+                "selectionEntryGroups": [],
+                "entryLinks": [
+                  {
+                    "name": "Bolt pistol",
+                    "targetId": "5541-daf-9f4a-ce3d",
+                    "type": "selectionEntry"
+                  },
+                  {
+                    "name": "Close combat weapon",
+                    "targetId": "3854-44a6-5746-d602",
+                    "type": "selectionEntry"
+                  }
+                ],
+                "infoLinks": [
+                  {
+                    "name": "Legionaries",
+                    "targetId": "b2ff-0104-48a5-6598",
+                    "type": "profile"
+                  }
+                ]
+              },
+              {
+                "id": "ec42-4170-492c-82e5",
+                "name": "Legionary w/ balefire tome",
+                "type": "model",
+                "profiles": [],
+                "selectionEntries": [
+                  {
+                    "id": "7297-9514-81bc-c415",
+                    "name": "Balefire tome",
+                    "type": "upgrade",
+                    "profiles": [
+                      {
+                        "id": "9e8b-b8a6-753f-8321",
+                        "name": "Balefire tome",
+                        "typeName": "Ranged Weapons",
+                        "characteristics": [
+                          {
+                            "name": "Range",
+                            "$text": "18\u0022"
+                          },
+                          {
+                            "name": "A",
+                            "$text": "2"
+                          },
+                          {
+                            "name": "BS",
+                            "$text": "3\u002B"
+                          },
+                          {
+                            "name": "S",
+                            "$text": "5"
+                          },
+                          {
+                            "name": "AP",
+                            "$text": "-1"
+                          },
+                          {
+                            "name": "D",
+                            "$text": "1"
+                          },
+                          {
+                            "name": "Keywords",
+                            "$text": "Psychic"
+                          }
+                        ]
+                      }
+                    ],
+                    "selectionEntries": [],
+                    "selectionEntryGroups": [],
+                    "entryLinks": [],
+                    "infoLinks": [
+                      {
+                        "name": "Psychic",
+                        "targetId": "e9c4-2bb8-12ee-cd1b",
+                        "type": "rule"
+                      }
+                    ]
+                  }
+                ],
+                "selectionEntryGroups": [],
+                "entryLinks": [
+                  {
+                    "name": "Bolt pistol",
+                    "targetId": "5541-daf-9f4a-ce3d",
+                    "type": "selectionEntry"
+                  },
+                  {
+                    "name": "Close combat weapon",
+                    "targetId": "3854-44a6-5746-d602",
+                    "type": "selectionEntry"
+                  }
+                ],
+                "infoLinks": [
+                  {
+                    "name": "Legionaries",
+                    "targetId": "b2ff-0104-48a5-6598",
+                    "type": "profile"
+                  }
+                ]
+              },
+              {
+                "id": "e32f-a7e9-6e5c-f2b3",
+                "name": "Legionary w/ other weapon",
+                "type": "model",
+                "profiles": [],
+                "selectionEntries": [],
+                "selectionEntryGroups": [
+                  {
+                    "id": "2c78-2c88-4fc1-2f25",
+                    "name": "Weapon",
+                    "selectionEntries": [
+                      {
+                        "id": "aad4-5ec4-cc9e-115f",
+                        "name": "Flamer",
+                        "type": "upgrade",
+                        "profiles": [
+                          {
+                            "id": "e0b3-e2cc-5b69-87d2",
+                            "name": "Flamer",
+                            "typeName": "Ranged Weapons",
+                            "characteristics": [
+                              {
+                                "name": "Range",
+                                "$text": "12\u0022"
+                              },
+                              {
+                                "name": "A",
+                                "$text": "D6"
+                              },
+                              {
+                                "name": "BS",
+                                "$text": "N/A"
+                              },
+                              {
+                                "name": "S",
+                                "$text": "4"
+                              },
+                              {
+                                "name": "AP",
+                                "$text": "0"
+                              },
+                              {
+                                "name": "D",
+                                "$text": "1"
+                              },
+                              {
+                                "name": "Keywords",
+                                "$text": "Ignores Cover, Torrent"
+                              }
+                            ]
+                          }
+                        ],
+                        "selectionEntries": [],
+                        "selectionEntryGroups": [],
+                        "entryLinks": [],
+                        "infoLinks": [
+                          {
+                            "name": "Ignores Cover",
+                            "targetId": "4640-43e7-30b-215a",
+                            "type": "rule"
+                          },
+                          {
+                            "name": "Torrent",
+                            "targetId": "5edf-d619-23e0-9b56",
+                            "type": "rule"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "e9cb-69af-41c7-3e59",
+                        "name": "Havoc autocannon",
+                        "type": "upgrade",
+                        "profiles": [
+                          {
+                            "id": "1999-9bf-85e8-e231",
+                            "name": "Havoc autocannon",
+                            "typeName": "Ranged Weapons",
+                            "characteristics": [
+                              {
+                                "name": "Range",
+                                "$text": "48\u0022"
+                              },
+                              {
+                                "name": "A",
+                                "$text": "2"
+                              },
+                              {
+                                "name": "BS",
+                                "$text": "4\u002B"
+                              },
+                              {
+                                "name": "S",
+                                "$text": "9"
+                              },
+                              {
+                                "name": "AP",
+                                "$text": "-1"
+                              },
+                              {
+                                "name": "D",
+                                "$text": "3"
+                              },
+                              {
+                                "name": "Keywords",
+                                "$text": "-"
+                              }
+                            ]
+                          }
+                        ],
+                        "selectionEntries": [],
+                        "selectionEntryGroups": [],
+                        "entryLinks": [],
+                        "infoLinks": []
+                      },
+                      {
+                        "id": "50ec-46b4-194a-a3ed",
+                        "name": "Heavy bolter",
+                        "type": "upgrade",
+                        "profiles": [
+                          {
+                            "id": "c699-3635-2050-d4f5",
+                            "name": "Heavy bolter",
+                            "typeName": "Ranged Weapons",
+                            "characteristics": [
+                              {
+                                "name": "Range",
+                                "$text": "36\u0022"
+                              },
+                              {
+                                "name": "A",
+                                "$text": "3"
+                              },
+                              {
+                                "name": "BS",
+                                "$text": "4\u002B"
+                              },
+                              {
+                                "name": "S",
+                                "$text": "5"
+                              },
+                              {
+                                "name": "AP",
+                                "$text": "-1"
+                              },
+                              {
+                                "name": "D",
+                                "$text": "2"
+                              },
+                              {
+                                "name": "Keywords",
+                                "$text": "Heavy, Sustained Hits 1"
+                              }
+                            ]
+                          }
+                        ],
+                        "selectionEntries": [],
+                        "selectionEntryGroups": [],
+                        "entryLinks": [],
+                        "infoLinks": [
+                          {
+                            "name": "Heavy",
+                            "targetId": "1202-10a8-78e9-4c67",
+                            "type": "rule"
+                          },
+                          {
+                            "name": "Sustained Hits",
+                            "targetId": "1897-c22c-9597-12b1",
+                            "type": "rule"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "94b3-f0dc-1691-4dca",
+                        "name": "Lascannon",
+                        "type": "upgrade",
+                        "profiles": [
+                          {
+                            "id": "b171-d132-74bd-4b7f",
+                            "name": "Lascannon",
+                            "typeName": "Ranged Weapons",
+                            "characteristics": [
+                              {
+                                "name": "Range",
+                                "$text": "48\u0022"
+                              },
+                              {
+                                "name": "A",
+                                "$text": "1"
+                              },
+                              {
+                                "name": "BS",
+                                "$text": "4\u002B"
+                              },
+                              {
+                                "name": "S",
+                                "$text": "12"
+                              },
+                              {
+                                "name": "AP",
+                                "$text": "-3"
+                              },
+                              {
+                                "name": "D",
+                                "$text": "D6\u002B1"
+                              },
+                              {
+                                "name": "Keywords",
+                                "$text": "Heavy"
+                              }
+                            ]
+                          }
+                        ],
+                        "selectionEntries": [],
+                        "selectionEntryGroups": [],
+                        "entryLinks": [],
+                        "infoLinks": [
+                          {
+                            "name": "Heavy",
+                            "targetId": "1202-10a8-78e9-4c67",
+                            "type": "rule"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "a015-477e-cd3b-6280",
+                        "name": "Missile launcher",
+                        "type": "upgrade",
+                        "profiles": [
+                          {
+                            "id": "fac3-a91f-aad6-8513",
+                            "name": "\u27A4 Missile launcher - frag",
+                            "typeName": "Ranged Weapons",
+                            "characteristics": [
+                              {
+                                "name": "Range",
+                                "$text": "48\u0022"
+                              },
+                              {
+                                "name": "A",
+                                "$text": "D6"
+                              },
+                              {
+                                "name": "BS",
+                                "$text": "4\u002B"
+                              },
+                              {
+                                "name": "S",
+                                "$text": "4"
+                              },
+                              {
+                                "name": "AP",
+                                "$text": "0"
+                              },
+                              {
+                                "name": "D",
+                                "$text": "1"
+                              },
+                              {
+                                "name": "Keywords",
+                                "$text": "Blast, Heavy"
+                              }
+                            ]
+                          },
+                          {
+                            "id": "f69b-59bf-5557-4440",
+                            "name": "\u27A4 Missile launcher - krak",
+                            "typeName": "Ranged Weapons",
+                            "characteristics": [
+                              {
+                                "name": "Range",
+                                "$text": "48\u0022"
+                              },
+                              {
+                                "name": "A",
+                                "$text": "1"
+                              },
+                              {
+                                "name": "BS",
+                                "$text": "4\u002B"
+                              },
+                              {
+                                "name": "S",
+                                "$text": "9"
+                              },
+                              {
+                                "name": "AP",
+                                "$text": "-2"
+                              },
+                              {
+                                "name": "D",
+                                "$text": "D6"
+                              },
+                              {
+                                "name": "Keywords",
+                                "$text": "Heavy"
+                              }
+                            ]
+                          }
+                        ],
+                        "selectionEntries": [],
+                        "selectionEntryGroups": [],
+                        "entryLinks": [],
+                        "infoLinks": [
+                          {
+                            "name": "Blast",
+                            "targetId": "6c1f-1cf7-ff25-c99e",
+                            "type": "rule"
+                          },
+                          {
+                            "name": "Heavy",
+                            "targetId": "1202-10a8-78e9-4c67",
+                            "type": "rule"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "b455-5fb4-7ce4-72dc",
+                        "name": "Plasma gun",
+                        "type": "upgrade",
+                        "profiles": [],
+                        "selectionEntries": [],
+                        "selectionEntryGroups": [],
+                        "entryLinks": [],
+                        "infoLinks": [
+                          {
+                            "name": "Hazardous",
+                            "targetId": "8367-374c-f87-c627",
+                            "type": "rule"
+                          },
+                          {
+                            "name": "Rapid Fire",
+                            "targetId": "c5c8-8b58-b8b6-7786",
+                            "type": "rule"
+                          },
+                          {
+                            "name": "\u27A4 Plasma gun - standard",
+                            "targetId": "38ff-30e0-10e1-fb2a",
+                            "type": "profile"
+                          },
+                          {
+                            "name": "\u27A4 Plasma gun - supercharge",
+                            "targetId": "8416-1e2b-edc1-7acf",
+                            "type": "profile"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "fbc0-6bf0-7d69-ee67",
+                        "name": "Reaper chaincannon",
+                        "type": "upgrade",
+                        "profiles": [
+                          {
+                            "id": "8d01-550a-5c47-2a35",
+                            "name": "Reaper chaincannon",
+                            "typeName": "Ranged Weapons",
+                            "characteristics": [
+                              {
+                                "name": "Range",
+                                "$text": "24\u0022"
+                              },
+                              {
+                                "name": "A",
+                                "$text": "8"
+                              },
+                              {
+                                "name": "BS",
+                                "$text": "4\u002B"
+                              },
+                              {
+                                "name": "S",
+                                "$text": "5"
+                              },
+                              {
+                                "name": "AP",
+                                "$text": "0"
+                              },
+                              {
+                                "name": "D",
+                                "$text": "1"
+                              },
+                              {
+                                "name": "Keywords",
+                                "$text": "Heavy"
+                              }
+                            ]
+                          }
+                        ],
+                        "selectionEntries": [],
+                        "selectionEntryGroups": [],
+                        "entryLinks": [],
+                        "infoLinks": [
+                          {
+                            "name": "Heavy",
+                            "targetId": "1202-10a8-78e9-4c67",
+                            "type": "rule"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "b63d-1885-e026-9de6",
+                        "name": "Plasma pistol and Astartes chainsword",
+                        "type": "upgrade",
+                        "profiles": [],
+                        "selectionEntries": [],
+                        "selectionEntryGroups": [],
+                        "entryLinks": [
+                          {
+                            "name": "Astartes chainsword",
+                            "targetId": "44ae-a376-590b-6349",
+                            "type": "selectionEntry"
+                          },
+                          {
+                            "name": "Plasma pistol",
+                            "targetId": "14a5-4b2-415a-c1d",
+                            "type": "selectionEntry"
+                          }
+                        ],
+                        "infoLinks": []
+                      }
+                    ],
+                    "selectionEntryGroups": [],
+                    "entryLinks": [
+                      {
+                        "name": "Meltagun",
+                        "targetId": "f0ee-44c4-e1b1-42d",
+                        "type": "selectionEntry"
+                      }
+                    ],
+                    "infoLinks": []
+                  }
+                ],
+                "entryLinks": [
+                  {
+                    "name": "Bolt pistol",
+                    "targetId": "5541-daf-9f4a-ce3d",
+                    "type": "selectionEntry"
+                  },
+                  {
+                    "name": "Close combat weapon",
+                    "targetId": "3854-44a6-5746-d602",
+                    "type": "selectionEntry"
+                  }
+                ],
+                "infoLinks": [
+                  {
+                    "name": "Legionaries",
+                    "targetId": "b2ff-0104-48a5-6598",
+                    "type": "profile"
+                  }
+                ]
+              }
+            ],
+            "selectionEntryGroups": [],
+            "entryLinks": [],
+            "infoLinks": []
+          }
+        ],
+        "entryLinks": [
+          {
+            "name": "Mark of Chaos",
+            "targetId": "5581-5d38-90b8-f8cd",
+            "type": "selectionEntryGroup"
+          },
+          {
+            "name": "Chaos icon",
+            "targetId": "4ea1-c93a-fc5a-9977",
+            "type": "selectionEntry"
+          },
+          {
+            "name": "Crusade",
+            "targetId": "16e2-c30d-b136-1a67",
+            "type": "selectionEntryGroup"
+          }
+        ],
+        "infoLinks": [
+          {
+            "name": "Dark Pacts",
+            "targetId": "fd69-68cc-5d63-c84d",
+            "type": "rule"
+          }
+        ]
+      }
+    ],
+    "sharedSelectionEntryGroups": [],
+    "sharedProfiles": [
+      {
+        "id": "2d43-6b3b-7297-3604",
+        "name": "Astartes chainsword",
+        "typeName": "Melee Weapons",
+        "characteristics": [
+          {
+            "name": "Range",
+            "$text": "Melee"
+          },
+          {
+            "name": "A",
+            "$text": "4"
+          },
+          {
+            "name": "WS",
+            "$text": "3\u002B"
+          },
+          {
+            "name": "S",
+            "$text": "4"
+          },
+          {
+            "name": "AP",
+            "$text": "-1"
+          },
+          {
+            "name": "D",
+            "$text": "1"
+          },
+          {
+            "name": "Keywords",
+            "$text": "-"
+          }
+        ]
+      },
+      {
+        "id": "54a-9461-807a-7750",
+        "name": "Heavy melee weapon",
+        "typeName": "Melee Weapons",
+        "characteristics": [
+          {
+            "name": "Range",
+            "$text": "Melee"
+          },
+          {
+            "name": "A",
+            "$text": "3"
+          },
+          {
+            "name": "WS",
+            "$text": "3\u002B"
+          },
+          {
+            "name": "S",
+            "$text": "8"
+          },
+          {
+            "name": "AP",
+            "$text": "-2"
+          },
+          {
+            "name": "D",
+            "$text": "2"
+          },
+          {
+            "name": "Keywords",
+            "$text": "-"
+          }
+        ]
+      },
+      {
+        "id": "38ff-30e0-10e1-fb2a",
+        "name": "\u27A4 Plasma gun - standard",
+        "typeName": "Ranged Weapons",
+        "characteristics": [
+          {
+            "name": "Range",
+            "$text": "24\u0022"
+          },
+          {
+            "name": "A",
+            "$text": "1"
+          },
+          {
+            "name": "BS",
+            "$text": "3\u002B"
+          },
+          {
+            "name": "S",
+            "$text": "7"
+          },
+          {
+            "name": "AP",
+            "$text": "-2"
+          },
+          {
+            "name": "D",
+            "$text": "1"
+          },
+          {
+            "name": "Keywords",
+            "$text": "Rapid Fire 1"
+          }
+        ]
+      },
+      {
+        "id": "8416-1e2b-edc1-7acf",
+        "name": "\u27A4 Plasma gun - supercharge",
+        "typeName": "Ranged Weapons",
+        "characteristics": [
+          {
+            "name": "Range",
+            "$text": "24\u0022"
+          },
+          {
+            "name": "A",
+            "$text": "1"
+          },
+          {
+            "name": "BS",
+            "$text": "3\u002B"
+          },
+          {
+            "name": "S",
+            "$text": "8"
+          },
+          {
+            "name": "AP",
+            "$text": "-3"
+          },
+          {
+            "name": "D",
+            "$text": "2"
+          },
+          {
+            "name": "Keywords",
+            "$text": "Hazardous, Rapid Fire 1"
+          }
+        ]
+      },
+      {
+        "id": "b2ff-0104-48a5-6598",
+        "name": "Legionaries",
+        "typeName": "Unit",
+        "characteristics": [
+          {
+            "name": "M",
+            "$text": "6\u0022"
+          },
+          {
+            "name": "T",
+            "$text": "4"
+          },
+          {
+            "name": "Sv",
+            "$text": "3\u002B"
+          },
+          {
+            "name": "W",
+            "$text": "2"
+          },
+          {
+            "name": "LD",
+            "$text": "6\u002B"
+          },
+          {
+            "name": "OC",
+            "$text": "2"
+          },
+          {
+            "name": "InSv",
+            "$text": ""
+          }
+        ]
+      }
+    ]
+  }
+}

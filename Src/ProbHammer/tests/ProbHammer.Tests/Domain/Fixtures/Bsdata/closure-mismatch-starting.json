@@ -1,0 +1,14 @@
+{
+  "catalogue": {
+    "id": "mismatch-start-id",
+    "name": "Mismatch Starting Faction",
+    "catalogueLinks": [
+      {
+        "name": "Stale Cached Name",
+        "targetId": "mismatch-target-id",
+        "importRootEntries": true
+      }
+    ],
+    "sharedSelectionEntries": []
+  }
+}

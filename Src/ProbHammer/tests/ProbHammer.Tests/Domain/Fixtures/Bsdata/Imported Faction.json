@@ -1,0 +1,55 @@
+{
+  "catalogue": {
+    "id": "imported-id",
+    "name": "Imported Faction",
+    "catalogueLinks": [
+      {
+        "name": "Deep Import",
+        "targetId": "deep-id",
+        "importRootEntries": true
+      }
+    ],
+    "sharedSelectionEntries": [
+      {
+        "id": "i1",
+        "name": "Locally Defined Unit",
+        "type": "model",
+        "profiles": [
+          {
+            "name": "Locally Defined Unit",
+            "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "5\"" },
+              { "name": "T", "$text": "9" },
+              { "name": "Sv", "$text": "5+" },
+              { "name": "W", "$text": "9" },
+              { "name": "LD", "$text": "9+" },
+              { "name": "OC", "$text": "9" },
+              { "name": "InSv", "$text": "" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "i2",
+        "name": "Import Only Unit",
+        "type": "model",
+        "profiles": [
+          {
+            "name": "Import Only Unit",
+            "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "7\"" },
+              { "name": "T", "$text": "3" },
+              { "name": "Sv", "$text": "4+" },
+              { "name": "W", "$text": "1" },
+              { "name": "LD", "$text": "7+" },
+              { "name": "OC", "$text": "1" },
+              { "name": "InSv", "$text": "" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

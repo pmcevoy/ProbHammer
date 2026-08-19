@@ -1,0 +1,29 @@
+{
+  "catalogue": {
+    "id": "deep-id",
+    "name": "Deep Import",
+    "catalogueLinks": [],
+    "sharedSelectionEntries": [
+      {
+        "id": "d1",
+        "name": "Deep Unit",
+        "type": "model",
+        "profiles": [
+          {
+            "name": "Deep Unit",
+            "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "12\"" },
+              { "name": "T", "$text": "12" },
+              { "name": "Sv", "$text": "2+" },
+              { "name": "W", "$text": "24" },
+              { "name": "LD", "$text": "6+" },
+              { "name": "OC", "$text": "3" },
+              { "name": "InSv", "$text": "5+" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

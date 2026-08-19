@@ -43,6 +43,18 @@ public abstract record WeaponProfile(
     public bool IgnoresCover { get; init; }
     public bool Assault { get; init; }
     public IReadOnlyDictionary<string, int> Anti { get; init; } = new Dictionary<string, int>();
+
+    /// <summary>
+    ///     Exact source keyword text, in source order, independent of whether any individual
+    ///     keyword also corresponds to one of this profile's typed ability flags above.
+    ///     Rendering of a weapon's keywords must read this verbatim record rather than being
+    ///     reconstructed from the typed flags - see datasheet-catalogue's "Weapon Profile
+    ///     Verbatim Keyword Text" requirement for why (an unrecognized token, or a
+    ///     context-dependent alternate spelling of an already-modeled flag, must never be
+    ///     silently dropped or rendered under the flag's own canonical wording instead).
+    /// </summary>
+    public IReadOnlyList<string> KeywordsText { get; init; } = [];
+
     /// <summary>
     ///     Structural equality for aggregation purposes: (Type, Skill, Strength, Ap, Damage, and
     ///     every ability/keyword flag). Excludes Name/Range/Attacks - count/attacks are the
@@ -58,7 +70,8 @@ public abstract record WeaponProfile(
             Torrent, Blast, Melta, RapidFire,
             SustainedHits, LethalHits, DevastatingWounds,
             TwinLinked, IndirectFire, Pistol, IgnoresCover, Assault,
-            NormaliseAnti(Anti));
+            NormaliseAnti(Anti),
+            string.Join("", KeywordsText));
     }
 
     private static string NormaliseAnti(IReadOnlyDictionary<string, int> anti)
@@ -88,4 +101,5 @@ public sealed record WeaponProfileEqualityKey(
     bool Pistol,
     bool IgnoresCover,
     bool Assault,
-    string Anti);
+    string Anti,
+    string KeywordsText);
