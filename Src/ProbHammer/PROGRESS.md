@@ -8,6 +8,85 @@ Nothing in progress.
 
 ## Recently Completed
 
+- Post-implementation bug fix on `import-army-list-for-live-play` (no new OpenSpec change): a real
+  user-reported bug after importing the Masters of the Maelstrom export - `/LivePlay` showed a pile
+  of unrelated abilities (Chaos Boons like "Warp Stalker"/"Mutant Form", all four "Mark of Chaos"
+  options) on every unit's ability list, none of them real matched-play rules. Root cause:
+  `BsdataDatasheetMapper`'s tree walk collects every "Abilities"-typeName profile it finds,
+  regardless of whether BSData itself marks that content hidden outside "Army Roster" (matched
+  play) mode - a shape this loader had never needed to recognize before, since no prior fixture or
+  captured export happened to reach this kind of content. Traced by hand through the live BSData
+  clone (confirmed via NewRecruit's own UI too: "Mark of Chaos" only appears when building a
+  "Crusade Force," never an "Army Roster") down to the exact modifier shape BSData uses -
+  `IsGameModeGated` in `BsdataDatasheetMapper.cs` (see `.claude/domain-model-11e.md`'s "Army List
+  Import Pipeline" section for the full mechanism) now recognizes it, resolved by name (never a
+  hardcoded id) against the game system's `ForceEntries`. New `GameModeGatingTests.cs` (5 tests,
+  hand-built fixture) locks in the fix; first draft of this fix used name-matching on the "Crusade"
+  entryLink specifically, caught two related-but-differently-named cases ("Crusade Relic Upgrades,"
+  "Mark of Chaos") it missed, and was replaced with the general structural check instead of adding
+  more names to a list. 237 tests, all passing.
+
+- OpenSpec change `import-army-list-for-live-play` implemented (all 27 tasks, not yet archived):
+  `/LivePlay` now renders a real, user-pasted GW-app 11e army-list export instead of the
+  `Examples/View.Roster()` fixture — the project's stated core purpose finally closes. New pipeline:
+  `text → IArmyListParser → ParsedArmyList → ArmyRosterEnricher (against a ResolvedBsdataCatalogue)
+  → ArmyRoster → /LivePlay`, with per-session storage (ASP.NET Core Session, reintroduced) holding
+  only the `ParsedArmyList` - every request (including every casualty tap) re-enriches fresh, one
+  level up from `casualty-tracking`'s existing "rebuild from source of truth" precedent.
+  New `ProbHammer.Core.Domain.Import` namespace: `ParsedArmyList`/`ParsedAttachmentGroup`/
+  `ParsedUnit`/`ParsedModelGroup` records plus `ArmyListParser` (line-based, classifies by bullet
+  character - `•` top-level, `◦` nested - not indentation depth). The model-group weapon-count
+  partition algorithm (shared-vs-alternating split) turned out to need one refinement beyond the
+  literal spec text, confirmed against a second real squad (`gw-app-export-3-dp.txt`'s Company
+  Veteran): each non-common weapon is its own partition, never merged with another weapon that
+  happens to share the same count - "1x Master-crafted bolt rifle" / "1x Master-crafted heavy
+  bolter" are two distinct 1-model sub-groups, not one sub-group carrying both.
+  New `ArmyRosterEnricher` (`Domain.Roster`) plus `BsdataFactionResolver`/`BsdataCatalogueCache`/
+  `ResolvedBsdataCatalogue`/`BsdataNameSuggestion`/`BsdataNameNormalization` (`Domain.Catalogue.
+  Bsdata`, alongside the existing `catalogue-json-ingestion` types). **The design.md decision that
+  a model-group name resolves against BSData "directly, trivially" was verified only against one
+  squad and did not generalize** - the one-off manual verification (task 2.8, against the live
+  clone at `C:\Users\Pete\wh40k-11e`) surfaced five independent real mismatch patterns between
+  export text and BSData names, each requiring a user decision mid-implementation (see
+  `[[project_bsdata_name_mismatch_patterns]]` in auto-memory for the full writeup): a Datasheet's
+  own name is sometimes itself one of several Statline names (Scout Squad, Legionaries, Eradicator
+  Squad); a single-Statline Datasheet's one Statline is sometimes named nothing like the export
+  label or the Datasheet name at all (Impulsor → "Black Templars Impulsor", Emperor's Champion →
+  "The Emperor's Champion", Sword Brethren Squad → "Sword Brethren") - resolved via a two-tier
+  fallback (Datasheet-name-as-Statline, then sole-Statline-if-only-one, both independently
+  necessary); one wargear line can resolve to more than one BSData weapon profile (Helbrecht's
+  "Sword of the High Marshals" → "➤ ... - Sweep" / "➤ ... - Strike"); some "weapon" lines are
+  actually BSData Ability profiles, not weapons at all (Impulsor's "Shield Dome", a granted 5+
+  invulnerable save) - now attached to the `ModelLine`'s own `Abilities` instead of thrown as
+  unresolved; and one genuine BSData spelling difference in the corpus itself (export's "Absolvor
+  bolt pistol" vs. BSData's own "Absolver bolt pistol", Garreon the Corpsemaster) - deliberately
+  *not* special-cased (a curated mismatch map doesn't scale to the corpus size); instead every
+  resolution failure now carries a Levenshtein-based "did you mean...?" suggestion
+  (`BsdataNameSuggestion`) in its exception message, diagnostic only, never auto-applied.
+  New `army-list-import` capability: `/Import` Razor Page (paste box + submit), `ISessionArmyListStore`
+  (JSON round-trip of `ParsedArmyList` through `ISession`), `IArmyRosterProvider` (shared
+  faction-resolve → cache-fetch → enrich orchestration, used by both `/Import`'s pre-commit
+  validation and `/LivePlay`'s per-request rebuild). `Program.cs` reintroduces
+  `AddDistributedMemoryCache`/`AddSession`/`UseSession` (removed by `archive-10e-pipeline`, brought
+  back for this new purpose) and registers a `BsdataCatalogueCache` singleton over the bundled
+  `src/ProbHammer.Web/BsData/` snapshot (path from new `Bsdata:RootDirectory` config, default
+  `"BsData"`). `LivePlayModel`/`LivePlayCasualtyService` repointed off `Examples.View`
+  entirely - `Examples/` stays in the tree, unreferenced by `Web`, as design.md anticipated.
+  232 tests (up from 224), including a new `ImportFlowTests.cs` (real end-to-end HTTP flow:
+  import→redirect, parse/enrichment failure reporting, a failed import leaving a prior successful
+  one untouched, two concurrent `HttpClient`-cookie-jar sessions staying isolated, no-import→
+  redirect, rebuild-fresh-per-request) using the real captured exports and the app's own bundled
+  BsData snapshot rather than synthetic fixtures. Manually verified via `firefox-devtools-mcp`
+  (`dotnet run`, no Docker) against all three captured exports end to end, rendering correctly.
+  **Tooling note**: `WebApplicationFactoryClientOptions.HandleCookies` defaults to `true` in this
+  package version, so a single `HttpClient` from `factory.CreateClient()` persists the ASP.NET Core
+  Session cookie automatically across an `/Import` POST and a following `/LivePlay` GET within one
+  test - no manual cookie-container wiring needed. The `/Import` page's `<form>` needed an explicit
+  `asp-page="/Import"` attribute for the `FormTagHelper` to attach at all and auto-inject the
+  antiforgery hidden field (a bare `<form method="post">` with no `asp-*` attribute isn't recognized
+  by the tag helper, and Razor Pages' global `AutoValidateAntiforgeryTokenAttribute` convention
+  rejects a POST with no token regardless).
+
 - OpenSpec change `redesign-invulnerable-save-display` implemented and archived (all 26 original
   tasks plus two post-review refinement rounds — 7 tasks, then 8 more, 41 total — synced to
   `openspec/specs/live-play-view/spec.md` before archiving): `/LivePlay`'s
@@ -748,6 +827,19 @@ Nothing in progress.
 
 ## Known Issues
 
+- A real captured export (`data/gw-app-export-masters-of-the-maelstrom.txt`) names a weapon
+  "Absolvor bolt pistol" (Garreon the Corpsemaster); the live BSData clone's own corpus spells it
+  "Absolver bolt pistol" - a genuine BSData typo/spelling drift, not a parsing bug. Deliberately not
+  special-cased (a curated mismatch map doesn't scale to the corpus size, per explicit user
+  direction) - `ArmyRosterEnricher`'s "did you mean...?" suggestion (`BsdataNameSuggestion`,
+  Levenshtein-based) surfaces this correctly on import, but the import itself still fails for this
+  one unit until BSData's own data is fixed or the user edits their pasted text.
+- `import-army-list-for-live-play`'s real-data verification (task 2.8) found several BSData
+  naming shapes `ArmyRosterEnricher` now handles via fallback chains rather than a single direct
+  match - see that change's summary above and `[[project_bsdata_name_mismatch_patterns]]` in
+  auto-memory. Not exhaustively proven against the *full* corpus (only the three captured exports,
+  covering ~4 factions) - a future corpus-wide scan (mirroring `bsdata-corpus-scan-tests`'s existing
+  pattern) could surface further shapes the three captured exports don't exercise.
 - 3 Ork weapons carry Strength as a dice expression (Battlewagon `D6+6`, Big Gunz [Legends] `2D6`,
   Deff Rolla Battle Fortress [Legends] `2D6`), which `WeaponProfile.S: int` can't represent. Needs a
   decision: leave failing / round to `DiceExpression.ExpectedValue()` / widen `S` to
@@ -779,21 +871,26 @@ Nothing outstanding.
 
 ## Next Session Prompt
 
-**Agreed starting point for next session, explicitly requested by the user**: begin the first
-iteration of the "Ability-text interpretation pass" (`.claude/vnext-ideas.md`) — the deferred
-classifier that resolves a `Caveated = true` invulnerable save's linked `CaveatAbility.Text` against
-a small closed vocabulary of known real phrasings (see `structured-invulnerable-save`'s and
-`bsdata-corpus-scan-tests`' findings for confirmed real examples — e.g. `"This model has a 5+
-invulnerable save against ranged attacks."`, `"Models in this unit have a 4+ invulnerable save
-against melee attacks."`) and, where a pattern matches, flips the result to `Caveated: false` with
-the resolved `MeleeInSv`/`RangedInSv` split — not general ability-text-to-behavior parsing, which
-stays permanently out of scope. This is a natural first real consumer of
-`redesign-invulnerable-save-display`'s new render logic: a save the classifier resolves would flip
-from the caveated-tile rendering to one of the plain melee-only/ranged-only/differing-both-known
-tiles, the last of which (until now) had no real data to exercise it — worth checking live once this
-lands. Start with an `openspec explore`/`propose` pass before writing code, per this project's
-established pattern for InSv work. Longer-term motivation (unchanged, still out of scope for the
-first iteration): feeding ability-driven weapon-attack modifiers into aggregation.
+**Immediate next step**: `import-army-list-for-live-play` is implemented (27/27 tasks) but not yet
+archived — run the archive flow (`openspec-archive-change`/`/opsx:archive`) once the user has
+reviewed it, syncing its four delta specs (`army-list-parsing`, `army-roster-enrichment`,
+`army-list-import`, the `live-play-view` modification) into `openspec/specs/`.
+
+**After that**, two candidates surfaced by this change itself, neither scoped or agreed yet — raise
+with the user before starting either:
+
+- The deferred "ability-text tuning pass" this change's own design.md explicitly left a slot for
+  (between `enrich` and `/LivePlay`, operating on the built `ArmyRoster`'s distinct `Datasheet`s) —
+  this is the same "Ability-text interpretation pass" idea from `.claude/vnext-ideas.md`/prior
+  sessions (resolving a `Caveated = true` invulnerable save's linked `CaveatAbility.Text` against a
+  small closed vocabulary of known real phrasings, flipping the result to `Caveated: false` with the
+  resolved `MeleeInSv`/`RangedInSv` split), now with a second, independent motivation from the real
+  import pipeline rather than only hand-authored fixtures. Not general ability-text-to-behavior
+  parsing, which stays permanently out of scope. Start with an `openspec explore`/`propose` pass
+  before writing code, per this project's established pattern for InSv work.
+- A corpus-wide scan of `ArmyRosterEnricher`'s resolution fallback chains (mirroring
+  `bsdata-corpus-scan-tests`'s existing permanent-scan pattern), since the current verification only
+  covers the three captured exports (~4 factions) — see the new "Known Issues" entry above.
 
 `redesign-invulnerable-save-display`, `structured-invulnerable-save`, and `bsdata-corpus-scan-tests`
 are all implemented, archived, and synced to main specs; both permanent scans pass against the live

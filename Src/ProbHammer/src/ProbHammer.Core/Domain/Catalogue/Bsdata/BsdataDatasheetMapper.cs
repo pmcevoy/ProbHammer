@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using ProbHammer.Core.Domain.Catalogue.Bsdata.Json;
 
@@ -21,13 +22,32 @@ namespace ProbHammer.Core.Domain.Catalogue.Bsdata;
 /// </summary>
 public static partial class BsdataDatasheetMapper
 {
+    /// <summary>Force-type names whose id, if referenced by a "hidden=true" modifier's condition
+    /// tree (see IsGameModeGated), marks an entry/group as belonging to a game mode other than the
+    /// matched-play "Army Roster" this loader exclusively represents - resolved by name (never a
+    /// hardcoded id) from the game system's own ForceEntries, matching this codebase's existing
+    /// "resolve by name" convention. Both names are needed: real BSData content gates itself either
+    /// as "hidden if force IS Army Roster" (confirmed: Chaos Space Marines' "Mark of Chaos", a
+    /// genuine matched-play mechanic that's still Crusade-Force-only per NewRecruit's own UI) or as
+    /// "hidden unless a Crusade Force is present" (confirmed: the "Crusade" content block every
+    /// datasheet carries - Battle Honours, Chaos Boons, Crusade Relic Upgrades) - opposite polarity,
+    /// same underlying game-mode concept, so both id references are treated as an exclusion
+    /// trigger regardless of which specific comparison the modifier uses.</summary>
+    private static readonly string[] GameModeGateNames = ["Army Roster", "Crusade Force"];
+
     public static Datasheet BuildDatasheet(
         BsSelectionEntry entry,
         IReadOnlyDictionary<string, BsSelectionEntry> idIndex,
         IReadOnlyDictionary<string, BsSelectionEntryGroup> groupIdIndex,
-        IReadOnlyDictionary<string, BsProfile>? profileIdIndex = null)
+        IReadOnlyDictionary<string, BsProfile>? profileIdIndex = null,
+        IReadOnlyList<BsForceEntry>? forceEntries = null)
     {
-        var context = new WalkContext(idIndex, groupIdIndex, profileIdIndex ?? new Dictionary<string, BsProfile>());
+        var gateIds = (forceEntries ?? [])
+            .Where(f => GameModeGateNames.Contains(f.Name, StringComparer.OrdinalIgnoreCase))
+            .Select(f => f.Id)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var context = new WalkContext(idIndex, groupIdIndex, profileIdIndex ?? new Dictionary<string, BsProfile>(), gateIds);
         WalkEntry(entry, context, []);
 
         return new Datasheet(
@@ -42,11 +62,13 @@ public static partial class BsdataDatasheetMapper
     private sealed class WalkContext(
         IReadOnlyDictionary<string, BsSelectionEntry> idIndex,
         IReadOnlyDictionary<string, BsSelectionEntryGroup> groupIdIndex,
-        IReadOnlyDictionary<string, BsProfile> profileIdIndex)
+        IReadOnlyDictionary<string, BsProfile> profileIdIndex,
+        IReadOnlySet<string> gameModeGateIds)
     {
         public IReadOnlyDictionary<string, BsSelectionEntry> IdIndex { get; } = idIndex;
         public IReadOnlyDictionary<string, BsSelectionEntryGroup> GroupIdIndex { get; } = groupIdIndex;
         public IReadOnlyDictionary<string, BsProfile> ProfileIdIndex { get; } = profileIdIndex;
+        public IReadOnlySet<string> GameModeGateIds { get; } = gameModeGateIds;
 
         public List<(string Name, Statline Statline)> Statlines { get; } = [];
         public HashSet<string> SeenStatlineNames { get; } = new(StringComparer.OrdinalIgnoreCase);
@@ -57,9 +79,52 @@ public static partial class BsdataDatasheetMapper
         public HashSet<string> VisitedGroupIds { get; } = new(StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <summary>True when any of the given modifiers sets "hidden" to true, gated (anywhere in its
+    /// condition tree, regardless of AND/OR structure or comparison operator - this is a plain
+    /// existence check, not general boolean evaluation, deliberately: this loader still does not
+    /// interpret constraints/modifiers as rules, only uses this one narrow shape to recognize
+    /// non-matched-play content) by a condition referencing one of ctx.GameModeGateIds. Found via a
+    /// real user-reported bug: /LivePlay showed abilities (Chaos Boons, Mark of Chaos options) that
+    /// don't belong to matched play at all - BuildDatasheet's walk had no way to distinguish
+    /// genuine datasheet rules from Crusade-mode-only or force-type-gated content, since both use
+    /// the identical "Abilities"-typeName profile shape.</summary>
+    private static bool IsGameModeGated(IReadOnlyList<BsModifier> modifiers, WalkContext ctx)
+    {
+        if (ctx.GameModeGateIds.Count == 0)
+            return false;
+
+        foreach (var modifier in modifiers)
+        {
+            if (modifier.Field != "hidden" || modifier.Value.ValueKind != JsonValueKind.True)
+                continue;
+
+            if (ConditionsReferenceGate(modifier.Conditions, modifier.ConditionGroups, ctx.GameModeGateIds))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool ConditionsReferenceGate(
+        IReadOnlyList<BsCondition> conditions, IReadOnlyList<BsConditionGroup> groups, IReadOnlySet<string> gateIds)
+    {
+        foreach (var condition in conditions)
+            if (gateIds.Contains(condition.ChildId))
+                return true;
+
+        foreach (var group in groups)
+            if (ConditionsReferenceGate(group.Conditions, group.ConditionGroups, gateIds))
+                return true;
+
+        return false;
+    }
+
     private static void WalkEntry(BsSelectionEntry entry, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry)
     {
         if (!string.IsNullOrEmpty(entry.Id) && !ctx.VisitedEntryIds.Add(entry.Id))
+            return;
+
+        if (IsGameModeGated(entry.Modifiers, ctx))
             return;
 
         var chain = new List<BsSelectionEntry>(ancestry) { entry };
@@ -85,6 +150,9 @@ public static partial class BsdataDatasheetMapper
         if (!string.IsNullOrEmpty(group.Id) && !ctx.VisitedGroupIds.Add(group.Id))
             return;
 
+        if (IsGameModeGated(group.Modifiers, ctx))
+            return;
+
         foreach (var child in group.SelectionEntries)
             WalkEntry(child, ctx, ancestry);
 
@@ -100,6 +168,12 @@ public static partial class BsdataDatasheetMapper
 
     private static void WalkLink(BsEntryLink link, WalkContext ctx)
     {
+        // Crusade-mode-only content (every datasheet's "Crusade" entryLink - Battle Honours, Chaos
+        // Boons, Crusade Relic Upgrades) and other force-type-gated matched-play mechanics (Chaos
+        // Space Marines' "Mark of Chaos") are excluded once resolved, via IsGameModeGated on the
+        // target entry/group itself - not by name here, since the gating shape (a modifier
+        // referencing a force-type id) generalizes across differently-named content, unlike a
+        // literal "Crusade" name match would.
         if (ctx.IdIndex.TryGetValue(link.TargetId, out var targetEntry))
         {
             // A shared/reusable target (e.g. a wargear option linked from many unrelated places)

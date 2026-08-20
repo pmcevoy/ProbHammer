@@ -14,7 +14,9 @@ public interface ILivePlayCasualtyService
     Task<IResult> SyncAsync(HttpContext ctx, List<CasualtyAdjustment> adjustments);
 }
 
-public class LivePlayCasualtyService(IRazorPartialRenderer renderer) : ILivePlayCasualtyService
+public class LivePlayCasualtyService(
+    IRazorPartialRenderer renderer, ISessionArmyListStore sessionStore, IArmyRosterProvider rosterProvider)
+    : ILivePlayCasualtyService
 {
     public async Task<IResult> SyncAsync(HttpContext ctx, List<CasualtyAdjustment> adjustments)
     {
@@ -23,10 +25,12 @@ public class LivePlayCasualtyService(IRazorPartialRenderer renderer) : ILivePlay
         // renders its unit's fragment, just identical to pristine; simpler than diffing, and an
         // empty batch (no stored adjustments) still yields an empty response either way.
         var unitIndexes = adjustments.Select(a => a.Coordinate.UnitIndex).Distinct().ToList();
-        if (unitIndexes.Count == 0)
+        var parsedArmyList = sessionStore.Load(ctx.Session);
+        if (unitIndexes.Count == 0 || parsedArmyList is null)
             return Results.Json(new Dictionary<int, string>());
 
-        var roster = LivePlayModel.RebuildRoster(adjustments);
+        var armyRoster = rosterProvider.Build(parsedArmyList);
+        var roster = LivePlayModel.RebuildRoster(armyRoster.Units, adjustments);
         var fragments = new Dictionary<int, string>();
 
         foreach (var unitIndex in unitIndexes)

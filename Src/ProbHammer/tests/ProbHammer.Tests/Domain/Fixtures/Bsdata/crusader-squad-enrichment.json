@@ -1,0 +1,111 @@
+{
+  "catalogue": {
+    "id": "test-cat-enrichment",
+    "name": "Imperium - Black Templars (enrichment fixture)",
+    "gameSystemId": "",
+    "catalogueLinks": [],
+    "sharedSelectionEntries": [
+      {
+        "id": "e-squad",
+        "name": "Crusader Squad",
+        "type": "unit",
+        "profiles": [],
+        "selectionEntries": [
+          {
+            "id": "e-sword-brother-member",
+            "name": "Sword Brother",
+            "type": "model",
+            "profiles": [
+              { "id": "p-sb-unit", "name": "Sword Brother", "typeName": "Unit",
+                "characteristics": [
+                  { "name": "M", "$text": "6\"" }, { "name": "T", "$text": "4" },
+                  { "name": "Sv", "$text": "3+" }, { "name": "W", "$text": "2" },
+                  { "name": "LD", "$text": "6+" }, { "name": "OC", "$text": "2" }
+                ] },
+              { "id": "p-mcpw", "name": "Master-crafted power weapon", "typeName": "Melee Weapons",
+                "characteristics": [
+                  { "name": "A", "$text": "4" }, { "name": "WS", "$text": "3+" },
+                  { "name": "S", "$text": "6" }, { "name": "AP", "$text": "-2" }, { "name": "D", "$text": "2" }
+                ] },
+              { "id": "p-pyre", "name": "Pyre pistol", "typeName": "Ranged Weapons",
+                "characteristics": [
+                  { "name": "Range", "$text": "12\"" }, { "name": "A", "$text": "D6" },
+                  { "name": "BS", "$text": "3+" }, { "name": "S", "$text": "3" },
+                  { "name": "AP", "$text": "0" }, { "name": "D", "$text": "1" }
+                ] }
+            ],
+            "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+          },
+          {
+            "id": "e-initiate", "name": "Initiate", "type": "model",
+            "profiles": [
+              { "id": "p-init-unit", "name": "Initiate", "typeName": "Unit",
+                "characteristics": [
+                  { "name": "M", "$text": "6\"" }, { "name": "T", "$text": "4" },
+                  { "name": "Sv", "$text": "3+" }, { "name": "W", "$text": "2" },
+                  { "name": "LD", "$text": "6+" }, { "name": "OC", "$text": "2" }
+                ] },
+              { "id": "p-bolt-pistol", "name": "Bolt pistol", "typeName": "Ranged Weapons",
+                "characteristics": [
+                  { "name": "Range", "$text": "12\"" }, { "name": "A", "$text": "1" },
+                  { "name": "BS", "$text": "3+" }, { "name": "S", "$text": "4" },
+                  { "name": "AP", "$text": "0" }, { "name": "D", "$text": "1" }
+                ] },
+              { "id": "p-ccw", "name": "Close combat weapon", "typeName": "Melee Weapons",
+                "characteristics": [
+                  { "name": "A", "$text": "3" }, { "name": "WS", "$text": "3+" },
+                  { "name": "S", "$text": "4" }, { "name": "AP", "$text": "0" }, { "name": "D", "$text": "1" }
+                ] },
+              { "id": "p-chainsword", "name": "Astartes chainsword", "typeName": "Melee Weapons",
+                "characteristics": [
+                  { "name": "A", "$text": "4" }, { "name": "WS", "$text": "3+" },
+                  { "name": "S", "$text": "4" }, { "name": "AP", "$text": "-1" }, { "name": "D", "$text": "1" }
+                ] },
+              { "id": "p-powerfist", "name": "Power fist", "typeName": "Melee Weapons",
+                "characteristics": [
+                  { "name": "A", "$text": "2" }, { "name": "WS", "$text": "4+" },
+                  { "name": "S", "$text": "8" }, { "name": "AP", "$text": "-2" }, { "name": "D", "$text": "2" }
+                ] }
+            ],
+            "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+          },
+          {
+            "id": "e-neophyte", "name": "Neophyte", "type": "model",
+            "profiles": [
+              { "id": "p-neo-unit", "name": "Neophyte", "typeName": "Unit",
+                "characteristics": [
+                  { "name": "M", "$text": "6\"" }, { "name": "T", "$text": "4" },
+                  { "name": "Sv", "$text": "4+" }, { "name": "W", "$text": "2" },
+                  { "name": "LD", "$text": "6+" }, { "name": "OC", "$text": "2" }
+                ] }
+            ],
+            "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+          }
+        ],
+        "selectionEntryGroups": [],
+        "entryLinks": [],
+        "infoLinks": []
+      },
+      {
+        "id": "e-sword-brother-leader", "name": "Sword Brother", "type": "model",
+        "profiles": [
+          { "id": "p-sbl-unit", "name": "Sword Brother", "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "6\"" }, { "name": "T", "$text": "4" },
+              { "name": "Sv", "$text": "3+" }, { "name": "W", "$text": "2" },
+              { "name": "LD", "$text": "6+" }, { "name": "OC", "$text": "2" }
+            ] },
+          { "id": "p-sbl-pyre", "name": "Pyre pistol", "typeName": "Ranged Weapons",
+            "characteristics": [
+              { "name": "Range", "$text": "12\"" }, { "name": "A", "$text": "D6" },
+              { "name": "BS", "$text": "3+" }, { "name": "S", "$text": "3" },
+              { "name": "AP", "$text": "0" }, { "name": "D", "$text": "1" }
+            ] }
+        ],
+        "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+      }
+    ],
+    "sharedSelectionEntryGroups": [],
+    "sharedProfiles": []
+  }
+}

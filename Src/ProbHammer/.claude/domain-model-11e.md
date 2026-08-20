@@ -6,11 +6,14 @@ tasks). This file summarizes the shape that landed in code.
 **Status:** implemented and tested (`src/ProbHammer.Core/Domain/`), proven against hand-built
 fixtures (`tests/ProbHammer.Tests/Domain/Fixtures/`) plus, since `catalogue-json-ingestion`, a
 real BSData JSON loader (`Domain/Catalogue/Bsdata/` — see "BSData JSON Ingestion" below) that can
-populate `Datasheet` objects from a local BSData clone. Still no export parser or wiring into
-`ProbHammer.Web`/`/LivePlay` (both still run on `Examples/`-fixture data) — see that section's own
-"Deliberately Out of Scope" note. Coexists with the 10th-edition model (`.claude/domain-model.md`),
-which remains in the tree, untouched, and is what the live Web app and `Simulation/*` still use.
-See `PROGRESS.md` for the supersession/pause status of that older code.
+populate `Datasheet` objects from a local BSData clone. Since `import-army-list-for-live-play`,
+`ProbHammer.Web`/`/LivePlay` is fully wired to this model: a pasted GW-app 11e export is parsed
+(`Domain/Import/` — see "Army List Import Pipeline" below), resolved against BSData
+(`ArmyRosterEnricher`, same section), and rendered — `Examples/`-fixture data is no longer
+referenced anywhere in `Web`, though the `Examples/` files themselves remain in the tree unchanged
+for future domain-model exploration. Coexists with the 10th-edition model
+(`.claude/domain-model.md`), which remains in the tree, untouched and fully unused (superseded, not
+just paused — see `PROGRESS.md` for that history).
 
 ---
 
@@ -144,10 +147,11 @@ Full requirements: `openspec/changes/catalogue-json-ingestion/` (proposal, desig
 Raw file format itself (not the C# types below): `.claude/bsdata-json-schema.md`.
 Namespace: `ProbHammer.Core.Domain.Catalogue.Bsdata`. Reads the BattleScribe `catalogueSchema` JSON
 shape (one file per faction/sub-faction) that BSData's 11th Edition repository publishes, and
-resolves it into the `Datasheet`/`Statline`/`WeaponProfile`/`Ability` shapes above. Not wired into
-`ProbHammer.Web`/`/LivePlay` (still runs on `Examples/` fixtures) and does not build the
-`Unit`/`AttachedUnit` graph — both are deliberately deferred to a future change; this loader only
-resolves names to rules data.
+resolves it into the `Datasheet`/`Statline`/`WeaponProfile`/`Ability` shapes above. This loader
+itself only resolves names to rules data and does not build the `Unit`/`AttachedUnit`/`ModelLine`
+graph — that's `ArmyRosterEnricher`'s job (see "Army List Import Pipeline" below), which consumes
+these types directly rather than duplicating them. Since `import-army-list-for-live-play`, this is
+fully wired into `ProbHammer.Web`/`/LivePlay` via the app-wide `BsdataCatalogueCache`.
 
 ```
 IBsdataCatalogueSource            // "get JSON content for this filename" boundary
@@ -335,6 +339,47 @@ WeaponKeywordParser.UnrecognizedTokens(keywordsText) -> IReadOnlyList<string>
                                        // added so the full-BSData-corpus weapon-keyword scan (see
                                        // "Full-Corpus Scan Tests" below) can't silently drift from
                                        // what Apply actually recognizes.
+
+BsdataDatasheetMapper.IsGameModeGated(modifiers, ctx) -> bool
+                                       // WalkEntry/WalkGroup's guard against a real, user-reported
+                                       // bug: a datasheet's full descendant tree can contain content
+                                       // BSData itself marks hidden outside "Army Roster" (matched
+                                       // play) mode - Crusade-mode-only narrative content (every
+                                       // datasheet's "Crusade" entryLink: Battle Honours, Chaos
+                                       // Boons, Crusade Relic Upgrades) and force-type-gated
+                                       // matched-play mechanics unavailable in this specific game
+                                       // mode (confirmed: Chaos Space Marines' "Mark of Chaos",
+                                       // verified against NewRecruit's own UI to only appear in
+                                       // "Crusade Force" mode, never "Army Roster") - and nothing
+                                       // previously distinguished this from genuine datasheet rules,
+                                       // since both use the identical "Abilities"-typeName profile
+                                       // shape. True when any of an entry/group's own `modifiers`
+                                       // sets `hidden: true` gated (anywhere in its condition tree -
+                                       // a plain existence check across nested conditionGroups, not
+                                       // real AND/OR boolean evaluation) by a condition referencing
+                                       // one of two force-type ids resolved by NAME (never a
+                                       // hardcoded id, matching this codebase's existing "resolve by
+                                       // name" convention) from the game system's own ForceEntries:
+                                       // "Army Roster" (real shape: `instanceOf`, `scope: "force"` -
+                                       // hidden IN matched play) or "Crusade Force" (real shape:
+                                       // `lessThan`, `scope: "roster"`, `field: "forces"` - hidden
+                                       // UNLESS a Crusade Force is present) - opposite polarity, same
+                                       // underlying "which game mode" concept, both treated as an
+                                       // exclusion trigger since ProbHammer only ever represents Army
+                                       // Roster mode. Called from WalkEntry/WalkGroup right after the
+                                       // visited-id check; a match skips the whole subtree (matches
+                                       // and abilities alike - Crusade Relic Upgrades under a "Weapon
+                                       // Upgrades" wargear choice are excluded the same way as a
+                                       // top-level "Crusade" entryLink). BuildDatasheet takes an
+                                       // optional `forceEntries` parameter (default null -> empty
+                                       // gate set -> nothing excluded, a fail-open default every
+                                       // pre-existing call site keeps unchanged);
+                                       // ResolvedBsdataCatalogue.ResolveDatasheet passes
+                                       // `Closure.GameSystem?.ForceEntries`. This still does not
+                                       // interpret `constraints`/`modifiers`/`conditionGroups` as
+                                       // rules in general (composition validation stays explicitly
+                                       // out of scope, per catalogue-json-ingestion's design.md) -
+                                       // only this one narrow, verified shape is ever read.
 ```
 
 `BsdataDatasheetMapper.ParseThreshold(text, CharacteristicPattern)` (Sv/BS/WS/LD only — InSv is no
@@ -424,6 +469,245 @@ WeaponKeywordScanTests.Full_corpus_weapon_keyword_token_scan
                                        // Attacks, Psychic, Lance, One Shot - to be worth a future
                                        // dedicated addition). See PROGRESS.md's Known Issues.
 ```
+
+---
+
+## Army List Import Pipeline
+
+Full requirements: `openspec/changes/import-army-list-for-live-play/` (proposal, design, specs,
+tasks). Connects a pasted GW-app 11e export to `/LivePlay`: `text → IArmyListParser →
+ParsedArmyList → ArmyRosterEnricher (against a ResolvedBsdataCatalogue) → ArmyRoster → /LivePlay`,
+with per-session storage holding only the `ParsedArmyList` intermediate — every request
+(`/LivePlay` renders, casualty adjustments) re-enriches fresh, one level up from
+`casualty-tracking`'s "rebuild from source of truth" precedent for the fixture path.
+
+### Army List Parsing (`ProbHammer.Core.Domain.Import`)
+
+```
+ParsedModelGroup(ModelName, Count, Weapons: IReadOnlyList<string>)
+                                       // already-split per-loadout sub-group - the shared-vs-
+                                       // mutually-exclusive weapon-count partition has already been
+                                       // applied by parse time (see below). Weapons is a flat,
+                                       // per-model list; duplicates are meaningful (two "Storm
+                                       // bolter" entries mean two copies of that weapon on one model).
+ParsedUnit(Name, ModelGroups: IReadOnlyList<ParsedModelGroup>, Enhancements: IReadOnlyList<string>)
+                                       // Role (Leader/Support/Bodyguard) is not a field - it's
+                                       // captured structurally by which list of ParsedAttachmentGroup
+                                       // a member ends up in, mirroring AttachedUnit's own
+                                       // Bodyguard/Attached split. The export's role-line category
+                                       // parenthetical is discarded during parsing, never captured.
+ParsedAttachmentGroup(Bodyguard: ParsedUnit, Attached: IReadOnlyList<ParsedUnit>)
+ParsedArmyList(Name, PointsSpent, Faction, Detachments, ForceDisposition, BattleSize, PointsLimit,
+               AttachmentGroups: IReadOnlyList<ParsedAttachmentGroup>,
+               StandaloneUnits: IReadOnlyList<ParsedUnit>)
+                                       // Faction/Detachments/etc. mirror ArmyRoster's own field
+                                       // shapes exactly - see Roster Context below.
+
+IArmyListParser.Parse(exportText) -> ParsedArmyList
+ArmyListParser                        // the only implementation. Line-based: blank lines discarded,
+                                       // every remaining line classified either positionally (the
+                                       // fixed army-metadata preamble: Name/Points header, 1-2
+                                       // Faction lines, one-or-more "(N Detachment Points)" lines,
+                                       // ForceDisposition, BattleSize/PointsLimit header) or by a
+                                       // small set of regexes (ATTACHED UNITS / a top-level section
+                                       // header / "Attached unit N" / a "<Name> (<N> Points)" unit
+                                       // header / a bullet line). Bullet nesting is read from the
+                                       // bullet CHARACTER itself ("•" top-level, "◦" nested) never
+                                       // from indentation depth - both appear at whatever indent the
+                                       // export happens to use.
+                                       // A unit's top-level bullets classify as: "Attached as: Role
+                                       // [(Category)]" (first bullet only, attached mode; Category
+                                       // discarded); "Enhancement(s): ..." (-> Enhancements, whole
+                                       // remainder as one entry, never split on commas - same
+                                       // "commas can be part of a real name" precedent as
+                                       // Detachment); "Nx ModelName" WITH nested "◦" weapon lines
+                                       // (-> an explicit model-group header, partitioned per below);
+                                       // "Nx WeaponName" with NO nested lines (-> a direct weapon
+                                       // selection, collected separately); anything else (e.g. bare
+                                       // "Warlord") ignored.
+                                       // A unit with zero explicit model-group headers (i.e. every
+                                       // top-level bullet was a direct weapon selection - the shape
+                                       // for single-model units like Helbrecht/Impulsor/Emperor's
+                                       // Champion, which have no "Nx ModelName" wrapper at all in the
+                                       // export) gets one synthesized ParsedModelGroup(Name: the
+                                       // unit's own Name, Count: 1, Weapons: each direct "Nx
+                                       // WeaponName" flattened into N repeated entries - "2x Storm
+                                       // bolter" on Impulsor becomes two "Storm bolter" list entries,
+                                       // not a partition attempt, since a single model can't have
+                                       // "alternative" sub-groups by definition).
+                                       // An EXPLICIT "Nx ModelName" header's nested weapons DO go
+                                       // through the shared-vs-alternating partition, regardless of
+                                       // the header's own count (even count=1, e.g. each of Masters
+                                       // of the Maelstrom's five named characters - trivially: every
+                                       // weapon's own count equals the header's total of 1, so all
+                                       // are "shared", producing one sub-group). Partition rule: a
+                                       // weapon whose count equals the header's total is common to
+                                       // every resulting sub-group; every OTHER weapon is its own
+                                       // independent sub-group carrying that weapon's own count -
+                                       // never merged with a different weapon sharing the same
+                                       // count (verified against a second real squad, `gw-app-
+                                       // export-3-dp.txt`'s Company Veteran: "1x Master-crafted bolt
+                                       // rifle" / "1x Master-crafted heavy bolter" are two distinct
+                                       // 1-model sub-groups, not one 2-weapon sub-group - grouping
+                                       // by count value instead of by weapon entry was the original,
+                                       // wrong draft of this rule). Throws ArmyListParseException
+                                       // (carrying UnitName/RawText) when the non-common counts
+                                       // don't sum exactly to the header's total, rather than
+                                       // guessing a split.
+
+ArmyListParseException(message, unitName?, rawText?)
+```
+
+### Army Roster Enrichment (`ProbHammer.Core.Domain.Catalogue.Bsdata` + `Domain.Roster`)
+
+```
+BsdataFactionResolver.ResolveStartingFileName(faction, availableFileNames) -> string
+                                       // suffix-matches only the most specific (last) Faction entry:
+                                       // a file named exactly "{entry}.json" or ending
+                                       // " - {entry}.json", excluding any name containing "Library"
+                                       // (shared cross-sub-faction content, never a playable faction
+                                       // identity itself, even though it can hold the bulk of a real
+                                       // faction's content). Throws BsdataFactionResolutionException
+                                       // on zero or multiple matches.
+
+ResolvedBsdataCatalogue(Closure, IdIndex, GroupIdIndex, ProfileIdIndex)
+                                       // bundles a resolved BsdataClosure with the three
+                                       // BsdataNameResolver indices built over it - everything
+                                       // needed to resolve names and build Datasheets, in one value.
+  Build(source, startingFileName) -> ResolvedBsdataCatalogue   // static factory
+  ResolveDatasheet(entryName) -> Datasheet                     // throws BsdataNameResolutionException
+                                                                // (with a "did you mean...?"
+                                                                // suggestion) on a miss
+
+BsdataCatalogueCache(source)          // app-wide cache of ResolvedBsdataCatalogue, keyed by
+  GetOrBuild(startingFileName) -> ResolvedBsdataCatalogue
+                                       // starting file name, ConcurrentDictionary-backed, populated
+                                       // lazily, valid for the lifetime of whatever holds the
+                                       // instance (a singleton registered in ProbHammer.Web's
+                                       // Program.cs) - the expensive part of enrichment (multi-file
+                                       // JSON parse, BFS import resolution, index building) is
+                                       // static per faction and identical for every user, so it's
+                                       // built at most once per starting file, never per request or
+                                       // per session.
+
+BsdataNameNormalization.Normalize(text) -> string
+                                       // typographic (U+2019) -> plain ASCII apostrophe, applied to
+                                       // every piece of export text before any BSData lookup (real
+                                       // confirmed cases: "Emperor's Champion", "Reaver's blade").
+
+BsdataNameSuggestion.FindClosest(target, candidates, maxDistance = 3) -> string?
+                                       // Levenshtein-based "did you mean...?" hint attached to a
+                                       // resolution-failure exception's message - diagnostic only,
+                                       // never changes whether a name resolves. Chosen over a
+                                       // curated mismatch map (confirmed real case: the captured
+                                       // export's "Absolvor bolt pistol" vs. BSData's own "Absolver
+                                       // bolt pistol", a genuine BSData spelling difference) - the
+                                       // corpus is too large/fluid for a hand-maintained table to
+                                       // stay complete; an edit-distance check against whatever
+                                       // names actually exist keeps working as the corpus changes.
+
+ArmyRosterEnricher.Enrich(ParsedArmyList, ResolvedBsdataCatalogue) -> ArmyRoster
+                                       // Every name resolution is eager (validated during the walk,
+                                       // not deferred to later aggregation), each failure throwing
+                                       // BsdataNameResolutionException with a "did you mean...?"
+                                       // suggestion. Builds one AttachedUnit per ParsedAttachmentGroup
+                                       // (Bodyguard/Attached built the same way as a standalone Unit)
+                                       // and one plain Unit per standalone ParsedUnit.
+                                       // Unit name resolution: ResolvedBsdataCatalogue
+                                       // .ResolveDatasheet, normalized first.
+                                       // Statline name resolution (per ParsedModelGroup): tries an
+                                       // exact match against the Datasheet's own Statlines first
+                                       // (the common case - see the parser's own note above on why
+                                       // this needs no BSData name-matching for a datasheet like
+                                       // Crusader Squad), then two independent fallbacks, BOTH
+                                       // confirmed necessary against the live BSData clone - neither
+                                       // subsumes the other:
+                                       //   1. The Datasheet's own Name, when it's itself one of
+                                       //      several Statline names (confirmed: Scout Squad,
+                                       //      Legionaries, Eradicator Squad - every troop model
+                                       //      shares the squad's own name as its Unit profile name,
+                                       //      alongside a separately-named Sergeant/Champion
+                                       //      statline).
+                                       //   2. The Datasheet's sole Statline, when it has exactly
+                                       //      one (confirmed: Emperor's Champion -> "The Emperor's
+                                       //      Champion", Impulsor -> "Black Templars Impulsor",
+                                       //      Ancient -> "Primaris Ancient", Sword Brethren Squad ->
+                                       //      "Sword Brethren" - none of these match the export
+                                       //      label or the Datasheet's own name, but with only one
+                                       //      Statline there's no ambiguity about what a model group
+                                       //      refers to regardless of what it's called).
+                                       // Wargear resolution (per weapon name in a ParsedModelGroup):
+                                       // tries an exact WeaponProfile match, then a multi-profile
+                                       // expansion (some real wargear choices resolve to more than
+                                       // one weapon profile - confirmed: Helbrecht's "Sword of the
+                                       // High Marshals" -> "➤ ... - Sweep" / "➤ ... - Strike", each
+                                       // profile named "{leading marker}{ExportedName} -
+                                       // {mode}" - every matching profile is included), then a
+                                       // Datasheet.Abilities match by name (some "weapon" lines
+                                       // aren't weapons at all - confirmed: Impulsor's "Shield
+                                       // Dome", a BSData Abilities-typeName profile granting a 5+
+                                       // invulnerable save - attached to that ModelLine's own
+                                       // Abilities instead of thrown as an unresolved weapon).
+
+BsdataFactionResolutionException(faction, message)   // carries the offending Faction entry
+BsdataNameResolutionException(text, message)         // carries the offending text
+```
+
+`Datasheet` (Catalogue Context above) gained `TryGetStatline`/`TryResolveWeaponProfile` (non-
+throwing variants) and `WeaponNames` (`IReadOnlyList<string>`) specifically to support the above -
+diagnostic/fallback lookups that need to check existence or enumerate candidates without either
+throwing on a routine miss or breaking `ResolveWeaponProfile`'s existing on-demand-only contract.
+
+### Session-Backed Import (`ProbHammer.Web`)
+
+```
+ISessionArmyListStore.Save(ISession, ParsedArmyList)
+                     .Load(ISession) -> ParsedArmyList?
+                                       // plain System.Text.Json round-trip through ISession's string
+                                       // storage - ParsedArmyList and everything it references are
+                                       // plain records of primitives/lists, no Datasheet/abstract
+                                       // WeaponProfile graph to serialize. The session stores only
+                                       // this intermediate, never the built ArmyRoster (see "Session
+                                       // stores the intermediate, not the graph" in design.md) - every
+                                       // request re-enriches fresh via IArmyRosterProvider.
+
+IArmyRosterProvider.Build(ParsedArmyList) -> ArmyRoster
+                                       // shared three-step orchestration (BsdataFactionResolver ->
+                                       // BsdataCatalogueCache.GetOrBuild -> ArmyRosterEnricher.Enrich)
+                                       // used by both the import page (to validate before writing to
+                                       // session) and /LivePlay's per-request rebuild - one place for
+                                       // a sequence needed at three call sites (import, LivePlay GET,
+                                       // the casualty sync endpoint).
+
+ImportModel (/Import Razor Page)      // paste box + submit. OnPost parses, then calls
+                                       // IArmyRosterProvider.Build to validate BEFORE calling
+                                       // ISessionArmyListStore.Save - so a failed re-import never
+                                       // touches a previously-successful session import. Catches
+                                       // ArmyListParseException / BsdataFactionResolutionException /
+                                       // BsdataNameResolutionException / AmbiguousCharacteristicException
+                                       // and reports the message on the page rather than crashing;
+                                       // any other exception type is an unhandled bug, not a
+                                       // reportable import failure.
+
+LivePlayModel.OnGet()                 // loads the session's ParsedArmyList; redirects to /Import if
+                                       // absent (live-play-view's "Live Play Redirects Without An
+                                       // Active Import"), otherwise builds via IArmyRosterProvider and
+                                       // renders exactly as before. RebuildRoster (casualty rebuild)
+                                       // now takes the roster's Units as an explicit parameter
+                                       // instead of reading Examples.View.MyArmyRoster() internally.
+LivePlayCasualtyService.SyncAsync()   // loads the session's ParsedArmyList itself (via
+                                       // ISessionArmyListStore) before calling RebuildRoster; an
+                                       // empty batch OR no active session import both short-circuit
+                                       // to an empty response.
+```
+
+`Program.cs` reintroduces `AddDistributedMemoryCache`/`AddSession`/`UseSession` (removed by
+`archive-10e-pipeline` as a 10e-only dependency; brought back here for a new purpose - per-session
+`ParsedArmyList` storage, not the old `Enricher` cache) and registers `BsdataCatalogueCache` as a
+singleton over a `LocalDiskBsdataCatalogueSource` rooted at `Bsdata:RootDirectory` (appsettings.json,
+default `"BsData"`, resolved against `IWebHostEnvironment.ContentRootPath`) - the bundled snapshot
+at `src/ProbHammer.Web/BsData/`, copied into the Docker image as its own layer (see
+`catalogue-json-ingestion`'s packaging notes), not a live GitHub fetch.
 
 ---
 
@@ -577,14 +861,18 @@ than through the `presentLines` filter.
 carries: `Name`, `PointsSpent`, `Faction` (ordered — parent codex before sub-faction, e.g.
 `["Space Marines", "Black Templars"]`, or a single entry when there's no split), `Detachments`
 (ordered by selection, one entry per detachment a battle size's detachment points bought),
-`ForceDisposition`, `BattleSize`, and `PointsLimit`. Added ahead of the still-unbuilt GW-app
-export parser specifically so that future work has a settled target type instead of inventing
-one mid-parser-design; the shape and sample values (`Examples/View.Roster()`) were validated
-against a real captured export (`data/gw-app-export.txt`), not invented. `PointsSpent` is plain
-sample data — it is not derived from or reconciled against `Units`, since no points value is
-tracked anywhere below `ArmyRoster` (consistent with the no-points-modeling omission below).
-`View.MyArmyRoster()` is now a thin projection over `View.Roster().Units`, so its existing
-`List<ICombatUnit>` contract — and every `/LivePlay` call site — is unchanged.
+`ForceDisposition`, `BattleSize`, and `PointsLimit`. Originally added ahead of the (then-unbuilt)
+GW-app export parser so that parsing work would have a settled target type instead of inventing
+one mid-design; the shape and sample values (`Examples/View.Roster()`) were validated against a
+real captured export (`data/gw-app-export.txt`) before the parser existed, and
+`import-army-list-for-live-play`'s real `ArmyListParser`/`ArmyRosterEnricher` now populate this
+exact shape from a real pasted export (see "Army List Import Pipeline" above) - the bet paid off
+unchanged. `PointsSpent` is still plain sample data on the `Examples/` fixture path — it is not
+derived from or reconciled against `Units`, since no points value is tracked anywhere below
+`ArmyRoster` (consistent with the no-points-modeling omission below); a real import's `PointsSpent`
+comes from the export text itself via `ArmyListParser`. `Examples/View.MyArmyRoster()` remains a
+thin projection over `View.Roster().Units`, but no longer has any `/LivePlay` call site —
+`Examples/` stays in the tree for future domain-model exploration, unreferenced by `Web`.
 
 ---
 

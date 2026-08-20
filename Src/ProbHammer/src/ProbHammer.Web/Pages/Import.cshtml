@@ -1,0 +1,20 @@
+@page
+@model ImportModel
+@{
+    ViewData["Title"] = "Import Army List";
+}
+
+<main class="import-page">
+    <h1>Import Army List</h1>
+    <p>Paste a GW-app 11th-edition army-list export below.</p>
+
+    @if (Model.ErrorMessage != null)
+    {
+        <p class="import-error">@Model.ErrorMessage</p>
+    }
+
+    <form method="post" asp-page="/Import">
+        <textarea asp-for="ExportText" rows="20" placeholder="Paste your exported army list here..."></textarea>
+        <button type="submit">Import</button>
+    </form>
+</main>

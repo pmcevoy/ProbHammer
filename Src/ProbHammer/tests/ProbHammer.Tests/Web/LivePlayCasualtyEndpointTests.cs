@@ -2,22 +2,35 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using ProbHammer.Web.Pages;
+using static ProbHammer.Tests.Web.ImportTestHelper;
 
 namespace ProbHammer.Tests.Web;
 
 /// <summary>Integration test for POST /api/live-play/casualties, exercising the real endpoint end
 /// to end (roster rebuild, adjustment resolution, and Razor-partial-to-string rendering via
-/// RazorPartialRenderer) rather than any one piece in isolation.</summary>
+/// RazorPartialRenderer) rather than any one piece in isolation. Since `/LivePlay` now renders the
+/// session's own imported-and-enriched ArmyRoster (see live-play-view's Modified Requirements),
+/// each test first imports the real captured `gw-app-export.txt` via the same client so the session
+/// this endpoint reads from has an active army list, matching the coordinates
+/// (`"Crusader Squad"`/`"Neophyte"`) this suite has always asserted against.</summary>
 public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory;
 
     public LivePlayCasualtyEndpointTests(WebApplicationFactory<Program> factory) => _factory = factory;
 
+    private async Task<HttpClient> ClientWithImportedArmyAsync()
+    {
+        var client = _factory.CreateClient();
+        var response = await ImportAsync(client, ReadRealExport("gw-app-export.txt"));
+        response.EnsureSuccessStatusCode();
+        return client;
+    }
+
     [Fact]
     public async Task PostingAnAdjustment_ReturnsAFragmentReflectingTheNewRemainingCount()
     {
-        var client = _factory.CreateClient();
+        var client = await ClientWithImportedArmyAsync();
         var adjustments = new[]
         {
             new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1), RemainingCount: 2)
@@ -34,7 +47,7 @@ public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory
     [Fact]
     public async Task PostingAnEmptyBatch_ReturnsAnEmptyResponse()
     {
-        var client = _factory.CreateClient();
+        var client = await ClientWithImportedArmyAsync();
 
         var response = await client.PostAsJsonAsync("/api/live-play/casualties", Array.Empty<CasualtyAdjustment>(), TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
@@ -46,7 +59,7 @@ public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory
     [Fact]
     public async Task PostingAnUnresolvableAdjustment_DoesNotFail_AndStillReturnsThatUnitsFragment()
     {
-        var client = _factory.CreateClient();
+        var client = await ClientWithImportedArmyAsync();
         var adjustments = new[]
         {
             new CasualtyAdjustment(new CasualtyCoordinate(0, "No Such Component", "No Such Statline", -1), RemainingCount: 0)
@@ -57,5 +70,21 @@ public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory
 
         var fragments = await response.Content.ReadFromJsonAsync<Dictionary<int, string>>(TestContext.Current.CancellationToken);
         fragments.Should().ContainKey(0); // still rendered, just identical to pristine
+    }
+
+    [Fact]
+    public async Task PostingAnAdjustment_WithNoActiveSessionImport_ReturnsAnEmptyResponse()
+    {
+        var client = _factory.CreateClient();
+        var adjustments = new[]
+        {
+            new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1), RemainingCount: 2)
+        };
+
+        var response = await client.PostAsJsonAsync("/api/live-play/casualties", adjustments, TestContext.Current.CancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var fragments = await response.Content.ReadFromJsonAsync<Dictionary<int, string>>(TestContext.Current.CancellationToken);
+        fragments.Should().BeEmpty();
     }
 }

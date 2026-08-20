@@ -1,12 +1,19 @@
+/* GW-datasheet-inspired light theme, shared by every current page (documented at
+   .claude/design-tokens.md). Promoted here from a page-local .live-play-page redeclaration once a
+   second page (/Import) needed the same theme - see design-tokens.md's Mechanism note. */
 :root {
-    --bg: #1a1a2e;
-    --bg2: #16213e;
-    --bg3: #0f3460;
-    --accent: #c0392b;
-    --text: #e0e0e0;
-    --text-dim: #a0a0b0;
-    --amber: #f1a94e;
-    --border: #2a2a4e;
+    --bg: #eeece6;
+    --bg2: #fbfaf7;
+    --bg3: #24413f;
+    --accent: #24413f;
+    --text: #262622;
+    --text-dim: #6f6c62;
+    --amber: #a86a1d;
+    /* A separate token from --amber, not a reinterpretation of it - --amber stays the foreground
+       colour for its existing uses (casualty-reset icon, filter badge); this is only a background
+       for the caveated invulnerable-save box, see .insv-box-caveated below. */
+    --amber-tint: color-mix(in srgb, var(--amber) 20%, white);
+    --border: #d9d5c9;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -473,26 +480,10 @@ button[type="submit"]:hover { opacity: 0.85; }
 .sim-error { color: #e74c3c; padding: 0.5rem; font-size: 0.85rem; }
 
 /* ── Live Play page ──
-   GW-datasheet-inspired light theme, scoped entirely to this page: the eight design tokens are
-   redeclared locally so every rule below (and any shared selector like .weapon-table) resolves
-   against these values instead of the unused dark-theme tokens still declared on :root (see
-   legacy/10e-pipeline/.claude/design-tokens.md - the archived pages that used those). Documented
-   at .claude/design-tokens.md. */
+   Layout only - the eight design tokens themselves live on :root now (shared with /Import),
+   documented at .claude/design-tokens.md. */
 
 .live-play-page {
-    --bg: #eeece6;
-    --bg2: #fbfaf7;
-    --bg3: #24413f;
-    --accent: #24413f;
-    --text: #262622;
-    --text-dim: #6f6c62;
-    --amber: #a86a1d;
-    /* A separate token from --amber, not a reinterpretation of it - --amber stays the foreground
-       colour for its existing uses (casualty-reset icon, filter badge); this is only a background
-       for the caveated invulnerable-save box, see .insv-box-caveated below. */
-    --amber-tint: color-mix(in srgb, var(--amber) 20%, white);
-    --border: #d9d5c9;
-
     padding: 1rem;
     max-width: 900px;
     margin: 0 auto;
@@ -939,4 +930,43 @@ button.filter-flag:hover { opacity: 0.8; }
     .army-columns { flex-direction: column; }
     .army-inputs { flex-direction: column; }
     .catalogue-bar { flex-direction: column; align-items: flex-start; }
+}
+
+/* ── Import page ── */
+
+.import-page { padding: 1rem; max-width: 700px; margin: 0 auto; }
+.import-page p { margin-bottom: 1rem; color: var(--text-dim); }
+
+.import-page textarea {
+    width: 100%;
+    background: var(--bg2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.75rem;
+    font-family: monospace;
+    font-size: 0.85rem;
+    resize: vertical;
+}
+
+.import-page button {
+    margin-top: 0.75rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.import-page button:hover { opacity: 0.85; }
+
+.import-error {
+    background: var(--bg2);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 0.75rem;
+    color: var(--text);
+    white-space: pre-wrap;
 }

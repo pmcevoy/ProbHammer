@@ -1,24 +1,38 @@
 using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using ProbHammer.Core.Domain.Catalogue;
-using ProbHammer.Core.Domain.Examples;
 using ProbHammer.Core.Domain.Roster;
+using ProbHammer.Web.Services;
 
 [assembly: InternalsVisibleTo("ProbHammer.Tests")]
 
 namespace ProbHammer.Web.Pages;
 
-public class LivePlayModel : PageModel
+public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvider rosterProvider) : PageModel
 {
     public List<UnitBlockViewModel> Units { get; private set; } = [];
 
-    public void OnGet()
+    // Per live-play-view's "Live Play Redirects Without An Active Import" requirement: a session
+    // with no successfully imported army list has nothing to render, so it's sent to the import
+    // page instead of rendering an empty/erroring page.
+    public IActionResult OnGet()
     {
-        Units = SortRoster(View.MyArmyRoster())
+        var parsedArmyList = sessionStore.Load(HttpContext.Session);
+        if (parsedArmyList is null)
+            return RedirectToPage("/Import");
+
+        Units = BuildUnitBlocks(rosterProvider.Build(parsedArmyList));
+        return Page();
+    }
+
+    // Factored out of OnGet() so its sort/aggregate/build-view-model pipeline is testable directly
+    // against a hand-built ArmyRoster, without needing a real HttpContext.Session.
+    internal static List<UnitBlockViewModel> BuildUnitBlocks(ArmyRoster roster) =>
+        SortRoster(roster.Units)
             .Select(AttachedUnitAggregator.Build)
             .Select(BuildUnitBlock)
             .ToList();
-    }
 
     // Sorts the raw roster using the same criteria OnGet() has always applied to the built views
     // (IsAttachedUnit, initial total model count, Name) - factored out so a casualty-adjusted
@@ -46,18 +60,19 @@ public class LivePlayModel : PageModel
     // values it used to construct the key - CasualtyKey exists only for the DOM data-* attribute and
     // the localStorage map's key, both client-side-only concerns.
 
-    // Rebuilds the roster from scratch (View.MyArmyRoster() - a fresh, pristine ICombatUnit graph
-    // every call, per Examples.Units) and replays every adjustment in the batch onto it before
-    // aggregating. The server holds no state between requests, so the caller (the casualty sync
-    // endpoint) must always pass the *entire* current adjustment set, not just the newest one - see
-    // design.md's "every request carries the full current map" decision, added after this exact bug
-    // was caught mid-implementation. An adjustment whose coordinate doesn't resolve to a real
-    // model-line (out-of-range UnitIndex, unknown ComponentName/StatlineName/LoadoutIndex) is
-    // silently ignored rather than throwing - defensive against stale localStorage from a roster
-    // shape that no longer matches (e.g. after Examples.Units changes).
-    internal static List<AttachedUnitAggregateView> RebuildRoster(IReadOnlyList<CasualtyAdjustment> adjustments)
+    // Rebuilds the roster from scratch (a fresh ArmyRoster re-enriched from the session's stored
+    // ParsedArmyList - see design.md's "Session stores the intermediate, not the graph") and replays
+    // every adjustment in the batch onto it before aggregating. The server holds no state between
+    // requests, so the caller (the casualty sync endpoint) must always pass the *entire* current
+    // adjustment set, not just the newest one - see design.md's "every request carries the full
+    // current map" decision, added after this exact bug was caught mid-implementation. An adjustment
+    // whose coordinate doesn't resolve to a real model-line (out-of-range UnitIndex, unknown
+    // ComponentName/StatlineName/LoadoutIndex) is silently ignored rather than throwing - defensive
+    // against stale localStorage from a roster shape that no longer matches (e.g. after a re-import).
+    internal static List<AttachedUnitAggregateView> RebuildRoster(
+        IReadOnlyList<ICombatUnit> units, IReadOnlyList<CasualtyAdjustment> adjustments)
     {
-        var sortedUnits = SortRoster(View.MyArmyRoster());
+        var sortedUnits = SortRoster(units);
 
         for (var unitIndex = 0; unitIndex < sortedUnits.Count; unitIndex++)
         {

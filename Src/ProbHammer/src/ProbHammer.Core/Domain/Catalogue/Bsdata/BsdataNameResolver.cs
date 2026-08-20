@@ -22,6 +22,12 @@ public static class BsdataNameResolver
         return null;
     }
 
+    /// <summary>Every top-level entry name in the closure - for diagnostic purposes only (a "did you
+    /// mean...?" suggestion on a resolution failure via <see cref="BsdataNameSuggestion"/>), never
+    /// for resolution itself.</summary>
+    public static IEnumerable<string> AllNames(BsdataClosure closure) =>
+        closure.Files.SelectMany(f => f.Catalogue.SharedSelectionEntries).Select(e => e.Name).Distinct(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
     /// Builds an id index over every top-level sharedSelectionEntry in the closure, nearer files'
     /// entries taking precedence on an (extremely unlikely) id collision. Used to resolve

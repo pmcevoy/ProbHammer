@@ -1,0 +1,98 @@
+{
+  "catalogue": {
+    "id": "test-cat-gating",
+    "name": "Test Faction (game-mode-gating fixture)",
+    "gameSystemId": "",
+    "catalogueLinks": [],
+    "sharedSelectionEntries": [
+      {
+        "id": "e-unit",
+        "name": "Test Unit",
+        "type": "unit",
+        "profiles": [
+          { "id": "p-unit", "name": "Test Unit", "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "6\"" }, { "name": "T", "$text": "4" },
+              { "name": "Sv", "$text": "3+" }, { "name": "W", "$text": "2" },
+              { "name": "LD", "$text": "6+" }, { "name": "OC", "$text": "2" }
+            ] },
+          { "id": "p-intrinsic", "name": "Intrinsic Ability", "typeName": "Abilities",
+            "characteristics": [ { "name": "Description", "$text": "Always present." } ] }
+        ],
+        "selectionEntries": [],
+        "selectionEntryGroups": [],
+        "entryLinks": [
+          { "name": "Crusade", "targetId": "g-crusade", "type": "selectionEntryGroup" },
+          { "name": "Mark of Chaos", "targetId": "g-mark", "type": "selectionEntryGroup" }
+        ],
+        "infoLinks": []
+      }
+    ],
+    "sharedSelectionEntryGroups": [
+      {
+        "id": "g-crusade",
+        "name": "Crusade",
+        "modifiers": [
+          {
+            "type": "set",
+            "field": "hidden",
+            "value": true,
+            "conditions": [
+              { "type": "lessThan", "field": "forces", "scope": "roster", "childId": "force-crusade" }
+            ]
+          }
+        ],
+        "selectionEntries": [
+          {
+            "id": "e-crusade-boon",
+            "name": "Chaos Boon Option",
+            "type": "upgrade",
+            "profiles": [
+              { "id": "p-boon", "name": "Warp Stalker", "typeName": "Abilities",
+                "characteristics": [ { "name": "Description", "$text": "Crusade-only, should never appear." } ] }
+            ],
+            "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+          }
+        ],
+        "selectionEntryGroups": [],
+        "entryLinks": [],
+        "infoLinks": []
+      },
+      {
+        "id": "g-mark",
+        "name": "Mark of Chaos",
+        "modifiers": [
+          {
+            "type": "set",
+            "field": "hidden",
+            "value": true,
+            "conditionGroups": [
+              {
+                "type": "and",
+                "conditions": [
+                  { "type": "instanceOf", "field": "selections", "scope": "force", "childId": "force-army-roster" }
+                ]
+              }
+            ]
+          }
+        ],
+        "selectionEntries": [
+          {
+            "id": "e-mark-option",
+            "name": "Tzeentch",
+            "type": "upgrade",
+            "profiles": [
+              { "id": "p-mark", "name": "Fake Mark Option", "typeName": "Abilities",
+                "characteristics": [ { "name": "Description", "$text": "Hidden in Army Roster mode, should never appear." } ] }
+            ],
+            "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+          }
+        ],
+        "selectionEntryGroups": [],
+        "entryLinks": [],
+        "infoLinks": []
+      }
+    ],
+    "sharedProfiles": []
+  }
+}

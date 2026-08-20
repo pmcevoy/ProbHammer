@@ -38,9 +38,18 @@ public sealed class Datasheet
             ? statline
             : throw new KeyNotFoundException($"Datasheet '{Name}' has no statline named '{name}'.");
 
+    public bool TryGetStatline(string name, out Statline statline) => _statlinesByName.TryGetValue(name, out statline!);
+
     /// <summary>Resolves a single named weapon profile without enumerating every profile the datasheet defines.</summary>
     public WeaponProfile ResolveWeaponProfile(string name) =>
         _weaponProfiles.TryGetValue(name, out var profile)
             ? profile
             : throw new KeyNotFoundException($"Datasheet '{Name}' has no weapon profile named '{name}'.");
+
+    public bool TryResolveWeaponProfile(string name, out WeaponProfile profile) => _weaponProfiles.TryGetValue(name, out profile!);
+
+    /// <summary>Every weapon profile name this Datasheet defines - exposed for diagnostic purposes
+    /// (e.g. army-roster-enrichment's "did you mean" suggestion on a resolution failure), not for
+    /// enumerating a full options menu (see ResolveWeaponProfile's own on-demand-only design).</summary>
+    public IReadOnlyList<string> WeaponNames => _weaponProfiles.Keys.ToList();
 }

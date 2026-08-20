@@ -1,7 +1,8 @@
 # Visual Design Specification
 
-GW-datasheet-inspired light theme for `/LivePlay`, the only live page today. No web fonts —
-system font throughout. No monospace — stat/weapon numbers render in the regular body weight.
+GW-datasheet-inspired light theme, shared by every current live page (`/LivePlay`, `/Import`). No
+web fonts — system font throughout. No monospace outside `/Import`'s paste textarea — stat/weapon
+numbers render in the regular body weight.
 
 ---
 
@@ -24,11 +25,15 @@ values in components.
 
 ## Mechanism
 
-Declared by redeclaring all eight custom properties locally on the `.live-play-page` selector in
-`site.css`, rather than as a separate stylesheet — every rule scoped under it (including shared
-selectors like `.weapon-table`) resolves against these values. `site.css` is not split by page; if
-a second page with its own theme is ever added, promote this into a proper multi-theme structure
-instead of copying the pattern a second time.
+Declared once on `:root` in `site.css` (not split by page, not a separate stylesheet), so every
+page shares the same theme by default — `body`'s own `background`/`color` already reference these
+tokens, so a new page needs no per-page redeclaration to pick up the theme, only its own layout
+rules (e.g. `.import-page`'s padding/max-width, alongside `.live-play-page`'s). Originally declared
+locally on `.live-play-page` only, back when it was the sole live page; promoted to `:root` when
+`/Import` (`import-army-list-for-live-play`) became a second page needing the identical theme,
+per this file's own prior guidance not to copy the pattern a second time. A future page wanting a
+*different* theme would still redeclare the tokens it wants to override on its own page-scoped
+selector, same mechanism as before, just no longer the default case.
 
 ---
 

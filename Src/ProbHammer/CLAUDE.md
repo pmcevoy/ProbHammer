@@ -11,9 +11,10 @@ After every implementation change — feature, bug fix, or design decision — u
 A live-game tool for use on a phone or tablet at the Warhammer 40K table. The end goal: paste
 two army list exports (attacker and defender), enrich them against catalogue data, and use the
 resulting page to select weapons and run instant Monte Carlo simulations for expected damage and
-kills. Today's app implements one slice of this — `/LivePlay`, a read-only reference view with
-live casualty tracking, built on hand-authored fixture data rather than a parsed export, with no
-simulation wired up yet.
+kills. Today's app implements the first half of this — paste a real GW-app 11e export at `/Import`,
+have it parsed and resolved against real BSData catalogue data, and view the result at
+`/LivePlay`: a read-only reference view with live casualty tracking, per user session. No attacker
++ defender two-roster flow or simulation wired up yet.
 
 ---
 
@@ -21,7 +22,7 @@ simulation wired up yet.
 
 ```
 wh40k-army-enricher/
-  ProbHammer.Web/        ASP.NET Core web application (Razor Pages + JS) — /LivePlay only
+  ProbHammer.Web/        ASP.NET Core web application (Razor Pages + JS) — /Import and /LivePlay
   ProbHammer.Core/       Domain logic — the live 11e model (Domain/Catalogue, Domain/Roster,
                           Domain/Examples)
   ProbHammer.Tests/      xUnit test suite
@@ -40,11 +41,16 @@ wh40k-army-enricher/
 ## Architecture Overview
 
 `ProbHammer.Core` holds the live 11e domain model — `Domain/Catalogue` (Datasheet, Statline,
-WeaponProfile), `Domain/Roster` (Unit, AttachedUnit, per-model-line remaining-count tracking),
-`Domain/Examples` (hand-authored fixture army, standing in for a parsed export). No BSData or
-simulation wiring exists yet. `ProbHammer.Web` serves one page, `/LivePlay`: a read-only reference
-view over that fixture army with live casualty tracking (browser `localStorage` + a full-map POST
-that rebuilds and re-renders server-side — no session state).
+WeaponProfile, plus `Domain/Catalogue/Bsdata` for real BSData JSON ingestion), `Domain/Roster`
+(Unit, AttachedUnit, per-model-line remaining-count tracking, `ArmyRosterEnricher` for resolving a
+parsed army list against BSData), `Domain/Import` (`ArmyListParser`, parsing a raw GW-app 11e
+export into a structured intermediate), `Domain/Examples` (hand-authored fixture army, no longer
+wired into `Web`, kept for future domain-model exploration). `ProbHammer.Web` serves two pages:
+`/Import` (paste an export, parsed + enriched + stored in ASP.NET Core Session) and `/LivePlay` (a
+read-only reference view over the current session's imported army, with live casualty tracking —
+browser `localStorage` plus a full-map POST that rebuilds and re-renders server-side from the
+session's stored parsed list, no server-held roster state between requests). No simulation wiring
+exists yet.
 
 Full domain model detail: @.claude/domain-model-11e.md  
 Implementation gotchas and defensive notes: @.claude/implementation-notes.md  

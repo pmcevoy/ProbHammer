@@ -11,9 +11,7 @@ public class LivePlayModelTests
     [Fact]
     public void OnGet_OrdersAttachedUnitsBeforePlainUnits_LargestFirstWithinEachGroup_TiesByName()
     {
-        var model = new LivePlayModel();
-
-        model.OnGet();
+        var units = LivePlayModel.BuildUnitBlocks(View.Roster());
 
         // Attached-sourced units (Crusader Squad x2 @ 12 models, Sword Bretheren @ 5) precede
         // plain-Unit-sourced ones (Assault Intercessor / Howling Banshees / Scout @ 5 models each,
@@ -22,7 +20,7 @@ public class LivePlayModelTests
         // Marshal Helbrecht..." sorts before "Marshal..." ascending; within the tied 5-model plain
         // trio, "Assault Intercessor" < "Howling Banshees" < "Scout" ascending; within the tied
         // 1-model plain trio, "Canis Rex" < "Impulsor" < "Twin-Ward Sentinel" ascending.
-        model.Units.Select(u => u.Name).Should().Equal(
+        units.Select(u => u.Name).Should().Equal(
             "Crusader Squad with High Marshal Helbrecht and Crusade Ancient",
             "Crusader Squad with Marshal and Lieutenant",
             "Sword Bretheren Squad with Marshal",
@@ -199,11 +197,9 @@ public class LivePlayModelTests
     [Fact]
     public void OnGet_AttachesContributionBreakdown_ForCrusaderSquadsMergedBoltPistolRow()
     {
-        var model = new LivePlayModel();
+        var units = LivePlayModel.BuildUnitBlocks(View.Roster());
 
-        model.OnGet();
-
-        var unit = model.Units.Single(u => u.Name == "Crusader Squad with High Marshal Helbrecht and Crusade Ancient");
+        var unit = units.Single(u => u.Name == "Crusader Squad with High Marshal Helbrecht and Crusade Ancient");
         var boltPistolRow = unit.RangedWeapons.Single(w =>
             w.Entry.Profile.Name.Equals("Bolt pistol", StringComparison.OrdinalIgnoreCase));
 
@@ -228,11 +224,9 @@ public class LivePlayModelTests
         // Pyre pistol is carried only by the Sword Brother (1 model, D6 attacks) - the exact
         // "it was the Sword Brother that contributed it" case: a single contributor, still shown
         // because the unit as a whole has several other ModelLines.
-        var model = new LivePlayModel();
+        var units = LivePlayModel.BuildUnitBlocks(View.Roster());
 
-        model.OnGet();
-
-        var unit = model.Units.Single(u => u.Name == "Crusader Squad with High Marshal Helbrecht and Crusade Ancient");
+        var unit = units.Single(u => u.Name == "Crusader Squad with High Marshal Helbrecht and Crusade Ancient");
         var pyrePistolRow = unit.RangedWeapons.Single(w => w.Entry.Profile.Name == "Pyre pistol");
 
         pyrePistolRow.Breakdown.Should().BeEquivalentTo(
@@ -250,11 +244,9 @@ public class LivePlayModelTests
         // expand trigger. Breakdown itself still has one raw row per weapon (its own SelectKey) -
         // that data isn't gated by ShowsBreakdownTrigger, since selection-scoped filtering still
         // needs it even for a unit with only one addressable statline.
-        var model = new LivePlayModel();
+        var units = LivePlayModel.BuildUnitBlocks(View.Roster());
 
-        model.OnGet();
-
-        var unit = model.Units.Single(u => u.Name == "Impulsor");
+        var unit = units.Single(u => u.Name == "Impulsor");
 
         unit.RangedWeapons.Should().OnlyContain(w => !w.ShowsBreakdownTrigger && w.Breakdown.Count == 1);
         unit.MeleeWeapons.Should().OnlyContain(w => !w.ShowsBreakdownTrigger && w.Breakdown.Count == 1);
@@ -336,7 +328,7 @@ public class LivePlayModelTests
     {
         var pristine = LivePlayModel.SortRoster(View.MyArmyRoster()).Select(AttachedUnitAggregator.Build).ToList();
 
-        var rebuilt = LivePlayModel.RebuildRoster([]);
+        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(),[]);
 
         rebuilt.Select(v => v.Name).Should().Equal(pristine.Select(v => v.Name));
     }
@@ -349,7 +341,7 @@ public class LivePlayModelTests
         // statline (count 4) on the Crusader Squad bodyguard, so LoadoutIndex is the -1 sentinel.
         var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1), RemainingCount: 2);
 
-        var rebuilt = LivePlayModel.RebuildRoster([adjustment]);
+        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(),[adjustment]);
 
         var unit = rebuilt[0];
         unit.Name.Should().Be("Crusader Squad with High Marshal Helbrecht and Crusade Ancient");
@@ -363,7 +355,7 @@ public class LivePlayModelTests
         // Astartes chainsword at index 1 - see AttachedUnitAggregatorTests' LoadoutIndex tests).
         var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Initiate", 0), RemainingCount: 0);
 
-        var rebuilt = LivePlayModel.RebuildRoster([adjustment]);
+        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(),[adjustment]);
 
         var initiate = rebuilt[0].Statlines.Single(s => s.StatlineName == "Initiate");
         initiate.Loadouts[0].RemainingCount.Should().Be(0); // Power fist loadout, fully removed
@@ -376,7 +368,7 @@ public class LivePlayModelTests
     {
         var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1), RemainingCount: 99);
 
-        var rebuilt = LivePlayModel.RebuildRoster([adjustment]);
+        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(),[adjustment]);
 
         rebuilt[0].Statlines.Single(s => s.StatlineName == "Neophyte").RemainingCount.Should().Be(4); // clamped at Count
     }
@@ -392,7 +384,7 @@ public class LivePlayModelTests
         var adjustment = new CasualtyAdjustment(
             new CasualtyCoordinate(unitIndex, componentName, statlineName, loadoutIndex), RemainingCount: 0);
 
-        var act = () => LivePlayModel.RebuildRoster([adjustment]);
+        var act = () => LivePlayModel.RebuildRoster(View.MyArmyRoster(),[adjustment]);
 
         act.Should().NotThrow();
         var pristine = LivePlayModel.SortRoster(View.MyArmyRoster()).Select(AttachedUnitAggregator.Build).ToList();

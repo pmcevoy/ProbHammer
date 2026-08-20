@@ -1,10 +1,26 @@
+using ProbHammer.Core.Domain.Catalogue.Bsdata;
+using ProbHammer.Core.Domain.Import;
 using ProbHammer.Web.Pages;
 using ProbHammer.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var bsdataRoot = Path.Combine(
+    builder.Environment.ContentRootPath,
+    builder.Configuration["Bsdata:RootDirectory"] ?? "BsData");
+var bsdataSource = new LocalDiskBsdataCatalogueSource(bsdataRoot);
+
+builder.Services.AddSingleton<IBsdataCatalogueSource>(bsdataSource);
+builder.Services.AddSingleton(new BsdataCatalogueCache(bsdataSource));
+builder.Services.AddSingleton<IArmyListParser, ArmyListParser>();
+builder.Services.AddSingleton<IArmyRosterProvider, ArmyRosterProvider>();
+builder.Services.AddSingleton<ISessionArmyListStore, SessionArmyListStore>();
+
 builder.Services.AddSingleton<IRazorPartialRenderer, RazorPartialRenderer>();
 builder.Services.AddScoped<ILivePlayCasualtyService, LivePlayCasualtyService>();
+
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession();
 
 builder.Services.AddRazorPages();
 
@@ -17,6 +33,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 app.UseRouting();
+app.UseSession();
 app.MapRazorPages();
 
 // Sync /LivePlay casualty adjustments and return rendered fragments for the affected units

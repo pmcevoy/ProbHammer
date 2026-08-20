@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace ProbHammer.Core.Domain.Catalogue.Bsdata.Json;
@@ -42,6 +43,19 @@ public sealed class BsCatalogue
     /// squad reaches its troop-model statline this way, marked "noindex" on the shared profile
     /// itself since it isn't meant to double-display anywhere else).</summary>
     public List<BsProfile> SharedProfiles { get; set; } = [];
+
+    /// <summary>Force-type definitions (e.g. "Army Roster", "Crusade Force") - populated only on
+    /// the game-system file ("Warhammer 40,000.json"). Used solely to resolve the id a
+    /// game-mode-gating modifier's condition references by name (see
+    /// BsdataDatasheetMapper.IsGameModeGated) - never for roster/force-composition validation
+    /// itself, which stays out of scope.</summary>
+    public List<BsForceEntry> ForceEntries { get; set; } = [];
+}
+
+public sealed class BsForceEntry
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
 }
 
 public sealed class BsCatalogueLink
@@ -68,6 +82,12 @@ public sealed class BsSelectionEntry
     /// <summary>References to standalone profiles (see BsCatalogue.SharedProfiles) of type
     /// "profile", resolved by id rather than nested directly in Profiles.</summary>
     public List<BsEntryLink> InfoLinks { get; set; } = [];
+
+    /// <summary>See BsdataDatasheetMapper.IsGameModeGated - only the "set hidden=true, gated by a
+    /// force-type condition" shape is ever interpreted; every other modifier use (points-cost
+    /// scaling, composition rules, etc.) is deliberately left unmapped/unread, unchanged from this
+    /// project's existing "no wargear constraint validation" stance.</summary>
+    public List<BsModifier> Modifiers { get; set; } = [];
 }
 
 public sealed class BsSelectionEntryGroup
@@ -78,6 +98,36 @@ public sealed class BsSelectionEntryGroup
     public List<BsSelectionEntryGroup> SelectionEntryGroups { get; set; } = [];
     public List<BsEntryLink> EntryLinks { get; set; } = [];
     public List<BsEntryLink> InfoLinks { get; set; } = [];
+    public List<BsModifier> Modifiers { get; set; } = [];
+}
+
+/// <summary>A BSData "modifiers" entry - the rules-engine primitive that sets some field to some
+/// value when its condition tree evaluates true. Only ever interpreted narrowly (see
+/// BsdataDatasheetMapper.IsGameModeGated): "does a hidden=true modifier's condition tree reference
+/// a specific force-type id anywhere" - a plain existence check, not general boolean evaluation
+/// (AND/OR nesting, comparison operators, etc. are all read structurally but never actually
+/// evaluated as logic).</summary>
+public sealed class BsModifier
+{
+    public string Type { get; set; } = "";
+    public string Field { get; set; } = "";
+    public JsonElement Value { get; set; }
+    public List<BsCondition> Conditions { get; set; } = [];
+    public List<BsConditionGroup> ConditionGroups { get; set; } = [];
+}
+
+public sealed class BsCondition
+{
+    public string Type { get; set; } = "";
+    public string ChildId { get; set; } = "";
+    public string Scope { get; set; } = "";
+}
+
+public sealed class BsConditionGroup
+{
+    public string Type { get; set; } = "";
+    public List<BsCondition> Conditions { get; set; } = [];
+    public List<BsConditionGroup> ConditionGroups { get; set; } = [];
 }
 
 /// <summary>
