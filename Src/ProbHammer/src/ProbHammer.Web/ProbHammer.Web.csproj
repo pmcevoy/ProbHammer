@@ -4,6 +4,12 @@
     <ProjectReference Include="..\ProbHammer.Core\ProbHammer.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="BSData\" />
+    <!--Don't copy the BSData implicitly into the image: we'll link in the Dockerfile-->
+    <Content Remove="BsData/**" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>

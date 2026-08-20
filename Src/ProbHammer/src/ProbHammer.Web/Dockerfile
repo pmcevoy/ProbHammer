@@ -13,5 +13,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0-noble-chiseled AS final
 WORKDIR /app
 EXPOSE 8080
 
+COPY --link src/ProbHammer.Web/BsData/ /app/BsData/
 COPY --link --from=build /app/publish .
+
 ENTRYPOINT ["dotnet", "ProbHammer.Web.dll"]
