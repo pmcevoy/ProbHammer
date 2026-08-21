@@ -14,6 +14,10 @@
        for the caveated invulnerable-save box, see .insv-box-caveated below. */
     --amber-tint: color-mix(in srgb, var(--amber) 20%, white);
     --border: #d9d5c9;
+    /* Lighter, flat shade of the bottle-green --bg3 - not derived from it via opacity, so it stays
+       a distinct, redefinable token rather than an implementation-dependent fade. Gives .lp-section
+       summary bars a step down in visual weight from the solid --bg3 unit-name h2 above them. */
+    --bg3-tint: color-mix(in srgb, var(--bg3) 55%, white);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -590,7 +594,7 @@ button.filter-flag:hover { opacity: 0.8; }
     user-select: none;
     list-style: none;
     padding: 0.35rem 0.6rem;
-    background: var(--bg3);
+    background: var(--bg3-tint);
     color: #fff;
     font-weight: 600;
     font-size: 0.82rem;
@@ -886,11 +890,21 @@ button.filter-flag:hover { opacity: 0.8; }
 
 /* ── Statline ability columns ── */
 
+/* padding: 0 (not the box's own inset) so every bit of internal spacing comes from
+   .ability-name-line's own padding uniformly, regardless of row parity or position - see
+   restyle-ability-list-rows/design.md for why a separate container-level padding band
+   reintroduced a visible gap under an odd/unstriped last row. display: flex + flex-direction:
+   column, paired with flex: 1 1 auto on each .ability-name-line, lets a short ability list's rows
+   grow to fill the cell's full height instead of leaving blank space below the last row - needed
+   because a .spans-component cell's height is driven by the statline rows it spans, not by its
+   own ability count. */
 .statline-cell.col-model-abilities,
 .statline-cell.col-unit-abilities {
     border: 1px dashed var(--border);
     border-radius: 3px;
-    padding: 0.4rem 0.5rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
     font-size: 0.78rem;
     max-height: 10rem;
     overflow: hidden;
@@ -915,7 +929,26 @@ button.filter-flag:hover { opacity: 0.8; }
     border-color: transparent;
 }
 
-.ability-name-line { padding: 0.1rem 0; font-weight: 600; }
+.ability-name-line {
+    padding: 0.3rem 0.6rem;
+    font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+}
+
+/* :nth-child(even), not a server-assigned alternating class: unlike the weapon table's
+   contribution-breakdown rows (site.css's own "Striping is driven by..." note below), no JS ever
+   hides an individual .ability-name-line - only the whole ability cell collapses as a unit - so
+   there's no hidden-row/parity hazard here. Fill color can't reuse the weapon table's literal
+   var(--bg): a .spans-component ability cell already uses var(--bg) as its own background
+   (above), which would make the stripe invisible against it. color-mix(border 70%, bg2) stays
+   visible against both a plain cell (--bg2) and a .spans-component cell (--bg) - see
+   restyle-ability-list-rows/design.md for the full comparison trail. */
+.ability-name-line:nth-child(even) {
+    background: color-mix(in srgb, var(--border) 70%, var(--bg2));
+}
 
 .live-play-page .keywords {
     margin-top: 0.5rem;

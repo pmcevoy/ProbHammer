@@ -22,6 +22,7 @@ values in components.
 | `--amber` | `#a86a1d` | Draw-the-eye controls/values (e.g. the casualty-reset icon, the filter badge, the caveated invulnerable-save box's border) |
 | `--amber-tint` | `color-mix(in srgb, var(--amber) 20%, white)` | Background only, for the caveated invulnerable-save box — a separate token from `--amber` itself, not a reinterpretation of it; `--amber`'s other uses stay foreground-only |
 | `--border` | `#d9d5c9` | Borders and dividers |
+| `--bg3-tint` | `color-mix(in srgb, var(--bg3) 55%, white)` | Background only, for `.lp-section` summary bars (Statline/Ranged Weapons/Melee Weapons disclosure headers) — a lighter, flat step down in visual weight from the solid `--bg3` unit-name h2 above them, so the two don't read as the same priority. Same "derived tint, not an opacity fade" pattern as `--amber-tint`: a named, independently redefinable token rather than `--bg3` at reduced opacity, which would also fade the bar's own arrow/icon children and whose rendered color would depend on whatever sits behind it. |
 
 ## Mechanism
 
@@ -68,5 +69,15 @@ selector, same mechanism as before, just no longer the default case.
 - **Zebra striping** (weapon tables): alternate rows tinted `var(--bg)` against the card's `--bg2`
   base — driven by each row's own list index server-side, not DOM child-position, so hidden
   breakdown rows can't shift the parity of rows after them
+- **Zebra striping** (Model/Unit ability lists, `.ability-name-line`): alternate rows tinted
+  `color-mix(in srgb, var(--border) 70%, var(--bg2))`, via plain `:nth-child(even)` rather than a
+  server-assigned class — safe here because, unlike a weapon table's breakdown rows, no JS ever
+  hides an individual ability line (only the whole ability cell collapses as a unit). Can't reuse
+  the weapon table's literal `var(--bg)` fill: a `.spans-component` ability cell (one spanning
+  several statline rows) already uses `var(--bg)` as its own background, which would make the
+  stripe invisible against it — see `openspec/changes/restyle-ability-list-rows/design.md` for the
+  full comparison trail (a flat `var(--border)` was visible but read too dark; this mix lands
+  between the two, distinct from both a plain cell's `--bg2` and a `.spans-component` cell's
+  `--bg`).
 
 No dedicated responsive breakpoint today — the page is a single centered column, `max-width: 900px`.
