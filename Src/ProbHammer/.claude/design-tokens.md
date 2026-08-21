@@ -16,7 +16,7 @@ values in components.
 | `--bg` | `#eeece6` | Page background |
 | `--bg2` | `#fbfaf7` | Card/panel surfaces |
 | `--bg3` | `#24413f` | Section header bars |
-| `--accent` | `#24413f` | Emphasis: stat sub-values (e.g. invulnerable save), primary headings |
+| `--accent` | `#24413f` | Emphasis: stat sub-values (e.g. invulnerable save), primary headings, a `.rule-reference` link (a resolved `[BRACKET]` cross-reference inside popover text) |
 | `--text` | `#262622` | Primary text |
 | `--text-dim` | `#6f6c62` | Labels, counts, dim info |
 | `--amber` | `#a86a1d` | Draw-the-eye controls/values (e.g. the casualty-reset icon, the filter badge, the caveated invulnerable-save box's border) |
@@ -49,7 +49,17 @@ selector, same mechanism as before, just no longer the default case.
   at `0.65rem` like a stat label. A caveated save's box gets an off-color (`--amber-tint`)
   background instead of the normal `--bg`, plus its linked ability's full text rendered in italics
   beneath the box at `0.7rem` — the one place on `/LivePlay` that shows an ability's text rather
-  than only its name, scoped narrowly to this one case (see `.claude/domain-model-11e.md`).
+  than only its name, scoped narrowly to this one case (see `.claude/domain-model-11e.md`). Since
+  `rules-glossary-popovers`, a second place now shows full rule text: a popover's own body
+  (`.rule-popover-text`) at `0.8rem`, with `white-space: pre-line` so a real line break in the
+  source text (e.g. "Lethal Hits"' own Designer's Note, a separate paragraph from its main
+  description) renders as one, rather than the existing `insv-caveat-text` box's plain run-on text
+  — that box is deliberately left as-is (see `.claude/domain-model-11e.md`'s "Rules Glossary &
+  Popovers"), so the two full-text-rendering sites don't share identical wrapping behavior. A
+  popover's `^^small-caps^^` markup renders via `font-variant: small-caps` (`.rule-text-smallcaps`)
+  — the correct CSS tool for real small caps: it shrinks only the lowercase letters, leaving an
+  already-uppercase letter at full size, matching how a proper name like `^^Fabius Bile^^` is
+  meant to look.
 
 ---
 
@@ -57,8 +67,14 @@ selector, same mechanism as before, just no longer the default case.
 
 - Spacing is tight — this is a game tool, not a marketing page.
 - Border radius: `4px` on unit-block cards, `3px` on section/chip/control surfaces, `2px` on the
-  smallest inline controls.
-- All borders use `--border`. No drop shadows.
+  smallest inline controls. Since `rules-glossary-popovers`: a weapon-keyword chip (`.weapon-tag`)
+  follows the `3px` chip scale; a popover panel (`.rule-popover`) follows the `4px` card scale, on
+  the reasoning that a popover is a self-contained floating surface closer in weight to a
+  unit-block card than to an inline control — both are existing scale steps applied to new
+  surfaces, not new radius values.
+- All borders use `--border`. No drop shadows — a popover panel follows this too (no `box-shadow`),
+  relying on its `--border` outline and the browser's own top-layer paint order to read as
+  "floating" above the page.
 
 ---
 
@@ -70,14 +86,50 @@ selector, same mechanism as before, just no longer the default case.
   base — driven by each row's own list index server-side, not DOM child-position, so hidden
   breakdown rows can't shift the parity of rows after them
 - **Zebra striping** (Model/Unit ability lists, `.ability-name-line`): alternate rows tinted
-  `color-mix(in srgb, var(--border) 70%, var(--bg2))`, via plain `:nth-child(even)` rather than a
-  server-assigned class — safe here because, unlike a weapon table's breakdown rows, no JS ever
-  hides an individual ability line (only the whole ability cell collapses as a unit). Can't reuse
-  the weapon table's literal `var(--bg)` fill: a `.spans-component` ability cell (one spanning
-  several statline rows) already uses `var(--bg)` as its own background, which would make the
-  stripe invisible against it — see `openspec/changes/restyle-ability-list-rows/design.md` for the
-  full comparison trail (a flat `var(--border)` was visible but read too dark; this mix lands
-  between the two, distinct from both a plain cell's `--bg2` and a `.spans-component` cell's
-  `--bg`).
+  `color-mix(in srgb, var(--border) 70%, var(--bg2))`, via `:nth-of-type(even)` — originally plain
+  `:nth-child(even)`, since no JS ever hides an individual ability line (only the whole ability
+  cell collapses as a unit) so there was no hidden-row/parity hazard at the time. `rules-glossary-
+  popovers` changed `.ability-name-line` from a `<div>` to a `<button popovertarget>` with its own
+  paired `.rule-popover` `<div>` rendered as an interleaved *sibling* (never nested inside the
+  button — a `<button>` can't validly contain flow content), which shifts `:nth-child` parity
+  exactly the way the weapon table's own breakdown rows already taught this codebase to avoid (see
+  below) — `:nth-of-type` sidesteps it by counting only same-tag (`<button>`) siblings, ignoring
+  the interleaved `<div>` popovers entirely. Can't reuse the weapon table's literal `var(--bg)`
+  fill: a `.spans-component` ability cell (one spanning several statline rows) already uses
+  `var(--bg)` as its own background, which would make the stripe invisible against it — see
+  `openspec/changes/restyle-ability-list-rows/design.md` for the full comparison trail (a flat
+  `var(--border)` was visible but read too dark; this mix lands between the two, distinct from both
+  a plain cell's `--bg2` and a `.spans-component` cell's `--bg`).
+- **Weapon-keyword chip, resolved vs. unresolved** (`rules-glossary-popovers`): a chip with a
+  matching glossary entry (`.weapon-tag-resolved`, itself a popover-trigger `<button>`) renders at
+  full opacity with the existing Hover convention above as its only "this is tappable" cue; a chip
+  with no match (`.weapon-tag-unresolved`, a plain non-interactive `<span>`) is dimmed via the
+  existing Disabled convention (`opacity: 0.55`) rather than a distinct color, so it reads as "not
+  tappable" without inventing a new state.
 
 No dedicated responsive breakpoint today — the page is a single centered column, `max-width: 900px`.
+
+---
+
+## Popovers (`rules-glossary-popovers`)
+
+Every ability name and resolvable weapon-keyword chip is a native `popover="auto"` trigger — see
+`.claude/domain-model-11e.md`'s "Rules Glossary & Popovers" for the full domain-model/wiring
+picture; this section covers only the visual/positioning decisions.
+
+- **Placement**: anchored locally to its own trigger (never centered), via a per-instance
+  `anchor-name`/`position-anchor` CSS custom-property pair (`--a{id}`, unique per trigger/popover
+  pair), wrapped in `@supports (anchor-name: --a)`. Real device testing (the actual target
+  browser, not just `CSS.supports()`) found this genuinely necessary to check, not just a
+  theoretical fallback: that browser reports the relevant anchor-positioning properties as
+  supported and the authored rule is confirmed matched in the CSSOM, yet the resulting position
+  still doesn't resolve near the trigger — a real but immature implementation, not an absent one.
+  No polyfill pursued; a popover still opens/shows/dismisses correctly either way (native
+  `popover="auto"` light-dismiss, not something positioning affects), so only placement quality
+  degrades on a browser like this one, never functionality.
+- **Nesting**: a resolved `[BRACKET]` reference inside an open popover's own text becomes a further
+  nested trigger/popover pair, using the exact same mechanism recursively — no separate visual
+  treatment for a nested vs. top-level popover panel, since the Popover API's own ancestor-aware
+  light-dismiss stacking (established via `popovertarget`, independent of the positioning
+  properties above) is what makes "parent stays open, tap-between closes only the child, tap-
+  outside-both closes both" work with no hand-rolled JS.

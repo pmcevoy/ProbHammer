@@ -9,15 +9,6 @@ entry once it's been turned into a change (archived changes remain the historica
 
 ## `/LivePlay` — Attached Unit view
 
-- **Ability/weapon-keyword definitions popup.** A genuine centre-screen popup (not an inline
-  `<details>` disclosure) triggered by clicking an ability name or a weapon keyword tag (e.g.
-  `[SUSTAINED HITS 1]`), showing its full descriptive text. Distinct in kind from the
-  weapon-contribution breakdown below — that one stays in-place in the table (native disclosure,
-  tabular data); this one needs a real floating/anchored overlay (prose content, works for
-  keywords that appear inline mid-row, doesn't want to push table rows around). Corresponds to
-  `web-app.md`'s "Ability rendering is name-only for now; full-text-on-demand is explicitly
-  deferred" note (currently `/LivePlay` renders `ability.Name` only, no way to see `ability.Text`
-  at all).
 - **Phase-level section toggling across all units at once** — collapse/expand every unit's
   statline/ranged/melee/abilities section together, reusing the same disclosure unit each
   section already uses individually.

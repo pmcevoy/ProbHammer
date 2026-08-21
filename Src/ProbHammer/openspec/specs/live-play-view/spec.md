@@ -337,7 +337,8 @@ entries whose Ability has Scope Unit. Within each column, an ability entry bound
 statline row SHALL render beside that row only; an ability entry with no statline-row binding (a
 component-wide ability) SHALL render beside the first rendered statline row belonging to its
 component, and SHALL visually span every row belonging to that component. Each ability SHALL
-render by Name only; ability descriptive Text is not rendered by this requirement.
+render by Name only; ability descriptive Text is not rendered inline by this requirement, but is
+available on demand via the "Ability And Rule Text Popover" requirement below.
 
 A row-bound ability cell SHALL collapse (hide its ability names) whenever its own row's run is
 collapsed, per "Statline Section Rendering" — i.e. whenever every entry in that run is either
@@ -365,7 +366,8 @@ fully dead. This applies identically to the Model Abilities and Unit Abilities c
 
 #### Scenario: Only the ability name renders
 - **WHEN** an ability entry renders in either column
-- **THEN** only its Name is shown; its descriptive Text is not rendered
+- **THEN** only its Name is shown inline; its descriptive Text is not rendered inline (see
+  "Ability And Rule Text Popover" for on-demand access to it)
 
 #### Scenario: A row-bound ability cell collapses with its own row
 - **WHEN** a row-bound ability entry's own row is collapsed because every entry in that row's run
@@ -522,8 +524,9 @@ Each unit block SHALL group the view's `Weapons` into a Ranged section and a Mel
 entry's `Profile.Type`, rendering the Ranged section before the Melee section, and SHALL omit
 either section entirely when it has no entries. Within each section, entries SHALL be ordered by
 descending expected value of their aggregated `TotalAttacks`. Each entry SHALL show the weapon's
-name, Skill, Strength, AP, Damage, the aggregated total Attacks value, and any ability tags
-rendered inline immediately next to the weapon's name rather than in a separate column. Ranged
+name, Skill, Strength, AP, Damage, the aggregated total Attacks value, and any active ability
+keywords, each rendered as its own bordered chip immediately alongside the weapon's name rather
+than in a separate column or joined with other keywords into a single bracketed group. Ranged
 weapon entries SHALL additionally show Range; Melee weapon entries SHALL NOT show a Range value,
 since it is always the fixed literal "Melee" for that weapon type and carries no information
 beyond the section it's already listed under. No entry's default (collapsed) rendering SHALL
@@ -630,9 +633,16 @@ affects the other weapon section of the same unit block.
   value
 
 #### Scenario: Ability tags render inline next to the weapon name
-- **WHEN** a weapon entry's `Profile` has one or more active ability flags (e.g. `RapidFire > 0`)
-- **THEN** the rendered entry shows those abilities as tags immediately alongside the weapon's
-  name, not in a separate table column
+- **WHEN** a weapon entry's `Profile` has more than one active ability flag (e.g. both `Torrent`
+  and `Pistol` and `IgnoresCover`)
+- **THEN** the rendered entry shows three separate chips immediately alongside the weapon's name —
+  one per keyword — not one chip containing all three joined together
+
+#### Scenario: A keyword chip with no matching glossary entry is not interactive
+- **WHEN** a weapon keyword chip's underlying tag text has no matching entry in the glossary (per
+  `rules-glossary`'s "Glossary Lookup By Normalized Name Or Alias" requirement)
+- **THEN** the chip still renders showing that keyword's text, but is not an interactive trigger
+  and opens no popover
 
 #### Scenario: A weapon entry disappears when none of its contributions are selected
 - **WHEN** every contribution of a weapon entry belongs to a statline or loadout that is currently
@@ -667,6 +677,137 @@ affects the other weapon section of the same unit block.
   Ranged Weapons section, but has no effect on any entry in the Melee Weapons section
 - **THEN** the Ranged Weapons section's disclosure summary shows a filtered indicator and the Melee
   Weapons section's disclosure summary does not
+
+### Requirement: Ability And Rule Text Popover
+Tapping an ability name (in either the Model Abilities or Unit Abilities column) or a weapon
+keyword chip that has a matching entry in the glossary (per `rules-glossary`) SHALL open a popover
+showing that entry's full descriptive text, without navigating away from or reloading the page. A
+weapon keyword chip with no matching glossary entry is not an interactive trigger and opens no
+popover (see "Weapon Section Rendering").
+
+#### Scenario: Tapping an ability name opens its rule text
+- **WHEN** a player taps an ability name rendered in the Model Abilities or Unit Abilities column
+- **THEN** a popover opens showing that ability's full descriptive text
+
+#### Scenario: Tapping a resolvable weapon keyword chip opens its rule text
+- **WHEN** a player taps a weapon keyword chip that has a matching glossary entry (e.g. a
+  `[LETHAL HITS]` chip resolving to the universal "Lethal Hits" rule)
+- **THEN** a popover opens showing that rule's full descriptive text
+
+#### Scenario: Opening a popover does not reload the page
+- **WHEN** a player taps an ability name or a resolvable weapon keyword chip
+- **THEN** the page's existing state (casualty marks, current statline/loadout selection, expanded
+  disclosure sections) is unchanged and no full page navigation occurs
+
+### Requirement: Popover Is Anchored Locally To Its Trigger
+A popover SHALL be positioned adjacent to the specific element that was tapped to open it, rather
+than centered on the screen or otherwise placed independent of what was tapped, so the player does
+not lose their place in the surrounding statline, ability column, or weapon table.
+
+#### Scenario: A popover appears next to what was tapped
+- **WHEN** a player taps an ability name or weapon keyword chip anywhere within a unit block
+- **THEN** the resulting popover renders positioned adjacent to that specific element, not centered
+  on the screen
+
+### Requirement: Popover Remains Functional Without Anchor-Positioning Support
+On a browser that does not support local anchor positioning, a popover SHALL still open and remain
+fully dismissable exactly as elsewhere in this requirement set — only its placement relative to its
+trigger is affected, never whether it appears or can be closed.
+
+#### Scenario: A popover still opens and closes on an unsupporting browser
+- **WHEN** a player taps an ability name or a resolvable weapon keyword chip on a browser without
+  local anchor-positioning support
+- **THEN** a popover still opens showing the expected text and can still be dismissed, even though
+  it is not positioned adjacent to its trigger
+
+### Requirement: Popover Dismissal
+A popover SHALL be dismissable by tapping anywhere outside it, without requiring a dedicated close
+control.
+
+#### Scenario: Tapping outside a popover closes it
+- **WHEN** a popover is open and the player taps anywhere outside it
+- **THEN** the popover closes
+
+### Requirement: Nested Reference Popover
+Within an open popover's own text, a resolved `[BRACKET]` cross-reference (per `rules-glossary`'s
+"Glossary Lookup By Normalized Name Or Alias" requirement) SHALL be an interactive trigger, unless
+it resolves back to a rule already shown somewhere in that popover's own ancestor chain (a direct
+self-reference or a longer cycle), in which case it SHALL be treated the same as an unresolved
+token. Tapping a resolved, non-cyclic reference SHALL open a second popover, anchored to that
+specific reference, showing the referenced rule's text, without closing the popover it was opened
+from. Tapping outside the second popover but still inside the first SHALL close only the second
+popover, leaving the first open. Tapping outside both SHALL close both in one action. An unresolved
+bracket token (no matching glossary entry) is not an interactive trigger.
+
+#### Scenario: Opening a nested popover keeps the parent open
+- **WHEN** a player taps a resolved cross-reference inside an open popover (e.g. tapping
+  `[PRECISION]` while reading a detachment rule's own text)
+- **THEN** a second popover opens showing the "Precision" rule's text, and the first popover
+  remains open and visible
+
+#### Scenario: Dismissing between the two closes only the nested popover
+- **WHEN** both a parent and a nested popover are open, and the player taps a location inside the
+  parent's own content but outside the nested popover
+- **THEN** only the nested popover closes; the parent popover remains open
+
+#### Scenario: Dismissing outside both closes the whole stack
+- **WHEN** both a parent and a nested popover are open, and the player taps a location outside both
+- **THEN** both popovers close
+
+#### Scenario: An unresolved reference within popover text is not interactive
+- **WHEN** an open popover's text contains a `[BRACKET]` token with no matching glossary entry
+- **THEN** that token is not an interactive trigger and tapping it opens no further popover
+
+#### Scenario: A self-referencing rule's own reference to itself is not interactive
+- **WHEN** a popover is showing a rule whose own text contains a `[BRACKET]` reference that
+  resolves back to that same rule (confirmed real shape — the "Sustained Hits", "Anti", and
+  "Cleave" sharedRules entries each reference themselves this way in their own description text)
+- **THEN** that reference is not an interactive trigger and tapping it opens no further popover,
+  the same treatment as an unresolved token — this also applies to a longer reference cycle back
+  to any rule already open in the current popover's own ancestor chain, not only a direct
+  self-reference
+
+### Requirement: Popover Text Preserves Paragraph Breaks
+A popover's rendered text SHALL preserve real line breaks present in the source text as visual
+line breaks, rather than collapsing them to a single space or run-on line.
+
+#### Scenario: Multi-paragraph rule text renders with its paragraph break intact
+- **WHEN** a popover renders rule text containing a real line break (e.g. the "Lethal Hits" rule's
+  Designer's Note, which is a separate paragraph from its main description)
+- **THEN** the two paragraphs render as visually distinct lines/paragraphs, not run together as one
+
+### Requirement: Popover Renders Emphasis Markup As Styling, Not As Links
+A popover SHALL render source emphasis markup as visual styling only, using three distinct styles:
+`*italic*` (single asterisk) as italic text, `**bold**` (double asterisk) as bold text, and
+`^^small-caps^^` (double caret) as small-caps text. None of the three SHALL make the wrapped text
+an interactive/tappable element merely by virtue of that markup — only a resolved `[BRACKET]`
+reference (per "Nested Reference Popover") is tappable, independent of any emphasis markup around
+it.
+
+#### Scenario: Single-asterisk text renders italic
+- **WHEN** a popover renders text containing `*italic text*`
+- **THEN** that text renders in italics
+
+#### Scenario: Double-asterisk text renders bold
+- **WHEN** a popover renders text containing `**bold text**`
+- **THEN** that text renders in bold
+
+#### Scenario: Double-caret text renders small caps
+- **WHEN** a popover renders text containing `^^small caps text^^`
+- **THEN** that text renders in small caps
+
+#### Scenario: Bold and small-caps combine when both wrap the same text
+- **WHEN** a popover renders text containing `^^**Fabius Bile**^^` (a unit name wrapped in both
+  markers at once, confirmed real shape)
+- **THEN** that text renders both bold and small-caps, and tapping it opens no popover
+
+#### Scenario: Nested triple-asterisk emphasis renders as combined bold and italic
+- **WHEN** a popover renders text containing `***Designer's Note:**` followed by running text that
+  stays open until a single closing `*` later in the same paragraph (confirmed real shape — the
+  "Lethal Hits" rule's own Designer's Note, where the bold portion closes after two words but the
+  italic portion continues to the paragraph's end)
+- **THEN** `"Designer's Note:"` renders both bold and italic, and the remaining running text up to
+  the closing `*` renders italic only, matching the source markup's own nesting
 
 ### Requirement: Keyword Section Rendering
 Each unit block SHALL render the view's `Keywords` as a single list of the unit's effective keywords.

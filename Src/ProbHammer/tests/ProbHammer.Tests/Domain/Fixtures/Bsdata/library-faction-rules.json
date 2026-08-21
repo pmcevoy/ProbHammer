@@ -1,0 +1,17 @@
+{
+  "catalogue": {
+    "id": "fixture-library-faction-rules",
+    "name": "Library - Astartes Heresy Legends (fixture)",
+    "library": true,
+    "gameSystemId": "fixture-game-system-shared-rules",
+    "type": "catalogue",
+    "rules": [
+      {
+        "description": "If your Army Faction is **^^Adeptus Astartes^^**, at the start of the first battle round, select one of the following Vows to be active for **^^Adeptus Astartes^^** units from your army.",
+        "name": "Templar Vows",
+        "id": "fixture-templar-vows",
+        "hidden": false
+      }
+    ]
+  }
+}

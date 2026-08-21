@@ -13,15 +13,23 @@ namespace ProbHammer.Web.Services;
 /// duplicating the three-step sequence.</summary>
 public interface IArmyRosterProvider
 {
-    ArmyRoster Build(ParsedArmyList parsedArmyList);
+    ArmyRosterBuildResult Build(ParsedArmyList parsedArmyList);
 }
+
+/// <summary>Bundles the built <see cref="ArmyRoster"/> with the same faction closure's
+/// <see cref="RuleGlossary"/> - both come out of the one <see cref="ResolvedBsdataCatalogue"/>
+/// <see cref="ArmyRosterProvider.Build"/> already resolves, so callers that need to look up
+/// ability/weapon-keyword rule text (rules-glossary) get it for free rather than re-resolving the
+/// catalogue a second time.</summary>
+public sealed record ArmyRosterBuildResult(ArmyRoster Roster, RuleGlossary Glossary);
 
 public sealed class ArmyRosterProvider(BsdataCatalogueCache cache, IBsdataCatalogueSource source) : IArmyRosterProvider
 {
-    public ArmyRoster Build(ParsedArmyList parsedArmyList)
+    public ArmyRosterBuildResult Build(ParsedArmyList parsedArmyList)
     {
         var startingFile = BsdataFactionResolver.ResolveStartingFileName(parsedArmyList.Faction, source.ListFileNames());
         var catalogue = cache.GetOrBuild(startingFile);
-        return ArmyRosterEnricher.Enrich(parsedArmyList, catalogue);
+        var roster = ArmyRosterEnricher.Enrich(parsedArmyList, catalogue);
+        return new ArmyRosterBuildResult(roster, catalogue.Glossary);
     }
 }

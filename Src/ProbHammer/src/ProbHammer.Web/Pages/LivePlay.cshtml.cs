@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using ProbHammer.Core.Domain.Catalogue;
+using ProbHammer.Core.Domain.Catalogue.Bsdata;
 using ProbHammer.Core.Domain.Roster;
 using ProbHammer.Web.Services;
 
@@ -13,6 +14,12 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
 {
     public List<UnitBlockViewModel> Units { get; private set; } = [];
 
+    // Consumed by _UnitBlock.cshtml (via UnitBlockRenderModel) to decide whether a weapon-keyword
+    // chip or ability name is a resolvable rules-glossary reference - see live-play-view's
+    // "Ability And Rule Text Popover"/rules-glossary's "Glossary Lookup By Normalized Name Or
+    // Alias". Set alongside Units in OnGet so both come from the same ArmyRosterBuildResult.
+    public RuleGlossary Glossary { get; private set; } = null!;
+
     // Per live-play-view's "Live Play Redirects Without An Active Import" requirement: a session
     // with no successfully imported army list has nothing to render, so it's sent to the import
     // page instead of rendering an empty/erroring page.
@@ -22,7 +29,9 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
         if (parsedArmyList is null)
             return RedirectToPage("/Import");
 
-        Units = BuildUnitBlocks(rosterProvider.Build(parsedArmyList));
+        var result = rosterProvider.Build(parsedArmyList);
+        Units = BuildUnitBlocks(result.Roster);
+        Glossary = result.Glossary;
         return Page();
     }
 
@@ -452,5 +461,10 @@ public sealed record UnitBlockViewModel(
 /// <summary>Wraps a <see cref="UnitBlockViewModel"/> with its position in
 /// <see cref="LivePlayModel.Units"/> for the <c>_UnitBlock</c> partial - needed for the weapon-row
 /// <c>data-weapon-id</c> derivation (<c>"w-{UnitIndex}-r-{w}"</c>/<c>"w-{UnitIndex}-m-{w}"</c>) and,
-/// from casualty-tracking onward, the casualty coordinate's unit-level qualifier.</summary>
-public sealed record UnitBlockRenderModel(int UnitIndex, UnitBlockViewModel Unit);
+/// from casualty-tracking onward, the casualty coordinate's unit-level qualifier.
+/// <see cref="Glossary"/> travels alongside the view model (rather than being read off
+/// <see cref="LivePlayModel"/> directly) so the casualty-sync endpoint's own fragment re-render
+/// (<see cref="ProbHammer.Web.Services.LivePlayCasualtyService"/>, which renders
+/// <c>_UnitBlock.cshtml</c> directly rather than through a full page request) can supply it too.
+/// </summary>
+public sealed record UnitBlockRenderModel(int UnitIndex, UnitBlockViewModel Unit, RuleGlossary Glossary);

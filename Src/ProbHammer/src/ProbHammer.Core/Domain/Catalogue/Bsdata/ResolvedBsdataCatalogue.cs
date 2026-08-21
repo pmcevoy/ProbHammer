@@ -13,12 +13,14 @@ public sealed class ResolvedBsdataCatalogue(
     BsdataClosure closure,
     IReadOnlyDictionary<string, BsSelectionEntry> idIndex,
     IReadOnlyDictionary<string, BsSelectionEntryGroup> groupIdIndex,
-    IReadOnlyDictionary<string, BsProfile> profileIdIndex)
+    IReadOnlyDictionary<string, BsProfile> profileIdIndex,
+    RuleGlossary glossary)
 {
     public BsdataClosure Closure { get; } = closure;
     public IReadOnlyDictionary<string, BsSelectionEntry> IdIndex { get; } = idIndex;
     public IReadOnlyDictionary<string, BsSelectionEntryGroup> GroupIdIndex { get; } = groupIdIndex;
     public IReadOnlyDictionary<string, BsProfile> ProfileIdIndex { get; } = profileIdIndex;
+    public RuleGlossary Glossary { get; } = glossary;
 
     public static ResolvedBsdataCatalogue Build(IBsdataCatalogueSource source, string startingFileName)
     {
@@ -27,7 +29,8 @@ public sealed class ResolvedBsdataCatalogue(
             closure,
             BsdataNameResolver.BuildIdIndex(closure),
             BsdataNameResolver.BuildGroupIdIndex(closure),
-            BsdataNameResolver.BuildProfileIdIndex(closure));
+            BsdataNameResolver.BuildProfileIdIndex(closure),
+            RuleGlossary.Build(closure));
     }
 
     public Datasheet ResolveDatasheet(string entryName)

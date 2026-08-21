@@ -394,9 +394,14 @@ properties) for anything that doesn't match.
 `Bsdata/`) is the one shape change this ingestion work made outside the new namespace: every
 weapon's exact source keyword text, in source order, included in `EqualityKey()` so two weapons
 that are rules-identical but spelled differently in source data are never silently aggregated as
-one. Rendering (`_UnitBlock.cshtml`'s `WeaponAbilityTags`) still reconstructs text from the typed
-flags today — switching it to read `KeywordsText` instead is deliberately deferred, unconnected to
-`/LivePlay` still running on fixtures with no `KeywordsText` populated.
+one. Rendering (`_UnitBlock.cshtml`'s `WeaponAbilityTags`) still reconstructs its literal ALL-CAPS
+tag strings from the typed boolean/int flags today, not from `KeywordsText` — switching to read
+`KeywordsText` instead remains a separate, still-deferred future step, unconnected to
+`rules-glossary-popovers`'s own use of those same tag strings (each one rendered as its own
+bordered chip and looked up against a `RuleGlossary` to decide whether it becomes a popover trigger
+— see "Weapon-Keyword Chip Rendering" in that change's `tasks.md`, and `RuleGlossary`'s own
+normalized-key resolution below, for why a literal ALL-CAPS tag string reliably matches even though
+it's a reconstruction rather than the verbatim source text `KeywordsText` would carry).
 
 Automated tests never read the external local clone (`C:\Users\Pete\wh40k-11e`, this machine only,
 not part of the repo) — they use trimmed real excerpts copied into
@@ -469,6 +474,175 @@ WeaponKeywordScanTests.Full_corpus_weapon_keyword_token_scan
                                        // Attacks, Psychic, Lance, One Shot - to be worth a future
                                        // dedicated addition). See PROGRESS.md's Known Issues.
 ```
+
+---
+
+## Rules Glossary & Popovers
+
+Full requirements: `openspec/changes/rules-glossary-popovers/` (proposal, design, specs, tasks).
+Resolves BSData's `sharedRules` (game-system level) and `rules` (faction/library level) arrays —
+previously read by no code path at all — into a name/alias-queryable glossary, and mechanically
+extracts `[BRACKET]`-style cross-reference tokens from ability/rule text for lookup against it.
+Text lookup and display only, never behavioral interpretation, consistent with this file's own
+"ability text is never auto-parsed into behavior" stance (Deliberate Omissions, below). Wired into
+`/LivePlay`: every weapon-keyword chip and ability name is a tap trigger opening a native-Popover-
+API panel showing that keyword's/ability's full rule text, with a resolved `[BRACKET]` reference
+inside that text itself becoming a further, nested trigger.
+
+```
+RuleDefinition(Name, Aliases, Text)   // Domain/Catalogue/Bsdata/RuleDefinition.cs - one BSData
+                                       // sharedRules/rules entry, carried through as opaque
+                                       // display text.
+
+RuleGlossary                          // Domain/Catalogue/Bsdata/RuleGlossary.cs
+  Build(BsdataClosure closure) -> RuleGlossary
+                                       // Iterates closure.Files in existing resolution order
+                                       // (local beats imported) collecting each file's own Rules,
+                                       // then closure.GameSystem?.SharedRules for the universal
+                                       // set. Indexes every RuleDefinition by a single Normalize()d
+                                       // key built from *both* its Name and every Alias, not Alias
+                                       // alone - first occurrence per key wins. Indexing by Name too
+                                       // is what makes a rule with no declared Alias at all
+                                       // (confirmed real BSData data gaps: "Cleave", "Close-
+                                       // quarters" - each self-references itself in its own
+                                       // description text via the same bracket convention every
+                                       // other generic mechanic uses) still resolve correctly,
+                                       // rather than requiring a formally-declared alias BSData
+                                       // simply never populated.
+  TryResolve(string nameOrAlias) -> RuleDefinition?
+                                       // Non-throwing (Datasheet.TryGetStatline's convention).
+                                       // Normalizes nameOrAlias the same way before comparing.
+
+  Normalize(string text) -> string    // private; the single ordered pipeline every Name/Alias and
+                                       // every query string goes through - no separate case-
+                                       // sensitive "exact" path. 1. Lowercase the whole string.
+                                       // 2. Strip a trailing value/threshold/dice/placeholder
+                                       // suffix ("x", a digit run, a digit run + "+", or "d" +
+                                       // digits with an optional "+"-suffix e.g. "d3") preceded by
+                                       // whitespace - must run first, while that separator is
+                                       // still present. 3. Collapse a string starting with "anti"
+                                       // followed immediately by a space/hyphen/colon boundary to
+                                       // bare "anti", discarding everything after it - must run
+                                       // before step 4 destroys that same boundary character (the
+                                       // boundary check matters: without it, an unrelated word
+                                       // merely starting with "anti", e.g. "Antimatter", would
+                                       // wrongly collapse too - caught by a real unit test, not
+                                       // just theoretical). 4. Strip everything that isn't a
+                                       // letter or digit - also what makes a casing/hyphenation
+                                       // variant like "Twin-Linked" collapse to the same key as
+                                       // "TWIN-LINKED" with no separate casing rule needed. Exists
+                                       // because a generic mechanic's bare Name/Alias (e.g.
+                                       // "Sustained Hits"/"SUSTAINED HITS") is what BSData
+                                       // declares, but real ability/weapon text almost always
+                                       // references it with a value or (Anti only) target category
+                                       // appended (e.g. "SUSTAINED HITS 1", "ANTI-VEHICLE 3+") -
+                                       // confirmed by each mechanic's own rule text, which
+                                       // documents its own referenced form explicitly
+                                       // ("**[SUSTAINED HITS X]**", "**[ANTI-X Y+]**"). A blanket
+                                       // "cut at the first hyphen" rule was rejected as unsafe -
+                                       // "Twin-linked"'s hyphen is part of the rule's own name, not
+                                       // a category separator - so Anti gets this one narrow,
+                                       // explicit exception instead of a general one. Re-running
+                                       // the full-corpus scan (below) after this pipeline landed
+                                       // confirmed unresolved bracket-token occurrences dropped
+                                       // from 1,964 to exactly 2, both genuine one-off BSData
+                                       // authoring anomalies with no general fix.
+
+RuleTextTokenizer                     // Domain/Catalogue/Bsdata/RuleTextTokenizer.cs
+  ExtractBracketTokens(text) -> IReadOnlyList<string>
+                                       // Simple non-nested "[...]" extraction via regex, with no
+                                       // awareness of "*"/"**"/"^^" emphasis markup as a *signal*
+                                       // of whether something is a candidate reference at all -
+                                       // that's what makes "Non-Bracket Markup Is Not A Reference
+                                       // Signal" hold structurally. It does normalize each already-
+                                       // captured token's own text before returning it (see
+                                       // Normalize below) - encoding-level cleanup, never
+                                       // interpreting or discarding semantic content.
+  Normalize(string token) -> string   // public - reused by RuleTextEmphasisRenderer's own bracket
+                                       // handling in _UnitBlock.cshtml, not just by
+                                       // ExtractBracketTokens internally. Strips "*"/"^" characters
+                                       // found *inside* the brackets (confirmed real shape:
+                                       // "[^^Lethal Hits^^]", a rule referenced by its display Name
+                                       // wrapped in small-caps markup inside the brackets
+                                       // themselves - the reverse of markup wrapping a bracket from
+                                       // the outside) and replaces known Unicode whitespace/hyphen
+                                       // variants (U+00A0 no-break space, U+2011 non-breaking
+                                       // hyphen, U+2013 en dash) with their plain-ASCII equivalent
+                                       // (confirmed real shapes in the corpus). This is the "light"
+                                       // normalization step, distinct from RuleGlossary's own
+                                       // "aggressive" Normalize (above) - the two compose: a
+                                       // bracket's raw text goes through this one first, then
+                                       // whatever's left goes through RuleGlossary's when resolving
+                                       // it.
+
+RuleTextEmphasisRenderer              // Domain/Catalogue/Bsdata/RuleTextEmphasisRenderer.cs
+  Render(text, renderBracket: Func<string, (string Inline, string Popovers)>)
+    -> (string Inline, string Popovers)
+                                       // Renders "*italic*"/"**bold**"/"^^small-caps^^" markup
+                                       // (including the nested "***bold+italic***" split-close
+                                       // case, confirmed real in "Lethal Hits"' own Designer's
+                                       // Note) as HTML styling only - never an interactive trigger
+                                       // by virtue of markup alone. A single left-to-right token
+                                       // scan (longest-first regex alternation over "***"/"**"/
+                                       // "*"/"^^"/"[BRACKET]"), tracking three independent
+                                       // open/closed booleans (bold/italic/small-caps - "***"
+                                       // toggles both bold and italic together) rather than a
+                                       // stack, since bold and italic need to close independently
+                                       // later, not as a matched pair. Every [BRACKET] token
+                                       // encountered is handed to the caller-supplied
+                                       // renderBracket delegate, never resolved or interpreted
+                                       // here - keeps this class free of any RuleGlossary/popover-
+                                       // id concern and independently unit-testable with a trivial
+                                       // pass-through delegate. Returns inline HTML separately from
+                                       // any popover panel markup the delegate produced, so a
+                                       // caller can splice the trigger in place while emitting
+                                       // every popover panel as a flow-content sibling elsewhere -
+                                       // never nested inside this text's own emphasis wrapping
+                                       // (which would leak that styling into a nested popover's own
+                                       // inherited CSS, since top-layer promotion doesn't detach an
+                                       // element from the DOM tree for inheritance purposes).
+
+ResolvedBsdataCatalogue.Glossary: RuleGlossary
+                                       // Built alongside the rest of ResolvedBsdataCatalogue.Build
+                                       // - no new cache, rides the existing BsdataCatalogueCache
+                                       // (keyed by starting file name) for free.
+```
+
+**`/LivePlay` wiring (`ProbHammer.Web`)**: `IArmyRosterProvider.Build` returns
+`ArmyRosterBuildResult(ArmyRoster Roster, RuleGlossary Glossary)` (was bare `ArmyRoster`) so both
+`LivePlayModel.OnGet` and `LivePlayCasualtyService`'s direct `_UnitBlock.cshtml` fragment
+re-render have the glossary available; `UnitBlockRenderModel` carries it as a third field.
+`_UnitBlock.cshtml`'s `BuildRulePopover`/`RenderNestedReference` local functions are the only glue
+code that touches `RuleGlossary` directly: every weapon-keyword chip (`WeaponAbilityTags()`'s
+existing literal ALL-CAPS tag strings, unchanged - see "BSData JSON Ingestion" above) and every
+ability name is looked up via `TryResolve`; a match becomes a `<button popovertarget="p-{id}">`
+trigger with a sibling `<div id="p-{id}" popover="auto">` panel (never nested inside the trigger -
+a `<button>` cannot validly contain another interactive/flow-content element), positioned via a
+per-instance `anchor-name`/`position-anchor` CSS custom-property pair rather than the newer HTML
+`anchor="..."` attribute (real device testing found the latter unsupported where the former's
+properties at least register as supported - see design.md's "Popover mechanism" decision and its
+Risks section for what "supports" turned out to mean in practice). `RenderNestedReference`
+recurses into a resolved reference's own `RuleDefinition.Text` to make nesting work to arbitrary
+depth (confirmed live to 3 levels), threading a `shownRuleNames` ancestor-chain set so a bracket
+resolving back to a rule already open somewhere in its own chain renders as plain text instead of
+recursing - several real generic-mechanic rules self-reference their own name in their own text
+(confirmed: `Sustained Hits`, `Anti`, `Cleave`), and an unguarded first version of this
+stack-overflowed rendering a real weapon's chip.
+
+### Full-Corpus Bracket-Token-Resolution Scan
+
+`tests/ProbHammer.Tests/Domain/Catalogue/Bsdata/CorpusScan/BracketTokenResolutionScanTests.cs` -
+same permanent, manually-triggered `[Fact(Explicit = true)]` pattern as `WeaponKeywordScanTests`/
+`CharacteristicResolutionScanTests` (see "Full-Corpus Scan Tests" above). Walks every closure's own
+local `rules` text, the game system's `sharedRules` text (once, not once per starting file), and
+every locally-defined entry's resolved `Ability.Text`, extracting bracket tokens and resolving each
+against that closure's own glossary. The first real run (before `RuleGlossary`'s normalized-key
+resolution existed) found 1,964 unresolved occurrences across 71 distinct tokens; after that
+resolution landed, exactly 2 remain, both individually allowlisted in
+`BracketTokenResolutionAllowlist.cs` as confirmed one-off BSData authoring anomalies (a
+bracket-placement typo in one Adeptus Custodes ability; a stray non-reference bracket in one Blood
+Angels ability) - neither fixed, since no general rule could resolve either without risking a wrong
+fix elsewhere.
 
 ---
 

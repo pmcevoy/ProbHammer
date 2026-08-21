@@ -50,6 +50,31 @@ public sealed class BsCatalogue
     /// BsdataDatasheetMapper.IsGameModeGated) - never for roster/force-composition validation
     /// itself, which stays out of scope.</summary>
     public List<BsForceEntry> ForceEntries { get; set; } = [];
+
+    /// <summary>Faction/library-level rule text (e.g. Black Templars' "Templar Vows", reached
+    /// through `Library - Astartes Heresy Legends.json`) - absent entirely on a plain faction file
+    /// with no rules of its own, which deserializes to the default empty list under this loader's
+    /// existing convention for optional BSData fields. See rules-glossary's "Faction and Library
+    /// Rule Text Extraction".</summary>
+    public List<BsRule> Rules { get; set; } = [];
+
+    /// <summary>Universal special-rule text (e.g. "Lethal Hits", "Devastating Wounds") - populated
+    /// only on the game-system file ("Warhammer 40,000.json"), reached via
+    /// <see cref="BsdataClosure.GameSystem"/>. See rules-glossary's "Universal Rule Text
+    /// Extraction".</summary>
+    public List<BsRule> SharedRules { get; set; } = [];
+}
+
+/// <summary>Shape shared by both `sharedRules` (game-system level) and `rules` (faction/library
+/// level) entries - `{name, description, alias[], id}` plus fields this loader doesn't need
+/// (`publicationId`, `page`, `hidden`, `modifiers`), silently dropped on parse like every other
+/// unmapped BSData field.</summary>
+public sealed class BsRule
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string Description { get; set; } = "";
+    public List<string> Alias { get; set; } = [];
 }
 
 public sealed class BsForceEntry

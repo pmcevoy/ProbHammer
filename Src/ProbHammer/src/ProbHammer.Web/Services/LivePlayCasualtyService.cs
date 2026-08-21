@@ -29,8 +29,8 @@ public class LivePlayCasualtyService(
         if (unitIndexes.Count == 0 || parsedArmyList is null)
             return Results.Json(new Dictionary<int, string>());
 
-        var armyRoster = rosterProvider.Build(parsedArmyList);
-        var roster = LivePlayModel.RebuildRoster(armyRoster.Units, adjustments);
+        var result = rosterProvider.Build(parsedArmyList);
+        var roster = LivePlayModel.RebuildRoster(result.Roster.Units, adjustments);
         var fragments = new Dictionary<int, string>();
 
         foreach (var unitIndex in unitIndexes)
@@ -39,7 +39,7 @@ public class LivePlayCasualtyService(
                 continue;
 
             var block = LivePlayModel.BuildUnitBlock(roster[unitIndex]);
-            var html = await renderer.RenderAsync(ctx, "/Pages/Shared/_UnitBlock.cshtml", new UnitBlockRenderModel(unitIndex, block));
+            var html = await renderer.RenderAsync(ctx, "/Pages/Shared/_UnitBlock.cshtml", new UnitBlockRenderModel(unitIndex, block, result.Glossary));
             fragments[unitIndex] = html;
         }
 

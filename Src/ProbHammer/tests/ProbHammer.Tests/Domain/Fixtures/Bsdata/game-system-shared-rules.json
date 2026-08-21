@@ -1,0 +1,68 @@
+{
+  "gameSystem": {
+    "id": "fixture-game-system-shared-rules",
+    "name": "Warhammer 40,000 (fixture)",
+    "sharedRules": [
+      {
+        "description": "Each time an attack made with a **[LETHAL HITS]** weapon results in a **critical hit**, you can choose for that attack to automatically wound the target. \n***Designer's Note:** Choosing to automatically wound the target means that no **wound roll** is made for that attack. You may decide against this, as it means that attack cannot result in a **critical wound** and so cannot trigger other abilities such as [DEVASTATING WOUNDS].*",
+        "alias": [
+          "LETHAL HITS"
+        ],
+        "id": "fixture-lethal-hits",
+        "name": "Lethal Hits",
+        "publicationId": "fixture-pub",
+        "page": 25,
+        "hidden": false
+      },
+      {
+        "description": "This ability always takes the form **[SUSTAINED HITS X]**. Each time an attack made with a **[SUSTAINED HITS]** weapon results in a critical hit, that attack scores X additional hits.",
+        "alias": [
+          "SUSTAINED HITS"
+        ],
+        "id": "fixture-sustained-hits",
+        "name": "Sustained Hits",
+        "publicationId": "fixture-pub",
+        "page": 26,
+        "hidden": false
+      },
+      {
+        "description": "This ability always takes the form **[ANTI-X Y+]**. Each time an attack is made against a unit that has the X keyword with a weapon that has this ability, an unmodified wound roll of Y+ automatically scores a critical wound.",
+        "alias": [
+          "ANTI"
+        ],
+        "id": "fixture-anti",
+        "name": "Anti",
+        "publicationId": "fixture-pub",
+        "page": 26,
+        "hidden": false
+      },
+      {
+        "description": "A model equipped with two **[TWIN-LINKED]** weapons of the same type can re-roll wound rolls.",
+        "alias": [
+          "TWIN-LINKED"
+        ],
+        "id": "fixture-twin-linked",
+        "name": "Twin-linked",
+        "publicationId": "fixture-pub",
+        "page": 27,
+        "hidden": false
+      },
+      {
+        "description": "This ability always takes the form **[CLEAVE X]**. Add X additional attack dice for every five models in the target unit.",
+        "id": "fixture-cleave",
+        "name": "Cleave",
+        "publicationId": "fixture-pub",
+        "page": 27,
+        "hidden": false
+      },
+      {
+        "description": "Units containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using close-quarters shooting.",
+        "id": "fixture-close-quarters",
+        "name": "Close-quarters",
+        "publicationId": "fixture-pub",
+        "page": 27,
+        "hidden": false
+      }
+    ]
+  }
+}

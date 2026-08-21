@@ -1,0 +1,13 @@
+{
+  "catalogue": {
+    "id": "fixture-rule-glossary-transitive-import",
+    "name": "Rule Glossary Transitive Import (fixture)",
+    "catalogueLinks": [
+      {
+        "name": "library-faction-rules",
+        "targetId": "fixture-library-faction-rules",
+        "importRootEntries": true
+      }
+    ]
+  }
+}

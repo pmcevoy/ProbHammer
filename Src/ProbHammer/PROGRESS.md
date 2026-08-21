@@ -8,6 +8,41 @@ Nothing in progress.
 
 ## Recently Completed
 
+- OpenSpec change `rules-glossary-popovers` implemented (all 32 tasks), archived, and synced to
+  main specs (new `rules-glossary` capability spec; `live-play-view` modified). `/LivePlay` now
+  surfaces the ability/weapon-keyword rule text BSData carried all along but nothing ever
+  read — every ability name and resolvable weapon-keyword chip is a native `popover="auto"` tap
+  trigger showing that rule's full text, with a resolved `[BRACKET]` cross-reference inside that
+  text itself becoming a further nested trigger (confirmed live to 3 levels deep on real data).
+  New domain types (`ProbHammer.Core.Domain.Catalogue.Bsdata`): `RuleDefinition`/`RuleGlossary`
+  (built from BSData's previously-unread `sharedRules`/`rules` arrays, exposed as
+  `ResolvedBsdataCatalogue.Glossary`), `RuleTextTokenizer` (`[BRACKET]` extraction with
+  markup-char/Unicode-whitespace-hyphen normalization), `RuleTextEmphasisRenderer` (a pure,
+  delegate-based parser rendering `*italic*`/`**bold**`/`^^small-caps^^` markup, including the
+  nested `***bold+italic***` split-close case, as styling only). Full architecture documented in
+  `.claude/domain-model-11e.md`'s new "Rules Glossary & Popovers" section.
+  - `RuleGlossary`'s resolution went through two superseded designs (exact-match-only, then an
+    `Alias`-only fallback) before landing on a single normalized-key index built from both `Name`
+    *and* `Alias` — the full-corpus bracket-token-resolution scan (new
+    `BracketTokenResolutionScanTests`) dropped from 1,964 unresolved occurrences to exactly 2, both
+    confirmed one-off BSData authoring anomalies.
+  - Real bugs found and fixed during implementation, not just in planning: a weapon-keyword chip
+    nested inside `.weapon-name-toggle` let a chip tap bubble up and also toggle the weapon's
+    contribution breakdown (user-flagged during review, confirmed live, fixed by making the chip a
+    sibling instead — the only valid fix, since a `<button>` can't validly contain another); several
+    real BSData rules (`Sustained Hits`, `Anti`, `Cleave`) reference their own name in their own
+    description text, which stack-overflowed an early version of the nested-popover renderer (fixed
+    with an ancestor-chain guard, documented as a new spec scenario since real data uncovered a gap
+    neither the proposal nor design.md anticipated).
+  - CSS anchor positioning (`anchor-name`/`position-anchor`, `@supports`-gated) opens/dismisses
+    correctly on the real target browser tested (Firefox 154) but doesn't yet position adjacent to
+    its trigger there — a genuinely incomplete implementation (`CSS.supports()` says yes, the rule
+    matches in the CSSOM, but `getComputedStyle` still resolves `top:0;left:0`), not an absent one;
+    left as-is per this change's own explicit no-polyfill policy, since the popover still opens and
+    is fully usable either way.
+  - 275 tests passing (9 in a new `RuleTextEmphasisRendererTests`, plus new `RuleGlossary`/
+    `RuleTextTokenizer` test suites and fixtures), full solution build clean.
+
 - Post-implementation bug fix on `import-army-list-for-live-play` (no new OpenSpec change): a real
   user-reported bug after importing the Masters of the Maelstrom export - `/LivePlay` showed a pile
   of unrelated abilities (Chaos Boons like "Warp Stalker"/"Mutant Form", all four "Mark of Chaos"

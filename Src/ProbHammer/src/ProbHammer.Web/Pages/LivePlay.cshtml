@@ -9,7 +9,7 @@
 
     @for (var i = 0; i < Model.Units.Count; i++)
     {
-        <partial name="_UnitBlock" model="new UnitBlockRenderModel(i, Model.Units[i])" />
+        <partial name="_UnitBlock" model="new UnitBlockRenderModel(i, Model.Units[i], Model.Glossary)" />
     }
 </main>
 

@@ -846,7 +846,12 @@ button.filter-flag:hover { opacity: 0.8; }
 
 /* Weapon-name toggle: only rendered when a weapon entry has more than one contribution to break
    down. Reset to plain block text so it keeps the existing td.weapon-name stacking (name line,
-   then .weapon-tags on its own line below) instead of becoming an inline/flex control. */
+   then .weapon-tags on its own line below) instead of becoming an inline/flex control.
+   .weapon-tags renders as this button's own next *sibling* in the markup, not a child of it -
+   a resolvable chip is itself a <button popovertarget>, and a <button> can never validly contain
+   another interactive/flow-content descendant (also fixes a real bug: nesting it here would let a
+   chip tap bubble up and toggle this button's own breakdown expand/collapse). display: block still
+   makes this stack above the sibling .weapon-tags exactly as before. */
 .weapon-name-toggle {
     display: block;
     width: 100%;
@@ -879,13 +884,50 @@ button.filter-flag:hover { opacity: 0.8; }
 }
 .weapon-contribution-label { padding-left: 1.75rem; }
 
+/* One bordered pill per keyword (rules-glossary-popovers), replacing the earlier single
+   "[TAG, TAG, TAG]" joined span - matches the GW-app/Wahapedia reference precedent and lets each
+   keyword be identified as its own tap target (a joined span can't). */
 .weapon-tags {
-    display: block;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.15rem;
+}
+
+.weapon-tag {
+    display: inline-block;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.05rem 0.4rem;
     color: var(--text-dim);
-    font-size: 0.68rem;
+    background: var(--bg2);
+    font-size: 0.65rem;
     font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+/* A resolvable chip is a <button popovertarget> (see _UnitBlock.cshtml) - reset to look like the
+   plain .weapon-tag pill above rather than a native button, then layer on the page's existing
+   hover convention (design-tokens.md's Interaction States: "opacity fades to 0.8") as its only tap
+   affordance beyond the cursor. */
+.weapon-tag-resolved {
+    font: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    cursor: pointer;
+}
+.weapon-tag-resolved:hover {
+    opacity: 0.8;
+}
+
+/* A chip with no matching glossary entry is not an interactive trigger (rules-glossary's "A
+   keyword chip with no matching glossary entry is not interactive") - a plain, non-button <span>,
+   dimmed per the page's existing disabled-control convention rather than a distinct color, so it
+   reads as "not tappable" without implying a resolvable chip's own popover-trigger styling. */
+.weapon-tag-unresolved {
+    opacity: 0.55;
 }
 
 /* ── Statline ability columns ── */
@@ -929,24 +971,41 @@ button.filter-flag:hover { opacity: 0.8; }
     border-color: transparent;
 }
 
+/* A <button popovertarget> now (rules-glossary-popovers), not a plain <div> - reset to keep the
+   exact same look/layout it had as a div (font-weight/border-bottom/flex/alignment all
+   unchanged), plus the button-chrome resets a native <button> needs stripped (background/border/
+   font/text-align/width/cursor), matching .weapon-name-toggle's own established reset pattern. */
 .ability-name-line {
     padding: 0.3rem 0.6rem;
     font-weight: 700;
+    border: none;
     border-bottom: 1px solid var(--border);
     flex: 1 1 auto;
     display: flex;
     align-items: center;
+    width: 100%;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.ability-name-line:hover {
+    opacity: 0.8;
 }
 
-/* :nth-child(even), not a server-assigned alternating class: unlike the weapon table's
-   contribution-breakdown rows (site.css's own "Striping is driven by..." note below), no JS ever
-   hides an individual .ability-name-line - only the whole ability cell collapses as a unit - so
-   there's no hidden-row/parity hazard here. Fill color can't reuse the weapon table's literal
-   var(--bg): a .spans-component ability cell already uses var(--bg) as its own background
-   (above), which would make the stripe invisible against it. color-mix(border 70%, bg2) stays
-   visible against both a plain cell (--bg2) and a .spans-component cell (--bg) - see
+/* :nth-of-type(even), not :nth-child: each ability-name-line button is now immediately followed
+   by its own sibling .rule-popover <div> (rules-glossary-popovers), which would shift a
+   :nth-child parity count - the exact same hidden-sibling hazard the weapon table's own
+   server-assigned row striping (site.css's "Striping is driven by..." note below) already avoids
+   for a different reason. :nth-of-type instead counts only same-tag (<button>) siblings, so the
+   interleaved <div> popovers - always display:none while closed, and promoted out of normal flow
+   into the top layer once open either way - never affect it. Fill color can't reuse the weapon
+   table's literal var(--bg): a .spans-component ability cell already uses var(--bg) as its own
+   background (above), which would make the stripe invisible against it. color-mix(border 70%,
+   bg2) stays visible against both a plain cell (--bg2) and a .spans-component cell (--bg) - see
    restyle-ability-list-rows/design.md for the full comparison trail. */
-.ability-name-line:nth-child(even) {
+.ability-name-line:nth-of-type(even) {
     background: color-mix(in srgb, var(--border) 70%, var(--bg2));
 }
 
@@ -955,6 +1014,81 @@ button.filter-flag:hover { opacity: 0.8; }
     margin-bottom: 0;
     padding-top: 0.5rem;
     border-top: 1px solid var(--border);
+}
+
+/* ── Rule/ability text popover (rules-glossary-popovers) ── */
+
+/* Base panel, unpositioned: the browser's own UA stylesheet already centers a [popover] roughly
+   on screen via `inset: 0; margin: auto` when nothing else positions it, so this alone already
+   satisfies "Popover Remains Functional Without Anchor-Positioning Support" - the @supports block
+   below only ever adds better placement on top, never something functionality depends on. */
+.rule-popover {
+    max-width: min(22rem, 90vw);
+    max-height: 70vh;
+    overflow-y: auto;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.6rem 0.75rem;
+}
+
+.rule-popover-text {
+    white-space: pre-line;
+    font-size: 0.8rem;
+    color: var(--text);
+}
+
+/* Emphasis markup, rendered as styling only by RuleTextEmphasisRenderer - never an interactive
+   trigger by virtue of this markup alone (only a resolved [BRACKET] reference, styled separately
+   below, is ever tappable) - per live-play-view's "Popover Renders Emphasis Markup As Styling,
+   Not As Links". font-variant (not text-transform/font-size) is the correct CSS tool for real
+   small-caps: it renders already-uppercase letters at full size and only shrinks the lowercase
+   ones, matching how `^^Fabius Bile^^`-style proper names are meant to look. */
+.rule-text-smallcaps {
+    font-variant: small-caps;
+}
+
+/* A resolved [BRACKET] cross-reference inside an open popover's own text (rules-glossary-popovers'
+   "Nested Reference Popover") - an inline text link, distinct from both `.weapon-tag` (a chip) and
+   `.ability-name-line` (a full-width row), since it sits mid-sentence in flowing popover-text
+   content. Reset to plain inline text (matching `.weapon-name-toggle`'s established button-reset
+   pattern) plus an underline and the page's `--accent` color as its only visual "this is tappable"
+   cue, reusing design-tokens.md's existing "Emphasis: stat sub-values, primary headings" role
+   rather than introducing a new color for the same concept. */
+.rule-reference {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: var(--accent);
+    text-decoration: underline;
+    cursor: pointer;
+}
+.rule-reference:hover {
+    opacity: 0.8;
+}
+
+/* Anchored placement: opens adjacent to whichever trigger opened it (an ability name, a
+   resolvable weapon-keyword chip, or a nested `.rule-reference`), never centered - per
+   live-play-view's "Popover Is Anchored Locally To Its Trigger". Each trigger carries a unique
+   inline `anchor-name: --a{id}`, and its paired popover carries the matching
+   `position-anchor: --a{id}` (see _UnitBlock.cshtml) - the CSS custom-property pair, not the
+   newer HTML `anchor="..."` IDREF attribute design.md also named as an option: real testing
+   (task 5.5) found the actual target browser supports `anchor-name`/`position-anchor` but not yet
+   the HTML `anchor` attribute, so this is the one that actually positions anything today. The
+   trigger/popover *ancestor* relationship nested popovers need for their own light-dismiss
+   stacking doesn't depend on this at all - it already comes from `popovertarget` establishing the
+   trigger as the popover's declarative invoker, independent of how (or whether) positioning
+   resolves. Feature-detected on `anchor-name` (the foundational property the whole
+   anchor-positioning feature turns on) rather than on `position-area` specifically, matching
+   design.md's own stated `@supports` target. */
+@supports (anchor-name: --a) {
+    .rule-popover {
+        position-area: block-end span-inline-start;
+        position-try-fallbacks: flip-block, flip-inline;
+        margin: 0.3rem 0 0 0;
+    }
 }
 
 /* ── Responsive ── */

@@ -1,0 +1,13 @@
+{
+  "catalogue": {
+    "id": "fixture-rule-glossary-collision-imported",
+    "name": "Rule Glossary Collision Imported (fixture)",
+    "rules": [
+      {
+        "name": "Duplicate Rule",
+        "description": "Imported definition - should lose to the local one of the same name.",
+        "id": "fixture-duplicate-rule-imported"
+      }
+    ]
+  }
+}

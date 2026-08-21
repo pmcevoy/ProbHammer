@@ -27,4 +27,39 @@ public class BsdataCatalogueReaderTests
 
         catalogue.SharedSelectionEntries.Should().ContainSingle(e => e.Name == "Crusader Squad");
     }
+
+    [Fact]
+    public void Deserializes_a_game_system_files_shared_rules()
+    {
+        var json = BsdataFixtures.Source().GetJson("game-system-shared-rules.json");
+
+        var catalogue = BsdataCatalogueReader.Read(json);
+
+        var lethalHits = catalogue.SharedRules.Should().ContainSingle(r => r.Name == "Lethal Hits").Subject;
+        lethalHits.Alias.Should().ContainSingle("LETHAL HITS");
+        lethalHits.Description.Should().Contain("automatically wound the target");
+    }
+
+    [Fact]
+    public void Deserializes_a_faction_or_library_files_rules()
+    {
+        var json = BsdataFixtures.Source().GetJson("library-faction-rules.json");
+
+        var catalogue = BsdataCatalogueReader.Read(json);
+
+        var templarVows = catalogue.Rules.Should().ContainSingle(r => r.Name == "Templar Vows").Subject;
+        templarVows.Description.Should().Contain("Army Faction");
+        templarVows.Alias.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void A_file_with_neither_rules_key_present_still_deserializes_cleanly()
+    {
+        var json = BsdataFixtures.Source().GetJson("closure-starting.json");
+
+        var catalogue = BsdataCatalogueReader.Read(json);
+
+        catalogue.Rules.Should().BeEmpty();
+        catalogue.SharedRules.Should().BeEmpty();
+    }
 }

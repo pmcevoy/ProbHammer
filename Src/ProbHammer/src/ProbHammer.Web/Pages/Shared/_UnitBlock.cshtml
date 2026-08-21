@@ -1,8 +1,71 @@
 @model ProbHammer.Web.Pages.UnitBlockRenderModel
+@using System.Net
 @using ProbHammer.Core.Domain.Catalogue
+@using ProbHammer.Core.Domain.Catalogue.Bsdata
 @{
     var unit = Model.Unit;
     var i = Model.UnitIndex;
+    var glossary = Model.Glossary;
+
+    // One running counter for every popover trigger/panel pair this unit block renders (ability
+    // names, resolvable weapon-keyword chips, and nested [BRACKET] references reached from either
+    // one's own text) - only needs to be unique within this unit's own fragment, since "i" (unique
+    // across the whole page) is part of every id this produces.
+    var popoverCounter = 0;
+    string NextPopoverId() => $"{i}-{popoverCounter++}";
+
+    // Builds one trigger/popover pair: triggerHtml is already-safe inline HTML (a plain
+    // HtmlEncode'd name/tag for a top-level ability/chip trigger, or an emphasis-rendered bracket
+    // label for a nested reference - see RenderNestedReference below); ruleText is the raw source
+    // text the popover body renders, itself run through the emphasis renderer (recursing into
+    // RenderNestedReference for any further [BRACKET] references inside *that* text - this is what
+    // makes nesting work to arbitrary depth, per rules-glossary-popovers' "Nested Reference
+    // Popover" requirement, though the real corpus never goes more than one level deep). Returns
+    // the trigger's own markup separately from every popover panel this call (and its own nested
+    // references) produced, so a caller can splice the trigger in place while emitting every panel
+    // as a flow-content sibling later - never nested inside this trigger's own emphasis wrapping
+    // (see RuleTextEmphasisRenderer's own doc comment for why that specifically matters).
+    //
+    // shownRuleNames is every RuleDefinition.Name already being displayed somewhere in this
+    // popover's own ancestor chain (empty for a top-level ability trigger; the resolved rule's own
+    // Name for a top-level weapon-tag chip, since its popover already shows that rule's text) -
+    // threaded down so RenderNestedReference can refuse to re-enter one, which real BSData data
+    // makes a genuine, not just theoretical, concern: confirmed real self-references in "Sustained
+    // Hits" ("...**[SUSTAINED HITS X]**..."), "Anti" ("...**[ANTI-X Y+]**..."), and "Cleave"
+    // ("...**[CLEAVE X]**...") own description text - each would otherwise recurse into its own
+    // popover forever (confirmed live: an unguarded first version of this stack-overflowed
+    // rendering a real weapon's Sustained Hits chip).
+    (string Trigger, string Trailer) BuildRulePopover(string triggerHtml, string triggerClass, string ruleText, IReadOnlySet<string> shownRuleNames)
+    {
+        var popoverId = NextPopoverId();
+        var (bodyInline, bodyPopovers) = RuleTextEmphasisRenderer.Render(ruleText, raw => RenderNestedReference(raw, shownRuleNames));
+        var trigger = $"<button type=\"button\" id=\"t-{popoverId}\" class=\"{triggerClass}\" popovertarget=\"p-{popoverId}\" style=\"anchor-name: --a{popoverId}\">{triggerHtml}</button>";
+        var panel = $"<div id=\"p-{popoverId}\" class=\"rule-popover\" popover=\"auto\" style=\"position-anchor: --a{popoverId}\"><div class=\"rule-popover-text\">{bodyInline}</div></div>";
+        return (trigger, panel + bodyPopovers);
+    }
+
+    // The bracket delegate RuleTextEmphasisRenderer.Render calls for every [BRACKET] token it
+    // encounters mid-parse. Normalizes the token's raw text the same way extraction always has
+    // (RuleTextTokenizer.Normalize - markup-char/Unicode-whitespace-hyphen cleanup) before
+    // resolving it against this unit's own glossary; an unresolved token renders as plain
+    // (emphasis-rendered) text with no trigger, per "Leave an unresolved bracket token as plain
+    // text" - never causing the surrounding text's own resolution to fail. A token that resolves
+    // back to a rule already in shownRuleNames (see BuildRulePopover) also degrades to plain text,
+    // the same graceful-fallback treatment as a genuinely unresolved one - tapping it would only
+    // ever reopen the popover already showing that exact text, and (for the self-reference case)
+    // recursing into it again is exactly what would otherwise overflow the stack.
+    (string Inline, string Popovers) RenderNestedReference(string rawInner, IReadOnlySet<string> shownRuleNames)
+    {
+        var normalized = RuleTextTokenizer.Normalize(rawInner);
+        var rule = glossary.TryResolve(normalized);
+        var (labelInline, labelPopovers) = RuleTextEmphasisRenderer.Render(rawInner, raw => RenderNestedReference(raw, shownRuleNames));
+        if (rule == null || shownRuleNames.Contains(rule.Name))
+            return (labelInline, labelPopovers);
+
+        var nextShownRuleNames = new HashSet<string>(shownRuleNames) { rule.Name };
+        var (trigger, trailer) = BuildRulePopover(labelInline, "rule-reference", rule.Text, nextShownRuleNames);
+        return (trigger, labelPopovers + trailer);
+    }
 }
 <section class="unit-block" data-unit-index="@i">
     <h2 class="unit-name">@unit.Name</h2>
@@ -167,7 +230,9 @@
                         <div class="statline-cell col-model-abilities @runCollapsedClass" data-run-index="@runIndex" data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1); grid-column: 2;">
                             @foreach (var ability in block.ModelAbilities)
                             {
-                                <div class="ability-name-line">@ability.Name</div>
+                                var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(ability.Name), "ability-name-line", ability.Text, new HashSet<string>());
+                                @Html.Raw(abilityTrigger)
+                                @Html.Raw(abilityTrailer)
                             }
                         </div>
                     }
@@ -177,7 +242,9 @@
                         <div class="statline-cell col-unit-abilities @runCollapsedClass" data-run-index="@runIndex" data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1); grid-column: 3;">
                             @foreach (var ability in block.UnitAbilities)
                             {
-                                <div class="ability-name-line">@ability.Name</div>
+                                var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(ability.Name), "ability-name-line", ability.Text, new HashSet<string>());
+                                @Html.Raw(abilityTrigger)
+                                @Html.Raw(abilityTrailer)
                             }
                         </div>
                     }
@@ -192,7 +259,9 @@
                         <div class="statline-cell col-model-abilities spans-component @spanCollapsedClass" data-first-run-index="@(span.FirstRunIndex)" data-last-run-index="@(span.LastRunIndex)" data-dead="@spanDeadAttr" style="grid-row: @(span.FirstRunIndex + 1) / @(span.LastRunIndex + 2); grid-column: 2;">
                             @foreach (var ability in span.ModelAbilities)
                             {
-                                <div class="ability-name-line">@ability.Name</div>
+                                var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(ability.Name), "ability-name-line", ability.Text, new HashSet<string>());
+                                @Html.Raw(abilityTrigger)
+                                @Html.Raw(abilityTrailer)
                             }
                         </div>
                     }
@@ -202,7 +271,9 @@
                         <div class="statline-cell col-unit-abilities spans-component @spanCollapsedClass" data-first-run-index="@(span.FirstRunIndex)" data-last-run-index="@(span.LastRunIndex)" data-dead="@spanDeadAttr" style="grid-row: @(span.FirstRunIndex + 1) / @(span.LastRunIndex + 2); grid-column: 3;">
                             @foreach (var ability in span.UnitAbilities)
                             {
-                                <div class="ability-name-line">@ability.Name</div>
+                                var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(ability.Name), "ability-name-line", ability.Text, new HashSet<string>());
+                                @Html.Raw(abilityTrigger)
+                                @Html.Raw(abilityTrailer)
                             }
                         </div>
                     }
@@ -254,19 +325,30 @@
                                 {
                                     <button type="button" class="weapon-name-toggle" data-weapon-id="@weaponId" aria-expanded="false">
                                         @weapon.Name
-                                        @if (tags.Count > 0)
-                                        {
-                                            <span class="weapon-tags">[@string.Join(", ", tags)]</span>
-                                        }
                                     </button>
                                 }
                                 else
                                 {
                                     @weapon.Name
-                                    @if (tags.Count > 0)
-                                    {
-                                        <span class="weapon-tags">[@string.Join(", ", tags)]</span>
-                                    }
+                                }
+                                @if (tags.Count > 0)
+                                {
+                                    <div class="weapon-tags">
+                                        @foreach (var tag in tags)
+                                        {
+                                            var rule = glossary.TryResolve(tag);
+                                            if (rule != null)
+                                            {
+                                                var (tagTrigger, tagTrailer) = BuildRulePopover(WebUtility.HtmlEncode(tag), "weapon-tag weapon-tag-resolved", rule.Text, new HashSet<string> { rule.Name });
+                                                @Html.Raw(tagTrigger)
+                                                @Html.Raw(tagTrailer)
+                                            }
+                                            else
+                                            {
+                                                <span class="weapon-tag weapon-tag-unresolved">@tag</span>
+                                            }
+                                        }
+                                    </div>
                                 }
                             </td>
                             <td>@(weapon.Range)"</td>
@@ -338,19 +420,30 @@
                                 {
                                     <button type="button" class="weapon-name-toggle" data-weapon-id="@weaponId" aria-expanded="false">
                                         @weapon.Name
-                                        @if (tags.Count > 0)
-                                        {
-                                            <span class="weapon-tags">[@string.Join(", ", tags)]</span>
-                                        }
                                     </button>
                                 }
                                 else
                                 {
                                     @weapon.Name
-                                    @if (tags.Count > 0)
-                                    {
-                                        <span class="weapon-tags">[@string.Join(", ", tags)]</span>
-                                    }
+                                }
+                                @if (tags.Count > 0)
+                                {
+                                    <div class="weapon-tags">
+                                        @foreach (var tag in tags)
+                                        {
+                                            var rule = glossary.TryResolve(tag);
+                                            if (rule != null)
+                                            {
+                                                var (tagTrigger, tagTrailer) = BuildRulePopover(WebUtility.HtmlEncode(tag), "weapon-tag weapon-tag-resolved", rule.Text, new HashSet<string> { rule.Name });
+                                                @Html.Raw(tagTrigger)
+                                                @Html.Raw(tagTrailer)
+                                            }
+                                            else
+                                            {
+                                                <span class="weapon-tag weapon-tag-unresolved">@tag</span>
+                                            }
+                                        }
+                                    </div>
                                 }
                             </td>
                             <td class="weapon-attacks-value">@row.Entry.TotalAttacks</td>

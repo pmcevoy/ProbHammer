@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using ProbHammer.Core.Domain.Catalogue;
+using ProbHammer.Core.Domain.Catalogue.Bsdata;
 using ProbHammer.Core.Domain.Roster;
 using ProbHammer.Web.Pages;
 using ProbHammer.Web.Services;
@@ -47,7 +48,8 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
             Keywords: new HashSet<string>());
 
         var unitBlock = LivePlayModel.BuildUnitBlock(view);
-        var model = new UnitBlockRenderModel(0, unitBlock);
+        var glossary = RuleGlossary.Build(new BsdataClosure([]));
+        var model = new UnitBlockRenderModel(0, unitBlock, glossary);
         return await renderer.RenderAsync(httpContext, "/Pages/Shared/_UnitBlock.cshtml", model);
     }
 

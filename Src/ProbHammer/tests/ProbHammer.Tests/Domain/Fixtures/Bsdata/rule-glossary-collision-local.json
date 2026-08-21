@@ -1,0 +1,20 @@
+{
+  "catalogue": {
+    "id": "fixture-rule-glossary-collision-local",
+    "name": "Rule Glossary Collision Local (fixture)",
+    "catalogueLinks": [
+      {
+        "name": "rule-glossary-collision-imported",
+        "targetId": "fixture-rule-glossary-collision-imported",
+        "importRootEntries": true
+      }
+    ],
+    "rules": [
+      {
+        "name": "Duplicate Rule",
+        "description": "Local definition - wins over the imported one of the same name.",
+        "id": "fixture-duplicate-rule-local"
+      }
+    ]
+  }
+}
