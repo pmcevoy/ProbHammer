@@ -11,7 +11,11 @@ entry once it's been turned into a change (archived changes remain the historica
 
 - **Phase-level section toggling across all units at once** — collapse/expand every unit's
   statline/ranged/melee/abilities section together, reusing the same disclosure unit each
-  section already uses individually.
+  section already uses individually. Raised again during `half-strength-and-battleshock-
+  indicators`' exploration, as the motivation for putting that change's half-strength/Battle-
+  shock status glyphs directly on the unit-name header (the one thing that stays visible
+  regardless of section collapse state) rather than in a separate row — deliberately kept out of
+  that change's own scope, still a candidate for its own change.
 - **Core/Faction/Psychic ability source tagging** — distinguish where an ability comes from,
   not just its name/scope.
 - **Per-`ModelLine` keywords.** Needed so a leader's personal keyword leaves the unit's effective
@@ -69,9 +73,14 @@ entry once it's been turned into a change (archived changes remain the historica
 
 ## Bigger picture
 
-- **A full "Gameplay" bounded context** for live/mutable game state beyond casualty counts —
-  turn tracking, objective control, battle-shock, and other conditions that rules text sometimes
-  references ("while this model is on the battlefield...", "gets Lethal Hits while within range
-  of an objective marker"). Some ability text is permanently out of scope for auto-parsing
-  because it needs state (positioning, objective control) the domain has no way to represent even
-  with this context built — see `.claude/domain-model-11e.md`'s Deliberate Omissions.
+- **A full "Gameplay" bounded context** for live/mutable game state beyond casualty counts — turn
+  tracking, and other conditions that rules text sometimes references ("while this model is on
+  the battlefield...", "gets Lethal Hits while within range of an objective marker"). Some ability
+  text is permanently out of scope for auto-parsing because it needs state (positioning) the
+  domain has no way to represent even with this context built — see `.claude/domain-model-11e.md`'s
+  Deliberate Omissions. Battle-shock and per-unit Objective-control-goes-nothing display are no
+  longer part of this deferred item — `half-strength-and-battleshock-indicators` implemented a
+  narrow, player-reported (never simulated) slice of both. What's still missing here is the
+  broader picture this bullet originally meant: turn/Command-phase tracking (so Battle-shock could
+  in principle even be prompted rather than purely player-toggled) and any other condition-tracking
+  beyond that one narrow slice.

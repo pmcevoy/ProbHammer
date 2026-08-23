@@ -23,4 +23,8 @@ public sealed class Unit : ICombatUnit
     public string Name => Datasheet.Name;
 
     public bool IsPresent => ModelLines.Any(ml => ml.RemainingCount > 0);
+
+    public bool IsHalfStrengthOverride { get; set; }
+
+    public bool IsBattleShocked { get; set; }
 }

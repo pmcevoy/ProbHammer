@@ -36,9 +36,10 @@ app.UseRouting();
 app.UseSession();
 app.MapRazorPages();
 
-// Sync /LivePlay casualty adjustments and return rendered fragments for the affected units
-app.MapPost("/api/live-play/casualties", async (HttpContext ctx, List<CasualtyAdjustment> adjustments, ILivePlayCasualtyService svc) =>
-    await svc.SyncAsync(ctx, adjustments));
+// Sync /LivePlay casualty adjustments and unit-status (half-strength/Battle-shocked) toggles,
+// returning rendered fragments for the affected units.
+app.MapPost("/api/live-play/casualties", async (HttpContext ctx, LivePlaySyncRequest request, ILivePlayCasualtyService svc) =>
+    await svc.SyncAsync(ctx, request));
 
 app.Run();
 

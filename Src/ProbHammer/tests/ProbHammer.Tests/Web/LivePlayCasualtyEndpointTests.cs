@@ -31,12 +31,11 @@ public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory
     public async Task PostingAnAdjustment_ReturnsAFragmentReflectingTheNewRemainingCount()
     {
         var client = await ClientWithImportedArmyAsync();
-        var adjustments = new[]
-        {
-            new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1), RemainingCount: 2)
-        };
+        var request = new LivePlaySyncRequest(
+            CasualtyAdjustments: [new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1), RemainingCount: 2)],
+            StatusAdjustments: []);
 
-        var response = await client.PostAsJsonAsync("/api/live-play/casualties", adjustments, TestContext.Current.CancellationToken);
+        var response = await client.PostAsJsonAsync("/api/live-play/casualties", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
 
         var fragments = await response.Content.ReadFromJsonAsync<Dictionary<int, string>>(TestContext.Current.CancellationToken);
@@ -48,8 +47,9 @@ public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory
     public async Task PostingAnEmptyBatch_ReturnsAnEmptyResponse()
     {
         var client = await ClientWithImportedArmyAsync();
+        var request = new LivePlaySyncRequest(CasualtyAdjustments: [], StatusAdjustments: []);
 
-        var response = await client.PostAsJsonAsync("/api/live-play/casualties", Array.Empty<CasualtyAdjustment>(), TestContext.Current.CancellationToken);
+        var response = await client.PostAsJsonAsync("/api/live-play/casualties", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
 
         var fragments = await response.Content.ReadFromJsonAsync<Dictionary<int, string>>(TestContext.Current.CancellationToken);
@@ -60,12 +60,11 @@ public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory
     public async Task PostingAnUnresolvableAdjustment_DoesNotFail_AndStillReturnsThatUnitsFragment()
     {
         var client = await ClientWithImportedArmyAsync();
-        var adjustments = new[]
-        {
-            new CasualtyAdjustment(new CasualtyCoordinate(0, "No Such Component", "No Such Statline", -1), RemainingCount: 0)
-        };
+        var request = new LivePlaySyncRequest(
+            CasualtyAdjustments: [new CasualtyAdjustment(new CasualtyCoordinate(0, "No Such Component", "No Such Statline", -1), RemainingCount: 0)],
+            StatusAdjustments: []);
 
-        var response = await client.PostAsJsonAsync("/api/live-play/casualties", adjustments, TestContext.Current.CancellationToken);
+        var response = await client.PostAsJsonAsync("/api/live-play/casualties", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
 
         var fragments = await response.Content.ReadFromJsonAsync<Dictionary<int, string>>(TestContext.Current.CancellationToken);
@@ -76,15 +75,45 @@ public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory
     public async Task PostingAnAdjustment_WithNoActiveSessionImport_ReturnsAnEmptyResponse()
     {
         var client = _factory.CreateClient();
-        var adjustments = new[]
-        {
-            new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1), RemainingCount: 2)
-        };
+        var request = new LivePlaySyncRequest(
+            CasualtyAdjustments: [new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1), RemainingCount: 2)],
+            StatusAdjustments: []);
 
-        var response = await client.PostAsJsonAsync("/api/live-play/casualties", adjustments, TestContext.Current.CancellationToken);
+        var response = await client.PostAsJsonAsync("/api/live-play/casualties", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
 
         var fragments = await response.Content.ReadFromJsonAsync<Dictionary<int, string>>(TestContext.Current.CancellationToken);
         fragments.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task PostingAStatusAdjustment_ReturnsAFragmentReflectingBattleShockedStatus()
+    {
+        var client = await ClientWithImportedArmyAsync();
+        var request = new LivePlaySyncRequest(
+            CasualtyAdjustments: [],
+            StatusAdjustments: [new UnitStatusAdjustment(0, IsHalfStrength: false, IsBattleShocked: true)]);
+
+        var response = await client.PostAsJsonAsync("/api/live-play/casualties", request, TestContext.Current.CancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var fragments = await response.Content.ReadFromJsonAsync<Dictionary<int, string>>(TestContext.Current.CancellationToken);
+        fragments.Should().ContainKey(0);
+        fragments![0].Should().Contain("status-glyph-battleshock is-active");
+    }
+
+    [Fact]
+    public async Task PostingBothBatchesTogether_AppliesBothInOneRebuild()
+    {
+        var client = await ClientWithImportedArmyAsync();
+        var request = new LivePlaySyncRequest(
+            CasualtyAdjustments: [new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1), RemainingCount: 2)],
+            StatusAdjustments: [new UnitStatusAdjustment(0, IsHalfStrength: false, IsBattleShocked: true)]);
+
+        var response = await client.PostAsJsonAsync("/api/live-play/casualties", request, TestContext.Current.CancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var fragments = await response.Content.ReadFromJsonAsync<Dictionary<int, string>>(TestContext.Current.CancellationToken);
+        fragments![0].Should().Contain("(2/4)").And.Contain("status-glyph-battleshock is-active");
     }
 }

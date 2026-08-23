@@ -12,6 +12,14 @@ public sealed class AttachedUnit(Unit bodyguard, IEnumerable<Unit> attached) : I
 
     public IReadOnlyList<Unit> Components => [Bodyguard, .. Attached];
 
+    /// <summary>One flag for the whole AttachedUnit (Bodyguard + every Attached unit together),
+    /// never per-component - see <see cref="ICombatUnit.IsHalfStrengthOverride"/>.</summary>
+    public bool IsHalfStrengthOverride { get; set; }
+
+    /// <summary>One flag for the whole AttachedUnit - see
+    /// <see cref="ICombatUnit.IsBattleShocked"/>.</summary>
+    public bool IsBattleShocked { get; set; }
+
     /// <summary>
     /// Humanized join of the Bodyguard's name with the Attached units' names: none attached
     /// yields the Bodyguard's name alone; one joins with "with A"; two join with "with A and B"

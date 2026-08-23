@@ -68,7 +68,36 @@
     }
 }
 <section class="unit-block" data-unit-index="@i">
-    <h2 class="unit-name">@unit.Name</h2>
+    <h2 class="unit-name">
+        <span class="unit-name-text">@unit.Name</span>
+        <span class="unit-status-glyphs">
+            @* Half-strength glyph: a single-model unit (no computed determination is possible -
+               see HalfStrengthResolution/domain-model-11e.md) always renders it as an interactive
+               toggle for the player-set override; a multi-model unit renders it as a passive,
+               non-interactive indicator that only appears once the computed determination is true.
+               Both share the same "½" text glyph and amber-when-active color rule. *@
+            @if (unit.IsSingleModelUnit)
+            {
+                <button type="button" class="filter-flag status-glyph-halfstrength @(unit.IsAtOrBelowHalfStrength ? "is-active" : "")"
+                        data-unit-index="@i" aria-pressed="@(unit.IsAtOrBelowHalfStrength ? "true" : "false")"
+                        aria-label="Toggle at-or-below half strength" title="At or below half strength (tap to set)">½</button>
+            }
+            else
+            {
+                <span class="filter-flag status-glyph-halfstrength is-active" hidden="@(!unit.IsAtOrBelowHalfStrength)"
+                      aria-label="At or below half strength" title="At or below half strength">½</span>
+            }
+            @* Battle-shock glyph: always present, always interactive - the app never simulates the
+               2D6-vs-Leadership test itself, only records the player's own reported result. Outline
+               when inactive (currentColor, matching the header's own text color), solid amber when
+               active - see .status-glyph-battleshock.is-active in site.css. *@
+            <button type="button" class="filter-flag status-glyph-battleshock @(unit.IsBattleShocked ? "is-active" : "")"
+                    data-unit-index="@i" aria-pressed="@(unit.IsBattleShocked ? "true" : "false")"
+                    aria-label="Toggle Battle-shocked" title="Battle-shocked (tap to set)">
+                @Html.Raw(BoltSvgIcon("battleshock-icon"))
+            </button>
+        </span>
+    </h2>
 
     @if (unit.Statlines.Any())
     {
@@ -145,7 +174,26 @@
                             <div class="stat-tile"><span class="stat-label">Sv</span><span class="stat-value">@(block.Statline.Sv)+</span></div>
                             <div class="stat-tile"><span class="stat-label">W</span><span class="stat-value">@(block.Statline.W)</span></div>
                             <div class="stat-tile"><span class="stat-label">Ld</span><span class="stat-value">@(block.Statline.Ld)+</span></div>
-                            <div class="stat-tile"><span class="stat-label">OC</span><span class="stat-value">@(block.Statline.Oc)</span></div>
+                            @* Battle-shocked: OC renders the same glyph as the header's Battle-shock
+                               control, in the tile's own value color (never amber - see
+                               design-tokens.md's "controls get amber ink when active, stat values
+                               never do") - the "flagged" signal lives entirely in the tile's
+                               background (.stat-tile-flagged, shared with the caveated-InSv tile
+                               below), not in the glyph's own color. No label change, no caption
+                               text: unlike a caveated InSv, there's only one fixed reason, already
+                               conveyed by the header glyph. Applies to every run's OC tile in this
+                               unit, not only whichever run the header itself sits above - Battle-
+                               shocked is one flag for the whole unit (see
+                               attached-unit-tracker's Battle-Shocked Status Is Player-Set
+                               requirement). *@
+                            @if (unit.IsBattleShocked)
+                            {
+                                <div class="stat-tile stat-tile-flagged"><span class="stat-label">OC</span><span class="stat-value">@Html.Raw(BoltSvgIcon("oc-battleshock-icon"))</span></div>
+                            }
+                            else
+                            {
+                                <div class="stat-tile"><span class="stat-label">OC</span><span class="stat-value">@(block.Statline.Oc)</span></div>
+                            }
                             @{
                                 var inv = block.Statline.InSv;
                             }
@@ -177,7 +225,7 @@
                                caveated) across every shape. *@
                             @if (inv.Caveated)
                             {
-                                <div class="stat-tile insv-tile insv-tile-caveated">
+                                <div class="stat-tile insv-tile stat-tile-flagged">
                                     <span class="stat-label">InSv*</span>
                                     <span class="stat-value">@(inv.MeleeInSv)+</span>
                                 </div>
@@ -481,6 +529,17 @@
 @functions {
     static string AbilityDisplayName(Ability ability) =>
         ability.Origin == AbilityOrigin.Enhancement ? $"✦ {ability.Name}" : ability.Name;
+
+    // Shared lightning-bolt shape for both the header's Battle-shock toggle and a Battle-shocked
+    // unit's OC tile - "the same glyph", per half-strength-and-battleshock-indicators' spec, not
+    // two independently-drawn bolts that only coincidentally look similar. Inline SVG rather than a
+    // Unicode/emoji character, matching .filter-flag-icon's own precedent (renders identically
+    // across browsers/fonts, and fill/stroke both resolve from currentColor) - the header toggle
+    // needs two genuinely different paint states (outline vs. solid), which no matched Unicode pair
+    // reliably gives. cssClass alone drives the paint state via CSS (see site.css); this helper
+    // never varies the markup itself.
+    static string BoltSvgIcon(string cssClass) =>
+        $"<svg class=\"{cssClass}\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path d=\"M9 1 L3 9 L7 9 L6 15 L13 6 L9 6 Z\" /></svg>";
 
     static List<string> WeaponAbilityTags(WeaponProfile w)
     {

@@ -1,4 +1,9 @@
 const CASUALTY_STORAGE_KEY = 'probhammer.livePlay.casualties';
+// Half-strength-override/Battle-shocked toggles (half-strength-and-battleshock-indicators) live in
+// their own maps, keyed by unit index alone (not the component/statline/loadout coordinate
+// casualties use) - both are unit-level status, never per-model-line.
+const HALF_STRENGTH_STORAGE_KEY = 'probhammer.livePlay.halfStrength';
+const BATTLESHOCKED_STORAGE_KEY = 'probhammer.livePlay.battleShocked';
 
 // Per-unit selection (deselected select-keys) state, keyed by data-unit-index and kept OUTSIDE
 // initUnitSelection's own closure so it survives a casualty-triggered swapUnitBlock - a casualty
@@ -13,7 +18,7 @@ const deselectedByUnit = new Map();
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.unit-block').forEach(initUnitBlock);
-    void syncCasualties();
+    void syncLivePlayState();
 });
 
 // One consolidated per-unit-block init, covering everything that attaches listeners to a
@@ -25,6 +30,7 @@ function initUnitBlock(unitEl) {
     initWeaponProvenanceToggles(unitEl);
     initCasualtyControls(unitEl);
     initCasualtyReset(unitEl);
+    initStatusGlyphControls(unitEl);
     initUnitSelection(unitEl);
 }
 
@@ -63,9 +69,39 @@ function initCasualtyControls(unitEl) {
             stored[key] = newValue;
             setStoredCasualties(stored);
 
-            void syncCasualties();
+            void syncLivePlayState();
         });
     });
+}
+
+// Header status-glyph controls (half-strength-and-battleshock-indicators): the half-strength
+// glyph only carries a click handler when it's rendered as a <button> (the single-model,
+// player-set case - see _UnitBlock.cshtml) - the multi-model <span> variant is a passive,
+// computed indicator with nothing to toggle. The Battle-shock glyph is always a <button>. Neither
+// needs stopPropagation: unlike the casualty controls, the header isn't nested inside any other
+// click target.
+function initStatusGlyphControls(unitEl) {
+    const halfStrengthBtn = unitEl.querySelector('button.status-glyph-halfstrength');
+    if (halfStrengthBtn) {
+        halfStrengthBtn.addEventListener('click', () => {
+            toggleStoredUnitFlag(HALF_STRENGTH_STORAGE_KEY, halfStrengthBtn.dataset.unitIndex);
+            void syncLivePlayState();
+        });
+    }
+
+    const battleShockBtn = unitEl.querySelector('.status-glyph-battleshock');
+    if (battleShockBtn) {
+        battleShockBtn.addEventListener('click', () => {
+            toggleStoredUnitFlag(BATTLESHOCKED_STORAGE_KEY, battleShockBtn.dataset.unitIndex);
+            void syncLivePlayState();
+        });
+    }
+}
+
+function toggleStoredUnitFlag(storageKey, unitIndex) {
+    const stored = readJsonMap(storageKey);
+    stored[unitIndex] = !stored[unitIndex];
+    writeJsonMap(storageKey, stored);
 }
 
 // Reset-casualties control (casualty-tracking follow-up). Confirms first - this can revert several
@@ -93,7 +129,7 @@ function initCasualtyReset(unitEl) {
         keysToReset.forEach((initialValue, key) => { stored[key] = initialValue; });
         setStoredCasualties(stored);
 
-        const succeeded = await syncCasualties();
+        const succeeded = await syncLivePlayState();
         if (!succeeded) return;
 
         // Prune this unit's now-pristine entries so localStorage doesn't carry redundant
@@ -105,17 +141,23 @@ function initCasualtyReset(unitEl) {
     });
 }
 
-function getStoredCasualties() {
+// Shared by the casualty map and the two unit-status maps (half-strength-and-battleshock-
+// indicators) - all three are "a plain object, JSON-round-tripped through localStorage under one
+// key", differing only in which key and what the object's values mean.
+function readJsonMap(storageKey) {
     try {
-        return JSON.parse(localStorage.getItem(CASUALTY_STORAGE_KEY) || '{}');
+        return JSON.parse(localStorage.getItem(storageKey) || '{}');
     } catch {
         return {};
     }
 }
 
-function setStoredCasualties(map) {
-    localStorage.setItem(CASUALTY_STORAGE_KEY, JSON.stringify(map));
+function writeJsonMap(storageKey, map) {
+    localStorage.setItem(storageKey, JSON.stringify(map));
 }
+
+function getStoredCasualties() { return readJsonMap(CASUALTY_STORAGE_KEY); }
+function setStoredCasualties(map) { writeJsonMap(CASUALTY_STORAGE_KEY, map); }
 
 // Reverses LivePlayModel.CasualtyKey's "{unitIndex}::{componentName}::{statlineName}[::{loadoutIndex}]"
 // format. Returns null for a malformed key rather than throwing - defensive against a stale/
@@ -136,30 +178,51 @@ function parseCasualtyKey(key) {
     };
 }
 
-// Posts the *entire* current localStorage map on every call, never just the newest change - the
-// server is stateless and always rebuilds from a pristine roster, so a request carrying only one
-// adjustment would discard every earlier casualty from the same session (see casualty-tracking's
-// design.md - "every request carries the full current map"). A no-op when the map is empty, so a
-// browser with no recorded adjustments never issues a request at all. Returns whether the sync
-// actually completed (used by initCasualtyReset to know when it's safe to prune storage) - true
-// for the empty-map no-op too, since there was nothing to fail.
-async function syncCasualties() {
+function buildCasualtyAdjustments() {
     const stored = getStoredCasualties();
-    const adjustments = Object.entries(stored)
+    return Object.entries(stored)
         .map(([key, remainingCount]) => {
             const coordinate = parseCasualtyKey(key);
             return coordinate ? { coordinate, remainingCount } : null;
         })
         .filter(entry => entry !== null);
+}
 
-    if (adjustments.length === 0) return true;
+// Every unit index present in EITHER map gets one combined adjustment, reading both maps' CURRENT
+// values (defaulting a side with no entry for that index to false, correctly representing "never
+// toggled") - never a delta, same "always send the whole current state" principle
+// buildCasualtyAdjustments already follows.
+function buildStatusAdjustments() {
+    const halfStrength = readJsonMap(HALF_STRENGTH_STORAGE_KEY);
+    const battleShocked = readJsonMap(BATTLESHOCKED_STORAGE_KEY);
+    const unitIndexes = new Set([...Object.keys(halfStrength), ...Object.keys(battleShocked)]);
+
+    return [...unitIndexes].map(key => ({
+        unitIndex: Number(key),
+        isHalfStrength: Boolean(halfStrength[key]),
+        isBattleShocked: Boolean(battleShocked[key])
+    }));
+}
+
+// Posts the *entire* current localStorage state on every call, never just the newest change - the
+// server is stateless and always rebuilds from a pristine roster, so a request carrying only one
+// adjustment would discard every earlier casualty/status from the same session (see casualty-
+// tracking's design.md - "every request carries the full current map", extended by half-strength-
+// and-battleshock-indicators to the two new unit-status maps sharing this same POST). A no-op when
+// both are empty, so a browser with no recorded adjustments never issues a request at all. Returns
+// whether the sync actually completed (used by initCasualtyReset to know when it's safe to prune
+// storage) - true for the no-op case too, since there was nothing to fail.
+async function syncLivePlayState() {
+    const casualtyAdjustments = buildCasualtyAdjustments();
+    const statusAdjustments = buildStatusAdjustments();
+    if (casualtyAdjustments.length === 0 && statusAdjustments.length === 0) return true;
 
     let response;
     try {
         response = await fetch('/api/live-play/casualties', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(adjustments)
+            body: JSON.stringify({ casualtyAdjustments, statusAdjustments })
         });
     } catch {
         return false; // offline/network failure - leave the DOM as-is, localStorage still holds the state

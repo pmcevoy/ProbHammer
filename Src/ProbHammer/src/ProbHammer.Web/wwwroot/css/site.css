@@ -506,7 +506,12 @@ button[type="submit"]:hover { opacity: 0.85; }
     overflow: hidden;
 }
 
+/* Flex row (name left, status glyphs right via .unit-status-glyphs' own margin-left: auto) - the
+   same left-title/right-flags shape .lp-section summary already uses one level down, applied here
+   to the unit-name bar itself (half-strength-and-battleshock-indicators). */
 .unit-block .unit-name {
+    display: flex;
+    align-items: center;
     margin: 0;
     padding: 0.6rem 0.85rem;
     background: var(--bg3);
@@ -515,6 +520,63 @@ button[type="submit"]:hover { opacity: 0.85; }
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.02em;
+}
+
+/* Status glyphs (half-strength-and-battleshock-indicators): right-aligned as a group, Battle-shock
+   always rightmost - mirrors .statline-flags' own "group of right-aligned .filter-flag controls"
+   pattern exactly, one level up on the unit-name bar itself. Both glyphs reuse .filter-flag for
+   their base color/font-size/hover-opacity - plain text/background matching the bar, not a colored
+   pill, same reasoning as every other .filter-flag use on this page. */
+.unit-status-glyphs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+.unit-status-glyphs .filter-flag { margin-left: 0; }
+
+/* Half-strength glyph: plain "½" text, no icon needed - a real, well-supported Unicode character
+   with no outline/solid duality to worry about (unlike the Battle-shock bolt below). Ordinary
+   header text color while inactive; amber only while active - stat VALUES (the OC tile's own bolt,
+   below) never carry amber ink themselves, but this glyph is a control (like the Battle-shock
+   toggle, the casualty-reset icon, and the filter badge), and controls get amber ink when active -
+   see design-tokens.md. */
+.status-glyph-halfstrength.is-active { color: var(--amber); }
+
+/* Battle-shock glyph: inline SVG (BoltSvgIcon in _UnitBlock.cshtml), not a Unicode/emoji character,
+   for the same reason .filter-flag-icon isn't one - it needs two genuinely different paint states
+   (outline vs. solid) that no matched Unicode pair reliably gives across browsers/fonts. Outline by
+   default (fill: none, stroke: currentColor - inherits the header's own white text color via
+   .filter-flag's color: inherit); solid amber once active, the same "control gets amber ink when
+   active" rule the half-strength glyph follows. */
+.battleshock-icon {
+    width: 0.85em;
+    height: 0.85em;
+    vertical-align: -0.05em;
+}
+.battleshock-icon path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.3;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+.status-glyph-battleshock.is-active .battleshock-icon path {
+    fill: var(--amber);
+    stroke: none;
+}
+
+/* The same bolt shape rendered inside a Battle-shocked unit's OC tile (see .stat-tile-flagged
+   below) - always solid, always the tile's own ordinary .stat-value color, never amber. The
+   "flagged" signal lives entirely in the tile's background token, not in this glyph's own ink -
+   deliberately different from the header control above, which does use amber ink because it's a
+   control, not a stat value (design-tokens.md's "controls get amber ink when active, stat values
+   never do"). */
+.oc-battleshock-icon {
+    width: 0.85em;
+    height: 0.85em;
+    vertical-align: -0.1em;
+    fill: currentColor;
 }
 
 /* One unified glyph flag across all three section bars (Statline/Ranged/Melee), right-justified via
@@ -690,10 +752,15 @@ button.filter-flag:hover { opacity: 0.8; }
    auto-width grows to fit a wider value/icon combination, leaving the other five tiles' widths
    alone - a spanning row previously let a long value bleed its width into every column it crossed. */
 .insv-tile { grid-column: 3; }
-/* A separate background token (--amber-tint) rather than the page's existing --amber accent
-   itself, kept black-on-light like every other stat value on this page (not GW's inverted
-   dark-shield/white-text treatment) - explicit user call, see design.md's "Caveated box color". */
-.insv-tile-caveated { background: var(--amber-tint); border-color: var(--amber); }
+/* Shared "this stat-tile's value isn't the plain catalogue value" background treatment - originally
+   InSv-only (.insv-tile-caveated), generalized by half-strength-and-battleshock-indicators once the
+   Battle-shocked OC tile needed the identical visual family. A separate background token
+   (--amber-tint) rather than the page's existing --amber accent itself, kept black-on-light like
+   every other stat value on this page (not GW's inverted dark-shield/white-text treatment) -
+   explicit user call, see redesign-invulnerable-save-display's design.md "Caveated box color". The
+   glyph/value inside stays in the tile's ordinary .stat-value color regardless of which tile this
+   is on - only the background carries the "flagged" signal, never the value's own ink. */
+.stat-tile-flagged { background: var(--amber-tint); border-color: var(--amber); }
 /* The differing-both-known case stacks its two icon+value pairs as two rows (ranged above melee)
    rather than one line with a "/" separator - each row reads as a complete, self-contained fact,
    and stacking keeps the tile from growing much wider than its neighbours (it grows taller

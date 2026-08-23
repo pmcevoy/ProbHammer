@@ -36,11 +36,12 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
     }
 
     // Factored out of OnGet() so its sort/aggregate/build-view-model pipeline is testable directly
-    // against a hand-built ArmyRoster, without needing a real HttpContext.Session.
+    // against a hand-built ArmyRoster, without needing a real HttpContext.Session. Threads each
+    // sorted unit alongside its own aggregate view (rather than discarding the unit once the view
+    // is built) so BuildUnitBlock can read HalfStrengthResolution/IsBattleShocked off it.
     internal static List<UnitBlockViewModel> BuildUnitBlocks(ArmyRoster roster) =>
         SortRoster(roster.Units)
-            .Select(AttachedUnitAggregator.Build)
-            .Select(BuildUnitBlock)
+            .Select(unit => BuildUnitBlock(AttachedUnitAggregator.Build(unit), unit))
             .ToList();
 
     // Sorts the raw roster using the same criteria OnGet() has always applied to the built views
@@ -79,18 +80,37 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
     // ComponentName/StatlineName/LoadoutIndex) is silently ignored rather than throwing - defensive
     // against stale localStorage from a roster shape that no longer matches (e.g. after a re-import).
     internal static List<AttachedUnitAggregateView> RebuildRoster(
-        IReadOnlyList<ICombatUnit> units, IReadOnlyList<CasualtyAdjustment> adjustments)
+        IReadOnlyList<ICombatUnit> units, IReadOnlyList<CasualtyAdjustment> adjustments) =>
+        RebuildRosterWithStatus(units, adjustments, []).Select(x => x.View).ToList();
+
+    // The half-strength/Battle-shocked-toggle counterpart to RebuildRoster - applies both a
+    // casualty batch and a unit-status-toggle batch onto a freshly sorted roster before
+    // aggregating, and (unlike RebuildRoster) returns each sorted unit alongside its built view so
+    // the caller can read HalfStrengthResolution/IsBattleShocked off it via BuildUnitBlock. Kept as
+    // a separate method rather than changing RebuildRoster's own signature/return type, since
+    // several existing tests exercise RebuildRoster in isolation against casualty-only behavior.
+    internal static List<(ICombatUnit Unit, AttachedUnitAggregateView View)> RebuildRosterWithStatus(
+        IReadOnlyList<ICombatUnit> units,
+        IReadOnlyList<CasualtyAdjustment> casualtyAdjustments,
+        IReadOnlyList<UnitStatusAdjustment> statusAdjustments)
     {
         var sortedUnits = SortRoster(units);
 
         for (var unitIndex = 0; unitIndex < sortedUnits.Count; unitIndex++)
         {
             var unit = sortedUnits[unitIndex];
-            foreach (var adjustment in adjustments.Where(a => a.Coordinate.UnitIndex == unitIndex))
+            foreach (var adjustment in casualtyAdjustments.Where(a => a.Coordinate.UnitIndex == unitIndex))
                 ApplyAdjustment(unit, adjustment.Coordinate, adjustment.RemainingCount);
+
+            var status = statusAdjustments.FirstOrDefault(a => a.UnitIndex == unitIndex);
+            if (status is not null)
+            {
+                unit.IsHalfStrengthOverride = status.IsHalfStrength;
+                unit.IsBattleShocked = status.IsBattleShocked;
+            }
         }
 
-        return sortedUnits.Select(AttachedUnitAggregator.Build).ToList();
+        return sortedUnits.Select(unit => (unit, AttachedUnitAggregator.Build(unit))).ToList();
     }
 
     private static void ApplyAdjustment(ICombatUnit unit, CasualtyCoordinate coordinate, int remainingCount)
@@ -114,7 +134,27 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
         line?.SetRemainingCount(remainingCount);
     }
 
-    internal static UnitBlockViewModel BuildUnitBlock(AttachedUnitAggregateView view)
+    // Computes IsSingleModelUnit/IsAtOrBelowHalfStrength/IsBattleShocked off the live unit (per
+    // HalfStrengthResolution and ICombatUnit.IsBattleShocked) before delegating to the view-only
+    // overload below - the production path (BuildUnitBlocks, the casualty-sync endpoint) always has
+    // the unit on hand.
+    internal static UnitBlockViewModel BuildUnitBlock(AttachedUnitAggregateView view, ICombatUnit unit)
+    {
+        var isSingleModelUnit = HalfStrengthResolution.StartingStrength(unit) == 1;
+        var isAtOrBelowHalfStrength = isSingleModelUnit
+            ? unit.IsHalfStrengthOverride
+            : HalfStrengthResolution.IsAtOrBelowHalfStrength(unit);
+        return BuildUnitBlock(view, isSingleModelUnit, isAtOrBelowHalfStrength, unit.IsBattleShocked);
+    }
+
+    // View-only overload, defaulting the three status fields to false/not-applicable - kept for the
+    // several existing rendering-focused tests that construct an AttachedUnitAggregateView fixture
+    // directly with no backing ICombatUnit to read status off.
+    internal static UnitBlockViewModel BuildUnitBlock(
+        AttachedUnitAggregateView view,
+        bool isSingleModelUnit = false,
+        bool isAtOrBelowHalfStrength = false,
+        bool isBattleShocked = false)
     {
         // Loadouts is empty when exactly one ModelLine shares a statline name (the "no redundant
         // breakdown row" rule - see AggregateStatlineEntry), so Max(.,1) recovers the true
@@ -141,7 +181,10 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
             RangedWeapons: orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Ranged).ToList(),
             MeleeWeapons: orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Melee).ToList(),
             ComponentAbilitySpans: BuildComponentAbilitySpans(statlineBlocks, view.Abilities),
-            Keywords: view.Keywords.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList());
+            Keywords: view.Keywords.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList(),
+            IsSingleModelUnit: isSingleModelUnit,
+            IsAtOrBelowHalfStrength: isAtOrBelowHalfStrength,
+            IsBattleShocked: isBattleShocked);
     }
 
     // Selection-key convention shared between the Statline section's toggle targets and weapon
@@ -379,6 +422,22 @@ public sealed record CasualtyCoordinate(int UnitIndex, string ComponentName, str
 /// <see cref="LivePlayModel.RebuildRoster"/>.</summary>
 public sealed record CasualtyAdjustment(CasualtyCoordinate Coordinate, int RemainingCount);
 
+/// <summary>One entry in a status-sync request: the absolute (not delta) half-strength-override
+/// and Battle-shocked values a specific unit's <see cref="ICombatUnit"/> should be set to. Unlike
+/// <see cref="CasualtyAdjustment"/>, addressed by <see cref="UnitIndex"/> alone - both statuses are
+/// unit-level (see <see cref="HalfStrengthResolution"/>'s "combined across every component"
+/// determination and <see cref="ICombatUnit.IsBattleShocked"/>), never per-component/statline/
+/// loadout.</summary>
+public sealed record UnitStatusAdjustment(int UnitIndex, bool IsHalfStrength, bool IsBattleShocked);
+
+/// <summary>The casualty-sync endpoint's full request body - bundles a casualty batch and a
+/// unit-status-toggle batch into one POST/one roster rebuild/one set of re-rendered fragments,
+/// rather than two independent requests that could race each other's fragment swap. Either list
+/// may be empty.</summary>
+public sealed record LivePlaySyncRequest(
+    List<CasualtyAdjustment> CasualtyAdjustments,
+    List<UnitStatusAdjustment> StatusAdjustments);
+
 /// <summary>A contiguous, same-component, value-identical run of statline entries sharing one
 /// rendered stat-tile. <see cref="Entries"/> is never empty - every group is seeded with at least
 /// one entry at creation. <see cref="LoadoutLabels"/> is parallel to <see cref="Entries"/> - each
@@ -448,7 +507,10 @@ public sealed record UnitBlockViewModel(
     IReadOnlyList<WeaponRowViewModel> RangedWeapons,
     IReadOnlyList<WeaponRowViewModel> MeleeWeapons,
     IReadOnlyList<ComponentAbilitySpanViewModel> ComponentAbilitySpans,
-    IReadOnlyList<string> Keywords)
+    IReadOnlyList<string> Keywords,
+    bool IsSingleModelUnit,
+    bool IsAtOrBelowHalfStrength,
+    bool IsBattleShocked)
 {
     /// <summary>True once at least one statline entry in this unit has taken a casualty
     /// (RemainingCount != InitialCount somewhere) - gates the "reset casualties" control's

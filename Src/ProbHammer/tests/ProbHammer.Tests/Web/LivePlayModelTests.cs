@@ -2,6 +2,7 @@ using FluentAssertions;
 using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Examples;
 using ProbHammer.Core.Domain.Roster;
+using ProbHammer.Tests.Domain.Fixtures;
 using ProbHammer.Web.Pages;
 
 namespace ProbHammer.Tests.Web;
@@ -390,6 +391,65 @@ public class LivePlayModelTests
         var pristine = LivePlayModel.SortRoster(View.MyArmyRoster()).Select(AttachedUnitAggregator.Build).ToList();
         act().Select(v => v.Statlines.Sum(s => s.RemainingCount))
             .Should().Equal(pristine.Select(v => v.Statlines.Sum(s => s.RemainingCount)));
+    }
+
+    [Fact]
+    public void BuildUnitBlock_WithUnit_ComputesSingleModelAndHalfStrengthAndBattleShockedFlags()
+    {
+        var unit = AttachedUnitFixtures.LeaderUnit(); // single-model
+        unit.IsHalfStrengthOverride = true;
+        unit.IsBattleShocked = true;
+        var view = AttachedUnitAggregator.Build(unit);
+
+        var block = LivePlayModel.BuildUnitBlock(view, unit);
+
+        block.IsSingleModelUnit.Should().BeTrue();
+        block.IsAtOrBelowHalfStrength.Should().BeTrue(); // the player-set override, for a single-model unit
+        block.IsBattleShocked.Should().BeTrue();
+    }
+
+    [Fact]
+    public void BuildUnitBlock_WithUnit_MultiModelUnit_UsesTheComputedHalfStrengthDetermination()
+    {
+        var unit = UnitFixtures.AssaultIntercessorSquadWithUnitLeader(); // 5 full-health models
+        unit.IsHalfStrengthOverride = true; // never read for a multi-model unit
+        var view = AttachedUnitAggregator.Build(unit);
+
+        var block = LivePlayModel.BuildUnitBlock(view, unit);
+
+        block.IsSingleModelUnit.Should().BeFalse();
+        block.IsAtOrBelowHalfStrength.Should().BeFalse();
+    }
+
+    [Fact]
+    public void RebuildRosterWithStatus_AppliesAStatusAdjustment_ToOnlyTheAddressedUnit()
+    {
+        var statusAdjustment = new UnitStatusAdjustment(0, IsHalfStrength: false, IsBattleShocked: true);
+
+        var rebuilt = LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [], [statusAdjustment]);
+
+        rebuilt[0].Unit.IsBattleShocked.Should().BeTrue();
+        rebuilt.Skip(1).Should().OnlyContain(x => !x.Unit.IsBattleShocked);
+    }
+
+    [Fact]
+    public void RebuildRosterWithStatus_LeavesStatusUnset_WhenNoAdjustmentAddressesAnyUnit()
+    {
+        var rebuilt = LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [], []);
+
+        rebuilt.Should().OnlyContain(x => !x.Unit.IsBattleShocked && !x.Unit.IsHalfStrengthOverride);
+    }
+
+    [Fact]
+    public void RebuildRosterWithStatus_ABatchOfBothKinds_AppliesBothIndependently()
+    {
+        var casualtyAdjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1), RemainingCount: 2);
+        var statusAdjustment = new UnitStatusAdjustment(0, IsHalfStrength: false, IsBattleShocked: true);
+
+        var rebuilt = LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [casualtyAdjustment], [statusAdjustment]);
+
+        rebuilt[0].View.Statlines.Single(s => s.StatlineName == "Neophyte").RemainingCount.Should().Be(2);
+        rebuilt[0].Unit.IsBattleShocked.Should().BeTrue();
     }
 
     // Synthetic BuildContributionBreakdown tests construct WeaponContribution directly, with no

@@ -1043,6 +1043,32 @@ ICombatUnit
   Components: IReadOnlyList<Unit>   // Composite-pattern shape; lets aggregate-view logic
                                      // treat a plain Unit and an AttachedUnit uniformly
   Name: string                      // computed, not stored - see Pure functions below
+  IsHalfStrengthOverride: bool      // mutable, live-state, since half-strength-and-
+                                     // battleshock-indicators - player-set only, defaulting
+                                     // to false. Meaningful only when HalfStrengthResolution
+                                     // .StartingStrength(this) == 1 (a genuine single-model
+                                     // unit, no attachment) - the real at-or-below-half-
+                                     // strength determination there is wound-based, which this
+                                     // app deliberately does not track (see Deliberate
+                                     // Omissions in CLAUDE.md); for a combined starting
+                                     // strength of 2+ the computed determination governs
+                                     // instead and this value goes unread. One flag per
+                                     // ICombatUnit - an AttachedUnit's own flag is unrelated to
+                                     // its Bodyguard's/each Attached Unit's own flag (each Unit
+                                     // still carries the property, by interface, but only reads
+                                     // as meaningful when that Unit itself is the top-level
+                                     // ICombatUnit being rendered, never when it's wrapped
+                                     // inside an AttachedUnit).
+  IsBattleShocked: bool             // mutable, live-state, same change - player-set only,
+                                     // defaulting to false; the app never simulates the 2D6-
+                                     // vs-Leadership test itself, only records the player's own
+                                     // reported result. Never cleared by any other domain
+                                     // operation (a casualty adjustment, a half-strength
+                                     // change) - 11th edition only clears Battle-shock on a
+                                     // *passed* subsequent test, so this is a plain persistent
+                                     // latch the player clears themselves, not something this
+                                     // app auto-resets each Command phase (it has no turn-
+                                     // tracking concept to hang that on anyway).
 ```
 
 **Pure functions (not stored state):**
@@ -1064,6 +1090,20 @@ ICombatUnit
   → `"{Bodyguard} with {A} and {B}"` (no comma); three or more → an Oxford-comma join
   (`"{Bodyguard} with {A}, {B}, and {C}"`). Duplicate attached-leader names are not deduplicated
   (e.g. two Marshals render as `"...with Marshal and Marshal"`) — a known, accepted limitation.
+- `HalfStrengthResolution` (since half-strength-and-battleshock-indicators) — `StartingStrength
+  (ICombatUnit)`/`CurrentStrength(ICombatUnit)` sum `Σ ModelLine.Count`/`Σ ModelLine
+  .RemainingCount` across every one of `Components` together, matching the real rule that an
+  attached unit's starting strength is the number of models it contains at the start of the first
+  battle round (combined, not per-component). `IsAtOrBelowHalfStrength(ICombatUnit)` is true when
+  `CurrentStrength <= floor(StartingStrength / 2)` (rounded down - a 5-model unit's threshold is 2,
+  not 3, so it takes 3 casualties, not 2, to reach it; confirmed against a real user-reported bug -
+  the initial implementation used `ceil`, one casualty too eager), but only meaningful (and only ever computed)
+  when `StartingStrength >= 2` — a combined starting strength of exactly 1 always returns `false`
+  here regardless of remaining wounds, since the real determination for that case is wound-based
+  and this app has no partial-wound data to compute it from (see `ICombatUnit
+  .IsHalfStrengthOverride` above). `IsAtOrBelowHalfStrengthStatus(ICombatUnit)` is the one combined
+  read most callers actually want — the computed value when `StartingStrength >= 2`, the player-set
+  override when it's exactly 1 — without the caller needing to know which of the two applies.
 
 **Aggregate view** (`AttachedUnitAggregator.Build(ICombatUnit) -> AttachedUnitAggregateView`):
 

@@ -66,7 +66,7 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
     {
         var html = await RenderAsync(new InvulnerableSave(4, 4, caveated: false, caveatAbility: null));
 
-        html.Should().Contain(">InSv<").And.Contain(">4+<").And.NotContain("insv-icon").And.NotContain("insv-tile-caveated");
+        html.Should().Contain(">InSv<").And.Contain(">4+<").And.NotContain("insv-icon").And.NotContain("stat-tile-flagged");
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
         };
         var html = await RenderAsync(new InvulnerableSave(5, 5, caveated: true, caveatAbility: ability));
 
-        html.Should().Contain("insv-tile-caveated")
+        html.Should().Contain("stat-tile-flagged")
             .And.Contain(">InSv*<")
             .And.Contain("This model has a test invulnerable save condition.")
             .And.NotContain("insv-icon");
