@@ -4,6 +4,9 @@ namespace ProbHammer.Core.Domain.Catalogue;
 /// Reference/rules data for a single named unit type, independent of any specific army list.
 /// Statlines are named and enumerable (the aggregate view needs to list distinct statlines in
 /// play). Weapon profiles resolve by name on demand only - no full options menu is materialized.
+/// Optional abilities (Enhancements, and other ability grants nested inside their own selection
+/// entry, e.g. Impulsor's "Shield Dome") get the same on-demand-only treatment - the public
+/// Abilities list carries only intrinsic, unconditional facts about the datasheet.
 /// </summary>
 public sealed class Datasheet
 {
@@ -15,6 +18,7 @@ public sealed class Datasheet
 
     private readonly IReadOnlyDictionary<string, Statline> _statlinesByName;
     private readonly IReadOnlyDictionary<string, WeaponProfile> _weaponProfiles;
+    private readonly IReadOnlyDictionary<string, Ability> _optionalAbilities;
 
     public Datasheet(
         string name,
@@ -22,7 +26,8 @@ public sealed class Datasheet
         IEnumerable<string> keywords,
         IEnumerable<Ability> abilities,
         IReadOnlyList<(string Name, Statline Statline)> statlines,
-        IEnumerable<WeaponProfile> weaponProfiles)
+        IEnumerable<WeaponProfile> weaponProfiles,
+        IEnumerable<Ability>? optionalAbilities = null)
     {
         Name = name;
         FactionKeywords = new HashSet<string>(factionKeywords, StringComparer.OrdinalIgnoreCase);
@@ -31,6 +36,7 @@ public sealed class Datasheet
         Statlines = statlines;
         _statlinesByName = statlines.ToDictionary(x => x.Name, x => x.Statline, StringComparer.OrdinalIgnoreCase);
         _weaponProfiles = weaponProfiles.ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
+        _optionalAbilities = (optionalAbilities ?? []).ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
     }
 
     public Statline GetStatline(string name) =>
@@ -52,4 +58,16 @@ public sealed class Datasheet
     /// (e.g. army-roster-enrichment's "did you mean" suggestion on a resolution failure), not for
     /// enumerating a full options menu (see ResolveWeaponProfile's own on-demand-only design).</summary>
     public IReadOnlyList<string> WeaponNames => _weaponProfiles.Keys.ToList();
+
+    /// <summary>Resolves a single named optional ability (an Enhancement, or any other ability
+    /// grant nested inside its own selection entry, e.g. Impulsor's "Shield Dome") without
+    /// enumerating every optional ability the Datasheet defines - mirrors
+    /// TryResolveWeaponProfile's on-demand-only design exactly. An optional ability never appears
+    /// in the public Abilities list; this is the only way to reach one.</summary>
+    public bool TryResolveAbility(string name, out Ability ability) => _optionalAbilities.TryGetValue(name, out ability!);
+
+    /// <summary>Every optional ability name this Datasheet defines - exposed for diagnostic
+    /// purposes (a "did you mean" suggestion on a resolution failure), not for enumerating a full
+    /// options menu (see TryResolveAbility's own on-demand-only design).</summary>
+    public IReadOnlyList<string> OptionalAbilityNames => _optionalAbilities.Keys.ToList();
 }

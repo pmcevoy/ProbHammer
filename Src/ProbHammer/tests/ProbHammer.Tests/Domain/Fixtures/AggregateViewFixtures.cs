@@ -79,7 +79,7 @@ public static class AggregateViewFixtures
             name: "Crusader Squad",
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY", "BATTLELINE"],
-            abilities: [new Ability { Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit }],
+            abilities: [new Ability { Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic }],
             statlines: [("Initiate", new Statline(6, 4, 3, 2, 6, 2))],
             weaponProfiles: []);
         var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Initiate", [], count: 5)]);
@@ -92,9 +92,9 @@ public static class AggregateViewFixtures
             statlines: [("Chaplain", new Statline(6, 4, 3, 4, 6, 1))],
             weaponProfiles: []);
 
-        var ironHalo = new Ability { Name = "Iron Halo", Text = "This model has a 4+ invulnerable save.", Scope = AbilityScope.Model };
+        var ironHalo = new Ability { Name = "Iron Halo", Text = "This model has a 4+ invulnerable save.", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
         var leaderLine = new ModelLine("Chaplain", [], count: 1, abilities: [ironHalo]);
-        var leader = new Unit(leaderDatasheet, ["Iron Halo"], [leaderLine]);
+        var leader = new Unit(leaderDatasheet, [ironHalo], [leaderLine]);
 
         return new AttachedUnit(bodyguard, [leader]);
     }

@@ -41,9 +41,34 @@ public static class ArmyRosterEnricher
         var unitName = BsdataNameNormalization.Normalize(parsedUnit.Name);
         var datasheet = catalogue.ResolveDatasheet(unitName);
         var modelLines = parsedUnit.ModelGroups.Select(g => BuildModelLine(g, datasheet)).ToList();
+        var enhancements = ResolveEnhancements(parsedUnit.Enhancements, datasheet);
 
-        return new Unit(datasheet, parsedUnit.Enhancements, modelLines);
+        return new Unit(datasheet, enhancements, modelLines);
     }
+
+    /// <summary>Resolves each parsed Enhancement name against the Datasheet's on-demand ability
+    /// index (per datasheet-catalogue's On-Demand Ability Resolution) - the same "resolve by name,
+    /// fail loud with a did-you-mean diagnostic" contract as every other name resolution in this
+    /// file. Deliberately does not check that a resolved ability's Origin is actually Enhancement
+    /// (vs. some other optional grant) - that would be new eligibility-checking behavior this
+    /// project has consistently declined to add elsewhere (see resolve-enhancement-abilities'
+    /// design.md). An empty Enhancements list resolves to an empty result - no Enhancement is ever
+    /// attached merely because the Datasheet defines one available.</summary>
+    private static IReadOnlyList<Ability> ResolveEnhancements(IReadOnlyList<string> enhancementNames, Datasheet datasheet) =>
+        enhancementNames
+            .Select(BsdataNameNormalization.Normalize)
+            .Select(name =>
+            {
+                if (datasheet.TryResolveAbility(name, out var ability))
+                    return ability;
+
+                var suggestion = BsdataNameSuggestion.FindClosest(name, datasheet.OptionalAbilityNames);
+                var message = suggestion is null
+                    ? $"Datasheet '{datasheet.Name}' has no Enhancement named '{name}'."
+                    : $"Datasheet '{datasheet.Name}' has no Enhancement named '{name}'. Did you mean '{suggestion}'?";
+                throw new BsdataNameResolutionException(name, message);
+            })
+            .ToList();
 
     private static ModelLine BuildModelLine(ParsedModelGroup group, Datasheet datasheet)
     {
@@ -122,8 +147,7 @@ public static class ArmyRosterEnricher
             return;
         }
 
-        var ability = datasheet.Abilities.FirstOrDefault(a => string.Equals(a.Name, itemName, StringComparison.OrdinalIgnoreCase));
-        if (ability is not null)
+        if (datasheet.TryResolveAbility(itemName, out var ability))
         {
             abilities.Add(ability);
             return;

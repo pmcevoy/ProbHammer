@@ -7,10 +7,10 @@ namespace ProbHammer.Core.Domain.Roster;
 public sealed class Unit : ICombatUnit
 {
     public Datasheet Datasheet { get; }
-    public IReadOnlyList<string> Enhancements { get; }
+    public IReadOnlyList<Ability> Enhancements { get; }
     public IReadOnlyList<ModelLine> ModelLines { get; }
 
-    public Unit(Datasheet datasheet, IEnumerable<string> enhancements, IEnumerable<ModelLine> modelLines)
+    public Unit(Datasheet datasheet, IEnumerable<Ability> enhancements, IEnumerable<ModelLine> modelLines)
     {
         Datasheet = datasheet;
         Enhancements = enhancements.ToList();

@@ -68,9 +68,14 @@ public class GameModeGatingTests
         // No game-system force entries reachable (e.g. BuildDatasheet's default forceEntries: null
         // - used by every pre-existing call site that doesn't pass one) means the gate can't be
         // resolved, so nothing is excluded - fails open rather than silently dropping content this
-        // loader can't actually evaluate.
+        // loader can't actually evaluate. Both fixture abilities sit on their own "type: upgrade"
+        // selection entry (a realistic shape - real Chaos Boons/Mark of Chaos options are exactly
+        // this), so once not gated out, they're resolvable only via TryResolveAbility (per
+        // resolve-enhancement-abilities' intrinsic/optional split), never enumerated in the public
+        // Abilities list - that split is independent of, and unaffected by, game-mode gating.
         var sheet = Build(forceEntries: null);
 
-        sheet.Abilities.Select(a => a.Name).Should().Contain("Warp Stalker").And.Contain("Fake Mark Option");
+        sheet.TryResolveAbility("Warp Stalker", out _).Should().BeTrue();
+        sheet.TryResolveAbility("Fake Mark Option", out _).Should().BeTrue();
     }
 }

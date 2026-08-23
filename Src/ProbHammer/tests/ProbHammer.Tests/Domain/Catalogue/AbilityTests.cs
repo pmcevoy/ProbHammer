@@ -8,7 +8,7 @@ public class AbilityTests
     [Fact]
     public void SimpleAbility_WithNoChoices_PreservesTextAsIs()
     {
-        var ability = new Ability { Name = "And They Shall Know No Fear", Text = "...", Scope = AbilityScope.Unit };
+        var ability = new Ability { Name = "And They Shall Know No Fear", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
 
         ability.Choices.Should().BeEmpty();
         ability.Text.Should().Be("...");
@@ -22,6 +22,7 @@ public class AbilityTests
             Name = "Litanies of Hate",
             Text = "While on an objective marker, choose one of the following:",
             Scope = AbilityScope.Unit,
+            Origin = AbilityOrigin.Intrinsic,
             Choices =
             [
                 new AbilityChoice("Rites of War", "This unit's melee weapons have the [LETHAL HITS] ability."),
@@ -37,7 +38,7 @@ public class AbilityTests
     [Fact]
     public void AbilityScope_ModelOnly_IsExplicit()
     {
-        var ability = new Ability { Name = "Icon of Despair", Text = "...", Scope = AbilityScope.Model };
+        var ability = new Ability { Name = "Icon of Despair", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
 
         ability.Scope.Should().Be(AbilityScope.Model);
     }
@@ -45,7 +46,7 @@ public class AbilityTests
     [Fact]
     public void AbilityScope_WholeUnit_IsExplicit()
     {
-        var ability = new Ability { Name = "Oath of Moment", Text = "...", Scope = AbilityScope.Unit };
+        var ability = new Ability { Name = "Oath of Moment", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
 
         ability.Scope.Should().Be(AbilityScope.Unit);
     }

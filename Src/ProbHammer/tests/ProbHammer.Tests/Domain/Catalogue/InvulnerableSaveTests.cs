@@ -30,7 +30,7 @@ public class InvulnerableSaveTests
     [Fact]
     public void Caveated_WithAbility_IsAllowed()
     {
-        var ability = new Ability { Name = "Invulnerable Save (5+*)", Text = "...", Scope = AbilityScope.Model };
+        var ability = new Ability { Name = "Invulnerable Save (5+*)", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
 
         var save = new InvulnerableSave(5, 5, caveated: true, caveatAbility: ability);
 

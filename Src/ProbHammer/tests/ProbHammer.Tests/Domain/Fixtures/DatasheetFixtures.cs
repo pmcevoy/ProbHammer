@@ -14,7 +14,7 @@ public static class DatasheetFixtures
             name: "Sword Brethren Squad",
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY", "SWORD BRETHREN SQUAD"],
-            abilities: [new Ability { Name = "Exploit their cowardice", Text = "...", Scope = AbilityScope.Unit }],
+            abilities: [new Ability { Name = "Exploit their cowardice", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic }],
             statlines: [("Sword Brother", bro)],
             weaponProfiles: [WeaponFixtures.MasterCraftedPowerWeapon(), WeaponFixtures.HeavyBoltPistol()]
         );
@@ -32,7 +32,7 @@ public static class DatasheetFixtures
             name: "Assault Intercessor Squad",
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY", "BATTLELINE", "ASSAULT INTERCESSOR SQUAD"],
-            abilities: [new Ability { Name = "Shock Assault", Text = "...", Scope = AbilityScope.Unit }],
+            abilities: [new Ability { Name = "Shock Assault", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic }],
             statlines: [("Assault Intercessor", troop), ("Assault Intercessor Sergeant", sergeant)],
             weaponProfiles: [WeaponFixtures.ChainSword(), WeaponFixtures.HeavyBoltPistol()]
         );

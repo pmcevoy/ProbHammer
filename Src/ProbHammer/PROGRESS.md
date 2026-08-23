@@ -8,6 +8,98 @@ Nothing in progress.
 
 ## Recently Completed
 
+- Post-implementation bug fix on `resolve-enhancement-abilities` (no new OpenSpec change - the
+  underlying `IsGameModeGated` method predates that change; this fix generalizes it, folded into
+  the same not-yet-archived change): user added a real Enhancement (`Enhancement(s): Oathbound
+  Exemplar`, on a Marshal using the "Companions of Vehemence" Detachment) to
+  `data/gw-app-export-templars.txt` and importing it failed with "Datasheet 'Marshal' has no
+  Enhancement named 'Oathbound Exemplar'." Traced (via the same instrument-and-print approach used
+  throughout this investigation) to `IsGameModeGated`'s original design: "a plain existence check
+  across nested conditionGroups, not real AND/OR boolean evaluation." Black Templars' "Companions of
+  Vehemence Enhancements" - a real, always-available Detachment Enhancement pool (Oathbound
+  Exemplar, Incendiary Animus, Merciless Denunciation, Zealous Vanguard) - is hidden by `AND(forces
+  (Crusade Force) < 1, selections(some other id) < 1)`, i.e. "hidden UNLESS you have a Crusade Force
+  OR this Detachment selected" - the existence check treated the mere presence of the Crusade Force
+  reference as sufficient to exclude the whole pool, regardless of the AND's other, unevaluated
+  branch, incorrectly hiding a real matched-play Enhancement for exactly the players using that
+  Detachment.
+  Fixed generally rather than allowlisted around: `IsGameModeGated` now calls a new
+  `IsProvablyAlwaysTrueInMatchedPlay`, real (if still narrow) 2-value boolean evaluation over the
+  condition tree - a gate-id condition combined via AND with an unrelated, unevaluated condition is
+  no longer treated as gated (that other condition could make the whole AND false); combined via OR,
+  it still is (OR only needs one always-true branch). Both previously-confirmed real shapes (Chaos
+  Boons' single flat condition, Mark of Chaos' single-condition "and" group) still evaluate
+  correctly under the new logic - neither was a coincidence of the old check, both are genuinely
+  "every branch provably true."
+  Verified: a new unit test confirms `Marshal.TryResolveAbility("Oathbound Exemplar", ...)` now
+  succeeds; full test suite (292 tests) and all 3 permanent full-corpus scans re-run against the
+  live BSData clone still pass unchanged - confirming the stricter evaluation doesn't silently
+  un-gate any of the content the original check correctly excluded. Manually re-verified via
+  `dotnet run` + `curl`: the updated export now imports successfully with no error. Note: the
+  resolved Enhancement doesn't yet visibly render on `/LivePlay` - wiring `Unit.Enhancements` into
+  the page's rendering remains the explicitly deferred future step from
+  `resolve-enhancement-abilities`'s own design.md, unaffected by this fix. Docs:
+  `.claude/domain-model-11e.md`'s `IsGameModeGated` description updated to describe the new
+  evaluation and this second real-world finding.
+
+- OpenSpec change `resolve-enhancement-abilities` implemented (all 23 tasks, not yet archived): a
+  real user-reported bug — after importing a real Black Templars export
+  (`data/gw-app-export-templars.txt`), `/LivePlay` showed "Thirst for Glory" on the Crusade Ancient
+  (a Space-Wolves-only Enhancement, never selected) and both "Fervent Exemplars" and "Inheritors of
+  Sigismund" on the Sword Brethren Squad (two real Black Templars Enhancements, neither selected,
+  on a unit that isn't even a Character eligible for an Enhancement at all). Root cause:
+  `BsdataDatasheetMapper.BuildDatasheet`'s walk materialized *every* `"Abilities"`-typeName profile
+  it found into the public, always-rendered `Datasheet.Abilities` — with no distinction between an
+  intrinsic fact about a datasheet and an optional, player-selectable ability nested inside its own
+  `"type": "upgrade"` selection entry (the exact same shape a weapon option uses).
+  `WeaponProfile` already had on-demand-only protection against this (`ResolveWeaponProfile`/
+  `TryResolveWeaponProfile`, never enumerated in bulk); `Ability` never got the same treatment.
+  **A first hypothesis (BSData "primary catalogue"/detachment gating) was investigated and
+  explicitly rejected** once the Sword Brethren Squad case surfaced: that content is genuine,
+  correctly-scoped Black Templars material on the right catalogue — it simply wasn't selected in
+  the export. The real, general fix had to be "never surface an optional ability unless the export
+  actually chose it," not "filter by which catalogue/detachment defines it."
+  Fix: `Datasheet` gained a second, on-demand-only ability index (`TryResolveAbility`/
+  `OptionalAbilityNames`, mirroring the weapon-profile shape exactly) alongside the now
+  intrinsic-only public `Abilities` list. `BsdataDatasheetMapper` classifies an ability during the
+  walk by the nearest owning entry's own `Type` (`"upgrade"` → optional, routed to the new index;
+  anything else → intrinsic, as before) and, for optional abilities, further classifies
+  `Enhancement` vs. a plain `OptionalGrant` by whether the nearest enclosing selection group's Name
+  contains `"Enhancements"` (a case-insensitive *substring* match, confirmed necessary against a
+  real nested sub-pool — "Legends of Saga and Song Enhancements" — that isn't an exact-name match).
+  New `AbilityOrigin` enum (`Intrinsic`/`Enhancement`/`OptionalGrant`) added to `Ability`, laying
+  domain groundwork for a future `/LivePlay` visual distinction (not built in this change).
+  `ArmyRosterEnricher`'s existing wargear-name-falls-back-to-an-ability resolution (how Impulsor's
+  "Shield Dome" has always resolved) repoints onto the new on-demand index — confirmed via a real
+  regression this exposed mid-implementation: a hand-built test fixture had "Shield Dome" sitting
+  directly on its owning entry's own `Profiles` (not nested inside a `"type": "upgrade"` child the
+  way the real corpus always shapes it), so under the new intrinsic/optional split it briefly
+  reclassified as intrinsic and broke that fixture's own test — fixed by correcting the fixture to
+  match the real shape, not by loosening the new rule. New `ArmyRosterEnricher.ResolveEnhancements`
+  step resolves each parsed Enhancement name against the same on-demand index and attaches the
+  resolved `Ability` to the `Unit`, replacing the previously inert raw-string
+  `Unit.Enhancements: IReadOnlyList<string>` (**BREAKING**, confirmed unused by any other code path
+  before this change) with `IReadOnlyList<Ability>`.
+  A pre-existing `GameModeGatingTests` test (`GatedContent_IsIncluded_WhenNoForceEntriesAreProvided`)
+  needed updating, not because it was wrong, but because its fixture's gated abilities are — like
+  real Chaos Boons/Mark of Chaos options — *also* genuinely `"type": "upgrade"`-shaped: once not
+  gated out, they now correctly land in the on-demand index rather than the public `Abilities` list
+  regardless of gating, which is orthogonal to what that test file is actually about.
+  292 tests, all passing (11 new, across a new `AbilityClassificationTests.cs` — a hand-built
+  closure fixture confirming all four classification outcomes including the substring-match nested
+  case — new `ArmyRosterEnricherTests` Enhancement-resolution cases, new `DatasheetTests` on-demand
+  ability cases, and a new `EnhancementAbilityLeakRegressionTests.cs` reading the real captured
+  export against the real bundled BSData snapshot end-to-end), including all 3 permanent full-corpus
+  scan tests re-run explicitly against the live BSData clone (confirms the ancestry/group-name
+  threading change didn't regress anything corpus-wide). Manually verified via `dotnet run` + `curl`
+  (cookie jar + antiforgery token, mirroring `ImportFlowTests`'s own approach): re-imported the real
+  export, confirmed zero occurrences of all three leaking ability names in the rendered `/LivePlay`
+  HTML, while Crusade Ancient, Sword Brethren Squad, Impulsor's Shield Dome, and the genuine
+  intrinsic abilities all still render correctly. Docs: `.claude/domain-model-11e.md` updated
+  (`Datasheet`'s on-demand ability API, the new `AbilityOrigin` shape, `BsdataDatasheetMapper`'s
+  classification mechanism, `ArmyRosterEnricher`'s repointed wargear fallback and new Enhancement
+  resolution step, `Unit.Enhancements`'s new element type).
+
 - OpenSpec change `rules-glossary-popovers` implemented (all 32 tasks), archived, and synced to
   main specs (new `rules-glossary` capability spec; `live-play-view` modified). `/LivePlay` now
   surfaces the ability/weapon-keyword rule text BSData carried all along but nothing ever

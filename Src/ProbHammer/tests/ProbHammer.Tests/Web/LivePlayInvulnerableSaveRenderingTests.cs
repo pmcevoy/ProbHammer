@@ -104,7 +104,8 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
         {
             Name = "Test Ability",
             Text = "This model has a test invulnerable save condition.",
-            Scope = AbilityScope.Unit
+            Scope = AbilityScope.Unit,
+            Origin = AbilityOrigin.Intrinsic
         };
         var html = await RenderAsync(new InvulnerableSave(5, 5, caveated: true, caveatAbility: ability));
 

@@ -69,9 +69,9 @@ public class LivePlayModelTests
     {
         var statlineA = new Statline(6, 4, 3, 2, 6, 2);
         var statlineB = new Statline(6, 4, 4, 2, 6, 2); // differs from A by Sv, so Neophyte gets its own run
-        var rowBoundModelAbility = new Ability { Name = "Iron Halo", Text = "...", Scope = AbilityScope.Model };
-        var componentWideUnitAbilityA = new Ability { Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit };
-        var componentWideModelAbilityB = new Ability { Name = "SUPPORT", Text = "...", Scope = AbilityScope.Model };
+        var rowBoundModelAbility = new Ability { Name = "Iron Halo", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
+        var componentWideUnitAbilityA = new Ability { Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
+        var componentWideModelAbilityB = new Ability { Name = "SUPPORT", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
 
         var view = new AttachedUnitAggregateView(
             Name: "Test Unit",

@@ -1,0 +1,83 @@
+{
+  "catalogue": {
+    "id": "test-cat-ability-classification",
+    "name": "Test Faction (ability-classification fixture)",
+    "gameSystemId": "",
+    "catalogueLinks": [],
+    "sharedSelectionEntries": [
+      {
+        "id": "e-unit",
+        "name": "Test Unit",
+        "type": "unit",
+        "profiles": [
+          { "id": "p-unit", "name": "Test Unit", "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "6\"" }, { "name": "T", "$text": "4" },
+              { "name": "Sv", "$text": "3+" }, { "name": "W", "$text": "2" },
+              { "name": "LD", "$text": "6+" }, { "name": "OC", "$text": "2" }
+            ] },
+          { "id": "p-intrinsic", "name": "Intrinsic Ability", "typeName": "Abilities",
+            "characteristics": [ { "name": "Description", "$text": "Always present." } ] }
+        ],
+        "selectionEntryGroups": [
+          {
+            "id": "g-enhancements",
+            "name": "Enhancements",
+            "selectionEntries": [
+              {
+                "id": "e-some-enhancement",
+                "name": "Some Enhancement",
+                "type": "upgrade",
+                "profiles": [
+                  { "id": "p-some-enhancement", "name": "Some Enhancement", "typeName": "Abilities",
+                    "characteristics": [ { "name": "Description", "$text": "An Enhancement." } ] }
+                ],
+                "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+              }
+            ],
+            "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+          },
+          {
+            "id": "g-wargear-grants",
+            "name": "Wargear Grants",
+            "selectionEntries": [
+              {
+                "id": "e-some-grant",
+                "name": "Some Grant",
+                "type": "upgrade",
+                "profiles": [
+                  { "id": "p-some-grant", "name": "Some Grant", "typeName": "Abilities",
+                    "characteristics": [ { "name": "Description", "$text": "A non-Enhancement optional grant." } ] }
+                ],
+                "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+              }
+            ],
+            "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+          },
+          {
+            "id": "g-nested-enhancements",
+            "name": "Legends of Saga and Song Enhancements",
+            "selectionEntries": [
+              {
+                "id": "e-nested-enhancement",
+                "name": "Nested Enhancement",
+                "type": "upgrade",
+                "profiles": [
+                  { "id": "p-nested-enhancement", "name": "Nested Enhancement", "typeName": "Abilities",
+                    "characteristics": [ { "name": "Description", "$text": "An Enhancement nested one hop deeper." } ] }
+                ],
+                "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+              }
+            ],
+            "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+          }
+        ],
+        "selectionEntries": [],
+        "entryLinks": [],
+        "infoLinks": []
+      }
+    ],
+    "sharedSelectionEntryGroups": [],
+    "sharedProfiles": []
+  }
+}

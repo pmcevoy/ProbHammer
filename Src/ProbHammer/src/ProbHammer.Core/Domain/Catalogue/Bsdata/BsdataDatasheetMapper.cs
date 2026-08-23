@@ -48,7 +48,7 @@ public static partial class BsdataDatasheetMapper
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var context = new WalkContext(idIndex, groupIdIndex, profileIdIndex ?? new Dictionary<string, BsProfile>(), gateIds);
-        WalkEntry(entry, context, []);
+        WalkEntry(entry, context, [], enclosingGroupName: null);
 
         return new Datasheet(
             entry.Name,
@@ -56,7 +56,8 @@ public static partial class BsdataDatasheetMapper
             keywords: [],
             abilities: context.Abilities,
             statlines: context.Statlines,
-            weaponProfiles: context.Weapons.Values);
+            weaponProfiles: context.Weapons.Values,
+            optionalAbilities: context.OptionalAbilities.Values);
     }
 
     private sealed class WalkContext(
@@ -75,19 +76,26 @@ public static partial class BsdataDatasheetMapper
         public Dictionary<string, WeaponProfile> Weapons { get; } = new(StringComparer.OrdinalIgnoreCase);
         public List<Ability> Abilities { get; } = [];
         public HashSet<string> SeenAbilityNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>Every ability found nested inside a "type: upgrade" selection entry (an
+        /// Enhancement, or any other optional ability grant, e.g. Impulsor's "Shield Dome") -
+        /// resolvable only via Datasheet.TryResolveAbility, never enumerated in the public
+        /// Abilities list. Deduped by name via TryAdd (first occurrence wins), mirroring Weapons'
+        /// own dedup convention exactly - no separate "Seen" set needed since Dictionary.TryAdd
+        /// already provides it.</summary>
+        public Dictionary<string, Ability> OptionalAbilities { get; } = new(StringComparer.OrdinalIgnoreCase);
+
         public HashSet<string> VisitedEntryIds { get; } = new(StringComparer.OrdinalIgnoreCase);
         public HashSet<string> VisitedGroupIds { get; } = new(StringComparer.OrdinalIgnoreCase);
     }
 
-    /// <summary>True when any of the given modifiers sets "hidden" to true, gated (anywhere in its
-    /// condition tree, regardless of AND/OR structure or comparison operator - this is a plain
-    /// existence check, not general boolean evaluation, deliberately: this loader still does not
-    /// interpret constraints/modifiers as rules, only uses this one narrow shape to recognize
-    /// non-matched-play content) by a condition referencing one of ctx.GameModeGateIds. Found via a
-    /// real user-reported bug: /LivePlay showed abilities (Chaos Boons, Mark of Chaos options) that
-    /// don't belong to matched play at all - BuildDatasheet's walk had no way to distinguish
-    /// genuine datasheet rules from Crusade-mode-only or force-type-gated content, since both use
-    /// the identical "Abilities"-typeName profile shape.</summary>
+    /// <summary>True when any of the given modifiers sets "hidden" to true in a way that is
+    /// PROVABLY always true in the matched-play "Army Roster" mode this loader exclusively
+    /// represents - see <see cref="IsProvablyAlwaysTrueInMatchedPlay"/> for exactly what "provably"
+    /// means here. Found via a real user-reported bug: /LivePlay showed abilities (Chaos Boons,
+    /// Mark of Chaos options) that don't belong to matched play at all - BuildDatasheet's walk had
+    /// no way to distinguish genuine datasheet rules from Crusade-mode-only or force-type-gated
+    /// content, since both use the identical "Abilities"-typeName profile shape.</summary>
     private static bool IsGameModeGated(IReadOnlyList<BsModifier> modifiers, WalkContext ctx)
     {
         if (ctx.GameModeGateIds.Count == 0)
@@ -98,28 +106,47 @@ public static partial class BsdataDatasheetMapper
             if (modifier.Field != "hidden" || modifier.Value.ValueKind != JsonValueKind.True)
                 continue;
 
-            if (ConditionsReferenceGate(modifier.Conditions, modifier.ConditionGroups, ctx.GameModeGateIds))
+            if (IsProvablyAlwaysTrueInMatchedPlay(modifier.Conditions, modifier.ConditionGroups, "and", ctx.GameModeGateIds))
                 return true;
         }
 
         return false;
     }
 
-    private static bool ConditionsReferenceGate(
-        IReadOnlyList<BsCondition> conditions, IReadOnlyList<BsConditionGroup> groups, IReadOnlySet<string> gateIds)
+    /// <summary>Evaluates a condition tree (a flat conditions list plus a conditionGroups list,
+    /// combined via <paramref name="combinator"/> - BattleScribe's own convention, matching how a
+    /// single BsModifier's own top-level conditions/conditionGroups are implicitly ANDed together)
+    /// treating a condition referencing one of <paramref name="gateIds"/> as "provably true in
+    /// matched play" (Army Roster mode always has zero of any Crusade-only force/selection) and
+    /// every other condition as unknowable (this loader does not evaluate roster selection state).
+    /// An "and" combinator is provably true only when EVERY item is provably true - a gate-id
+    /// condition combined via AND with an unrelated, unevaluated condition is NOT provably true,
+    /// since that other condition could make the whole AND false. An "or" combinator is provably
+    /// true when ANY item is - a gate-id condition combined via OR with anything else still forces
+    /// the whole OR true in matched play regardless of that other condition. This distinction is a
+    /// real, confirmed-necessary generalization, not a hypothetical: Black Templars' "Companions of
+    /// Vehemence Enhancements" is hidden by `AND(forces(Crusade Force) < 1, selections(some other
+    /// id) < 1)` - "hidden unless you have a Crusade Force OR this Detachment selected" - the plain
+    /// existence-check this method replaces treated the mere presence of the Crusade Force
+    /// reference as sufficient, incorrectly excluding a real, always-available matched-play
+    /// Enhancement for players using that exact Detachment.</summary>
+    private static bool IsProvablyAlwaysTrueInMatchedPlay(
+        IReadOnlyList<BsCondition> conditions, IReadOnlyList<BsConditionGroup> groups, string combinator, IReadOnlySet<string> gateIds)
     {
-        foreach (var condition in conditions)
-            if (gateIds.Contains(condition.ChildId))
-                return true;
+        var items = conditions
+            .Select(c => gateIds.Contains(c.ChildId))
+            .Concat(groups.Select(g => IsProvablyAlwaysTrueInMatchedPlay(g.Conditions, g.ConditionGroups, g.Type, gateIds)))
+            .ToList();
 
-        foreach (var group in groups)
-            if (ConditionsReferenceGate(group.Conditions, group.ConditionGroups, gateIds))
-                return true;
+        if (items.Count == 0)
+            return false;
 
-        return false;
+        return combinator.Equals("or", StringComparison.OrdinalIgnoreCase)
+            ? items.Any(x => x)
+            : items.All(x => x);
     }
 
-    private static void WalkEntry(BsSelectionEntry entry, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry)
+    private static void WalkEntry(BsSelectionEntry entry, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry, string? enclosingGroupName)
     {
         if (!string.IsNullOrEmpty(entry.Id) && !ctx.VisitedEntryIds.Add(entry.Id))
             return;
@@ -130,22 +157,22 @@ public static partial class BsdataDatasheetMapper
         var chain = new List<BsSelectionEntry>(ancestry) { entry };
 
         foreach (var profile in entry.Profiles)
-            ProcessProfile(profile, ctx, chain);
+            ProcessProfile(profile, ctx, chain, enclosingGroupName);
 
         foreach (var child in entry.SelectionEntries)
-            WalkEntry(child, ctx, chain);
+            WalkEntry(child, ctx, chain, enclosingGroupName);
 
         foreach (var group in entry.SelectionEntryGroups)
-            WalkGroup(group, ctx, chain);
+            WalkGroup(group, ctx, chain, enclosingGroupName);
 
         foreach (var link in entry.EntryLinks)
             WalkLink(link, ctx);
 
         foreach (var link in entry.InfoLinks)
-            WalkInfoLink(link, ctx, chain);
+            WalkInfoLink(link, ctx, chain, enclosingGroupName);
     }
 
-    private static void WalkGroup(BsSelectionEntryGroup group, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry)
+    private static void WalkGroup(BsSelectionEntryGroup group, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry, string? enclosingGroupName)
     {
         if (!string.IsNullOrEmpty(group.Id) && !ctx.VisitedGroupIds.Add(group.Id))
             return;
@@ -153,17 +180,24 @@ public static partial class BsdataDatasheetMapper
         if (IsGameModeGated(group.Modifiers, ctx))
             return;
 
+        // The nearest enclosing group's own Name wins over whatever was passed in - classification
+        // (see ProcessProfile's Enhancement-vs-plain-grant split) always reads the *directly*
+        // enclosing group, not some ancestor further up (confirmed necessary: Crusade Ancient
+        // reaches "Thirst for Glory" through a group named "Legends of Saga and Song Enhancements",
+        // not through the outer "Enhancements" group one hop up - see design.md).
+        var nearestGroupName = group.Name;
+
         foreach (var child in group.SelectionEntries)
-            WalkEntry(child, ctx, ancestry);
+            WalkEntry(child, ctx, ancestry, nearestGroupName);
 
         foreach (var nested in group.SelectionEntryGroups)
-            WalkGroup(nested, ctx, ancestry);
+            WalkGroup(nested, ctx, ancestry, nearestGroupName);
 
         foreach (var link in group.EntryLinks)
             WalkLink(link, ctx);
 
         foreach (var link in group.InfoLinks)
-            WalkInfoLink(link, ctx, ancestry);
+            WalkInfoLink(link, ctx, ancestry, nearestGroupName);
     }
 
     private static void WalkLink(BsEntryLink link, WalkContext ctx)
@@ -178,26 +212,27 @@ public static partial class BsdataDatasheetMapper
         {
             // A shared/reusable target (e.g. a wargear option linked from many unrelated places)
             // starts its own fresh ancestry rather than inheriting the linking entry's - it isn't
-            // structurally "part of" whatever entry happened to link to it.
-            WalkEntry(targetEntry, ctx, []);
+            // structurally "part of" whatever entry happened to link to it. The enclosing-group
+            // name resets the same way, for the same reason.
+            WalkEntry(targetEntry, ctx, [], enclosingGroupName: null);
         }
         else if (ctx.GroupIdIndex.TryGetValue(link.TargetId, out var targetGroup))
         {
-            WalkGroup(targetGroup, ctx, []);
+            WalkGroup(targetGroup, ctx, [], enclosingGroupName: null);
         }
         // else: target not found in this closure (e.g. links into apparatus this loader doesn't
         // model) - skipped rather than failing resolution.
     }
 
-    private static void WalkInfoLink(BsEntryLink link, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry)
+    private static void WalkInfoLink(BsEntryLink link, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry, string? enclosingGroupName)
     {
         if (link.Type == "profile" && ctx.ProfileIdIndex.TryGetValue(link.TargetId, out var profile))
-            ProcessProfile(profile, ctx, ancestry);
+            ProcessProfile(profile, ctx, ancestry, enclosingGroupName);
         // else: a "rule" infoLink (rules-text reference) or an unresolvable target - not
         // something this loader maps.
     }
 
-    private static void ProcessProfile(BsProfile profile, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry)
+    private static void ProcessProfile(BsProfile profile, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry, string? enclosingGroupName)
     {
         switch (profile.TypeName)
         {
@@ -212,10 +247,38 @@ public static partial class BsdataDatasheetMapper
                 ctx.Weapons.TryAdd(profile.Name, MapMeleeWeapon(profile));
                 break;
             case "Abilities":
-                if (ctx.SeenAbilityNames.Add(profile.Name))
-                    ctx.Abilities.Add(MapAbility(profile));
+                ProcessAbilityProfile(profile, ctx, ancestry, enclosingGroupName);
                 break;
         }
+    }
+
+    /// <summary>Classifies an "Abilities"-typeName profile as intrinsic (a fact about the
+    /// datasheet, always exposed via Datasheet.Abilities) or optional (an Enhancement, or any
+    /// other ability grant nested inside its own selection entry, e.g. Impulsor's "Shield Dome" -
+    /// resolvable only via Datasheet.TryResolveAbility, never enumerated). The signal is the
+    /// *nearest* entry in <paramref name="ancestry"/> - the one that actually makes this profile
+    /// reachable, whether directly (entry.Profiles) or through a "profile"-type infoLink it
+    /// declared: BSData's own "type": "upgrade" marks a player-selectable choice, the same shape a
+    /// weapon option uses, distinct from a "model"/"unit"-typed entry's own unconditional facts.
+    /// An optional ability is further classified as an Enhancement when the nearest enclosing
+    /// selection group's own Name contains "Enhancements" (case-insensitive substring, not exact
+    /// match - confirmed necessary: a nested Enhancement sub-pool like "Legends of Saga and Song
+    /// Enhancements" is the *directly* enclosing group for its own entries, not the outer
+    /// "Enhancements" group one hop up), else a plain optional grant.</summary>
+    private static void ProcessAbilityProfile(BsProfile profile, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry, string? enclosingGroupName)
+    {
+        var isOptional = ancestry.Count > 0 && ancestry[^1].Type == "upgrade";
+        if (!isOptional)
+        {
+            if (ctx.SeenAbilityNames.Add(profile.Name))
+                ctx.Abilities.Add(MapAbility(profile, AbilityOrigin.Intrinsic));
+            return;
+        }
+
+        var origin = enclosingGroupName is not null && enclosingGroupName.Contains("Enhancements", StringComparison.OrdinalIgnoreCase)
+            ? AbilityOrigin.Enhancement
+            : AbilityOrigin.OptionalGrant;
+        ctx.OptionalAbilities.TryAdd(profile.Name, MapAbility(profile, origin));
     }
 
     private static Statline MapStatline(BsProfile profile, IReadOnlyList<BsSelectionEntry> ancestry, WalkContext ctx) =>
@@ -322,12 +385,12 @@ public static partial class BsdataDatasheetMapper
             var localProfile = candidate.Profiles.FirstOrDefault(p =>
                 p.TypeName == "Abilities" && expectedNames.Any(n => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase)));
             if (localProfile is not null)
-                return MapAbility(localProfile);
+                return MapAbility(localProfile, AbilityOrigin.Intrinsic);
 
             var link = candidate.InfoLinks.FirstOrDefault(l =>
                 l.Type == "profile" && expectedNames.Any(n => string.Equals(l.Name, n, StringComparison.OrdinalIgnoreCase)));
             if (link is not null && ctx.ProfileIdIndex.TryGetValue(link.TargetId, out var linkedProfile))
-                return MapAbility(linkedProfile);
+                return MapAbility(linkedProfile, AbilityOrigin.Intrinsic);
         }
 
         throw new AmbiguousCharacteristicException("InSv", rawText);
@@ -366,12 +429,13 @@ public static partial class BsdataDatasheetMapper
         return WeaponKeywordParser.Apply(weapon, profile.CharacteristicText("Keywords") ?? "-");
     }
 
-    private static Ability MapAbility(BsProfile profile) =>
+    private static Ability MapAbility(BsProfile profile, AbilityOrigin origin) =>
         new()
         {
             Name = profile.Name,
             Text = profile.CharacteristicText("Description") ?? "",
-            Scope = AbilityScope.Unit
+            Scope = AbilityScope.Unit,
+            Origin = origin
         };
 
     /// <summary>True for BSData's "not applicable" marker - confirmed on M (a Fortification/

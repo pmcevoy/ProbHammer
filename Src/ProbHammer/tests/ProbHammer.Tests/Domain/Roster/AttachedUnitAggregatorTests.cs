@@ -356,13 +356,13 @@ public class AttachedUnitAggregatorTests
     {
         var bodyguardDatasheet = new Datasheet(
             "Crusader Squad", factionKeywords: [], keywords: [],
-            abilities: [new Ability { Name = "Shared Name", Text = "...", Scope = AbilityScope.Unit }],
+            abilities: [new Ability { Name = "Shared Name", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic }],
             statlines: [("Guardian", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
         var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Guardian", [], count: 3)]);
 
         var leaderDatasheet = new Datasheet(
             "Ancient", factionKeywords: [], keywords: [],
-            abilities: [new Ability { Name = "Shared Name", Text = "...", Scope = AbilityScope.Unit }],
+            abilities: [new Ability { Name = "Shared Name", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic }],
             statlines: [("Ancient", new Statline(6, 5, 3, 4, 6, 1))], weaponProfiles: []);
         var leader = new Unit(leaderDatasheet, [], [new ModelLine("Ancient", [], count: 1)]);
 
@@ -380,7 +380,7 @@ public class AttachedUnitAggregatorTests
     {
         var datasheet = new Datasheet(
             "Crusader Squad", factionKeywords: [], keywords: [],
-            abilities: [new Ability { Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit }],
+            abilities: [new Ability { Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic }],
             statlines: [("Initiate", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
         var unit = new Unit(datasheet, [],
             [

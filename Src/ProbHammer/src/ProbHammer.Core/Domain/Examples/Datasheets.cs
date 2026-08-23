@@ -35,7 +35,8 @@ public static class Datasheets
                     Name = "LEADER",
                     Text =
                         "This model can be attached to the following units:\\n\\n■ Assault Intercessor Squad\\n■ Intercessor Squad\\n■ Crusader Squad\\n■ Sword Brethren",
-                    Scope = AbilityScope.Model
+                    Scope = AbilityScope.Model,
+                    Origin = AbilityOrigin.Intrinsic
                 },
                 TemplarVows(),
                 new Ability
@@ -43,14 +44,16 @@ public static class Datasheets
                     Name = "Crusade of Wrath",
                     Text =
                         "While this model is leading a unit, add 1 to the Attacks and Strength characteristic of melee weapons equipped by models in that unit.",
-                    Scope = AbilityScope.Unit
+                    Scope = AbilityScope.Unit,
+                    Origin = AbilityOrigin.Intrinsic
                 },
                 new Ability
                 {
                     Name = "High Marshal",
                     Text =
                         "At the start of the Fight phase, select one enemy unit within Engagement Range of this model’s unit and roll one D6, adding 1 to the result for every five models in this model's unit: on a 2-3, that enemy unit suffers D3 mortal wounds; on a 4-5, that enemy unit suffers 3 mortal wounds; on a 6, that enemy unit suffers D3+3 mortal wounds.",
-                    Scope = AbilityScope.Model
+                    Scope = AbilityScope.Model,
+                    Origin = AbilityOrigin.Intrinsic
                 }
             ],
             keywords:
@@ -83,21 +86,24 @@ public static class Datasheets
                     Name = "SUPPORT",
                     Text =
                         "This model can be attached to the following units:\n\n■ CRUSADER SQUAD\n■ SWORD BRETHREN SQUAD\n\nYou can attach this model to a unit it can lead even if one Captain or Chapter Master model has already been attached to it. If you do, and that Bodyguard unit is destroyed, the Leader units attached to it become separate units, with their original Starting Strengths.",
-                    Scope = AbilityScope.Model
+                    Scope = AbilityScope.Model,
+                    Origin = AbilityOrigin.Intrinsic
                 },
                 new Ability
                 {
                     Name = "Vengeful Exhortation",
                     Text =
                         "Fight on death on a 4+",
-                    Scope = AbilityScope.Unit
+                    Scope = AbilityScope.Unit,
+                    Origin = AbilityOrigin.Intrinsic
                 },
                 new Ability
                 {
                     Name = "Martial Honour",
                     Text =
                         "Destory a unit, add 5 to OC",
-                    Scope = AbilityScope.Unit
+                    Scope = AbilityScope.Unit,
+                    Origin = AbilityOrigin.Intrinsic
                 }
             },
             keywords:
@@ -129,21 +135,24 @@ public static class Datasheets
                     Name = "SUPPORT",
                     Text =
                         "This model can be attached to the following units:\n\n■ ASSAULT INTERCESSOR SQUAD\n■ BLADEGUARD VETERAN SQUAD\n■ COMPANY HEROES\n■ CRUSADER SQUAD\n■ DEATHWATCH VETERANS\n■ DECIMUS KILL TEAM\n■ FORTIS KILL TEAM\n■ HELLBLASTER SQUAD\n■ INFERNUS SQUAD\n■ INNER CIRCLE COMPANIONS\n■ INTERCESSOR SQUAD\n■ STERNGUARD VETERAN SQUAD\n■ SWORD BRETHREN SQUAD\n■ TACTICAL SQUAD\n\nYou can attach this model to a unit it can lead even if one Captain or Chapter Master model has already been attached to it. If you do, and that Bodyguard unit is destroyed, the Leader units attached to it become separate units, with their original Starting Strengths.",
-                    Scope = AbilityScope.Model
+                    Scope = AbilityScope.Model,
+                    Origin = AbilityOrigin.Intrinsic
                 },
                 new Ability
                 {
                     Name = "Tactical Precision",
                     Text =
                         "While this model is leading a unit, weapons equipped by models in that unit have the [LETHAL HITS] ability.",
-                    Scope = AbilityScope.Unit
+                    Scope = AbilityScope.Unit,
+                    Origin = AbilityOrigin.Intrinsic
                 },
                 new Ability
                 {
                     Name = "Target Priority",
                     Text =
                         "This model’s unit is eligible to shoot and declare a charge in a turn in which it Fell Back",
-                    Scope = AbilityScope.Unit
+                    Scope = AbilityScope.Unit,
+                    Origin = AbilityOrigin.Intrinsic
                 }
             },
             keywords:
@@ -179,7 +188,8 @@ public static class Datasheets
                     Name = "LEADER",
                     Text =
                         "This model can be attached to the following units:\n\n■ Assault Intercessor Squad\n■ Infernus Squad\n■ Intercessor Squad\n■ Crusader Squad\n■ Sword Brethren\n■ Sternguard Veteran Squad",
-                    Scope = AbilityScope.Model
+                    Scope = AbilityScope.Model,
+                    Origin = AbilityOrigin.Intrinsic
                 },
                 TemplarVows(),
                 new Ability
@@ -187,14 +197,16 @@ public static class Datasheets
                     Name = "Inspirational Exemplar",
                     Text =
                         "While this model is leading a unit, each time a model in that unit makes a melee attack, an unmodified Hit roll of 5+ scores a Critical Hit.",
-                    Scope = AbilityScope.Unit
+                    Scope = AbilityScope.Unit,
+                    Origin = AbilityOrigin.Intrinsic
                 },
                 new Ability
                 {
                     Name = "Pious Fervour",
                     Text =
                         "Each time this model's unit is selected to fight, until the end of the phase, add 1 to the Attacks characteristic of this model's Master-Crafted Power Weapon for each enemy unit within 6\" of this model (to a maximum of +3)",
-                    Scope = AbilityScope.Model
+                    Scope = AbilityScope.Model,
+                    Origin = AbilityOrigin.Intrinsic
                 }
             },
             keywords:
@@ -226,7 +238,8 @@ public static class Datasheets
                 {
                     Name = "Targetted Intercession",
                     Text = "Melee reroll wound 1. If in range of objective, reroll wound",
-                    Scope = AbilityScope.Unit
+                    Scope = AbilityScope.Unit,
+                    Origin = AbilityOrigin.Intrinsic
                 }
             },
             keywords:
@@ -267,7 +280,8 @@ public static class Datasheets
                 {
                     Name = "Righteous Zeal",
                     Text = "Surge move D6+2",
-                    Scope = AbilityScope.Unit
+                    Scope = AbilityScope.Unit,
+                    Origin = AbilityOrigin.Intrinsic
                 }
             },
             keywords:
@@ -290,7 +304,8 @@ public static class Datasheets
         {
             Name = "Invulnerable Save (5+*)",
             Text = "This model has a 5+ invulnerable save against ranged attacks.",
-            Scope = AbilityScope.Unit
+            Scope = AbilityScope.Unit,
+            Origin = AbilityOrigin.Intrinsic
         };
 
         return new Datasheet(
@@ -331,7 +346,8 @@ public static class Datasheets
         {
             Name = "Invulnerable Save (4+*)",
             Text = "Models in this unit have a 4+ invulnerable save against melee attacks.",
-            Scope = AbilityScope.Unit
+            Scope = AbilityScope.Unit,
+            Origin = AbilityOrigin.Intrinsic
         };
 
         return new Datasheet(
@@ -415,25 +431,29 @@ public static class Datasheets
                 {
                     Name = "Deadly Demise D3",
                     Text = "roll, mortal wounds (TBC)",
-                    Scope = AbilityScope.Model
+                    Scope = AbilityScope.Model,
+                    Origin = AbilityOrigin.Intrinsic
                 },
                 new Ability
                 {
                     Name = "Firing deck 6",
                     Text = "Models inside..",
-                    Scope = AbilityScope.Model
+                    Scope = AbilityScope.Model,
+                    Origin = AbilityOrigin.Intrinsic
                 },
                 new Ability
                 {
                     Name = "Shield Dome",
                     Text = "The bearer as a 5+ invulnerable save",
-                    Scope = AbilityScope.Model
+                    Scope = AbilityScope.Model,
+                    Origin = AbilityOrigin.Intrinsic
                 },
                 new Ability
                 {
                     Name = "Assault Vehicle",
                     Text = "Units can disembark after advance",
-                    Scope = AbilityScope.Model
+                    Scope = AbilityScope.Model,
+                    Origin = AbilityOrigin.Intrinsic
                 }
             },
             keywords:
@@ -466,20 +486,23 @@ public static class Datasheets
                 {
                     Name = "Infiltrators",
                     Text = "deploy center table",
-                    Scope = AbilityScope.Unit
+                    Scope = AbilityScope.Unit,
+                    Origin = AbilityOrigin.Intrinsic
                 },
                 new Ability
                 {
                     Name = "Scouts 6",
                     Text = "6in move at start of game",
-                    Scope = AbilityScope.Unit
+                    Scope = AbilityScope.Unit,
+                    Origin = AbilityOrigin.Intrinsic
                 },
 
                 new Ability
                 {
                     Name = "Guerrilla tactics",
                     Text = "Back to reserves",
-                    Scope = AbilityScope.Unit
+                    Scope = AbilityScope.Unit,
+                    Origin = AbilityOrigin.Intrinsic
                 }
             },
             keywords:
@@ -510,7 +533,8 @@ public static class Datasheets
                 {
                     Name = "Exploit their cowardice",
                     Text = "Normal move if enemy falls back",
-                    Scope = AbilityScope.Unit
+                    Scope = AbilityScope.Unit,
+                    Origin = AbilityOrigin.Intrinsic
                 }
             },
             keywords:
@@ -540,7 +564,8 @@ public static class Datasheets
                 new AbilityChoice("Uphold the Honour of the Emperor",
                     "If this unit has the **^^Infantry^^** keyword:\\n■ At the end of your Command phase, if this unit is within range of an objective marker you control, that objective marker remains under your control until your opponent's level of control over that objective marker is greater than yours at the end of the phase. \\n■ If the mission you are playing features Actions, this unit is eligible to start to perform an Action in a turn in which it Advanced.")
             ],
-            Scope = AbilityScope.Unit
+            Scope = AbilityScope.Unit,
+            Origin = AbilityOrigin.Intrinsic
         };
     }
 }

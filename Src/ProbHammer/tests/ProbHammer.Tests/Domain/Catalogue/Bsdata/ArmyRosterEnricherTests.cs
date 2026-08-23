@@ -207,4 +207,48 @@ public class ArmyRosterEnricherTests
 
     private static ResolvedBsdataCatalogue MultiProfileWeaponCatalogue() =>
         ResolvedBsdataCatalogue.Build(BsdataFixtures.Source(), "crusader-squad-multiprofile-weapon.json");
+
+    private static ResolvedBsdataCatalogue AbilityClassificationCatalogue() =>
+        ResolvedBsdataCatalogue.Build(BsdataFixtures.Source(), "ability-classification.json");
+
+    private static ParsedUnit TestUnit(IReadOnlyList<string>? enhancements = null) =>
+        new(
+            Name: "Test Unit",
+            ModelGroups: [new ParsedModelGroup("Test Unit", 1, [])],
+            Enhancements: enhancements ?? []);
+
+    [Fact]
+    public void ASelectedEnhancement_ResolvesToItsAbilityText()
+    {
+        var parsed = ArmyListWith(standaloneUnits: [TestUnit(["Some Enhancement"])]);
+
+        var roster = ArmyRosterEnricher.Enrich(parsed, AbilityClassificationCatalogue());
+
+        var unit = (Unit)roster.Units[0];
+        unit.Enhancements.Should().ContainSingle(a => a.Name == "Some Enhancement" && a.Text == "An Enhancement.");
+    }
+
+    [Fact]
+    public void AnUnresolvableEnhancementName_ThrowsNamingTheUnresolvedText()
+    {
+        var parsed = ArmyListWith(standaloneUnits: [TestUnit(["Does not exist"])]);
+
+        var act = () => ArmyRosterEnricher.Enrich(parsed, AbilityClassificationCatalogue());
+
+        act.Should().Throw<BsdataNameResolutionException>().Where(e => e.Text == "Does not exist");
+    }
+
+    [Fact]
+    public void AUnitWithNoEnhancementsSelected_ResolvesWithAnEmptyEnhancementsList()
+    {
+        // The Datasheet defines "Some Enhancement" as available - it must not be attached just
+        // because it exists, only when the export actually selected it (resolve-enhancement-
+        // abilities' core fix).
+        var parsed = ArmyListWith(standaloneUnits: [TestUnit()]);
+
+        var roster = ArmyRosterEnricher.Enrich(parsed, AbilityClassificationCatalogue());
+
+        var unit = (Unit)roster.Units[0];
+        unit.Enhancements.Should().BeEmpty();
+    }
 }

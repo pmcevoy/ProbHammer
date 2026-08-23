@@ -31,13 +31,23 @@
                 "characteristics": [
                   { "name": "A", "$text": "3" }, { "name": "WS", "$text": "2+" },
                   { "name": "S", "$text": "8" }, { "name": "AP", "$text": "-3" }, { "name": "D", "$text": "3" }
-                ] },
-              { "id": "p-shield-dome", "name": "Shield Dome", "typeName": "Abilities",
-                "characteristics": [
-                  { "name": "Description", "$text": "The bearer has a 5+ invulnerable save." }
                 ] }
             ],
-            "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+            "selectionEntries": [
+              {
+                "id": "e-shield-dome",
+                "name": "Shield Dome",
+                "type": "upgrade",
+                "profiles": [
+                  { "id": "p-shield-dome", "name": "Shield Dome", "typeName": "Abilities",
+                    "characteristics": [
+                      { "name": "Description", "$text": "The bearer has a 5+ invulnerable save." }
+                    ] }
+                ],
+                "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+              }
+            ],
+            "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
           }
         ],
         "selectionEntryGroups": [],

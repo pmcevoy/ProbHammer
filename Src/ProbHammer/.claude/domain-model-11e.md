@@ -28,7 +28,7 @@ just paused — see `PROGRESS.md` for that history).
 
 ```
 Datasheet
-  Name, FactionKeywords, Keywords, Abilities (unit-wide)
+  Name, FactionKeywords, Keywords, Abilities (unit-wide, intrinsic only - see below)
   Statlines: IReadOnlyList<(string Name, Statline Statline)>   // ordered - declaration order is a
                                                       // load-bearing, documented property (the
                                                       // Sergeant/leader-equivalent entry is declared
@@ -39,8 +39,28 @@ Datasheet
                                                       // Dictionary built once in the constructor
                                                       // from the ordered list
   ResolveWeaponProfile(name) -> WeaponProfile          // on-demand only, never enumerated
-  ctor(..., statlines: IReadOnlyList<(string Name, Statline Statline)>, weaponProfiles: IEnumerable<WeaponProfile>)
-                                                      // weaponProfiles keyed internally by .Name
+  TryResolveAbility(name) -> Ability?                  // on-demand only, never enumerated - since
+                                                      // resolve-enhancement-abilities, mirrors
+                                                      // ResolveWeaponProfile exactly. Resolves an
+                                                      // optional ability (an Enhancement, or any
+                                                      // other ability grant nested inside its own
+                                                      // selection entry, e.g. Impulsor's "Shield
+                                                      // Dome") that the public Abilities list
+                                                      // deliberately excludes - see
+                                                      // BsdataDatasheetMapper's classification,
+                                                      // below, and ArmyRosterEnricher's wargear/
+                                                      // Enhancement resolution, in "Army List
+                                                      // Import Pipeline".
+  OptionalAbilityNames: IReadOnlyList<string>          // diagnostic enumeration only (a "did you
+                                                      // mean...?" suggestion source), never a full
+                                                      // options menu - mirrors WeaponNames exactly.
+  ctor(..., statlines: IReadOnlyList<(string Name, Statline Statline)>, weaponProfiles: IEnumerable<WeaponProfile>,
+       optionalAbilities: IEnumerable<Ability>? = null)
+                                                      // weaponProfiles keyed internally by .Name;
+                                                      // optionalAbilities likewise, defaulting to
+                                                      // empty (most datasheets define none) -
+                                                      // same "optional trailing parameter" pattern
+                                                      // as ModelLine's own Keywords parameter.
 
 Statline(M, T, Sv, W, Ld, Oc)   // value object — field names match official shorthand
   InSv: InvulnerableSave               // init-only property, defaults to a fresh (absent)
@@ -79,7 +99,30 @@ RangedWeapon(Name, Range, A, Bs, S, Ap, D) : WeaponProfile   // Type fixed to Ra
 MeleeWeapon(Name, A, Ws, S, Ap, D) : WeaponProfile           // Type fixed to Melee, Range fixed to 0
   Skill => Ws
 
-Ability(Name, Text, Choices: IReadOnlyList<AbilityChoice>, Scope: Model | Unit)
+Ability(Name, Text, Choices: IReadOnlyList<AbilityChoice>, Scope: Model | Unit, Origin: AbilityOrigin)
+
+AbilityOrigin = Intrinsic | Enhancement | OptionalGrant   // since resolve-enhancement-abilities -
+                                                      // classifies where an ability came from
+                                                      // during BsdataDatasheetMapper's walk, not a
+                                                      // player-facing concept the export text ever
+                                                      // states directly. Intrinsic: a fact about
+                                                      // the datasheet, always in Datasheet
+                                                      // .Abilities. Enhancement: found nested
+                                                      // inside a "type: upgrade" selection entry
+                                                      // whose nearest enclosing selection group's
+                                                      // own Name contains "Enhancements" (case-
+                                                      // insensitive substring - confirmed necessary
+                                                      // for a nested sub-pool like "Legends of Saga
+                                                      // and Song Enhancements", not just a group
+                                                      // literally named "Enhancements"). Optional-
+                                                      // Grant: any other ability nested inside its
+                                                      // own "type: upgrade" selection entry (e.g.
+                                                      // Impulsor's "Shield Dome"). Both Enhancement
+                                                      // and OptionalGrant abilities are resolvable
+                                                      // only via Datasheet.TryResolveAbility, never
+                                                      // enumerated in the public Abilities list -
+                                                      // see BsdataDatasheetMapper's "Ability
+                                                      // Extraction and Classification" below.
 ```
 
 **Key design points:**
@@ -232,25 +275,67 @@ BsdataDatasheetMapper.BuildDatasheet(entry, idIndex, groupIdIndex, profileIdInde
                                        // their own, fall out of the same code path with no explicit
                                        // squad-vs-single branch), every "Ranged Weapons"/"Melee
                                        // Weapons"-typeName profile as a resolvable WeaponProfile,
-                                       // and every "Abilities"-typeName profile as an Ability
-                                       // (Text carried through verbatim, Scope always AbilityScope
-                                       // .Unit - BSData JSON gives no per-ability scope signal).
-                                       // entryLinks are resolved via idIndex/groupIdIndex;
-                                       // infoLinks of type "profile" are resolved via
-                                       // profileIdIndex against BsCatalogue.SharedProfiles -
-                                       // some model statlines exist only this way (real example:
-                                       // Chaos - Chaos Space Marines.json's "Legionaries" squad
-                                       // reaches its troop model's Unit profile through a
-                                       // profile-type infoLink, not nested in any selectionEntry's
-                                       // own Profiles list). FactionKeywords/Keywords are always
-                                       // empty - BSData's categoryLinks could plausibly source
-                                       // them, but no requirement in this change's spec governs
-                                       // that mapping, so it's left unattempted rather than guessed.
-                                       // The walk also threads a per-branch ancestry list (every
-                                       // BsSelectionEntry from the walk root down to the current
-                                       // one, reset to a fresh chain on each entryLink hop) purely
-                                       // for InSv resolution - see "Invulnerable Save Resolution"
-                                       // below.
+                                       // and every "Abilities"-typeName profile as an Ability (Text
+                                       // carried through verbatim, Scope always AbilityScope.Unit -
+                                       // BSData JSON gives no per-ability scope signal) -
+                                       // classified and routed into either Datasheet.Abilities or
+                                       // Datasheet's on-demand-only index (see "Ability Extraction
+                                       // and Classification" below, added by
+                                       // resolve-enhancement-abilities). entryLinks are resolved
+                                       // via idIndex/groupIdIndex; infoLinks of type "profile" are
+                                       // resolved via profileIdIndex against
+                                       // BsCatalogue.SharedProfiles - some model statlines exist
+                                       // only this way (real example: Chaos - Chaos Space
+                                       // Marines.json's "Legionaries" squad reaches its troop
+                                       // model's Unit profile through a profile-type infoLink, not
+                                       // nested in any selectionEntry's own Profiles list).
+                                       // FactionKeywords/Keywords are always empty - BSData's
+                                       // categoryLinks could plausibly source them, but no
+                                       // requirement in this change's spec governs that mapping, so
+                                       // it's left unattempted rather than guessed. The walk also
+                                       // threads a per-branch ancestry list (every BsSelectionEntry
+                                       // from the walk root down to the current one, reset to a
+                                       // fresh chain on each entryLink hop) - originally added
+                                       // purely for InSv resolution (see "Invulnerable Save
+                                       // Resolution" below), now also read by ability
+                                       // classification (below) - plus, since
+                                       // resolve-enhancement-abilities, the nearest enclosing
+                                       // BsSelectionEntryGroup's own Name, threaded and reset the
+                                       // same way, read only by ability classification.
+
+BsdataDatasheetMapper's Ability Extraction and Classification (resolve-enhancement-abilities)
+                                       // An "Abilities"-typeName profile is Intrinsic (populates
+                                       // the public Datasheet.Abilities, deduped by name) when the
+                                       // nearest entry in the walk's ancestry chain - the one that
+                                       // actually made this profile reachable, whether directly
+                                       // (entry.Profiles) or through a "profile"-type infoLink it
+                                       // declared - is NOT `"type": "upgrade"`. A `"type": "upgrade"`
+                                       // owning entry means the profile is optional (an Enhancement,
+                                       // or any other ability grant nested inside its own selection
+                                       // entry, e.g. Impulsor's "Shield Dome") - it's routed instead
+                                       // into Datasheet's on-demand-only index (TryResolveAbility/
+                                       // OptionalAbilityNames), never the public Abilities list,
+                                       // mirroring WeaponProfile's own on-demand-only design exactly.
+                                       // An optional ability is further classified Enhancement (vs.
+                                       // a plain OptionalGrant) when the nearest enclosing selection
+                                       // group's own Name contains "Enhancements" (case-insensitive
+                                       // substring, not exact match - confirmed necessary against a
+                                       // nested sub-pool like "Legends of Saga and Song Enhancements",
+                                       // which is the *directly* enclosing group for its own entries,
+                                       // not the outer "Enhancements" group one hop up). Found via a
+                                       // real user-reported bug: /LivePlay showed unselected
+                                       // Enhancements (Black Templars' "Fervent Exemplars"/
+                                       // "Inheritors of Sigismund" on Sword Brethren Squad; a
+                                       // Space-Wolves-only "Thirst for Glory" on Crusade Ancient) on
+                                       // every eligible unit regardless of what the export actually
+                                       // selected - Datasheet.Abilities had no on-demand protection
+                                       // at all, unlike WeaponProfile. See
+                                       // openspec/changes/resolve-enhancement-abilities/ (design.md
+                                       // in particular) for the full investigation and rejected
+                                       // alternatives (a primary-catalogue/detachment-gating fix was
+                                       // considered and explicitly rejected - it doesn't generalize,
+                                       // since the Sword Brethren case is genuine, correctly-scoped
+                                       // Black Templars content that simply wasn't selected).
 
 InvulnerableSave(MeleeInSv, RangedInSv, Caveated, CaveatAbility)   // Domain/Catalogue/
                                        // InvulnerableSave.cs; sealed record, non-nullable on
@@ -354,9 +439,28 @@ BsdataDatasheetMapper.IsGameModeGated(modifiers, ctx) -> bool
                                        // previously distinguished this from genuine datasheet rules,
                                        // since both use the identical "Abilities"-typeName profile
                                        // shape. True when any of an entry/group's own `modifiers`
-                                       // sets `hidden: true` gated (anywhere in its condition tree -
-                                       // a plain existence check across nested conditionGroups, not
-                                       // real AND/OR boolean evaluation) by a condition referencing
+                                       // sets `hidden: true` PROVABLY always true in matched play
+                                       // (see IsProvablyAlwaysTrueInMatchedPlay - resolve-
+                                       // enhancement-abilities replaced this method's original
+                                       // "plain existence check anywhere in the condition tree,
+                                       // regardless of AND/OR structure" with real, if still narrow,
+                                       // 2-value boolean evaluation: a gate-id condition combined
+                                       // via AND with an unrelated, unevaluated condition is no
+                                       // longer treated as gated, since that other condition could
+                                       // make the whole AND false; combined via OR, it still is,
+                                       // since OR only needs one always-true branch. Found via a
+                                       // second real user-reported bug, after this file's own
+                                       // resolve-enhancement-abilities change shipped: Black
+                                       // Templars' "Companions of Vehemence Enhancements" - a real,
+                                       // always-available Detachment Enhancement pool (Oathbound
+                                       // Exemplar, Incendiary Animus, Merciless Denunciation,
+                                       // Zealous Vanguard) - is hidden by `AND(forces(Crusade Force)
+                                       // < 1, selections(some other id) < 1)`, i.e. "hidden UNLESS
+                                       // you have a Crusade Force OR this Detachment selected" - the
+                                       // original plain-existence check incorrectly treated the mere
+                                       // presence of the Crusade Force reference as sufficient,
+                                       // excluding a real matched-play Enhancement for exactly the
+                                       // players using that Detachment) by a condition referencing
                                        // one of two force-type ids resolved by NAME (never a
                                        // hardcoded id, matching this codebase's existing "resolve by
                                        // name" convention) from the game system's own ForceEntries:
@@ -379,7 +483,8 @@ BsdataDatasheetMapper.IsGameModeGated(modifiers, ctx) -> bool
                                        // interpret `constraints`/`modifiers`/`conditionGroups` as
                                        // rules in general (composition validation stays explicitly
                                        // out of scope, per catalogue-json-ingestion's design.md) -
-                                       // only this one narrow, verified shape is ever read.
+                                       // only this one narrow, verified shape is ever read, now with
+                                       // sound (not just existence-based) boolean evaluation over it.
 ```
 
 `BsdataDatasheetMapper.ParseThreshold(text, CharacteristicPattern)` (Sv/BS/WS/LD only — InSv is no
@@ -817,11 +922,31 @@ ArmyRosterEnricher.Enrich(ParsedArmyList, ResolvedBsdataCatalogue) -> ArmyRoster
                                        // High Marshals" -> "➤ ... - Sweep" / "➤ ... - Strike", each
                                        // profile named "{leading marker}{ExportedName} -
                                        // {mode}" - every matching profile is included), then a
-                                       // Datasheet.Abilities match by name (some "weapon" lines
-                                       // aren't weapons at all - confirmed: Impulsor's "Shield
-                                       // Dome", a BSData Abilities-typeName profile granting a 5+
-                                       // invulnerable save - attached to that ModelLine's own
-                                       // Abilities instead of thrown as an unresolved weapon).
+                                       // Datasheet.TryResolveAbility match by name (some "weapon"
+                                       // lines aren't weapons at all - confirmed: Impulsor's
+                                       // "Shield Dome", a BSData Abilities-typeName profile
+                                       // granting a 5+ invulnerable save - attached to that
+                                       // ModelLine's own Abilities instead of thrown as an
+                                       // unresolved weapon). Since resolve-enhancement-abilities,
+                                       // this reads the on-demand index (was: a linear scan of the
+                                       // public Datasheet.Abilities, before that list narrowed to
+                                       // intrinsic-only) - Shield Dome resolves identically either
+                                       // way, only where it's looked up changed.
+                                       // Enhancement resolution (per name in ParsedUnit
+                                       // .Enhancements, resolve-enhancement-abilities): each name
+                                       // is resolved against the built Unit's Datasheet
+                                       // .TryResolveAbility (same on-demand index the wargear
+                                       // fallback above reads), same "resolve by name, fail loud
+                                       // with a did-you-mean suggestion on a miss" contract as
+                                       // every other resolution in this file. Deliberately does
+                                       // NOT check that the resolved ability's Origin is actually
+                                       // Enhancement (vs. some other OptionalGrant) - that would be
+                                       // new eligibility-checking behavior this project has
+                                       // consistently declined to add elsewhere. An empty
+                                       // Enhancements list resolves to an empty result - no
+                                       // Enhancement is ever attached merely because the Datasheet
+                                       // defines one available (this is the actual fix for the bug
+                                       // that motivated resolve-enhancement-abilities).
 
 BsdataFactionResolutionException(faction, message)   // carries the offending Faction entry
 BsdataNameResolutionException(text, message)         // carries the offending text
@@ -831,6 +956,8 @@ BsdataNameResolutionException(text, message)         // carries the offending te
 throwing variants) and `WeaponNames` (`IReadOnlyList<string>`) specifically to support the above -
 diagnostic/fallback lookups that need to check existence or enumerate candidates without either
 throwing on a routine miss or breaking `ResolveWeaponProfile`'s existing on-demand-only contract.
+Since resolve-enhancement-abilities, it likewise gained `TryResolveAbility`/`OptionalAbilityNames`
+for the same reason, on the optional-ability side.
 
 ### Session-Backed Import (`ProbHammer.Web`)
 
@@ -898,7 +1025,13 @@ ModelLine(StatlineName, Weapons: IReadOnlyList<string>, Count, Abilities: IReadO
   RemoveCasualties(n)         // thin wrapper: SetRemainingCount(RemainingCount - n)
 
 Unit : ICombatUnit
-  Datasheet, Enhancements, ModelLines
+  Datasheet, Enhancements: IReadOnlyList<Ability>, ModelLines
+                     // Enhancements holds resolved Ability objects (via ArmyRosterEnricher's
+                     // Enhancement resolution, above), not raw name strings - since
+                     // resolve-enhancement-abilities (element type was previously
+                     // IReadOnlyList<string>, populated straight from the parsed export with no
+                     // cross-reference against the catalogue at all - confirmed unused by any
+                     // other code path in `src/` at the time of that change).
   IsPresent   // any model-line with RemainingCount > 0
   Components -> [this]
 

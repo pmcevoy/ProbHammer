@@ -94,6 +94,61 @@ public class DatasheetTests
     }
 
     [Fact]
+    public void ResolvingAKnownOptionalAbility_Succeeds()
+    {
+        var shieldDome = new Ability
+        {
+            Name = "Shield Dome",
+            Text = "The bearer has a 5+ invulnerable save.",
+            Scope = AbilityScope.Model,
+            Origin = AbilityOrigin.OptionalGrant
+        };
+        var datasheet = new Datasheet(
+            "Impulsor",
+            factionKeywords: [],
+            keywords: [],
+            abilities: [],
+            statlines: [],
+            weaponProfiles: [],
+            optionalAbilities: [shieldDome]);
+
+        datasheet.TryResolveAbility("Shield Dome", out var resolved).Should().BeTrue();
+        resolved.Should().Be(shieldDome);
+    }
+
+    [Fact]
+    public void ResolvingAnUnknownOptionalAbility_FailsWithoutAResult()
+    {
+        var datasheet = new Datasheet(
+            "Impulsor",
+            factionKeywords: [],
+            keywords: [],
+            abilities: [],
+            statlines: [],
+            weaponProfiles: [],
+            optionalAbilities: []);
+
+        datasheet.TryResolveAbility("Does not exist", out _).Should().BeFalse();
+    }
+
+    [Fact]
+    public void OptionalAbilityNames_EnumeratesOnlyTheOptionalSet()
+    {
+        var intrinsic = new Ability { Name = "Vengeful Exhortation", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
+        var enhancement = new Ability { Name = "Thirst for Glory", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Enhancement };
+        var datasheet = new Datasheet(
+            "Crusade Ancient",
+            factionKeywords: [],
+            keywords: [],
+            abilities: [intrinsic],
+            statlines: [],
+            weaponProfiles: [],
+            optionalAbilities: [enhancement]);
+
+        datasheet.OptionalAbilityNames.Should().ContainSingle().Which.Should().Be("Thirst for Glory");
+    }
+
+    [Fact]
     public void Datasheet_OmitsConstraintAndCostData()
     {
         // No public surface for wargear min/max, composition counts, or points - compile-time
