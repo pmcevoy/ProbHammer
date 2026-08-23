@@ -42,11 +42,13 @@ public sealed record AggregateWeaponEntry(
     IReadOnlyList<WeaponContribution> Contributions);
 
 /// <summary>
-/// <see cref="StatlineName"/> is null for a Datasheet-sourced ability (not tied to any one
-/// model-line - applies to the whole component) and set for a ModelLine-sourced ability
-/// (Enhancement-conferred - tied to that specific model-line). This applies regardless of
-/// <see cref="Ability.Scope"/>: Scope alone decides which UI column an entry belongs in; source
-/// alone decides which row(s) it binds to.
+/// <see cref="StatlineName"/> is null for a Datasheet-sourced or Unit.Enhancements-sourced ability
+/// (neither is tied to any one model-line - both apply to the whole component) and set for a
+/// ModelLine-sourced ability (e.g. one granted by a wargear choice like Impulsor's "Shield Dome" -
+/// tied to that specific model-line). This applies regardless of <see cref="Ability.Scope"/>:
+/// Scope alone decides which UI column an entry belongs in; source alone decides which row(s) it
+/// binds to. <see cref="Ability.Origin"/> (not this record's own shape) is what a renderer reads
+/// to show an Enhancement-classified entry distinctly.
 /// </summary>
 public sealed record AggregateAbilityEntry(string ComponentName, string? StatlineName, Ability Ability);
 

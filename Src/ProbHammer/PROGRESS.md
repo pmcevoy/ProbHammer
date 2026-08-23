@@ -8,9 +8,43 @@ Nothing in progress.
 
 ## Recently Completed
 
-- Post-implementation bug fix on `resolve-enhancement-abilities` (no new OpenSpec change - the
-  underlying `IsGameModeGated` method predates that change; this fix generalizes it, folded into
-  the same not-yet-archived change): user added a real Enhancement (`Enhancement(s): Oathbound
+- OpenSpec change `restyle-rule-popover-titlebar` implemented (6/6 tasks): every rule/ability
+  popover (ability names, weapon-keyword chips, nested `[BRACKET]` references) gained a title bar
+  above its body text, naming whatever was tapped to open it. `_UnitBlock.cshtml`'s
+  `BuildRulePopover` reuses its existing `triggerHtml` parameter verbatim for the new
+  `.rule-popover-title` `<div>` — no new plumbing, and the `✦` prefix from
+  `display-resolved-enhancements` carries through into the title automatically. The title bar's
+  CSS matches `.lp-section` summary's own section-title style (dark filled bar, uppercase, bold);
+  `.rule-popover`'s own padding moved onto `.rule-popover-text` so the title bar can sit flush at
+  the panel's top edge, and the title is `position: sticky` so it stays visible while a long
+  popover's body scrolls. Verified: full suite green (297 total); manually confirmed via `dotnet
+  run` + the real templars export that ability, weapon-tag, and Enhancement popovers all show a
+  correctly-styled title bar (the Enhancement's showing "✦ Oathbound Exemplar"). Docs:
+  `.claude/design-tokens.md`'s Popovers section updated.
+
+- OpenSpec change `display-resolved-enhancements` implemented (11/11 tasks): `Unit.Enhancements`
+  (resolved by `resolve-enhancement-abilities`, archived below) was never read by any rendering
+  code — an applied Enhancement was invisible on `/LivePlay`. `AttachedUnitAggregator.BuildAbilities`
+  now reports each present component's own `Enhancements` the same way it already reports
+  `Datasheet.Abilities` (component-wide, `StatlineName: null`) — no new domain shape needed, since
+  `Ability.Origin` already distinguishes an Enhancement from every other ability. `_UnitBlock.cshtml`
+  gained an `AbilityDisplayName` helper prefixing an Enhancement-classified ability's rendered name
+  with `✦ ` wherever it renders (both ability columns; the popover title bar, once
+  `restyle-rule-popover-titlebar` lands, reuses the same prefixed name for free). An Enhancement
+  renders in the Unit Abilities column unconditionally for now — `Ability.Scope` is already always
+  `Unit` for every BSData-resolved ability (no per-ability scope signal in the source data), so this
+  isn't new scope logic, just the pre-existing default. A genuine per-Enhancement Model/Unit scope
+  is deferred to the future ability-text classification pass, noted in `.claude/vnext-ideas.md`.
+  Verified: new `AttachedUnitAggregatorTests` (Enhancement reported/disappears-when-dead/absent-when-
+  none-applied) and new `LivePlayAbilityRenderingTests` (real-Razor-path render confirming the `✦`
+  prefix appears only on an Enhancement-origin ability); full suite green (297 total); manually
+  re-verified via `dotnet run` + the real templars export — `/LivePlay` now shows "✦ Oathbound
+  Exemplar" on the Marshal. Docs: `.claude/domain-model-11e.md`'s Aggregate Ability View description
+  updated.
+
+- Post-implementation bug fix on `resolve-enhancement-abilities` (no new OpenSpec change at the
+  time - the underlying `IsGameModeGated` method predates that change; this fix generalized it,
+  folded into the same change before it was archived): user added a real Enhancement (`Enhancement(s): Oathbound
   Exemplar`, on a Marshal using the "Companions of Vehemence" Detachment) to
   `data/gw-app-export-templars.txt` and importing it failed with "Datasheet 'Marshal' has no
   Enhancement named 'Oathbound Exemplar'." Traced (via the same instrument-and-print approach used
@@ -35,14 +69,15 @@ Nothing in progress.
   succeeds; full test suite (292 tests) and all 3 permanent full-corpus scans re-run against the
   live BSData clone still pass unchanged - confirming the stricter evaluation doesn't silently
   un-gate any of the content the original check correctly excluded. Manually re-verified via
-  `dotnet run` + `curl`: the updated export now imports successfully with no error. Note: the
-  resolved Enhancement doesn't yet visibly render on `/LivePlay` - wiring `Unit.Enhancements` into
-  the page's rendering remains the explicitly deferred future step from
-  `resolve-enhancement-abilities`'s own design.md, unaffected by this fix. Docs:
+  `dotnet run` + `curl`: the updated export now imports successfully with no error. Note: at the
+  time of this fix, the resolved Enhancement didn't yet visibly render on `/LivePlay` - wiring
+  `Unit.Enhancements` into the page's rendering was the explicitly deferred future step from
+  `resolve-enhancement-abilities`'s own design.md; `display-resolved-enhancements` (above) has
+  since closed that gap. Docs:
   `.claude/domain-model-11e.md`'s `IsGameModeGated` description updated to describe the new
   evaluation and this second real-world finding.
 
-- OpenSpec change `resolve-enhancement-abilities` implemented (all 23 tasks, not yet archived): a
+- OpenSpec change `resolve-enhancement-abilities` implemented (all 23 tasks) and archived: a
   real user-reported bug — after importing a real Black Templars export
   (`data/gw-app-export-templars.txt`), `/LivePlay` showed "Thirst for Glory" on the Crusade Ancient
   (a Space-Wolves-only Enhancement, never selected) and both "Fervent Exemplars" and "Inheritors of

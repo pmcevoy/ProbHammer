@@ -60,7 +60,12 @@ entry once it's been turned into a change (archived changes remain the historica
   "Ability-driven attack modifiers" idea above (e.g. folding a "+1 Attack to melee weapons"
   ability into weapon-aggregation totals) — same class of problem, not yet designed together.
   **Revisit once the InSv-caveat change is implemented/archived — explicitly asked to be
-  reminded.**
+  reminded.** Should also resolve Model-vs-Unit scope for Enhancements specifically: today every
+  Enhancement is displayed at Unit scope unconditionally (`resolve-enhancement-abilities` shipped
+  Enhancement *resolution*, not scope classification), even though a real Enhancement's actual
+  scope depends on its rules text and can genuinely be Model — this pass is where that
+  distinction should get made instead of guessed at, per the same "no scope on
+  Enhancement" acknowledgment.
 
 ## Bigger picture
 

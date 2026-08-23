@@ -1103,13 +1103,17 @@ AggregateWeaponEntry(Profile: WeaponProfile, TotalAttacks: DiceExpression,
   // safe to render.
 
 AggregateAbilityEntry(ComponentName: string, StatlineName: string?, Ability: Ability)
-  // StatlineName is null for a Datasheet-sourced ability (Unit.Datasheet.Abilities - not tied to
-  // any one model-line, applies to the whole component) and set to a specific statline name for a
-  // ModelLine-sourced ability (that ModelLine's own Abilities, e.g. Enhancement-conferred). This
-  // applies regardless of Ability.Scope: Scope alone decides which UI column (Model vs Unit) an
-  // entry belongs in; source alone decides which statline row(s) it binds to. No cross-component
-  // combination or deduplication - two components each having an ability of the same Name produce
-  // two separate entries.
+  // StatlineName is null for a Datasheet-sourced ability (Unit.Datasheet.Abilities) or a resolved
+  // Enhancement (Unit.Enhancements, since display-resolved-enhancements) - neither is tied to any
+  // one model-line, both apply to the whole component - and set to a specific statline name for a
+  // ModelLine-sourced ability (that ModelLine's own Abilities, e.g. a wargear-granted ability like
+  // Impulsor's "Shield Dome"). This applies regardless of Ability.Scope: Scope alone decides which
+  // UI column (Model vs Unit) an entry belongs in; source alone decides which statline row(s) it
+  // binds to. Ability.Origin (not this record's own shape) is what /LivePlay reads to render an
+  // Enhancement-classified entry with its leading "✦ " indicator - see
+  // openspec/specs/live-play-view/spec.md's "Enhancement Ability Visual Indicator". No
+  // cross-component combination or deduplication - two components each having an ability of the
+  // same Name produce two separate entries.
 ```
 
 - `Statlines` — built by walking components in display order (an `AttachedUnit`'s `Attached` list,
@@ -1140,15 +1144,26 @@ AggregateAbilityEntry(ComponentName: string, StatlineName: string?, Ability: Abi
   19, not silently keep one contributor's A and report Count=5.)
 - `Abilities` — built by `BuildAbilities`, walking components in the same display order
   `BuildStatlines` uses. For each component where `IsPresent`: one entry per
-  `Datasheet.Ability` (`StatlineName: null`), then one entry per `Ability` on each of that
-  component's own `ModelLine`s with `RemainingCount > 0` (`StatlineName:` that line's own name).
-  No cross-component combination or deduplication, regardless of `Ability.Scope` — mirrors
-  `Statlines`' per-component scoping exactly. The explicit `IsPresent` guard exists only for
-  Datasheet-sourced entries: unlike `BuildStatlines`, where a fully-dead component naturally
-  produces zero entries through its per-statline `RemainingCount` check, a Datasheet ability has
-  no statline-level gate of its own to fall through. A `ModelLine`-sourced entry (any Scope)
-  disappears once that line's `RemainingCount` reaches 0, since it's simply excluded from that
-  component's model-line scan on the next `Build`.
+  `Datasheet.Ability` (`StatlineName: null`), one entry per resolved `Unit.Enhancements`
+  ability (`StatlineName: null`, since `display-resolved-enhancements` - reported the same way as
+  a Datasheet-sourced ability, not any new source-specific shape), then one entry per `Ability` on
+  each of that component's own `ModelLine`s with `RemainingCount > 0` (`StatlineName:` that line's
+  own name). No cross-component combination or deduplication, regardless of `Ability.Scope` —
+  mirrors `Statlines`' per-component scoping exactly. The explicit `IsPresent` guard is needed for
+  both component-wide sources (Datasheet-sourced and Enhancement-sourced alike): unlike
+  `BuildStatlines`, where a fully-dead component naturally produces zero entries through its
+  per-statline `RemainingCount` check, neither has a statline-level gate of its own to fall
+  through. A `ModelLine`-sourced entry (any Scope) disappears once that line's `RemainingCount`
+  reaches 0, since it's simply excluded from that component's model-line scan on the next `Build`.
+  `/LivePlay` renders an Enhancement-classified entry (`Ability.Origin == Enhancement`) with a
+  leading `✦ ` before its name, wherever an ability name renders (including a rule-text popover's
+  own title bar, since it reuses the same rendered name) - see `_UnitBlock.cshtml`'s
+  `AbilityDisplayName` helper and `openspec/specs/live-play-view/spec.md`'s "Enhancement Ability
+  Visual Indicator". An Enhancement renders in the Unit Abilities column unconditionally today,
+  since `Ability.Scope` is already always `Unit` for every ability BSData resolution produces (see
+  "Ability Extraction and Classification" above) - not a new scope decision this change adds. A
+  genuine per-Enhancement Model/Unit scope is deferred to the future ability-text classification
+  pass (`.claude/vnext-ideas.md`).
 - `Keywords` — wired directly to `KeywordResolution.EffectiveKeywords`.
 
 `AttachedUnitAggregator.Build` computes one `RemainingCount > 0`-filtered `presentLines` list from

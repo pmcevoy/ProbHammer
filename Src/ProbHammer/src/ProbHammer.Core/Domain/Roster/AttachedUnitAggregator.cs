@@ -131,12 +131,14 @@ public static class AttachedUnitAggregator
     }
 
     // Walks components in display order; for each present component, reports its Datasheet's own
-    // Abilities (component-wide, StatlineName: null) and each of its present ModelLines' own
-    // Abilities (StatlineName: that line's own name) - regardless of Scope, and with no
-    // cross-component combination or deduplication. The explicit IsPresent guard is needed only
-    // for Datasheet-sourced entries: unlike BuildStatlines, where a fully-dead component naturally
-    // produces zero entries through its per-statline RemainingCount check, a Datasheet ability has
-    // no statline-level gate of its own to fall through.
+    // Abilities, its own resolved Enhancements (both component-wide, StatlineName: null - an
+    // Enhancement's Ability.Origin is what a renderer reads to show it distinctly, not this
+    // record's own shape), and each of its present ModelLines' own Abilities (StatlineName: that
+    // line's own name) - regardless of Scope, and with no cross-component combination or
+    // deduplication. The explicit IsPresent guard is needed for both component-wide sources
+    // (Datasheet.Abilities and Enhancements alike): unlike BuildStatlines, where a fully-dead
+    // component naturally produces zero entries through its per-statline RemainingCount check,
+    // neither has a statline-level gate of its own to fall through.
     private static IReadOnlyList<AggregateAbilityEntry> BuildAbilities(ICombatUnit combatUnit)
     {
         var entries = new List<AggregateAbilityEntry>();
@@ -147,6 +149,9 @@ public static class AttachedUnitAggregator
                 continue;
 
             foreach (var ability in component.Datasheet.Abilities)
+                entries.Add(new AggregateAbilityEntry(component.Datasheet.Name, StatlineName: null, ability));
+
+            foreach (var ability in component.Enhancements)
                 entries.Add(new AggregateAbilityEntry(component.Datasheet.Name, StatlineName: null, ability));
 
             foreach (var modelLine in component.ModelLines.Where(ml => ml.RemainingCount > 0))

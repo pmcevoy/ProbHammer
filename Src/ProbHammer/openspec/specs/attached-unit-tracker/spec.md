@@ -158,12 +158,14 @@ Aggregate Statline View.
 ### Requirement: Aggregate Ability View
 The Attached Unit aggregate view SHALL report abilities per present component Unit, without
 combining or deduplicating across components. For each present component, the aggregate view
-SHALL report abilities from two sources: the component's Datasheet-level Abilities (not tied to
-any one model-line) and abilities carried by any of the component's own present model-lines (e.g.
-granted by an Enhancement). Each reported entry SHALL carry the owning component's name, the
-Ability itself, and — only for model-line-sourced abilities — the name of the specific statline
-that bears it; Datasheet-sourced abilities carry no statline name, since they belong to the
-component as a whole rather than to any one of its statlines. This applies uniformly to both
+SHALL report abilities from three sources: the component's Datasheet-level Abilities (not tied to
+any one model-line), the component's own resolved Enhancements, and abilities carried by any of
+the component's own present model-lines (e.g. granted by an Enhancement). Datasheet-level
+Abilities and resolved Enhancements are both reported the same way — not tied to any one
+model-line. Each reported entry SHALL carry the owning component's name, the Ability itself, and —
+only for model-line-sourced abilities — the name of the specific statline that bears it;
+Datasheet-sourced and Enhancement-sourced abilities carry no statline name, since they belong to
+the component as a whole rather than to any one of its statlines. This applies uniformly to both
 Model-scoped and Unit-scoped abilities — the Ability's own Scope alone determines which of the two
 an entry is; the reporting rule itself does not depend on Scope.
 
@@ -200,4 +202,19 @@ an entry is; the reporting rule itself does not depend on Scope.
 - **WHEN** a component has multiple model-lines and only some of them reach a remaining count of 0
 - **THEN** the component's Datasheet-sourced abilities still appear in the aggregate view, as long
   as the component itself is still present
+
+#### Scenario: An applied Enhancement is reported without a statline name
+- **WHEN** a present component Unit has one or more resolved Enhancements
+- **THEN** the aggregate view reports each of them for that component with no statline name,
+  the same treatment as a Datasheet-sourced ability
+
+#### Scenario: An Enhancement disappears once its component is no longer present
+- **WHEN** a component with a resolved Enhancement has every one of its model-lines reach a
+  remaining count of 0
+- **THEN** that Enhancement no longer appears in the aggregate view, the same treatment as a
+  Datasheet-sourced ability
+
+#### Scenario: A component with no Enhancements applied reports none
+- **WHEN** a present component Unit's resolved Enhancements list is empty
+- **THEN** the aggregate view reports no Enhancement-sourced entry for that component
 

@@ -1029,10 +1029,28 @@ button.filter-flag:hover { opacity: 0.8; }
     background: var(--bg2);
     border: 1px solid var(--border);
     border-radius: 4px;
-    padding: 0.6rem 0.75rem;
+}
+
+/* Same visual style as .lp-section summary's own section-title bar (background/color/weight/size/
+   case/letter-spacing) - reused here rather than shared via one selector, since the two sit on
+   structurally different elements (an interactive, toggling <summary> vs. a plain <div>). Sticky
+   within .rule-popover's own scroll container so a long rule's title stays visible while its body
+   scrolls, matching how the page's own section headers are always visible. */
+.rule-popover-title {
+    position: sticky;
+    top: 0;
+    background: var(--bg3-tint);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding: 0.35rem 0.6rem;
+    border-radius: 4px 4px 0 0;
 }
 
 .rule-popover-text {
+    padding: 0.6rem 0.75rem;
     white-space: pre-line;
     font-size: 0.8rem;
     color: var(--text);

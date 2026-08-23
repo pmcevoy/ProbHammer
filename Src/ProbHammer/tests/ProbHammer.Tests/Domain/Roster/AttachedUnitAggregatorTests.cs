@@ -395,6 +395,49 @@ public class AttachedUnitAggregatorTests
     }
 
     [Fact]
+    public void AbilityView_ReportsAResolvedEnhancementWithoutAStatlineName()
+    {
+        var enhancement = new Ability { Name = "Oathbound Exemplar", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Enhancement };
+        var datasheet = new Datasheet(
+            "Marshal", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: []);
+        var unit = new Unit(datasheet, [enhancement], [new ModelLine("Marshal", [], count: 1)]);
+
+        var view = AttachedUnitAggregator.Build(unit);
+
+        view.Abilities.Should().ContainSingle(e =>
+            e.Ability.Name == "Oathbound Exemplar" && e.ComponentName == "Marshal" && e.StatlineName == null);
+    }
+
+    [Fact]
+    public void AbilityView_EnhancementDisappearsOnceItsComponentIsNoLongerPresent()
+    {
+        var enhancement = new Ability { Name = "Oathbound Exemplar", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Enhancement };
+        var datasheet = new Datasheet(
+            "Marshal", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: []);
+        var unit = new Unit(datasheet, [enhancement], [new ModelLine("Marshal", [], count: 1)]);
+        unit.ModelLines[0].RemoveCasualties(1);
+
+        var view = AttachedUnitAggregator.Build(unit);
+
+        view.Abilities.Should().NotContain(e => e.Ability.Name == "Oathbound Exemplar");
+    }
+
+    [Fact]
+    public void AbilityView_ReportsNoEnhancementEntry_WhenNoneAreApplied()
+    {
+        var datasheet = new Datasheet(
+            "Marshal", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: []);
+        var unit = new Unit(datasheet, [], [new ModelLine("Marshal", [], count: 1)]);
+
+        var view = AttachedUnitAggregator.Build(unit);
+
+        view.Abilities.Should().BeEmpty();
+    }
+
+    [Fact]
     public void NameView_ForAPlainUnit_IsWiredToTheUnitsName()
     {
         var unit = UnitFixtures.CrusaderSquadMixedLoadout();

@@ -133,3 +133,16 @@ picture; this section covers only the visual/positioning decisions.
   light-dismiss stacking (established via `popovertarget`, independent of the positioning
   properties above) is what makes "parent stays open, tap-between closes only the child, tap-
   outside-both closes both" work with no hand-rolled JS.
+- **Title bar** (`restyle-rule-popover-titlebar`): every popover panel (ability, weapon-keyword
+  chip, and nested `[BRACKET]` reference alike) opens with a title bar naming its subject —
+  `.rule-popover-title`, reusing the exact same trigger content (`triggerHtml`) the panel's own
+  trigger button already renders, so an Enhancement's `✦`-prefixed name (see
+  `display-resolved-enhancements`) shows in the title too, with no separate plumbing. Styled
+  identically to an `.lp-section` summary's own section-title bar (`--bg3-tint` background, white
+  text, `600` weight, `0.82rem`, uppercase, `0.02em` letter-spacing) — reused as its own selector
+  rather than shared with `.lp-section summary`, since the two sit on structurally different
+  elements (an interactive, toggling `<summary>` vs. a plain `<div>`). `position: sticky; top: 0`
+  within `.rule-popover`'s own scroll container, so the title stays visible while a long popover's
+  body scrolls — matching how the page's own section headers are always visible. Padding that used
+  to sit on `.rule-popover` itself moved onto `.rule-popover-text` alone, so the title bar can span
+  flush to the panel's own top edge and corners.
