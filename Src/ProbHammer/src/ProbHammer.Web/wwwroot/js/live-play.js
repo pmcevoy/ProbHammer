@@ -74,11 +74,12 @@ function initCasualtyControls(unitEl) {
     });
 }
 
-// Header status-glyph controls (half-strength-and-battleshock-indicators): the half-strength
-// glyph only carries a click handler when it's rendered as a <button> (the single-model,
-// player-set case - see _UnitBlock.cshtml) - the multi-model <span> variant is a passive,
-// computed indicator with nothing to toggle. The Battle-shock glyph is always a <button>. Neither
-// needs stopPropagation: unlike the casualty controls, the header isn't nested inside any other
+// Unit toolbar status controls (half-strength-and-battleshock-indicators; relocated into
+// .unit-toolbar by consolidate-unit-toolbar). Both are always real <button>s now - the multi-model
+// Half Strength case is permanently `disabled` in markup rather than a separate, listener-less
+// <span> - so this always finds and wires up both; native `disabled` buttons never dispatch click
+// events, so attaching a listener to that permanently-disabled case is inert, not a bug. Neither
+// needs stopPropagation: unlike the casualty controls, the toolbar isn't nested inside any other
 // click target.
 function initStatusGlyphControls(unitEl) {
     const halfStrengthBtn = unitEl.querySelector('button.status-glyph-halfstrength');
@@ -104,11 +105,11 @@ function toggleStoredUnitFlag(storageKey, unitIndex) {
     writeJsonMap(storageKey, stored);
 }
 
-// Reset-casualties control (casualty-tracking follow-up). Confirms first - this can revert several
-// taps' worth of marking at once, and is deliberately spaced away from the Clear-filter button (see
-// .statline-flags in site.css) so the two can't be fat-fingered for each other. Resets every
-// model-line this specific unit currently has a casualty control for, regardless of whether that
-// one is actually adjusted right now - simpler than diffing, and a no-op remaining==initial send is
+// Reset-casualties control (casualty-tracking follow-up; relocated into .unit-toolbar by
+// consolidate-unit-toolbar, `disabled` in markup whenever the unit has no casualties to reset).
+// Confirms first - this can revert several taps' worth of marking at once. Resets every model-line
+// this specific unit currently has a casualty control for, regardless of whether that one is
+// actually adjusted right now - simpler than diffing, and a no-op remaining==initial send is
 // harmless (SetRemainingCount is idempotent).
 function initCasualtyReset(unitEl) {
     const button = unitEl.querySelector('.casualty-reset-btn');

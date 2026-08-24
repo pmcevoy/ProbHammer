@@ -70,34 +70,68 @@
 <section class="unit-block" data-unit-index="@i">
     <h2 class="unit-name">
         <span class="unit-name-text">@unit.Name</span>
-        <span class="unit-status-glyphs">
-            @* Half-strength glyph: a single-model unit (no computed determination is possible -
-               see HalfStrengthResolution/domain-model-11e.md) always renders it as an interactive
-               toggle for the player-set override; a multi-model unit renders it as a passive,
-               non-interactive indicator that only appears once the computed determination is true.
-               Both share the same "½" text glyph and amber-when-active color rule. *@
-            @if (unit.IsSingleModelUnit)
-            {
-                <button type="button" class="filter-flag status-glyph-halfstrength @(unit.IsAtOrBelowHalfStrength ? "is-active" : "")"
+    </h2>
+
+    @* Unit status toolbar (consolidate-unit-toolbar): its own row between the unit-name header and
+       the Statline section, immune to the header wrapping onto multiple lines for a long unit name
+       (the reason the two status glyphs and the casualty-reset button used to live split across the
+       header and the Statline summary bar). All three controls always render - no more
+       hide-when-irrelevant per control. Each is a small square icon-button (.unit-toolbar-icon-btn,
+       sized like .mod-step-btn/.casualty-btn's existing inc/dec controls) - the ONLY clickable
+       area - with its plain-text caption (.unit-toolbar-label, styled like .stat-label) sitting
+       beside it, outside the button, never part of the click target. Two independent states,
+       purely via color: "actionable" (--bg3 background, clickable) vs. "inert" (--text-dim
+       background, `disabled`) - see .unit-toolbar-icon-btn in site.css - and "active" (amber icon)
+       vs. "inactive" (white icon), via .is-active. The caption's own color never changes with
+       either state - it's a static label, not a status indicator. Each icon+label pair is grouped
+       in its own .unit-toolbar-item, separated from its neighbor by a left border rather than a
+       literal "|" character - a bordered cell, not a punctuation mark. *@
+    <div class="unit-toolbar">
+        @* Half-strength: a single-model unit (no computed determination is possible - see
+           HalfStrengthResolution/domain-model-11e.md) is always actionable, toggling the
+           player-set override; a multi-model unit is always inert (the computed determination is
+           read-only) but its icon color still reflects that computed value - collapsed from the
+           previous button-vs-span split into "always a button, permanently disabled" in this case,
+           matching every other toolbar control's shape. *@
+        @if (unit.IsSingleModelUnit)
+        {
+            <div class="unit-toolbar-item">
+                <button type="button" class="unit-toolbar-icon-btn status-glyph-halfstrength @(unit.IsAtOrBelowHalfStrength ? "is-active" : "")"
                         data-unit-index="@i" aria-pressed="@(unit.IsAtOrBelowHalfStrength ? "true" : "false")"
                         aria-label="Toggle at-or-below half strength" title="At or below half strength (tap to set)">½</button>
-            }
-            else
-            {
-                <span class="filter-flag status-glyph-halfstrength is-active" hidden="@(!unit.IsAtOrBelowHalfStrength)"
-                      aria-label="At or below half strength" title="At or below half strength">½</span>
-            }
-            @* Battle-shock glyph: always present, always interactive - the app never simulates the
-               2D6-vs-Leadership test itself, only records the player's own reported result. Outline
-               when inactive (currentColor, matching the header's own text color), solid amber when
-               active - see .status-glyph-battleshock.is-active in site.css. *@
-            <button type="button" class="filter-flag status-glyph-battleshock @(unit.IsBattleShocked ? "is-active" : "")"
+                <span class="unit-toolbar-label">Half Strength</span>
+            </div>
+        }
+        else
+        {
+            <div class="unit-toolbar-item">
+                <button type="button" class="unit-toolbar-icon-btn status-glyph-halfstrength @(unit.IsAtOrBelowHalfStrength ? "is-active" : "")" disabled
+                        aria-label="At or below half strength (computed)" title="At or below half strength (computed)">½</button>
+                <span class="unit-toolbar-label">Half Strength</span>
+            </div>
+        }
+        @* Battle-shock: always present, always actionable - the app never simulates the
+           2D6-vs-Leadership test itself, only records the player's own reported result. Icon color
+           alone now carries active/inactive (see .unit-toolbar-icon-btn.is-active in site.css) -
+           the bolt's old outline-vs-solid duality is no longer needed. *@
+        <div class="unit-toolbar-item">
+            <button type="button" class="unit-toolbar-icon-btn status-glyph-battleshock @(unit.IsBattleShocked ? "is-active" : "")"
                     data-unit-index="@i" aria-pressed="@(unit.IsBattleShocked ? "true" : "false")"
                     aria-label="Toggle Battle-shocked" title="Battle-shocked (tap to set)">
-                @Html.Raw(BoltSvgIcon("battleshock-icon"))
+                @Html.Raw(BoltSvgIcon("unit-toolbar-svg-icon"))
             </button>
-        </span>
-    </h2>
+            <span class="unit-toolbar-label">Battle-shock</span>
+        </div>
+        @* Reset Casualties: actionable only once there's something to reset - unlike the other two,
+           it has no independent "active" fact, so its icon is amber exactly when actionable (see
+           .is-active applied alongside `disabled` below, driven by the same HasCasualties check). *@
+        <div class="unit-toolbar-item">
+            <button type="button" class="unit-toolbar-icon-btn casualty-reset-btn @(unit.HasCasualties ? "is-active" : "")" disabled="@(!unit.HasCasualties)"
+                    data-unit-index="@i"
+                    aria-label="Reset casualties for this unit" title="Reset casualties for this unit">@Html.Raw(SkullSvgIcon("unit-toolbar-svg-icon"))</button>
+            <span class="unit-toolbar-label">Reset Casualties</span>
+        </div>
+    </div>
 
     @if (unit.Statlines.Any())
     {
@@ -109,9 +143,6 @@
                             aria-label="Filtered - click to clear" title="Filtered - click to clear">
                         <svg class="filter-flag-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2 L15 2 L10 8 L10 13 L6 15 L6 8 Z" /></svg>
                     </button>
-                    <button type="button" class="filter-flag casualty-reset-btn casualty-reset-btn-emoji" hidden="@(!unit.HasCasualties)"
-                            data-unit-index="@i"
-                            aria-label="Reset casualties for this unit" title="Reset casualties for this unit">&#x1F480;</button>
                 </span>
             </summary>
             @{
@@ -566,16 +597,25 @@
     static string AbilityDisplayName(Ability ability) =>
         ability.Origin == AbilityOrigin.Enhancement ? $"✦ {ability.Name}" : ability.Name;
 
-    // Shared lightning-bolt shape for both the header's Battle-shock toggle and a Battle-shocked
+    // Shared lightning-bolt shape for both the Battle-shock toolbar control and a Battle-shocked
     // unit's OC tile - "the same glyph", per half-strength-and-battleshock-indicators' spec, not
     // two independently-drawn bolts that only coincidentally look similar. Inline SVG rather than a
-    // Unicode/emoji character, matching .filter-flag-icon's own precedent (renders identically
-    // across browsers/fonts, and fill/stroke both resolve from currentColor) - the header toggle
-    // needs two genuinely different paint states (outline vs. solid), which no matched Unicode pair
-    // reliably gives. cssClass alone drives the paint state via CSS (see site.css); this helper
-    // never varies the markup itself.
+    // Unicode/emoji character, matching .filter-flag-icon's own precedent - fill resolves from
+    // currentColor, so the same markup paints white/--amber (toolbar) or the tile's own
+    // .stat-value color (OC tile) purely via CSS, with no markup variation needed.
     static string BoltSvgIcon(string cssClass) =>
         $"<svg class=\"{cssClass}\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path d=\"M9 1 L3 9 L7 9 L6 15 L13 6 L9 6 Z\" /></svg>";
+
+    // Reset Casualties' skull, inline SVG rather than the U+1F480 emoji character this button used
+    // before consolidate-unit-toolbar's restyle - found, via direct user testing, to be the reason
+    // the icon never actually turned amber when active: most platforms render an emoji as a fixed,
+    // full-color glyph that ignores `color`/`currentColor` entirely, the same class of problem
+    // BoltSvgIcon above was already built to avoid. fill-rule="evenodd" carves the eye sockets and
+    // nasal cavity as true holes (through to whatever's behind the icon - the button's own current
+    // background) out of one filled silhouette, rather than layering same-colored shapes that would
+    // just blend into a solid blob.
+    static string SkullSvgIcon(string cssClass) =>
+        $"<svg class=\"{cssClass}\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M8,1 C4.7,1 2,3.6 2,6.8 C2,8.7 3,10.3 4.5,11.3 L4.5,13 C4.5,13.6 5,14 5.5,14 L10.5,14 C11,14 11.5,13.6 11.5,13 L11.5,11.3 C13,10.3 14,8.7 14,6.8 C14,3.6 11.3,1 8,1 Z M7,6.7 A1.3,1.3 0 1,0 4.4,6.7 A1.3,1.3 0 1,0 7,6.7 Z M11.6,6.7 A1.3,1.3 0 1,0 9,6.7 A1.3,1.3 0 1,0 11.6,6.7 Z M7.4,7.6 L8.6,7.6 L8,9 Z\" /></svg>";
 
     static List<string> WeaponAbilityTags(WeaponProfile w)
     {

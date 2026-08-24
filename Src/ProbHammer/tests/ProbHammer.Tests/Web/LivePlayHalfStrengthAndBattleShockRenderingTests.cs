@@ -11,11 +11,12 @@ using ProbHammer.Web.Services;
 
 namespace ProbHammer.Tests.Web;
 
-/// <summary>Exercises `_UnitBlock.cshtml`'s unit-header status glyphs and Battle-shocked Objective
-/// Control tile rendering (half-strength-and-battleshock-indicators), against real `ICombatUnit`
-/// fixtures rather than a bare `AttachedUnitAggregateView` - unlike
+/// <summary>Exercises `_UnitBlock.cshtml`'s `.unit-toolbar` Half Strength/Battle-shock controls
+/// (half-strength-and-battleshock-indicators; relocated from the unit-name header into the toolbar
+/// by consolidate-unit-toolbar) and the Battle-shocked Objective Control tile rendering, against
+/// real `ICombatUnit` fixtures rather than a bare `AttachedUnitAggregateView` - unlike
 /// `LivePlayInvulnerableSaveRenderingTests`, the branching under test here (single-model vs.
-/// multi-model glyph mode, Battle-shocked OC rendering) reads `ICombatUnit`-level state
+/// multi-model control shape, Battle-shocked OC rendering) reads `ICombatUnit`-level state
 /// (`HalfStrengthResolution`, `IsBattleShocked`) that only exists via
 /// `LivePlayModel.BuildUnitBlock(view, unit)`'s two-argument overload.</summary>
 public class LivePlayHalfStrengthAndBattleShockRenderingTests : IClassFixture<WebApplicationFactory<Program>>
@@ -38,12 +39,15 @@ public class LivePlayHalfStrengthAndBattleShockRenderingTests : IClassFixture<We
     }
 
     [Fact]
-    public async Task SingleModelUnit_RendersAnInteractiveHalfStrengthButton_ReflectingTheOverride()
+    public async Task SingleModelUnit_HalfStrengthControlIsAlwaysActionable_ReflectingTheOverride()
     {
         var unit = AttachedUnitFixtures.LeaderUnit();
 
         var pristineHtml = await RenderAsync(unit);
-        pristineHtml.Should().Contain("button").And.Contain("status-glyph-halfstrength");
+        // The single-model branch's own aria-label - unique to it, unlike the multi-model branch's
+        // "(computed)" wording - and it never carries a `disabled` attribute.
+        pristineHtml.Should().Contain("aria-label=\"Toggle at-or-below half strength\"");
+        pristineHtml.Should().NotContain("aria-label=\"At or below half strength (computed)\"");
         pristineHtml.Should().NotContain("status-glyph-halfstrength is-active");
 
         unit.IsHalfStrengthOverride = true;
@@ -52,22 +56,24 @@ public class LivePlayHalfStrengthAndBattleShockRenderingTests : IClassFixture<We
     }
 
     [Fact]
-    public async Task MultiModelUnit_AboveHalfStrength_RendersTheHalfStrengthGlyphHidden()
+    public async Task MultiModelUnit_AboveHalfStrength_RendersTheHalfStrengthControlInertAndInactive()
     {
-        // The <span> variant is always in the markup (matching .filtered-badge's own established
-        // "always present, hidden attribute toggles visibility" convention on this page) - only the
-        // `hidden` attribute (razor's conditional-boolean-attribute rendering, the same mechanism
-        // .casualty-reset-btn's own `hidden="@(!unit.HasCasualties)"` already relies on) controls
-        // whether it's actually shown.
+        // Every toolbar control always renders now (consolidate-unit-toolbar) - the multi-model
+        // case is a permanently-`disabled` <button>, never a listener-less <span>, so both the
+        // "computed, not a player toggle" aria-label and the `disabled` attribute are always
+        // present regardless of the computed status; only the glyph's active/inactive color
+        // (the "is-active" class) reflects that status.
         var unit = UnitFixtures.AssaultIntercessorSquadWithUnitLeader(); // 5 full-health models
 
         var html = await RenderAsync(unit);
 
-        html.Should().Contain("<span class=\"filter-flag status-glyph-halfstrength is-active\" hidden");
+        html.Should().Contain("aria-label=\"At or below half strength (computed)\"");
+        html.Should().Contain("status-glyph-halfstrength \" disabled");
+        html.Should().NotContain("status-glyph-halfstrength is-active");
     }
 
     [Fact]
-    public async Task MultiModelUnit_AtOrBelowHalfStrength_RendersAPassiveVisibleAmberGlyph()
+    public async Task MultiModelUnit_AtOrBelowHalfStrength_RendersTheHalfStrengthControlInertButActive()
     {
         // Sergeant (1) + troopers (4) = 5; half = floor(5/2) = 2.
         var unit = UnitFixtures.AssaultIntercessorSquadWithUnitLeader();
@@ -76,32 +82,27 @@ public class LivePlayHalfStrengthAndBattleShockRenderingTests : IClassFixture<We
 
         var html = await RenderAsync(unit);
 
-        html.Should().Contain("status-glyph-halfstrength is-active");
-        // The `hidden` attribute is razor-omitted once the condition is false - see
-        // MultiModelUnit_AboveHalfStrength_RendersTheHalfStrengthGlyphHidden's own comment.
-        html.Should().NotContain("<span class=\"filter-flag status-glyph-halfstrength is-active\" hidden");
-        // The multi-model case is a non-interactive <span>, never a <button> - see the spec's
-        // "Unit Header Status Glyphs" requirement.
-        html.Should().NotContain("<button type=\"button\" class=\"filter-flag status-glyph-halfstrength");
+        // Still inert (disabled) - only the glyph color changes to reflect the computed status.
+        html.Should().Contain("status-glyph-halfstrength is-active\" disabled");
     }
 
     [Fact]
-    public async Task TheBattleShockGlyph_AlwaysRenders_RightmostOfTheStatusGlyphs()
+    public async Task TheBattleShockControl_AlwaysRendersActionable_RightmostOfTheStatusControls()
     {
         var unit = UnitFixtures.AssaultIntercessorSquadWithUnitLeader();
 
         var html = await RenderAsync(unit);
 
         html.Should().Contain("status-glyph-battleshock");
-        // For a >= 2 starting-strength unit above half-strength, the half-strength glyph doesn't
-        // render at all, so the Battle-shock glyph trivially being present is enough here; the
-        // AttachedUnit test below covers relative ordering when both glyphs are present.
+        // Battle-shock is always actionable, for every unit regardless of starting strength -
+        // unlike Half Strength, it never renders `disabled`.
+        html.Should().NotContain("status-glyph-battleshock \" disabled").And.NotContain("status-glyph-battleshock is-active\" disabled");
     }
 
     [Fact]
-    public async Task BothGlyphsPresent_BattleShockRendersAfterHalfStrengthInMarkupOrder()
+    public async Task BothControlsPresent_BattleShockRendersAfterHalfStrengthInMarkupOrder()
     {
-        var unit = AttachedUnitFixtures.LeaderUnit(); // single-model - half-strength glyph always renders
+        var unit = AttachedUnitFixtures.LeaderUnit(); // single-model - Half Strength is always actionable
         unit.IsBattleShocked = true;
 
         var html = await RenderAsync(unit);
