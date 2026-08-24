@@ -225,6 +225,210 @@ public class ArmyListParserTests
         act.Should().NotThrow();
     }
 
+    // --- Real Android-export regression coverage ---
+
+    [Fact]
+    public void RealExport_AndroidDeathGuard_ParsesFullArmyMetadata()
+    {
+        // No attached units and no partition ambiguity - the whole file is expected to succeed
+        // once the case-insensitivity and bullet-continuation fixes are in place. Also has no
+        // ForceDisposition line at all (goes straight from the Detachment line to the BattleSize
+        // line) - a third real finding beyond the two this change originally scoped to; see
+        // design.md's "ForceDisposition is optional" decision.
+        var army = ParseDataFile("gw-android-export-deathguard.txt");
+
+        army.Name.Should().Be("11th First");
+        army.PointsSpent.Should().Be(960);
+        army.Faction.Should().Equal("Death Guard");
+        army.Detachments.Should().Equal("Virulent Vectorium");
+        army.ForceDisposition.Should().BeEmpty();
+        army.BattleSize.Should().Be("Strike Force");
+        army.PointsLimit.Should().Be(2000);
+    }
+
+    [Fact]
+    public void RealExport_AndroidDeathGuard_HasNoAttachmentGroups()
+    {
+        var army = ParseDataFile("gw-android-export-deathguard.txt");
+
+        army.AttachmentGroups.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void RealExport_AndroidDeathGuard_ParsesEveryStandaloneUnitName()
+    {
+        var army = ParseDataFile("gw-android-export-deathguard.txt");
+
+        army.StandaloneUnits.Select(u => u.Name).Should().Equal(
+            "Daemon Prince of Nurgle", "Plague Marines", "Plague Marines", "Defiler",
+            "Foetid Bloat-Drone with Heavy Blight Launcher", "Poxwalkers", "Poxwalkers");
+    }
+
+    [Fact]
+    public void RealExport_AndroidDeathGuard_DaemonPrince_DirectWeaponsIncludeTheContinuationLine()
+    {
+        // "1x Infernal cannon" carries no bullet of its own in the raw export - it continues
+        // "1x Hellforged weapons"' own bulleted line.
+        var army = ParseDataFile("gw-android-export-deathguard.txt");
+
+        var daemonPrince = army.StandaloneUnits.Single(u => u.Name == "Daemon Prince of Nurgle");
+
+        daemonPrince.ModelGroups.Should().ContainSingle();
+        daemonPrince.ModelGroups[0].Weapons.Should().Equal("Hellforged weapons", "Infernal cannon");
+    }
+
+    [Fact]
+    public void RealExport_AndroidDeathGuard_PlagueMarines_NestedWeaponsReuseTheBulletThenContinue()
+    {
+        // "1x Boltgun" re-adopts the "•" bullet for its model group's own first nested weapon
+        // (Android has no distinct "◦" glyph); "1x Plague knives" continues that same nested list
+        // with no bullet at all.
+        var army = ParseDataFile("gw-android-export-deathguard.txt");
+
+        var plagueMarines = army.StandaloneUnits.First(u => u.Name == "Plague Marines");
+
+        var champion = plagueMarines.ModelGroups.Single(g => g.ModelName == "Plague Champion");
+        champion.Count.Should().Be(1);
+        champion.Weapons.Should().BeEquivalentTo(["Boltgun", "Plague knives"]);
+
+        var troopers = plagueMarines.ModelGroups.Single(g => g.ModelName == "Plague Marine");
+        troopers.Count.Should().Be(4);
+        troopers.Weapons.Should().BeEquivalentTo(["Boltgun", "Plague knives"]);
+    }
+
+    [Fact]
+    public void RealExport_AndroidDeathGuard_Defiler_FourConsecutiveContinuationLinesAllExtendTheSameList()
+    {
+        var army = ParseDataFile("gw-android-export-deathguard.txt");
+
+        var defiler = army.StandaloneUnits.Single(u => u.Name == "Defiler");
+
+        defiler.ModelGroups.Should().ContainSingle();
+        defiler.ModelGroups[0].Weapons.Should().Equal(
+            "Ectoplasma destructor", "Excruciator cannon", "Excruciator cannon", "Hades lascannon",
+            "Heavy reaper autocannon", "Shearing claws");
+    }
+
+    [Fact]
+    public void RealExport_AndroidDeathGuard_Poxwalkers_UniformGroupNeedsNoSplit()
+    {
+        var army = ParseDataFile("gw-android-export-deathguard.txt");
+
+        var poxwalkers = army.StandaloneUnits.First(u => u.Name == "Poxwalkers");
+
+        poxwalkers.ModelGroups.Should().ContainSingle();
+        var group = poxwalkers.ModelGroups[0];
+        group.ModelName.Should().Be("Poxwalker");
+        group.Count.Should().Be(10);
+        group.Weapons.Should().Equal("Improvised weapon");
+    }
+
+    [Fact]
+    public void RealExport_AndroidCustodes_FullFile_FailsOnCustodianWardens()
+    {
+        // The whole file parses sequentially - Custodian Wardens (the second member of Attached
+        // unit 1) is the first unit whose weapon counts can't be partitioned, so a whole-file
+        // parse throws there before ever reaching Custodian Guard or Allarus Custodians. Their own
+        // successful/failing behavior is verified in isolation below, using fragments extracted
+        // verbatim from this same real file.
+        var act = () => ParseDataFile("gw-android-export-custodes.txt");
+
+        act.Should().Throw<ArmyListParseException>()
+            .Which.UnitName.Should().Be("Custodian Wardens");
+    }
+
+    [Fact]
+    public void RealExport_AndroidCustodes_BladeChampion_ParsesSuccessfully()
+    {
+        var army = ParseCustodesUnitInIsolation("Blade Champion (");
+
+        var unit = army.StandaloneUnits.Single();
+        unit.Name.Should().Be("Blade Champion");
+        unit.Enhancements.Should().Equal("Martial Philosopher");
+        unit.ModelGroups.Should().ContainSingle();
+        unit.ModelGroups[0].Weapons.Should().Equal("Vaultswords");
+    }
+
+    [Fact]
+    public void RealExport_AndroidCustodes_AllarusCustodians_ParsesSuccessfully()
+    {
+        var army = ParseCustodesUnitInIsolation("Allarus Custodians (");
+
+        var unit = army.StandaloneUnits.Single();
+        unit.Name.Should().Be("Allarus Custodians");
+        unit.ModelGroups.Should().ContainSingle();
+        var group = unit.ModelGroups[0];
+        group.ModelName.Should().Be("Allarus Custodian");
+        group.Count.Should().Be(3);
+        group.Weapons.Should().BeEquivalentTo(["Balistus grenade launcher", "Guardian spear"]);
+    }
+
+    [Fact]
+    public void RealExport_AndroidCustodes_CustodianWardens_FailsWithUnitAndRawTextDiagnostic()
+    {
+        var act = () => ParseCustodesUnitInIsolation("Custodian Wardens (");
+
+        act.Should().Throw<ArmyListParseException>()
+            .Which.UnitName.Should().Be("Custodian Wardens");
+    }
+
+    [Fact]
+    public void RealExport_AndroidCustodes_CustodianGuard_FailsWithUnitAndRawTextDiagnostic()
+    {
+        // Once the bullet-continuation rule flattens this group's three weapon-count lines into
+        // one list (1x Guardian spear, 3x Praesidium Shield, 3x Sentinel blade, total 4), the
+        // existing partition rule still can't resolve it - a deliberate non-goal of this change
+        // (see design.md's "Custodian Guard partition ambiguity is not resolved").
+        var act = () => ParseCustodesUnitInIsolation("Custodian Guard (");
+
+        act.Should().Throw<ArmyListParseException>()
+            .Which.UnitName.Should().Be("Custodian Guard");
+    }
+
+    /// <summary>Parses one named unit from the real gw-android-export-custodes.txt in isolation,
+    /// by extracting its own verbatim header+bullet-block text (unmodified real bytes, not a
+    /// hand-retyped equivalent) and wrapping it in a minimal standalone-section skeleton. A real
+    /// whole-file parse can only ever report one outcome (it throws on the first unit that fails),
+    /// so this is what lets each of Blade Champion/Custodian Wardens/Custodian Guard/Allarus
+    /// Custodians be asserted on independently even though the real file mixes succeeding and
+    /// failing units together.</summary>
+    private static ParsedArmyList ParseCustodesUnitInIsolation(string unitHeaderPrefix)
+    {
+        var fullText = ReadDataFile("gw-android-export-custodes.txt");
+        var block = ExtractUnitBlock(fullText, unitHeaderPrefix);
+        return new ArmyListParser().Parse(SingleUnitArmyListText(block));
+    }
+
+    private static string ExtractUnitBlock(string exportText, string unitHeaderPrefix)
+    {
+        var lines = exportText.Replace("\r\n", "\n").Split('\n');
+        var start = Array.FindIndex(lines, l => l.StartsWith(unitHeaderPrefix, StringComparison.Ordinal));
+        if (start < 0)
+            throw new InvalidOperationException($"Unit header '{unitHeaderPrefix}' not found.");
+
+        var end = start + 1;
+        while (end < lines.Length && lines[end].Trim().Length > 0)
+            end++;
+
+        return string.Join("\n", lines[start..end]);
+    }
+
+    private static string SingleUnitArmyListText(string unitBlockText) => string.Join("\n",
+    [
+        "Test Army (100 Points)",
+        "",
+        "Chaos Space Marines",
+        "Test Detachment (1 Detachment Points)",
+        "Test Disposition",
+        "Incursion (1,000 Points)",
+        "",
+        "OTHER DATASHEETS",
+        "",
+        unitBlockText,
+        "",
+        "Exported with App Version: v2.4.0 (1), Data Version: v925"
+    ]);
+
     // --- Hand-built edge-case fixtures ---
 
     [Fact]
@@ -274,10 +478,120 @@ public class ArmyListParserTests
             .Which.UnitName.Should().Be("Test Bodyguard");
     }
 
+    // --- Case-insensitive metadata/section matching ---
+
+    [Fact]
+    public void LowerCasePointsSuffix_ArmyHeaderAndBattleSizeLines_ParseIdenticallyToTitleCase()
+    {
+        var text = ArmyListText(
+            armyHeaderLine: "Barra's Army (725 points)",
+            battleSizeLine: "Incursion (1000 points)");
+
+        var army = new ArmyListParser().Parse(text);
+
+        army.Name.Should().Be("Barra's Army");
+        army.PointsSpent.Should().Be(725);
+        army.BattleSize.Should().Be("Incursion");
+        army.PointsLimit.Should().Be(1000);
+    }
+
+    [Fact]
+    public void TitleCaseAttachedUnitsMarkers_ParseIdenticallyToAllCapsForm()
+    {
+        var text = ArmyListText(
+            attachedUnitsHeader: "Attached Units",
+            attachedUnitGroupLine: "Attached Unit 1");
+
+        var army = new ArmyListParser().Parse(text);
+
+        army.AttachmentGroups.Should().HaveCount(1);
+        army.AttachmentGroups[0].Bodyguard.Name.Should().Be("Test Bodyguard");
+    }
+
+    // --- Bullet-continuation rule ---
+
+    [Fact]
+    public void UnbulletedContinuationLine_ExtendsTheDirectWeaponList()
+    {
+        // Daemon Prince shape: one continuation line with no bullet of its own.
+        var text = StandaloneArmyListText(
+        [
+            "  • 1x Hellforged weapons",
+            "    1x Infernal cannon"
+        ]);
+
+        var army = new ArmyListParser().Parse(text);
+
+        var unit = army.StandaloneUnits.Single();
+        unit.ModelGroups.Should().ContainSingle();
+        unit.ModelGroups[0].Weapons.Should().Equal("Hellforged weapons", "Infernal cannon");
+    }
+
+    [Fact]
+    public void FourConsecutiveUnbulletedContinuationLines_AllExtendTheSameDirectWeaponList()
+    {
+        // Defiler shape: four consecutive continuation lines, all at the same indent - not
+        // progressively deeper.
+        var text = StandaloneArmyListText(
+        [
+            "  • 1x Ectoplasma destructor",
+            "    2x Excruciator cannon",
+            "    1x Hades lascannon",
+            "    1x Heavy reaper autocannon",
+            "    1x Shearing claws"
+        ]);
+
+        var army = new ArmyListParser().Parse(text);
+
+        var unit = army.StandaloneUnits.Single();
+        unit.ModelGroups.Should().ContainSingle();
+        unit.ModelGroups[0].Weapons.Should().Equal(
+            "Ectoplasma destructor", "Excruciator cannon", "Excruciator cannon", "Hades lascannon",
+            "Heavy reaper autocannon", "Shearing claws");
+    }
+
+    [Fact]
+    public void UnbulletedContinuationTwoTiersDeep_StillFailsWithUnpartitionableDiagnostic()
+    {
+        // Custodian Wardens shape: the nested weapon list's own first item re-adopts the "•"
+        // bullet, and the second continues it with no bullet at all, two tiers deep. The
+        // continuation rule correctly flattens this into one list - the resulting counts (5 and 1
+        // against a total of 5) still can't be partitioned, which is the existing, unmodified
+        // diagnostic this change deliberately leaves in place (see design.md).
+        var text = StandaloneArmyListText(
+        [
+            "  • 5x Custodian Warden",
+            "    • 5x Guardian spear",
+            "      1x Vexilla"
+        ]);
+
+        var act = () => new ArmyListParser().Parse(text);
+
+        act.Should().Throw<ArmyListParseException>()
+            .Which.UnitName.Should().Be("Test Unit");
+    }
+
+    [Fact]
+    public void UnbulletedLineBeforeAnyBulletedLine_StillFallsThroughToUnitHeaderParsing()
+    {
+        // A malformed export whose unit block never opens with a bulleted line at all must still
+        // fail with today's unit-header diagnostic, not be silently swallowed as a continuation.
+        var text = StandaloneArmyListText(["    Not a bullet line at all"]);
+
+        var act = () => new ArmyListParser().Parse(text);
+
+        act.Should().Throw<ArmyListParseException>()
+            .WithMessage("*<Name> (<N> Points)*");
+    }
+
     private static string ArmyListText(
         IReadOnlyList<string>? faction = null,
         string? attachedAsLine = null,
-        IReadOnlyList<string>? bodyguardModelLines = null)
+        IReadOnlyList<string>? bodyguardModelLines = null,
+        string armyHeaderLine = "Test Army (100 Points)",
+        string battleSizeLine = "Incursion (1,000 Points)",
+        string attachedUnitsHeader = "ATTACHED UNITS",
+        string attachedUnitGroupLine = "Attached unit 1")
     {
         faction ??= ["Chaos Space Marines"];
         attachedAsLine ??= "  • Attached as: Leader (Character)";
@@ -289,17 +603,17 @@ public class ArmyListParserTests
 
         var lines = new List<string>
         {
-            "Test Army (100 Points)",
+            armyHeaderLine,
             "",
         };
         lines.AddRange(faction);
         lines.Add("Test Detachment (1 Detachment Points)");
         lines.Add("Test Disposition");
-        lines.Add("Incursion (1,000 Points)");
+        lines.Add(battleSizeLine);
         lines.Add("");
-        lines.Add("ATTACHED UNITS");
+        lines.Add(attachedUnitsHeader);
         lines.Add("");
-        lines.Add("Attached unit 1");
+        lines.Add(attachedUnitGroupLine);
         lines.Add("");
         lines.Add("Test Leader (10 Points)");
         lines.Add(attachedAsLine);
@@ -313,4 +627,21 @@ public class ArmyListParserTests
 
         return string.Join("\n", lines);
     }
+
+    private static string StandaloneArmyListText(IReadOnlyList<string> unitBulletLines) => string.Join("\n",
+    [
+        "Test Army (100 Points)",
+        "",
+        "Chaos Space Marines",
+        "Test Detachment (1 Detachment Points)",
+        "Test Disposition",
+        "Incursion (1,000 Points)",
+        "",
+        "OTHER DATASHEETS",
+        "",
+        "Test Unit (10 Points)",
+        ..unitBulletLines,
+        "",
+        "Exported with App Version: v2.4.0 (1), Data Version: v925"
+    ]);
 }

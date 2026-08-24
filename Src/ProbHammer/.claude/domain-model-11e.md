@@ -919,23 +919,65 @@ ParsedArmyList(Name, PointsSpent, Faction, Detachments, ForceDisposition, Battle
                                        // shapes exactly - see Roster Context below.
 
 IArmyListParser.Parse(exportText) -> ParsedArmyList
-ArmyListParser                        // the only implementation. Line-based: blank lines discarded,
-                                       // every remaining line classified either positionally (the
-                                       // fixed army-metadata preamble: Name/Points header, 1-2
-                                       // Faction lines, one-or-more "(N Detachment Points)" lines,
-                                       // ForceDisposition, BattleSize/PointsLimit header) or by a
-                                       // small set of regexes (ATTACHED UNITS / a top-level section
-                                       // header / "Attached unit N" / a "<Name> (<N> Points)" unit
-                                       // header / a bullet line). Bullet nesting is read from the
-                                       // bullet CHARACTER itself ("•" top-level, "◦" nested) never
-                                       // from indentation depth - both appear at whatever indent the
-                                       // export happens to use.
+ArmyListParser                        // the only implementation, covering both iOS-captured
+                                       // exports (data/gw-app-export*.txt) and Android-captured
+                                       // ones (data/gw-android-export*.txt - see
+                                       // harden-army-list-parsing-for-android-exports's design.md
+                                       // for the format differences this section describes).
+                                       // Line-based: blank lines discarded, every remaining line
+                                       // classified either positionally (the fixed army-metadata
+                                       // preamble: Name/Points header, 1-2 Faction lines,
+                                       // one-or-more "(N Detachment Points)" lines, an OPTIONAL
+                                       // ForceDisposition, BattleSize/PointsLimit header - see
+                                       // below) or by a small set of regexes (ATTACHED UNITS / a
+                                       // top-level section header / "Attached unit N" / a
+                                       // "<Name> (<N> Points)" unit header / a bullet line). The
+                                       // Points-cost suffix (NamePointsRegex) and the
+                                       // ATTACHED UNITS/Attached Unit N markers are matched
+                                       // case-insensitively (a real Android export renders these
+                                       // "Attached Units"/"Attached Unit 1", title-case); the four
+                                       // top-level section headers (CHARACTERS/BATTLELINE/DEDICATED
+                                       // TRANSPORTS/OTHER DATASHEETS) and Detachment Points are NOT
+                                       // - both confirmed Android samples already render those
+                                       // identically to iOS, so widening their match would be an
+                                       // unverified guess. ForceDisposition, being free text with
+                                       // no fixed shape of its own, is optional: a real Android
+                                       // export (gw-android-export-deathguard.txt) omits it
+                                       // entirely, going straight from the Detachment line to the
+                                       // BattleSize line - detected by peeking whether the next
+                                       // line already matches the BattleSize "<Name> (<N> Points)"
+                                       // pattern, in which case ForceDisposition is "" rather than
+                                       // consuming that line as disposition text.
+                                       // Bullet nesting is read from the bullet CHARACTER itself
+                                       // ("•" top-level, "◦" nested) on iOS - but Android drops
+                                       // "◦" entirely: a nested list's own first item re-adopts
+                                       // "•" instead, and every later item in that same list (at
+                                       // ANY depth) carries no bullet at all, relying purely on
+                                       // indentation. Two signals resolve this without a
+                                       // depth-specific special case (see ArmyListParser
+                                       // .CollectBulletBlocks' own doc comment for the full
+                                       // reasoning, including why bullet-glyph/indentation alone
+                                       // can't distinguish a "•" role line like "Attached as:
+                                       // Leader" from a genuine model-group header, both followed
+                                       // by a same-relative-indent sibling bullet): (1) a "•" line
+                                       // nests under the current top-level block only when that
+                                       // block's own text looks like an "Nx ModelName" header, it
+                                       // has no nested item yet, and this line is indented deeper
+                                       // than that block's own bullet; (2) an unbulleted line
+                                       // extends whichever list is currently open only when its own
+                                       // indentation is at least that list's first item's own text
+                                       // column - which is what stops a genuine next unit/section
+                                       // header (always column 0) from being swallowed as a stray
+                                       // continuation. Each tokenized line therefore carries its own
+                                       // leading-indent count alongside its trimmed content
+                                       // (ArmyListParser.Line), not just the trimmed text every
+                                       // other part of the parser reads.
                                        // A unit's top-level bullets classify as: "Attached as: Role
                                        // [(Category)]" (first bullet only, attached mode; Category
                                        // discarded); "Enhancement(s): ..." (-> Enhancements, whole
                                        // remainder as one entry, never split on commas - same
                                        // "commas can be part of a real name" precedent as
-                                       // Detachment); "Nx ModelName" WITH nested "◦" weapon lines
+                                       // Detachment); "Nx ModelName" WITH nested weapon lines
                                        // (-> an explicit model-group header, partitioned per below);
                                        // "Nx WeaponName" with NO nested lines (-> a direct weapon
                                        // selection, collected separately); anything else (e.g. bare
@@ -968,7 +1010,15 @@ ArmyListParser                        // the only implementation. Line-based: bl
                                        // wrong draft of this rule). Throws ArmyListParseException
                                        // (carrying UnitName/RawText) when the non-common counts
                                        // don't sum exactly to the header's total, rather than
-                                       // guessing a split.
+                                       // guessing a split. A confirmed real case of this (Adeptus
+                                       // Custodes' Custodian Guard: "1x Guardian spear" / "3x
+                                       // Praesidium Shield" / "3x Sentinel blade" against a total of
+                                       // 4 - the only sensible reading pairs Shield+blade as one
+                                       // 3-model sub-group, which the partition rule can't infer from
+                                       // counts alone without risking a wrong merge on a case like
+                                       // Company Veteran's above) is a deliberately deferred, still-
+                                       // open gap, not a regression - see
+                                       // harden-army-list-parsing-for-android-exports's design.md.
 
 ArmyListParseException(message, unitName?, rawText?)
 ```

@@ -8,6 +8,33 @@ Nothing in progress.
 
 ## Recently Completed
 
+- OpenSpec change `harden-army-list-parsing-for-android-exports` implemented (12/12 tasks) —
+  `ArmyListParser` was only ever verified against iOS-captured exports; two real Android exports
+  (`data/gw-android-export-custodes.txt`, `data/gw-android-export-deathguard.txt`, both relayed
+  over WhatsApp) failed to parse at all. Investigated against both real files and fixed three
+  independent, mechanical causes: **(1) case sensitivity** — the `Points` cost suffix and the
+  `ATTACHED UNITS`/`Attached unit N` markers are now matched case-insensitively (`NamePointsRegex`,
+  `AttachedUnitGroupRegex`); the four top-level section headers and `Detachment Points` were left
+  as-is since both samples already render those identically to iOS. **(2) bullet-continuation
+  rule** — Android drops the nested `◦` glyph entirely: a weapon list's own first item (at any
+  depth) re-adopts `•`, and every later item in that same list carries no bullet at all, relying
+  purely on indentation. `CollectBulletBlocks` now reads each line's own leading-indent count
+  (tokenizing no longer fully strips it — see `ArmyListParser.Line`) to tell a nested item, a
+  continuation, and a genuine next unit/section header apart, applied uniformly with no
+  depth-specific branching (full reasoning in `CollectBulletBlocks`' own doc comment and this
+  change's design.md). **(3) `ForceDisposition` is now optional** — a third finding, surfaced only
+  while verifying the Death Guard file end-to-end after (1)-(2): its preamble omits that line
+  entirely (goes straight from the Detachment line to the BattleSize line). Confirmed with the user
+  before implementing, since it fell outside the two causes this change was originally scoped to.
+  Deliberately deferred: a real, confirmed partition ambiguity (Adeptus Custodes' Custodian Guard —
+  once the continuation rule flattens its three weapon-count lines into one list, the existing
+  "counts must sum to the total" partition rule still can't resolve `1x Guardian spear` / `3x
+  Praesidium Shield` / `3x Sentinel blade` against a total of 4, since the correct reading pairs the
+  latter two as one loadout and text structure alone can't distinguish that from Company Veteran's
+  genuinely-independent same-count alternatives) — left failing loudly, same diagnostic as before,
+  not guessed at. Also open: whether the bullet-continuation shape and the missing
+  `ForceDisposition` line are native to the Android app or introduced by WhatsApp's own text
+  handling — pending a directly-saved (non-WhatsApp) Android export (~2026-08-27).
 - OpenSpec change `gate-and-dedupe-core-rule-abilities` implemented (all 21 tasks) — fixes two real
   problems found while discussing `resolve-core-rule-abilities` (below) with the user: **(1)
   missing chapter/game-mode gating.** A `CoreRule` ability's own target rule can carry chapter/
@@ -1091,6 +1118,17 @@ Nothing in progress.
 
 ## Known Issues
 
+- `harden-army-list-parsing-for-android-exports` deliberately left one real ambiguity unresolved:
+  Adeptus Custodes' Custodian Guard (`data/gw-android-export-custodes.txt`) fails to import with
+  the existing unpartitionable-weapon-counts diagnostic (`1x Guardian spear` / `3x Praesidium
+  Shield` / `3x Sentinel blade` against a total of 4) — the correct reading pairs Shield+blade as
+  one 3-model sub-group, which can't be inferred from counts alone without risking a wrong merge on
+  a genuinely-independent-alternatives case like Company Veteran's. Needs either a second real
+  example to clarify the general pattern, or becomes moot once a NewRecruit/BattleScribe JSON
+  import path exists (see `openspec/changes/import-battlescribe-json-rosters/`). Also still open:
+  whether the bullet-continuation shape and the missing `ForceDisposition` line that change fixed
+  are native to the Android app or an artifact of the WhatsApp relay both captured exports went
+  through — a directly-saved Android export is expected ~2026-08-27 to check against.
 - `resolve-core-rule-abilities`'s new `InfoLinkTypeScanTests` found a third, confirmed real
   ability-granting `infoLink` shape, `"infoGroup"` (129 occurrences across the corpus) — targets a
   `sharedInfoGroups`/`infoGroups` container holding its own nested `profiles` array of real

@@ -3,12 +3,18 @@ using System.Text.RegularExpressions;
 namespace ProbHammer.Core.Domain.Import;
 
 /// <summary>Concrete IArmyListParser for the GW-app 11e export text shape (see design.md's
-/// "Pipeline shape" and the three real captured exports in data/gw-app-export*.txt). Line-based:
-/// blank lines are discarded, then every remaining line is classified either positionally (the
-/// fixed army-metadata preamble) or by a small set of regexes (section headers, attachment-group
-/// boundaries, unit headers, bullet lines) - never by indentation depth, since bullet nesting is
-/// signaled unambiguously by the bullet character itself ("•" top-level, "◦" nested) regardless of
-/// how many spaces precede it.</summary>
+/// "Pipeline shape", the iOS-captured exports in data/gw-app-export*.txt, and the
+/// Android-captured ones in data/gw-android-export*.txt - see
+/// openspec/changes/harden-army-list-parsing-for-android-exports/design.md for the two formats'
+/// differences). Line-based: blank lines are discarded, then every remaining line is classified
+/// either positionally (the fixed army-metadata preamble), by a small set of regexes (metadata
+/// suffixes, section headers, attachment-group boundaries, unit headers - matched
+/// case-insensitively where an Android export is known to vary casing), or, for bullet lines, by
+/// the bullet character itself ("•" top-level, "◦" nested) together with each line's own
+/// leading-whitespace count - Android reuses "•" for a nested list's own first item too and drops
+/// the bullet entirely on every later item in that list, so indentation is what disambiguates a
+/// nested item, a continuation, and a new unit/section header once the glyph alone no longer can;
+/// see CollectBulletBlocks' own doc comment.</summary>
 public sealed partial class ArmyListParser : IArmyListParser
 {
     private static readonly string[] SectionHeaders =
@@ -18,21 +24,29 @@ public sealed partial class ArmyListParser : IArmyListParser
     {
         var cursor = new LineCursor(Tokenize(exportText));
 
-        var (name, pointsSpent) = ParseNamePoints(cursor.Next());
+        var (name, pointsSpent) = ParseNamePoints(cursor.Next().Content);
 
         var faction = new List<string>();
-        while (cursor.HasMore && !TryParseDetachment(cursor.Peek(), out _))
-            faction.Add(cursor.Next());
+        while (cursor.HasMore && !TryParseDetachment(cursor.Peek().Content, out _))
+            faction.Add(cursor.Next().Content);
 
         var detachments = new List<string>();
-        while (cursor.HasMore && TryParseDetachment(cursor.Peek(), out var detachmentName))
+        while (cursor.HasMore && TryParseDetachment(cursor.Peek().Content, out var detachmentName))
         {
             detachments.Add(detachmentName!);
             cursor.Next();
         }
 
-        var forceDisposition = cursor.Next();
-        var (battleSize, pointsLimit) = ParseNamePoints(cursor.Next());
+        // ForceDisposition is a free-text line with no fixed shape of its own, so its absence can
+        // only be inferred from what follows: a real Android export (gw-android-export-
+        // deathguard.txt) omits it entirely when nothing was selected, going straight from the
+        // Detachment line to the "<BattleSize> (<N> Points)" line - if that next line already
+        // looks like a BattleSize header, ForceDisposition is treated as absent rather than
+        // consumed as its text.
+        var forceDisposition = NamePointsRegex().IsMatch(cursor.Peek().Content)
+            ? ""
+            : cursor.Next().Content;
+        var (battleSize, pointsLimit) = ParseNamePoints(cursor.Next().Content);
 
         var attachmentGroups = new List<ParsedAttachmentGroup>();
         var standaloneUnits = new List<ParsedUnit>();
@@ -41,9 +55,9 @@ public sealed partial class ArmyListParser : IArmyListParser
 
         while (cursor.HasMore)
         {
-            var line = cursor.Peek();
+            var line = cursor.Peek().Content;
 
-            if (line == "ATTACHED UNITS")
+            if (string.Equals(line, "ATTACHED UNITS", StringComparison.OrdinalIgnoreCase))
             {
                 cursor.Next();
                 mode = BodyMode.Attached;
@@ -104,7 +118,7 @@ public sealed partial class ArmyListParser : IArmyListParser
 
     private static ParsedUnit ParseUnitBlock(LineCursor cursor, bool isAttached, out Role role)
     {
-        var (unitName, _) = ParseNamePoints(cursor.Next());
+        var (unitName, _) = ParseNamePoints(cursor.Next().Content);
         var blocks = CollectBulletBlocks(cursor);
 
         role = Role.Leader;
@@ -195,23 +209,68 @@ public sealed partial class ArmyListParser : IArmyListParser
         return new ParsedModelGroup(unitName, 1, weapons);
     }
 
+    /// <summary>Android exports never emit the nested "◦" glyph at all - a weapon list's own
+    /// first item (whether at the unit's top level or nested under a model-group header) reuses
+    /// "•", and every later item in that same list drops its bullet entirely, relying on
+    /// indentation alone. Two signals - both confirmed necessary against the real captured
+    /// Android exports (see design.md) - resolve this without a depth-specific special case:
+    /// (1) a "•" line nests under the current top-level block, rather than starting a new
+    /// sibling, only when that block's own text looks like an "Nx ModelName" header (so it can
+    /// plausibly own a weapon list), it has no nested item yet (so only the list's own first
+    /// item optionally re-adopts a bullet), and this line is indented deeper than that block's
+    /// own bullet - the same relation a role line like "Attached as: Leader" and a following
+    /// "Warlord"/"1x Weapon" sibling bullet share, which is exactly why the "Nx ModelName" check
+    /// on the parent's own text is also required, not indentation alone. (2) an unbulleted line
+    /// extends whichever list is currently open only when its own indentation is at least that
+    /// list's first item's own text column - this is what stops a genuine next unit/section
+    /// header (always at column 0) from being swallowed as a stray continuation.</summary>
     private static List<(string TopContent, List<string> Nested)> CollectBulletBlocks(LineCursor cursor)
     {
         var blocks = new List<(string TopContent, List<string> Nested)>();
+        var lastTopIndent = -1;
+        var openListTextColumn = -1;
 
         while (cursor.HasMore)
         {
             var line = cursor.Peek();
-            if (line.StartsWith('•'))
+
+            if (line.Content.StartsWith('•'))
             {
-                blocks.Add((StripBulletPrefix(line), []));
+                var content = StripBulletPrefix(line.Content);
+                var nestsUnderCurrentBlock =
+                    blocks.Count > 0
+                    && blocks[^1].Nested.Count == 0
+                    && line.Indent > lastTopIndent
+                    && WeaponCountRegex().IsMatch(blocks[^1].TopContent);
+
+                if (nestsUnderCurrentBlock)
+                {
+                    blocks[^1].Nested.Add(content);
+                }
+                else
+                {
+                    blocks.Add((content, []));
+                    lastTopIndent = line.Indent;
+                }
+
+                openListTextColumn = line.Indent + 2;
                 cursor.Next();
             }
-            else if (line.StartsWith('◦'))
+            else if (line.Content.StartsWith('◦'))
             {
                 if (blocks.Count == 0)
-                    throw new ArmyListParseException($"Nested bullet line '{line}' has no preceding top-level bullet.");
-                blocks[^1].Nested.Add(StripBulletPrefix(line));
+                    throw new ArmyListParseException($"Nested bullet line '{line.Content}' has no preceding top-level bullet.");
+                blocks[^1].Nested.Add(StripBulletPrefix(line.Content));
+                openListTextColumn = line.Indent + 2;
+                cursor.Next();
+            }
+            else if (blocks.Count > 0 && line.Indent >= openListTextColumn)
+            {
+                if (blocks[^1].Nested.Count > 0)
+                    blocks[^1].Nested.Add(line.Content);
+                else
+                    blocks.Add((line.Content, []));
+
                 cursor.Next();
             }
             else
@@ -269,21 +328,28 @@ public sealed partial class ArmyListParser : IArmyListParser
         return true;
     }
 
-    private static List<string> Tokenize(string exportText) =>
+    /// <summary>One non-blank export line, with its own leading-whitespace count preserved
+    /// alongside its fully-trimmed content - Content is what every existing regex/equality check
+    /// already expects unchanged; Indent exists only for CollectBulletBlocks' bullet-continuation
+    /// rule (see its own doc comment).</summary>
+    private readonly record struct Line(string Content, int Indent);
+
+    private static List<Line> Tokenize(string exportText) =>
         exportText
             .Replace("\r\n", "\n")
             .Split('\n')
-            .Select(l => l.Trim())
-            .Where(l => l.Length > 0)
+            .Select(l => l.TrimEnd())
+            .Where(l => l.TrimStart().Length > 0)
+            .Select(l => new Line(l.TrimStart(), l.Length - l.TrimStart().Length))
             .ToList();
 
-    [GeneratedRegex(@"^(.+?)\s*\((\d[\d,]*)\s*Points\)$")]
+    [GeneratedRegex(@"^(.+?)\s*\((\d[\d,]*)\s*Points\)$", RegexOptions.IgnoreCase)]
     private static partial Regex NamePointsRegex();
 
     [GeneratedRegex(@"^(.+?)\s*\((\d+)\s*Detachment Points?\)$")]
     private static partial Regex DetachmentRegex();
 
-    [GeneratedRegex(@"^Attached unit \d+$")]
+    [GeneratedRegex(@"^Attached unit \d+$", RegexOptions.IgnoreCase)]
     private static partial Regex AttachedUnitGroupRegex();
 
     [GeneratedRegex(@"^Attached as:\s*(Leader|Support|Bodyguard)(?:\s*\([^)]*\))?$")]
@@ -295,14 +361,14 @@ public sealed partial class ArmyListParser : IArmyListParser
     [GeneratedRegex(@"^(\d+)x\s*(.+)$")]
     private static partial Regex WeaponCountRegex();
 
-    private sealed class LineCursor(List<string> lines)
+    private sealed class LineCursor(List<Line> lines)
     {
         private int _index;
 
         public bool HasMore => _index < lines.Count;
 
-        public string Peek() => lines[_index];
+        public Line Peek() => lines[_index];
 
-        public string Next() => lines[_index++];
+        public Line Next() => lines[_index++];
     }
 }
