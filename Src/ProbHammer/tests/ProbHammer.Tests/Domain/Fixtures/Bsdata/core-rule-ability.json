@@ -1,0 +1,93 @@
+{
+  "catalogue": {
+    "id": "test-cat-core-rule-ability",
+    "name": "Test Faction (core-rule-ability fixture)",
+    "gameSystemId": "",
+    "catalogueLinks": [],
+    "rules": [
+      {
+        "id": "r-deadly-demise",
+        "name": "Deadly Demise",
+        "description": "This ability always takes the form **Deadly Demise X**. Each time a model in this unit is destroyed, roll one D6..."
+      },
+      {
+        "id": "r-firing-deck",
+        "name": "Firing Deck",
+        "description": "This ability always takes the form **Firing Deck X**. In your Shooting phase, each unit embarked within this Transport can shoot..."
+      },
+      {
+        "id": "r-oath-of-moment",
+        "name": "Oath of Moment",
+        "description": "If your Army Faction is **^^Adeptus Astartes^^**, at the start of your Command phase, select one unit from your opponent's army..."
+      },
+      {
+        "id": "r-sustained-hits",
+        "name": "Sustained Hits",
+        "description": "This ability always takes the form **Sustained Hits X**. Each time an attack made with this weapon scores a Critical Hit..."
+      }
+    ],
+    "sharedSelectionEntries": [
+      {
+        "id": "e-unit",
+        "name": "Test Unit",
+        "type": "unit",
+        "profiles": [
+          { "id": "p-unit", "name": "Test Unit", "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "6\"" }, { "name": "T", "$text": "4" },
+              { "name": "Sv", "$text": "3+" }, { "name": "W", "$text": "2" },
+              { "name": "LD", "$text": "6+" }, { "name": "OC", "$text": "2" }
+            ] }
+        ],
+        "selectionEntries": [
+          {
+            "id": "e-weapon-option",
+            "name": "Test Weapon",
+            "type": "upgrade",
+            "profiles": [
+              { "id": "p-weapon", "name": "Test Weapon", "typeName": "Ranged Weapons",
+                "characteristics": [
+                  { "name": "Range", "$text": "24\"" }, { "name": "A", "$text": "2" },
+                  { "name": "BS", "$text": "3+" }, { "name": "S", "$text": "4" },
+                  { "name": "AP", "$text": "0" }, { "name": "D", "$text": "1" },
+                  { "name": "Keywords", "$text": "Sustained Hits 1" }
+                ] }
+            ],
+            "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [],
+            "infoLinks": [
+              { "name": "Sustained Hits", "type": "rule", "targetId": "r-sustained-hits" }
+            ]
+          }
+        ],
+        "selectionEntryGroups": [],
+        "entryLinks": [],
+        "infoLinks": [
+          {
+            "name": "Deadly Demise",
+            "type": "rule",
+            "targetId": "r-deadly-demise",
+            "modifiers": [ { "type": "append", "field": "name", "value": "D3" } ]
+          },
+          {
+            "name": "Firing Deck",
+            "type": "rule",
+            "targetId": "r-firing-deck",
+            "modifiers": [ { "type": "append", "field": "name", "value": 6 } ]
+          },
+          {
+            "name": "Oath of Moment",
+            "type": "rule",
+            "targetId": "r-oath-of-moment"
+          },
+          {
+            "name": "Nonexistent Rule",
+            "type": "rule",
+            "targetId": "r-does-not-exist"
+          }
+        ]
+      }
+    ],
+    "sharedSelectionEntryGroups": [],
+    "sharedProfiles": []
+  }
+}

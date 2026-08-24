@@ -174,13 +174,16 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
             .ToList();
 
         var statlineBlocks = GroupStatlines(view.Statlines, view.Abilities);
+        var wholeUnitAbilitySpans = BuildWholeUnitAbilitySpans(statlineBlocks, view.Abilities);
+        var (adjustedStatlineBlocks, componentAbilitySpans) = BuildComponentAbilitySpans(statlineBlocks, view.Abilities);
 
         return new(
             Name: view.Name,
-            Statlines: statlineBlocks,
+            Statlines: adjustedStatlineBlocks,
             RangedWeapons: orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Ranged).ToList(),
             MeleeWeapons: orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Melee).ToList(),
-            ComponentAbilitySpans: BuildComponentAbilitySpans(statlineBlocks, view.Abilities),
+            ComponentAbilitySpans: componentAbilitySpans,
+            WholeUnitAbilitySpans: wholeUnitAbilitySpans,
             Keywords: view.Keywords.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList(),
             IsSingleModelUnit: isSingleModelUnit,
             IsAtOrBelowHalfStrength: isAtOrBelowHalfStrength,
@@ -383,12 +386,29 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
             .Select(a => a.Ability)
             .ToList();
 
-    // Component-wide (Datasheet-sourced, StatlineName == null) abilities span every run belonging
-    // to their component - from the index of that component's first rendered run through its last.
-    private static IReadOnlyList<ComponentAbilitySpanViewModel> BuildComponentAbilitySpans(
-        IReadOnlyList<StatlineBlockViewModel> statlineBlocks, IReadOnlyList<AggregateAbilityEntry> abilities) =>
-        abilities
-            .Where(a => a.StatlineName == null)
+    // Component-wide (Datasheet-sourced, StatlineName == null, ComponentName set) abilities span
+    // every run belonging to their component - from the index of that component's first rendered
+    // run through its last. A ComponentName-null entry (deduplicated Core Rule ability, see
+    // BuildWholeUnitAbilitySpans) is excluded here - it belongs to no single component, so it has
+    // no per-component run range to compute.
+    //
+    // When a component's span covers exactly one run (FirstRunIndex == LastRunIndex), that run's
+    // own row-bound abilities (StatlineBlockViewModel.ModelAbilities/UnitAbilities) would
+    // otherwise render at the identical grid coordinates as this span - two independently
+    // positioned cells occupying the same area, one painting over the other. Found via a real
+    // user-reported bug: the Impulsor's row-bound "Shield Dome" (its only statline row) was
+    // invisible behind its own component-wide "Transport"/"Assault Vehicle"/etc cell. Fixed by
+    // absorbing that single run's row-bound abilities into this span instead of rendering them
+    // separately - returned alongside an adjusted copy of statlineBlocks with that run's own
+    // ability lists cleared, so the caller's final Statlines never render the now-redundant
+    // row-bound cell. A multi-row span is left alone - its grid-row range strictly contains, but
+    // is never identical to, any one row-bound cell's range, so the two nest visually rather than
+    // colliding.
+    private static (IReadOnlyList<StatlineBlockViewModel> AdjustedBlocks, IReadOnlyList<ComponentAbilitySpanViewModel> Spans) BuildComponentAbilitySpans(
+        IReadOnlyList<StatlineBlockViewModel> statlineBlocks, IReadOnlyList<AggregateAbilityEntry> abilities)
+    {
+        var spans = abilities
+            .Where(a => a.StatlineName == null && a.ComponentName != null)
             .GroupBy(a => a.ComponentName)
             .Select(group =>
             {
@@ -398,12 +418,54 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
                     .Select(x => x.index)
                     .ToList();
 
+                var firstRun = runIndices.Min();
+                var lastRun = runIndices.Max();
+                var absorbsRowBound = firstRun == lastRun;
+                var rowBoundModel = absorbsRowBound ? statlineBlocks[firstRun].ModelAbilities : [];
+                var rowBoundUnit = absorbsRowBound ? statlineBlocks[firstRun].UnitAbilities : [];
+
                 return new ComponentAbilitySpanViewModel(
-                    FirstRunIndex: runIndices.Min(),
-                    LastRunIndex: runIndices.Max(),
+                    FirstRunIndex: firstRun,
+                    LastRunIndex: lastRun,
+                    ModelAbilities: [.. rowBoundModel, .. group.Where(a => a.Ability.Scope == AbilityScope.Model).Select(a => a.Ability)],
+                    UnitAbilities: [.. rowBoundUnit, .. group.Where(a => a.Ability.Scope == AbilityScope.Unit).Select(a => a.Ability)],
+                    IsFullyDead: runIndices.All(i => statlineBlocks[i].IsFullyDead));
+            })
+            .ToList();
+
+        var absorbedRunIndices = spans.Where(s => s.FirstRunIndex == s.LastRunIndex).Select(s => s.FirstRunIndex).ToHashSet();
+        var adjustedBlocks = statlineBlocks
+            .Select((block, index) => absorbedRunIndices.Contains(index) ? block with { ModelAbilities = [], UnitAbilities = [] } : block)
+            .ToList();
+
+        return (adjustedBlocks, spans);
+    }
+
+    // A ComponentName-null entry (see AttachedUnitAggregator.DedupeSharedCoreRuleAbilities)
+    // belongs to no single component - grouped by Ability.Name (there can in principle be more
+    // than one distinct deduplicated ability on the same unit) rather than by component, since
+    // there's no per-component run range to key off. IsFullyDead reads the entry's own
+    // ContributingComponentNames - true only once every run belonging to any of those components
+    // is itself fully dead, matching the "hidden only once every contributing component is fully
+    // dead" rule (distinct from ComponentAbilitySpanViewModel's own single-component rule).
+    private static IReadOnlyList<WholeUnitAbilitySpanViewModel> BuildWholeUnitAbilitySpans(
+        IReadOnlyList<StatlineBlockViewModel> statlineBlocks, IReadOnlyList<AggregateAbilityEntry> abilities) =>
+        abilities
+            .Where(a => a.ComponentName == null)
+            .GroupBy(a => a.Ability.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var contributingComponents = group.First().ContributingComponentNames
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                var isFullyDead = statlineBlocks
+                    .Where(block => contributingComponents.Contains(block.Entries[0].ComponentName))
+                    .All(block => block.IsFullyDead);
+
+                return new WholeUnitAbilitySpanViewModel(
                     ModelAbilities: group.Where(a => a.Ability.Scope == AbilityScope.Model).Select(a => a.Ability).ToList(),
                     UnitAbilities: group.Where(a => a.Ability.Scope == AbilityScope.Unit).Select(a => a.Ability).ToList(),
-                    IsFullyDead: runIndices.All(i => statlineBlocks[i].IsFullyDead));
+                    IsFullyDead: isFullyDead);
             })
             .ToList();
 }
@@ -473,6 +535,18 @@ public sealed record ComponentAbilitySpanViewModel(
     IReadOnlyList<Ability> UnitAbilities,
     bool IsFullyDead);
 
+/// <summary>A deduplicated Core Rule ability shared by two or more present components of one
+/// AttachedUnit (see AggregateAbilityEntry.ComponentName == null) - belongs to no single
+/// component, rendered in its own dedicated grid row above every component's statline rows
+/// (never spanning through them, unlike ComponentAbilitySpanViewModel). <see cref="IsFullyDead"/>
+/// is true only once every one of the entry's own ContributingComponentNames has no present
+/// statline block left - computed once in <see cref="LivePlayModel.BuildWholeUnitAbilitySpans"/>.
+/// </summary>
+public sealed record WholeUnitAbilitySpanViewModel(
+    IReadOnlyList<Ability> ModelAbilities,
+    IReadOnlyList<Ability> UnitAbilities,
+    bool IsFullyDead);
+
 /// <summary>One row of a weapon entry's contribution breakdown - either a merged display row
 /// (<see cref="SelectKey"/> null, spans every raw contribution in <see cref="GroupKey"/>) or a raw
 /// per-contribution row (<see cref="SelectKey"/> set - see <see cref="LivePlayModel.SelectKey"/>).
@@ -507,6 +581,7 @@ public sealed record UnitBlockViewModel(
     IReadOnlyList<WeaponRowViewModel> RangedWeapons,
     IReadOnlyList<WeaponRowViewModel> MeleeWeapons,
     IReadOnlyList<ComponentAbilitySpanViewModel> ComponentAbilitySpans,
+    IReadOnlyList<WholeUnitAbilitySpanViewModel> WholeUnitAbilitySpans,
     IReadOnlyList<string> Keywords,
     bool IsSingleModelUnit,
     bool IsAtOrBelowHalfStrength,

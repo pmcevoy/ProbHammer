@@ -40,14 +40,16 @@ public static partial class BsdataDatasheetMapper
         IReadOnlyDictionary<string, BsSelectionEntry> idIndex,
         IReadOnlyDictionary<string, BsSelectionEntryGroup> groupIdIndex,
         IReadOnlyDictionary<string, BsProfile>? profileIdIndex = null,
-        IReadOnlyList<BsForceEntry>? forceEntries = null)
+        IReadOnlyList<BsForceEntry>? forceEntries = null,
+        RuleGlossary? glossary = null,
+        string? primaryCatalogueId = null)
     {
         var gateIds = (forceEntries ?? [])
             .Where(f => GameModeGateNames.Contains(f.Name, StringComparer.OrdinalIgnoreCase))
             .Select(f => f.Id)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var context = new WalkContext(idIndex, groupIdIndex, profileIdIndex ?? new Dictionary<string, BsProfile>(), gateIds);
+        var context = new WalkContext(idIndex, groupIdIndex, profileIdIndex ?? new Dictionary<string, BsProfile>(), gateIds, glossary, primaryCatalogueId);
         WalkEntry(entry, context, [], enclosingGroupName: null);
 
         return new Datasheet(
@@ -64,12 +66,22 @@ public static partial class BsdataDatasheetMapper
         IReadOnlyDictionary<string, BsSelectionEntry> idIndex,
         IReadOnlyDictionary<string, BsSelectionEntryGroup> groupIdIndex,
         IReadOnlyDictionary<string, BsProfile> profileIdIndex,
-        IReadOnlySet<string> gameModeGateIds)
+        IReadOnlySet<string> gameModeGateIds,
+        RuleGlossary? glossary = null,
+        string? primaryCatalogueId = null)
     {
         public IReadOnlyDictionary<string, BsSelectionEntry> IdIndex { get; } = idIndex;
         public IReadOnlyDictionary<string, BsSelectionEntryGroup> GroupIdIndex { get; } = groupIdIndex;
         public IReadOnlyDictionary<string, BsProfile> ProfileIdIndex { get; } = profileIdIndex;
         public IReadOnlySet<string> GameModeGateIds { get; } = gameModeGateIds;
+        public RuleGlossary? Glossary { get; } = glossary;
+
+        /// <summary>The resolved army's own starting/primary catalogue id (e.g. Black Templars'
+        /// own catalogue.id) - null when not supplied (every pre-existing BuildDatasheet call
+        /// site). Used only to evaluate a "scope: primary-catalogue" hidden condition on a Core
+        /// Rule's own target rule (chapter/sub-faction exclusivity) - see
+        /// IsProvablyAlwaysTrueInMatchedPlay.</summary>
+        public string? PrimaryCatalogueId { get; } = primaryCatalogueId;
 
         public List<(string Name, Statline Statline)> Statlines { get; } = [];
         public HashSet<string> SeenStatlineNames { get; } = new(StringComparer.OrdinalIgnoreCase);
@@ -90,15 +102,22 @@ public static partial class BsdataDatasheetMapper
     }
 
     /// <summary>True when any of the given modifiers sets "hidden" to true in a way that is
-    /// PROVABLY always true in the matched-play "Army Roster" mode this loader exclusively
-    /// represents - see <see cref="IsProvablyAlwaysTrueInMatchedPlay"/> for exactly what "provably"
-    /// means here. Found via a real user-reported bug: /LivePlay showed abilities (Chaos Boons,
-    /// Mark of Chaos options) that don't belong to matched play at all - BuildDatasheet's walk had
-    /// no way to distinguish genuine datasheet rules from Crusade-mode-only or force-type-gated
-    /// content, since both use the identical "Abilities"-typeName profile shape.</summary>
+    /// PROVABLY always excluded for the current context - either the matched-play "Army Roster"
+    /// mode this loader exclusively represents, or (since gate-and-dedupe-core-rule-abilities) the
+    /// resolved army's own chapter/sub-faction not matching a rule's own primary-catalogue
+    /// exclusivity - see <see cref="IsProvablyAlwaysTrueInMatchedPlay"/>/
+    /// <see cref="IsConditionProvablyTrue"/> for exactly what "provably" means for each. Despite
+    /// the name (kept for minimal diff against its original game-mode-only purpose), this is now
+    /// called on both entry/group modifiers (game-mode gating, its original use - found via a real
+    /// user-reported bug: /LivePlay showed abilities like Chaos Boons/Mark of Chaos options that
+    /// don't belong to matched play at all) and a resolved Core Rule's own target-rule modifiers
+    /// (chapter gating - found via a real user-reported bug: a Black Templars roster showed both
+    /// "Oath of Moment" and its own chapter-exclusive replacement "Templar Vows" together, and the
+    /// same pipeline run against a Salamanders closure produced the identical, equally-wrong
+    /// list).</summary>
     private static bool IsGameModeGated(IReadOnlyList<BsModifier> modifiers, WalkContext ctx)
     {
-        if (ctx.GameModeGateIds.Count == 0)
+        if (ctx.GameModeGateIds.Count == 0 && ctx.PrimaryCatalogueId is null)
             return false;
 
         foreach (var modifier in modifiers)
@@ -106,7 +125,7 @@ public static partial class BsdataDatasheetMapper
             if (modifier.Field != "hidden" || modifier.Value.ValueKind != JsonValueKind.True)
                 continue;
 
-            if (IsProvablyAlwaysTrueInMatchedPlay(modifier.Conditions, modifier.ConditionGroups, "and", ctx.GameModeGateIds))
+            if (IsProvablyAlwaysTrueInMatchedPlay(modifier.Conditions, modifier.ConditionGroups, "and", ctx))
                 return true;
         }
 
@@ -116,26 +135,25 @@ public static partial class BsdataDatasheetMapper
     /// <summary>Evaluates a condition tree (a flat conditions list plus a conditionGroups list,
     /// combined via <paramref name="combinator"/> - BattleScribe's own convention, matching how a
     /// single BsModifier's own top-level conditions/conditionGroups are implicitly ANDed together)
-    /// treating a condition referencing one of <paramref name="gateIds"/> as "provably true in
-    /// matched play" (Army Roster mode always has zero of any Crusade-only force/selection) and
-    /// every other condition as unknowable (this loader does not evaluate roster selection state).
-    /// An "and" combinator is provably true only when EVERY item is provably true - a gate-id
+    /// against everything this loader can provably know about the current context - see
+    /// <see cref="IsConditionProvablyTrue"/> for what each individual condition recognizes.
+    /// An "and" combinator is provably true only when EVERY item is provably true - a gate
     /// condition combined via AND with an unrelated, unevaluated condition is NOT provably true,
     /// since that other condition could make the whole AND false. An "or" combinator is provably
-    /// true when ANY item is - a gate-id condition combined via OR with anything else still forces
-    /// the whole OR true in matched play regardless of that other condition. This distinction is a
-    /// real, confirmed-necessary generalization, not a hypothetical: Black Templars' "Companions of
+    /// true when ANY item is - a gate condition combined via OR with anything else still forces
+    /// the whole OR true regardless of that other condition. This distinction is a real,
+    /// confirmed-necessary generalization, not a hypothetical: Black Templars' "Companions of
     /// Vehemence Enhancements" is hidden by `AND(forces(Crusade Force) < 1, selections(some other
-    /// id) < 1)` - "hidden unless you have a Crusade Force OR this Detachment selected" - the plain
-    /// existence-check this method replaces treated the mere presence of the Crusade Force
-    /// reference as sufficient, incorrectly excluding a real, always-available matched-play
-    /// Enhancement for players using that exact Detachment.</summary>
+    /// id) < 1)` - "hidden unless you have a Crusade Force OR this Detachment selected" - a plain
+    /// existence-check treating the mere presence of the Crusade Force reference as sufficient
+    /// would incorrectly exclude a real, always-available matched-play Enhancement for players
+    /// using that exact Detachment.</summary>
     private static bool IsProvablyAlwaysTrueInMatchedPlay(
-        IReadOnlyList<BsCondition> conditions, IReadOnlyList<BsConditionGroup> groups, string combinator, IReadOnlySet<string> gateIds)
+        IReadOnlyList<BsCondition> conditions, IReadOnlyList<BsConditionGroup> groups, string combinator, WalkContext ctx)
     {
         var items = conditions
-            .Select(c => gateIds.Contains(c.ChildId))
-            .Concat(groups.Select(g => IsProvablyAlwaysTrueInMatchedPlay(g.Conditions, g.ConditionGroups, g.Type, gateIds)))
+            .Select(c => IsConditionProvablyTrue(c, ctx))
+            .Concat(groups.Select(g => IsProvablyAlwaysTrueInMatchedPlay(g.Conditions, g.ConditionGroups, g.Type, ctx)))
             .ToList();
 
         if (items.Count == 0)
@@ -144,6 +162,36 @@ public static partial class BsdataDatasheetMapper
         return combinator.Equals("or", StringComparison.OrdinalIgnoreCase)
             ? items.Any(x => x)
             : items.All(x => x);
+    }
+
+    /// <summary>Evaluates one condition against everything this loader provably knows. A
+    /// "scope: primary-catalogue" condition (chapter/sub-faction exclusivity - confirmed real
+    /// shape: Oath of Moment's own rule definition is hidden unless the army's primary catalogue
+    /// is one of 11 named chapters; Templar Vows' is hidden unless it's specifically Black
+    /// Templars, by catalogue id, not name) is evaluated WITH its own comparison Type against
+    /// <see cref="WalkContext.PrimaryCatalogueId"/> - unlike the game-mode gate check below, this
+    /// can't ignore polarity: "notInstanceOf" is true when the ids differ, "instanceOf" when they
+    /// match, since a real corpus condition uses each direction for a genuinely different meaning.
+    /// Every other scope (the existing "force"/"roster" game-mode gate) keeps the prior,
+    /// type-agnostic "is this id one of the known gate ids" check unchanged - confirmed safe for
+    /// both real shapes seen there regardless of comparison type. A condition matching neither is
+    /// unknowable (false), same conservative default as before.</summary>
+    private static bool IsConditionProvablyTrue(BsCondition c, WalkContext ctx)
+    {
+        if (c.Scope == "primary-catalogue")
+        {
+            if (ctx.PrimaryCatalogueId is null)
+                return false;
+
+            return c.Type switch
+            {
+                "notInstanceOf" => !string.Equals(c.ChildId, ctx.PrimaryCatalogueId, StringComparison.OrdinalIgnoreCase),
+                "instanceOf" => string.Equals(c.ChildId, ctx.PrimaryCatalogueId, StringComparison.OrdinalIgnoreCase),
+                _ => false
+            };
+        }
+
+        return ctx.GameModeGateIds.Contains(c.ChildId);
     }
 
     private static void WalkEntry(BsSelectionEntry entry, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry, string? enclosingGroupName)
@@ -227,9 +275,113 @@ public static partial class BsdataDatasheetMapper
     private static void WalkInfoLink(BsEntryLink link, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry, string? enclosingGroupName)
     {
         if (link.Type == "profile" && ctx.ProfileIdIndex.TryGetValue(link.TargetId, out var profile))
+        {
             ProcessProfile(profile, ctx, ancestry, enclosingGroupName);
-        // else: a "rule" infoLink (rules-text reference) or an unresolvable target - not
-        // something this loader maps.
+            return;
+        }
+
+        if (link.Type == "rule")
+            ProcessRuleInfoLink(link, ctx, ancestry);
+
+        // else: an unresolvable target - not something this loader maps.
+    }
+
+    /// <summary>Resolves a "type: rule" infoLink (BSData's shape for a datasheet-wide Core or
+    /// faction rule reference - Oath of Moment, Templar Vows, Deadly Demise D3, Firing Deck 6,
+    /// Infiltrators, Scouts 6" all take this shape) into an Ability, added to the same always-
+    /// exposed Abilities list an Intrinsic ability populates - a Core rule is never an optional,
+    /// player-selectable grant, so it doesn't go through the on-demand OptionalAbilities index.
+    /// Text is resolved via RuleGlossary (the same glossary rules-glossary-popovers already
+    /// resolves a [BRACKET] cross-reference against), keyed by the infoLink's own un-appended
+    /// Name - never the modifier-appended display name, which isn't itself a rule name. A missing
+    /// glossary (ctx.Glossary is null - every pre-existing BuildDatasheet call site that doesn't
+    /// pass one) or an unresolvable rule name both silently produce no Ability, mirroring
+    /// WalkLink's existing "target not found in this closure... skipped rather than failing
+    /// resolution" convention - this is a data-completeness gap the full-corpus scan catches in
+    /// aggregate, not something a single import should fail over.
+    ///
+    /// Nested inside a "type: upgrade" wargear-option entry (the same isOptional signal
+    /// ProcessAbilityProfile already uses), a "type: rule" infoLink is a DIFFERENT, unrelated
+    /// shape - not a datasheet-wide Core rule at all, but that specific weapon profile's own
+    /// keyword cross-reference (confirmed real shape: the Impulsor's "Ironhail Skytalon Array"
+    /// weapon-option entry carries "Sustained Hits"/"Anti" infoLinks describing its own Keywords
+    /// characteristic, redundant with what WeaponAbilityTags/RuleGlossary already independently
+    /// resolves for that weapon's own keyword chip). A real user-reported near-miss: without this
+    /// guard, every weapon's own keyword rule-references leaked into Datasheet.Abilities as bogus
+    /// datasheet-wide entries ("Sustained Hits", "Anti", "Melta", "Rapid Fire", "Blast" appearing
+    /// unit-wide on the Impulsor) - caught by running the fix against a real export before
+    /// shipping, not by any existing test. Skipped entirely (not routed to OptionalAbilities
+    /// either) since it isn't an ability grant of any kind.</summary>
+    private static void ProcessRuleInfoLink(BsEntryLink link, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry)
+    {
+        if (ancestry.Count > 0 && ancestry[^1].Type == "upgrade")
+            return;
+
+        if (ctx.Glossary is null)
+            return;
+
+        var rule = ctx.Glossary.TryResolve(link.Name);
+        if (rule is null)
+            return;
+
+        if (IsGameModeGated(rule.Modifiers, ctx))
+            return;
+
+        var name = BuildAppendedName(link);
+        if (ctx.SeenAbilityNames.Add(name))
+        {
+            ctx.Abilities.Add(new Ability
+            {
+                Name = name,
+                Text = rule.Text,
+                Scope = AbilityScope.Unit,
+                Origin = HasPrimaryCatalogueScope(rule.Modifiers) ? AbilityOrigin.ArmyRule : AbilityOrigin.CoreRule
+            });
+        }
+    }
+
+    /// <summary>True when any of the given modifiers' condition tree contains a
+    /// "scope: primary-catalogue" condition ANYWHERE, regardless of comparison type or whether it
+    /// actually excludes content for the current closure - a structural fact about the rule
+    /// itself (found via a real user-reported gap: the earlier "shared by 2+ present components"
+    /// dedup heuristic never triggered for a standalone Unit, since chapter/army-wide-ness isn't
+    /// really about how many components in one particular roster happen to reference a rule).
+    /// Deliberately simpler than <see cref="IsConditionProvablyTrue"/> - this asks "is this rule
+    /// chapter-scoped at all", not "is it excluded here", so it doesn't need
+    /// <see cref="WalkContext.PrimaryCatalogueId"/> or any evaluation logic, only a presence
+    /// check.</summary>
+    private static bool HasPrimaryCatalogueScope(IReadOnlyList<BsModifier> modifiers)
+    {
+        bool HasScope(IReadOnlyList<BsCondition> conditions, IReadOnlyList<BsConditionGroup> groups) =>
+            conditions.Any(c => c.Scope == "primary-catalogue")
+            || groups.Any(g => HasScope(g.Conditions, g.ConditionGroups));
+
+        return modifiers.Any(m => m.Field == "hidden" && HasScope(m.Conditions, m.ConditionGroups));
+    }
+
+    /// <summary>Builds a "type: rule" infoLink's display name: its own base Name, plus every
+    /// "append"/field:"name" modifier's value found directly on the infoLink itself (in array
+    /// order), space-joined - e.g. "Deadly Demise" + "D3" -> "Deadly Demise D3". A modifier's
+    /// Value is mixed-typed in real data (a JSON string for Deadly Demise, a JSON number for
+    /// Firing Deck), so both JsonValueKind.String and JsonValueKind.Number are handled.</summary>
+    private static string BuildAppendedName(BsEntryLink link)
+    {
+        var name = link.Name;
+
+        foreach (var modifier in link.Modifiers)
+        {
+            if (modifier.Type != "append" || modifier.Field != "name")
+                continue;
+
+            var suffix = modifier.Value.ValueKind == JsonValueKind.String
+                ? modifier.Value.GetString()
+                : modifier.Value.GetRawText();
+
+            if (!string.IsNullOrEmpty(suffix))
+                name = $"{name} {suffix}";
+        }
+
+        return name;
     }
 
     private static void ProcessProfile(BsProfile profile, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry, string? enclosingGroupName)

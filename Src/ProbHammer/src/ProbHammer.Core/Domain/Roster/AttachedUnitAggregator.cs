@@ -159,6 +159,58 @@ public static class AttachedUnitAggregator
                 entries.Add(new AggregateAbilityEntry(component.Datasheet.Name, modelLine.StatlineName, ability));
         }
 
-        return entries;
+        return PromoteArmyRuleAbilities(entries);
+    }
+
+    /// <summary>An ArmyRule-origin ability (see AbilityOrigin.ArmyRule - a Core rule whose own
+    /// gating is chapter/sub-faction exclusive, e.g. "Templar Vows"/"Oath of Moment") is an
+    /// army-wide fact, never a per-component one - so it ALWAYS gets promoted to belong to no
+    /// single component (<see cref="AggregateAbilityEntry.ComponentName"/> null,
+    /// <see cref="AggregateAbilityEntry.ContributingComponentNames"/> listing every contributor),
+    /// regardless of how many present components in THIS roster happen to reference it - even a
+    /// standalone Unit's own single component. This is deliberately NOT "shared by 2+ components"
+    /// (an earlier, wrong heuristic this replaces - it only promoted a shared army-wide ability
+    /// within a multi-component AttachedUnit, leaving it as an ordinary per-component entry on a
+    /// standalone Unit, which is exactly as much an army-wide fact there): whether an ability
+    /// gets this treatment is a structural property of the ability itself (its Origin), not a
+    /// headcount of who happens to reference it in one particular roster. Multiple components
+    /// referencing the same ArmyRule ability still collapse into one entry, same as before. Since
+    /// this runs on a freshly-rebuilt list of only PRESENT components' abilities every request
+    /// (this view is never cached), a component that dies simply stops contributing on the next
+    /// rebuild - what makes the promoted entry's own collapse rule ("hidden once every
+    /// contributing component is fully dead") fall out for free rather than needing separate
+    /// tracking. Every other Origin (including CoreRule - a Core rule with no chapter exclusivity,
+    /// e.g. "Deadly Demise") is untouched, exactly matching the existing "no cross-component
+    /// combination" rule for everything else.</summary>
+    private static IReadOnlyList<AggregateAbilityEntry> PromoteArmyRuleAbilities(List<AggregateAbilityEntry> entries)
+    {
+        var armyRuleGroups = entries
+            .Where(e => e.Ability.Origin == AbilityOrigin.ArmyRule)
+            .GroupBy(e => e.Ability.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
+
+        var result = new List<AggregateAbilityEntry>();
+        var promotedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var entry in entries)
+        {
+            if (entry.Ability.Origin != AbilityOrigin.ArmyRule)
+            {
+                result.Add(entry);
+                continue;
+            }
+
+            if (promotedNames.Add(entry.Ability.Name))
+            {
+                result.Add(entry with
+                {
+                    ComponentName = null,
+                    ContributingComponentNames = armyRuleGroups[entry.Ability.Name].Select(e => e.ComponentName!).ToList()
+                });
+            }
+            // else: the promoted entry for this name was already added by an earlier contributor.
+        }
+
+        return result;
     }
 }

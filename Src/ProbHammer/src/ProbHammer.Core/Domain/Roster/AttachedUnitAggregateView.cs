@@ -49,8 +49,27 @@ public sealed record AggregateWeaponEntry(
 /// Scope alone decides which UI column an entry belongs in; source alone decides which row(s) it
 /// binds to. <see cref="Ability.Origin"/> (not this record's own shape) is what a renderer reads
 /// to show an Enhancement-classified entry distinctly.
+///
+/// <see cref="ComponentName"/> is null only for a deduplicated Core Rule ability shared verbatim
+/// by two or more present components of one AttachedUnit (e.g. "Templar Vows", identical by
+/// Origin+Name across every component that references it) - see
+/// <c>AttachedUnitAggregator.BuildAbilities</c>'s dedup step (gate-and-dedupe-core-rule-abilities).
+/// Such an entry belongs to no single component, renders as its own row above every component's
+/// statline rows, and always carries <see cref="StatlineName"/> null too (it can never be
+/// row-bound - a shared army-wide fact is never tied to one specific model-line).
+/// <see cref="ContributingComponentNames"/> is non-empty only in this case, listing every
+/// component that contributed to the dedup - needed to evaluate this entry's own collapse rule
+/// (hidden only once every one of those components is fully dead), which differs from the
+/// single-component collapse rule every other entry uses.
 /// </summary>
-public sealed record AggregateAbilityEntry(string ComponentName, string? StatlineName, Ability Ability);
+public sealed record AggregateAbilityEntry(
+    string? ComponentName, string? StatlineName, Ability Ability, IReadOnlyList<string> ContributingComponentNames)
+{
+    public AggregateAbilityEntry(string ComponentName, string? StatlineName, Ability Ability)
+        : this(ComponentName, StatlineName, Ability, [])
+    {
+    }
+}
 
 public sealed record AttachedUnitAggregateView(
     string Name,

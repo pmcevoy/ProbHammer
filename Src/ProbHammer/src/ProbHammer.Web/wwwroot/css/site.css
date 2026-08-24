@@ -1022,8 +1022,12 @@ button.filter-flag:hover { opacity: 0.8; }
 }
 
 /* Component-wide (Datasheet-sourced) abilities spanning multiple statline rows get a subtle fill
-   so the taller cell visibly reads as "covering" its span, not just an odd empty gap. */
-.statline-cell.spans-component { background: var(--bg); }
+   so the taller cell visibly reads as "covering" its span, not just an odd empty gap. A
+   deduplicated Core Rule ability belonging to no single component (its own dedicated row above
+   every component's rows, see gate-and-dedupe-core-rule-abilities) gets the same fill for the
+   same reason - it reads as a distinct kind of cell from a plain row-bound one. */
+.statline-cell.spans-component,
+.statline-cell.spans-whole-unit { background: var(--bg); }
 
 /* Unlike .col-statline (which keeps its header lines visible and only hides the stat-tile beneath
    them), an ability cell has no header content of its own - it collapses in full, per

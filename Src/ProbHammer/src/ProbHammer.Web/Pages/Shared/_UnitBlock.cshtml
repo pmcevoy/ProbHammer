@@ -114,13 +114,49 @@
                             aria-label="Reset casualties for this unit" title="Reset casualties for this unit">&#x1F480;</button>
                 </span>
             </summary>
+            @{
+                // A deduplicated Core Rule ability (e.g. "Templar Vows") belongs to no single
+                // component - it gets its own dedicated grid row above every component's own
+                // rows, rather than spanning through them the way a component-wide ability does.
+                // rowOffset shifts every other row down by one to make room for it; with none,
+                // the grid is laid out exactly as before this change.
+                var rowOffset = unit.WholeUnitAbilitySpans.Any() ? 1 : 0;
+            }
             <div class="statline-grid">
+                @foreach (var wholeUnitSpan in unit.WholeUnitAbilitySpans)
+                {
+                    var wholeUnitCollapsedClass = wholeUnitSpan.IsFullyDead ? "run-collapsed" : "";
+                    var wholeUnitDeadAttr = wholeUnitSpan.IsFullyDead ? "true" : "false";
+                    @if (wholeUnitSpan.ModelAbilities.Any())
+                    {
+                        <div class="statline-cell col-model-abilities spans-whole-unit @wholeUnitCollapsedClass" data-dead="@wholeUnitDeadAttr" style="grid-row: 1; grid-column: 2;">
+                            @foreach (var ability in wholeUnitSpan.ModelAbilities)
+                            {
+                                var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
+                                @Html.Raw(abilityTrigger)
+                                @Html.Raw(abilityTrailer)
+                            }
+                        </div>
+                    }
+
+                    @if (wholeUnitSpan.UnitAbilities.Any())
+                    {
+                        <div class="statline-cell col-unit-abilities spans-whole-unit @wholeUnitCollapsedClass" data-dead="@wholeUnitDeadAttr" style="grid-row: 1; grid-column: 3;">
+                            @foreach (var ability in wholeUnitSpan.UnitAbilities)
+                            {
+                                var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
+                                @Html.Raw(abilityTrigger)
+                                @Html.Raw(abilityTrailer)
+                            }
+                        </div>
+                    }
+                }
                 @for (var runIndex = 0; runIndex < unit.Statlines.Count; runIndex++)
                 {
                     var block = unit.Statlines[runIndex];
                     var runCollapsedClass = block.IsFullyDead ? "run-collapsed" : "";
                     var runDeadAttr = block.IsFullyDead ? "true" : "false";
-                    <div class="statline-cell col-statline @runCollapsedClass" data-run-index="@runIndex" data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1); grid-column: 1;">
+                    <div class="statline-cell col-statline @runCollapsedClass" data-run-index="@runIndex" data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1 + rowOffset); grid-column: 1;">
                         @for (var entryIndex = 0; entryIndex < block.Entries.Count; entryIndex++)
                         {
                             var entry = block.Entries[entryIndex];
@@ -275,7 +311,7 @@
 
                     @if (block.ModelAbilities.Any())
                     {
-                        <div class="statline-cell col-model-abilities @runCollapsedClass" data-run-index="@runIndex" data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1); grid-column: 2;">
+                        <div class="statline-cell col-model-abilities @runCollapsedClass" data-run-index="@runIndex" data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1 + rowOffset); grid-column: 2;">
                             @foreach (var ability in block.ModelAbilities)
                             {
                                 var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
@@ -287,7 +323,7 @@
 
                     @if (block.UnitAbilities.Any())
                     {
-                        <div class="statline-cell col-unit-abilities @runCollapsedClass" data-run-index="@runIndex" data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1); grid-column: 3;">
+                        <div class="statline-cell col-unit-abilities @runCollapsedClass" data-run-index="@runIndex" data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1 + rowOffset); grid-column: 3;">
                             @foreach (var ability in block.UnitAbilities)
                             {
                                 var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
@@ -304,7 +340,7 @@
                     var spanDeadAttr = span.IsFullyDead ? "true" : "false";
                     @if (span.ModelAbilities.Any())
                     {
-                        <div class="statline-cell col-model-abilities spans-component @spanCollapsedClass" data-first-run-index="@(span.FirstRunIndex)" data-last-run-index="@(span.LastRunIndex)" data-dead="@spanDeadAttr" style="grid-row: @(span.FirstRunIndex + 1) / @(span.LastRunIndex + 2); grid-column: 2;">
+                        <div class="statline-cell col-model-abilities spans-component @spanCollapsedClass" data-first-run-index="@(span.FirstRunIndex)" data-last-run-index="@(span.LastRunIndex)" data-dead="@spanDeadAttr" style="grid-row: @(span.FirstRunIndex + 1 + rowOffset) / @(span.LastRunIndex + 2 + rowOffset); grid-column: 2;">
                             @foreach (var ability in span.ModelAbilities)
                             {
                                 var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
@@ -316,7 +352,7 @@
 
                     @if (span.UnitAbilities.Any())
                     {
-                        <div class="statline-cell col-unit-abilities spans-component @spanCollapsedClass" data-first-run-index="@(span.FirstRunIndex)" data-last-run-index="@(span.LastRunIndex)" data-dead="@spanDeadAttr" style="grid-row: @(span.FirstRunIndex + 1) / @(span.LastRunIndex + 2); grid-column: 3;">
+                        <div class="statline-cell col-unit-abilities spans-component @spanCollapsedClass" data-first-run-index="@(span.FirstRunIndex)" data-last-run-index="@(span.LastRunIndex)" data-dead="@spanDeadAttr" style="grid-row: @(span.FirstRunIndex + 1 + rowOffset) / @(span.LastRunIndex + 2 + rowOffset); grid-column: 3;">
                             @foreach (var ability in span.UnitAbilities)
                             {
                                 var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());

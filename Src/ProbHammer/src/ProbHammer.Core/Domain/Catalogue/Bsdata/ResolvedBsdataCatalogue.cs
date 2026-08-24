@@ -38,7 +38,7 @@ public sealed class ResolvedBsdataCatalogue(
         var entry = BsdataNameResolver.Resolve(Closure, entryName)
             ?? throw new BsdataNameResolutionException(entryName, BuildFailureMessage(entryName));
 
-        return BsdataDatasheetMapper.BuildDatasheet(entry, IdIndex, GroupIdIndex, ProfileIdIndex, Closure.GameSystem?.ForceEntries);
+        return BsdataDatasheetMapper.BuildDatasheet(entry, IdIndex, GroupIdIndex, ProfileIdIndex, Closure.GameSystem?.ForceEntries, Glossary, Closure.Files[0].Catalogue.Id);
     }
 
     private string BuildFailureMessage(string entryName)

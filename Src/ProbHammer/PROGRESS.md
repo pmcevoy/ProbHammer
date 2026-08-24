@@ -8,6 +8,108 @@ Nothing in progress.
 
 ## Recently Completed
 
+- OpenSpec change `gate-and-dedupe-core-rule-abilities` implemented (all 21 tasks) — fixes two real
+  problems found while discussing `resolve-core-rule-abilities` (below) with the user: **(1)
+  missing chapter/game-mode gating.** A `CoreRule` ability's own target rule can carry chapter/
+  sub-faction exclusivity (`scope: "primary-catalogue"`, confirmed real: Oath of Moment's rule
+  definition is hidden unless the army is one of 11 named chapters, Black Templars deliberately
+  excluded; Templar Vows' is hidden unless it specifically IS Black Templars, by catalogue id) or
+  game-mode exclusivity (`scope: "force"`, e.g. Scouts hidden during Boarding Actions missions) -
+  `resolve-core-rule-abilities` never read a rule's own `hidden`/`modifiers` at all, so a Black
+  Templars roster showed both `Oath of Moment` and its own chapter-exclusive replacement `Templar
+  Vows` together; running the same pipeline against a Salamanders closure produced the identical
+  (and therefore equally wrong) list. Fixed by generalizing `BsdataDatasheetMapper
+  .IsGameModeGated`'s existing condition-evaluator (previously force/roster-only, entry/group-
+  scoped) to also recognize a `primary-catalogue` condition (evaluated with its own comparison
+  type against the closure's own starting catalogue id - no name lookup needed, the condition's
+  `childId` already IS the target catalogue's own literal id) and to accept a rule's own modifiers
+  as input (`BsRule.Modifiers` was previously silently dropped). Found and fixed a real bug while
+  wiring this up: the method's pre-existing early-return guard short-circuited before ever
+  reaching the new check whenever no `forceEntries` were supplied - existing `GameModeGatingTests`
+  confirmed no regression to the original behavior. **(2) Army-wide Core rules duplicated per
+  component instead of deduplicated.** Every component of an `AttachedUnit` independently
+  references the same underlying rule (confirmed: identical `targetId` across every reference), so
+  `Templar Vows` rendered as 3 separate, textually-identical entries on a 3-component attached
+  unit. Fixed with a narrow, identity-matched exception (by `Name`, `CoreRule`-origin only) to
+  `attached-unit-tracker`'s existing "no cross-component combination" rule (itself a deliberate
+  choice from `add-live-play-ability-columns` - this change's design.md explicitly addresses why
+  the narrow exception here doesn't reopen that change's original problem, unconditional same-
+  Scope merging). Rendered per the user's own hand-drawn ASCII mockup: the deduped ability gets its
+  own dedicated grid row above every component's statline rows (a third placement, distinct from
+  row-bound and component-wide), implemented via a `rowOffset` shifting every other row down by
+  one when present. Collapse-on-death falls out for free from the view's existing per-request
+  rebuild (a fully-dead component simply stops contributing on the next rebuild) rather than
+  needing separate state tracking. Verified: new `PrimaryCatalogueGatingTests` (fixture-based, both
+  `instanceOf`/`notInstanceOf` directions plus an unrecognized-shape safety check),
+  `ChapterExclusiveCoreRuleRegressionTests` (explicit-only, live clone, the exact real Black
+  Templars-vs-Salamanders case), new `AttachedUnitAggregatorTests`/`LivePlayAbilityRenderingTests`
+  coverage for the dedup+span behavior; full suite green (356 total, 350 run + 6 explicit-only);
+  `docker compose up` + a real Firefox session against the real Templars export confirmed the
+  rendered layout matches the user's own mockup exactly (screenshot compared side-by-side), `Oath
+  of Moment` gone, everything else unaffected. Docs: `.claude/domain-model-11e.md`'s Core Rule
+  Ability Extraction and `IsGameModeGated` sections updated; `.claude/vnext-ideas.md`'s "Ability-
+  text interpretation pass" entry gained detailed notes on the related but explicitly out-of-scope
+  "classifier" ideas discussed alongside this change (Model/Unit scope classification, dropping
+  Leader/Support/Attached Unit, Shield Dome-to-InSv conversion, a toggleable rule-pipeline
+  architecture) so they aren't relitigated from scratch when that work starts.
+  **Post-delivery correction, found via user feedback after the above was verified**: two real
+  gaps, fixed within this same change. (1) The "shared by 2+ present components" dedup trigger was
+  the wrong signal — `Templar Vows` got its own box on a multi-component `AttachedUnit` but
+  rendered as a plain inline entry on a standalone `Unit` (Impulsor/Scout Squad), even though it's
+  just as much an army-wide fact there. Fixed by adding `AbilityOrigin.ArmyRule` (chapter-exclusive
+  Core rule, distinguished from plain `CoreRule` by a structural presence check —
+  `HasPrimaryCatalogueScope` — on the rule's own gating, not a contributor headcount);
+  `AttachedUnitAggregator`'s promotion now triggers on `Origin == ArmyRule` unconditionally, even
+  for a single contributor. This also revisits, correctly given new evidence, `resolve-core-rule-
+  abilities`' own earlier argument against splitting `CoreRule` by chapter-exclusivity. (2) Shield
+  Dome was **still** invisible on Impulsor — the original single-row-component collision (found
+  earlier this session, its fix-or-defer question lost when the conversation moved to the mockup
+  discussion) was never actually addressed by this change's own `rowOffset` work, which only added
+  a *new* row for the multi-component case. Fixed by having `BuildComponentAbilitySpans` absorb a
+  single-row component's row-bound abilities into its own component-wide span instead of rendering
+  both as separate, identically-coordinated grid cells. Verified: updated
+  `AttachedUnitAggregatorTests`/`PrimaryCatalogueGatingTests`/`LivePlayAbilityRenderingTests`; full
+  suite green (360 total, 354 run + 6 explicit-only); `docker compose up` + Firefox against the
+  real export confirmed both fixes (Impulsor now shows `Templar Vows` in its own box *and* `Shield
+  Dome` alongside `Transport`/`Assault Vehicle`/etc., all visible) with no regression to the
+  already-verified `AttachedUnit` rendering. This change's own `design.md`/`specs/` deltas updated
+  to reflect the corrected behavior rather than leave the superseded language in place.
+
+- OpenSpec change `resolve-core-rule-abilities` implemented (all tasks): a fourth,
+  previously-unhandled BSData ability-sourcing shape — an `infoLink` with `"type": "rule"`
+  (Oath of Moment, a Chapter's own Vows, Deadly Demise, Firing Deck, Infiltrators, Scouts; GW's
+  own app shows these as "Core"/"Faction Abilities", NewRecruit as "Rules") — was silently
+  dropped by `BsdataDatasheetMapper.WalkInfoLink`, deliberately, per its own prior comment. Found
+  via a real user-reported bug against `data/gw-app-export-templars.txt`: every unit in a Black
+  Templars roster was missing at least `Templar Vows`. `WalkInfoLink` now resolves the linked rule's
+  text via `RuleGlossary` (the same glossary `rules-glossary-popovers` already built) and builds the
+  display name from the infoLink's own name plus any `"append"`/`field:"name"` modifier value
+  (string- and number-valued, both real shapes — `"Deadly Demise"` + `"D3"`, `"Firing Deck"` + `6`).
+  New `AbilityOrigin.CoreRule` — always-exposed like `Intrinsic`, never on-demand, since a Core rule
+  is never a player selection. **Real defect found and fixed during implementation, not anticipated
+  by the plan**: a `"type": "rule"` infoLink also appears nested inside a weapon's own
+  `"type": "upgrade"` wargear-option entry (the Impulsor's "Ironhail Skytalon Array" carries its own
+  "Sustained Hits"/"Anti" keyword cross-references) — the first working version leaked these into
+  `Datasheet.Abilities` as bogus unit-wide entries; fixed by reusing the same ancestry signal
+  `ProcessAbilityProfile` already uses to exclude an optional ability (nearest ancestor's own
+  `Type == "upgrade"`), caught only by running the fix against the real export before shipping, not
+  by any planned test. New `InfoLinkTypeScanTests` (full-corpus scan, same `[Fact(Explicit = true)]`
+  pattern as the other `CorpusScan/` tests) walks every `infoLink` in the local clone and asserts its
+  `Type` value is one of a maintained allowlist — found a third, genuinely new type, `"infoGroup"`
+  (129 occurrences, e.g. Adeptus Custodes' "Talons" — confirmed real ability-granting content, same
+  class of gap), deliberately allowlisted rather than fixed (no `infoGroup`-carrying export was
+  available to verify against) — see Known Issues below. Verified: 9 new `CoreRuleAbilityTests`
+  (fixture-based, including a dedicated regression test for the weapon-nested false-positive); full
+  suite green (339 total, 335 run + 4 explicit-only); `InfoLinkTypeScanTests` and every other
+  explicit-only corpus scan re-run manually and clean; `docker compose up` + a real Firefox session
+  against the real Templars export confirmed every expected ability renders correctly (including
+  `Templar Vows`'s popover showing the real, correct rule text) with `Shield Dome` and the
+  Enhancement `✦` indicator both unaffected. One genuine BSData data fact surfaced along the way,
+  not a bug: Black Templars' own local "Impulsor" override declares Deadly Demise/Firing
+  Deck/Templar Vows but not Oath of Moment, unlike the generic Space Marines Impulsor it overrides.
+  Docs: `.claude/domain-model-11e.md`'s "BSData JSON Ingestion" section gained "Core Rule Ability
+  Extraction" and "Full-Corpus InfoLink-Type Scan" subsections.
+
 - OpenSpec change `restyle-rule-popover-titlebar` implemented (6/6 tasks): every rule/ability
   popover (ability names, weapon-keyword chips, nested `[BRACKET]` references) gained a title bar
   above its body text, naming whatever was tapped to open it. `_UnitBlock.cshtml`'s
@@ -989,6 +1091,15 @@ Nothing in progress.
 
 ## Known Issues
 
+- `resolve-core-rule-abilities`'s new `InfoLinkTypeScanTests` found a third, confirmed real
+  ability-granting `infoLink` shape, `"infoGroup"` (129 occurrences across the corpus) — targets a
+  `sharedInfoGroups`/`infoGroups` container holding its own nested `profiles` array of real
+  `Abilities`-typeName content (confirmed: Adeptus Custodes' "Talons" holds two genuine,
+  mutually-exclusive-by-modifier auras, "Null Aegis (Aura)" and "Deadly Unity (Aura)", currently
+  invisible on `/LivePlay` — the same class of bug that change fixed for `"rule"`). Deliberately
+  allowlisted rather than fixed blind, since no real `infoGroup`-carrying export was available to
+  verify a fix against at the time. Tracked as a dedicated follow-up change once one is (a friend's
+  Adeptus Custodes export, expected 2026-08-27).
 - A real captured export (`data/gw-app-export-masters-of-the-maelstrom.txt`) names a weapon
   "Absolvor bolt pistol" (Garreon the Corpsemaster); the live BSData clone's own corpus spells it
   "Absolver bolt pistol" - a genuine BSData typo/spelling drift, not a parsing bug. Deliberately not

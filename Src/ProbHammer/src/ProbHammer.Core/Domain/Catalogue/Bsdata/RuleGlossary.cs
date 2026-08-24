@@ -41,7 +41,7 @@ public sealed partial class RuleGlossary
         {
             foreach (var rule in rules)
             {
-                var definition = new RuleDefinition(rule.Name, rule.Alias, rule.Description);
+                var definition = new RuleDefinition(rule.Name, rule.Alias, rule.Description, rule.Modifiers);
                 index.TryAdd(Normalize(rule.Name), definition);
                 foreach (var alias in rule.Alias)
                     index.TryAdd(Normalize(alias), definition);

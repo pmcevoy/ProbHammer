@@ -71,6 +71,42 @@ entry once it's been turned into a change (archived changes remain the historica
   distinction should get made instead of guessed at, per the same "no scope on
   Enhancement" acknowledgment.
 
+  Discussion during `resolve-core-rule-abilities`' follow-up (2026-08-24) sharpened the shape of
+  this considerably — noting it here so it isn't relitigated from scratch when this gets picked
+  up:
+  - **Not just Enhancements — every ability source is Model/Unit-blind today.**
+    `BsdataDatasheetMapper.MapAbility` hardcodes `Scope = AbilityScope.Unit` unconditionally for
+    every origin (Intrinsic, Enhancement, OptionalGrant, CoreRule); `AbilityScope.Model` is set
+    nowhere in real-data code, only in the unused `Examples/Datasheets.cs` fixtures. Real text
+    reliably signals the split (confirmed against real Black Templars rule text: `Martial Honour`
+    — *"add 5 to **this model's** Objective Control"* — is Model; `Crusade of Wrath` — *"...models
+    in **that unit**"* — is Unit) but nothing reads it yet.
+  - **`Leader`/`Support`/`Attached Unit` should be dropped entirely, not scope-classified.** These
+    three are redundant with the export's own "Attached as: Role" line (already parsed and
+    rendered) — the app trusts the export's already-validated attachment, same reasoning as the
+    existing "no wargear constraint modeling" stance, so there's no live-play value in also
+    showing the attachment-eligibility rules text. Note `Attached Unit`'s own text is Unit-shaped
+    by the Model/Unit heuristic above (*"...attached to **this unit** instead"*) — this is a
+    deliberate override of that heuristic, not something the heuristic itself would derive, so
+    keep it a small exact-name drop-list (same pattern `WeaponKeywordParser`/`RuleGlossary` already
+    use for exact-name matching) rather than folding it into general scope classification.
+  - **Wargear-granted invulnerable saves should convert to a populated InSv box, not render as a
+    plain ability chip.** Concrete driver: Impulsor's `Shield Dome` (*"The bearer has a 5+
+    invulnerable save"*). Distinct from the InSv-caveat case above, though it renders the same
+    way in the end (a value in the InSv box, linked text beneath it) — the caveat case *caveats an
+    existing intrinsic value* (footnoted `"5+*"` on the Unit profile itself); Shield Dome *grants*
+    one where the Unit profile's own `InSv` is empty (Impulsor has no baseline invulnerable save
+    at all). Keep these two as distinct recognized shapes rather than forcing the wargear-grant
+    case through the existing `Caveated`/`CaveatAbility` pair unchanged.
+  - **Architecture: a composable, user-toggleable rule pipeline, not a single fixed pass.** Rather
+    than one hardcoded transformation, envisioned as a pipeline of named rules ("drop
+    Leader/Support/Attached Unit", "convert Shield Dome to a granted InSv", "resolve a known
+    InSv-caveat to non-caveated", ...) that mutate the resolved domain model after
+    `BuildDatasheet`, each independently enable/disable-able by the player, and potentially
+    re-evaluated as live state changes (e.g. a rule that only applies while its granting model is
+    not a casualty) — a materially bigger scope than "classify once at import time," worth
+    designing as its own change once picked up, not assumed.
+
 ## Bigger picture
 
 - **A full "Gameplay" bounded context** for live/mutable game state beyond casualty counts — turn

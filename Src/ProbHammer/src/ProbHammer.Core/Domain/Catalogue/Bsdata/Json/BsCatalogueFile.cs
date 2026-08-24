@@ -66,13 +66,21 @@ public sealed class BsCatalogue
 }
 
 /// <summary>Shape shared by both `sharedRules` (game-system level) and `rules` (faction/library
-/// level) entries - `{name, description, alias[], id}` plus fields this loader doesn't need
-/// (`publicationId`, `page`, `hidden`, `modifiers`), silently dropped on parse like every other
-/// unmapped BSData field.</summary>
+/// level) entries - `{name, description, alias[], id, modifiers}` plus fields this loader doesn't
+/// need (`publicationId`, `page`, `hidden` as a bare bool - only the structured `modifiers`-driven
+/// hidden condition is read), silently dropped on parse like every other unmapped BSData
+/// field.</summary>
 public sealed class BsRule
 {
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
+
+    /// <summary>A rule's own gating (e.g. chapter/sub-faction exclusivity, or game-mode
+    /// exclusivity) - see BsdataDatasheetMapper's generalized IsGameModeGated/
+    /// IsProvablyAlwaysTrueInMatchedPlay, which reads this to decide whether a Core Rule Ability
+    /// reference should be excluded for the current closure. Previously silently dropped like
+    /// every other unmapped BSData field on this type.</summary>
+    public List<BsModifier> Modifiers { get; set; } = [];
     public string Description { get; set; } = "";
     public List<string> Alias { get; set; } = [];
 }
@@ -167,6 +175,12 @@ public sealed class BsEntryLink
     public string Name { get; set; } = "";
     public string TargetId { get; set; } = "";
     public string Type { get; set; } = "";
+
+    /// <summary>A "type":"rule" infoLink's own display-name-building modifiers (e.g. an
+    /// "append"/field:"name" modifier that turns the linked rule's bare name "Deadly Demise" into
+    /// the displayed "Deadly Demise D3") - see BsdataDatasheetMapper's Core Rule ability
+    /// extraction. Empty for every other link shape.</summary>
+    public List<BsModifier> Modifiers { get; set; } = [];
 }
 
 public sealed class BsProfile

@@ -157,13 +157,19 @@ Aggregate Statline View.
 
 ### Requirement: Aggregate Ability View
 The Attached Unit aggregate view SHALL report abilities per present component Unit, without
-combining or deduplicating across components. For each present component, the aggregate view
-SHALL report abilities from three sources: the component's Datasheet-level Abilities (not tied to
-any one model-line), the component's own resolved Enhancements, and abilities carried by any of
-the component's own present model-lines (e.g. granted by an Enhancement). Datasheet-level
-Abilities and resolved Enhancements are both reported the same way — not tied to any one
-model-line. Each reported entry SHALL carry the owning component's name, the Ability itself, and —
-only for model-line-sourced abilities — the name of the specific statline that bears it;
+combining or deduplicating across components, with one exception: every present component's own
+Army Rule-origin Ability entries SHALL be promoted into a single entry per distinct Name, belonging
+to no single component, rather than reported per contributing component. This promotion SHALL
+apply unconditionally — including when only one present component currently contributes that Name
+— since an Army Rule-origin Ability is an army-wide fact regardless of how many components in a
+given roster happen to reference it, not a fact contingent on being shared by two or more of them.
+For every other case, the aggregate view SHALL report abilities from three sources: the
+component's Datasheet-level Abilities (not tied to any one model-line), the component's own
+resolved Enhancements, and abilities carried by any of the component's own present model-lines
+(e.g. granted by an Enhancement). Datasheet-level Abilities and resolved Enhancements are both
+reported the same way — not tied to any one model-line. Each reported entry SHALL carry the owning
+component's name (absent only for the deduplicated Core Rule case above), the Ability itself, and
+— only for model-line-sourced abilities — the name of the specific statline that bears it;
 Datasheet-sourced and Enhancement-sourced abilities carry no statline name, since they belong to
 the component as a whole rather than to any one of its statlines. This applies uniformly to both
 Model-scoped and Unit-scoped abilities — the Ability's own Scope alone determines which of the two
@@ -194,7 +200,8 @@ an entry is; the reporting rule itself does not depend on Scope.
   regardless of its Scope
 
 #### Scenario: Abilities are not combined across components
-- **WHEN** two different component Units of an AttachedUnit each have an Ability with the same Name
+- **WHEN** two different component Units of an AttachedUnit each have an Ability with the same
+  Name, and that Ability's Origin is not Core Rule
 - **THEN** the aggregate view reports them as two separate entries, one per component, never
   combined into one
 
@@ -217,6 +224,37 @@ an entry is; the reporting rule itself does not depend on Scope.
 #### Scenario: A component with no Enhancements applied reports none
 - **WHEN** a present component Unit's resolved Enhancements list is empty
 - **THEN** the aggregate view reports no Enhancement-sourced entry for that component
+
+#### Scenario: An Army Rule ability shared by every present component is reported once
+- **WHEN** every present component of an AttachedUnit carries a Datasheet-level Ability with Origin
+  Army Rule and an identical Name (e.g. a chapter-wide faction rule referenced independently by
+  each component)
+- **THEN** the aggregate view reports one entry for that Ability, belonging to no single component,
+  rather than one entry per contributing component
+
+#### Scenario: An Army Rule ability shared by only some components is still reported once
+- **WHEN** two of an AttachedUnit's three present components carry an Army Rule-origin Ability with
+  an identical Name, and the third does not
+- **THEN** the aggregate view still reports one entry for that Ability, not two, and not one for
+  each of the two contributing components
+
+#### Scenario: An Army Rule ability on a standalone Unit is still promoted, not left as a plain entry
+- **WHEN** a standalone Unit (not part of an AttachedUnit) has exactly one component, and that
+  component carries a Datasheet-level Ability with Origin Army Rule
+- **THEN** the aggregate view still reports that Ability belonging to no single component, the same
+  treatment as when two or more components of an AttachedUnit share it — promotion depends on the
+  Ability's Origin, not on how many components currently contribute it
+
+#### Scenario: A shared Army Rule ability persists while any contributing component remains present
+- **WHEN** an Army Rule ability is shared across multiple components and one of those components has
+  every one of its model-lines reach a remaining count of 0, while at least one other contributing
+  component still has a present model-line
+- **THEN** the promoted entry still appears in the aggregate view
+
+#### Scenario: A shared Army Rule ability disappears once every contributing component is gone
+- **WHEN** every component that contributed to a promoted Army Rule ability has every one of
+  its model-lines reach a remaining count of 0
+- **THEN** the promoted entry no longer appears in the aggregate view
 
 ### Requirement: Half-Strength Determination
 A combat unit's starting strength SHALL be the sum of every one of its components' model-lines'

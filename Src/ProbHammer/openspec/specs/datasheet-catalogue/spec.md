@@ -61,9 +61,15 @@ A Datasheet SHALL resolve weapon profiles by name on request rather than materia
 ### Requirement: Ability Shape
 An Ability SHALL carry a Name, free-text Text, an optional list of structured Choices, a Scope of
 either Model or Unit, and an Origin classifying it as Intrinsic (a fact about the datasheet), an
-Enhancement (an optional ability found within a selection group named "Enhancements"), or an
-Optional Grant (any other optional ability nested inside its own selection entry, e.g. a wargear
-choice that grants an ability rather than a weapon profile).
+Enhancement (an optional ability found within a selection group named "Enhancements"), an Optional
+Grant (any other optional ability nested inside its own selection entry, e.g. a wargear choice that
+grants an ability rather than a weapon profile), a Core Rule (a datasheet-wide ability whose text is
+a reference to a separately-defined Core rule with no chapter/sub-faction exclusivity of its own,
+e.g. Deadly Demise or Firing Deck, rather than text carried directly on the datasheet's own ability
+profile), or an Army Rule (the same reference shape as a Core Rule, but whose referenced rule
+carries its own chapter/sub-faction exclusivity, e.g. Oath of Moment or a Chapter's own Vows — the
+distinguishing signal is a structural property of the referenced rule's own gating, not a guess or
+a count of how many datasheets happen to reference it).
 
 #### Scenario: Simple ability with no choices
 - **WHEN** an Ability has only descriptive Text and no sub-choices
@@ -93,6 +99,20 @@ choice that grants an ability rather than a weapon profile).
 - **WHEN** an Ability is resolved from a profile nested inside an optional selection entry that is
   not part of a group named "Enhancements" (e.g. Impulsor's "Shield Dome")
 - **THEN** its Origin is Optional Grant, distinct from Enhancement
+
+#### Scenario: A datasheet-wide rule reference with no chapter exclusivity is classified as a Core Rule
+- **WHEN** an Ability is resolved from a datasheet-wide reference to a separately-defined rule
+  whose own gating carries no chapter/sub-faction-scoped condition (e.g. Impulsor's "Deadly Demise
+  D3" or "Firing Deck 6" reference)
+- **THEN** its Origin is Core Rule, distinct from Intrinsic, Enhancement, Optional Grant, and Army
+  Rule, and it carries a Scope of Unit
+
+#### Scenario: A datasheet-wide rule reference with chapter exclusivity is classified as an Army Rule
+- **WHEN** an Ability is resolved from a datasheet-wide reference to a separately-defined rule
+  whose own gating carries a chapter/sub-faction-scoped condition (e.g. Oath of Moment or Templar
+  Vows), regardless of whether that condition currently excludes the reference for the resolved
+  army
+- **THEN** its Origin is Army Rule, distinct from Core Rule, and it carries a Scope of Unit
 
 ### Requirement: On-Demand Ability Resolution
 A Datasheet SHALL resolve an optional ability (an Enhancement, or any other ability nested inside

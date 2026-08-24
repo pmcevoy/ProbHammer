@@ -438,6 +438,124 @@ public class AttachedUnitAggregatorTests
     }
 
     [Fact]
+    public void AbilityView_ACoreRuleAbilitySharedByEveryComponent_IsReportedOnce()
+    {
+        var vow = new Ability { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
+        var bodyguardDatasheet = new Datasheet(
+            "Crusader Squad", factionKeywords: [], keywords: [], abilities: [vow],
+            statlines: [("Guardian", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
+        var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Guardian", [], count: 3)]);
+
+        var leaderDatasheet = new Datasheet(
+            "Ancient", factionKeywords: [], keywords: [], abilities: [vow],
+            statlines: [("Ancient", new Statline(6, 5, 3, 4, 6, 1))], weaponProfiles: []);
+        var leader = new Unit(leaderDatasheet, [], [new ModelLine("Ancient", [], count: 1)]);
+
+        var attachedUnit = new AttachedUnit(bodyguard, [leader]);
+
+        var view = AttachedUnitAggregator.Build(attachedUnit);
+
+        view.Abilities.Where(e => e.Ability.Name == "Templar Vows").Should().ContainSingle();
+        view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Templar Vows" && e.ComponentName == null && e.StatlineName == null);
+    }
+
+    [Fact]
+    public void AbilityView_ACoreRuleAbilitySharedByOnlySomeComponents_IsStillReportedOnce()
+    {
+        var vow = new Ability { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
+        var bodyguardDatasheet = new Datasheet(
+            "Crusader Squad", factionKeywords: [], keywords: [], abilities: [vow],
+            statlines: [("Guardian", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
+        var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Guardian", [], count: 3)]);
+
+        var leaderOneDatasheet = new Datasheet(
+            "Ancient", factionKeywords: [], keywords: [], abilities: [vow],
+            statlines: [("Ancient", new Statline(6, 5, 3, 4, 6, 1))], weaponProfiles: []);
+        var leaderOne = new Unit(leaderOneDatasheet, [], [new ModelLine("Ancient", [], count: 1)]);
+
+        var leaderTwoDatasheet = new Datasheet(
+            "Chaplain", factionKeywords: [], keywords: [], abilities: [], // no Templar Vows here
+            statlines: [("Chaplain", new Statline(6, 5, 3, 4, 6, 1))], weaponProfiles: []);
+        var leaderTwo = new Unit(leaderTwoDatasheet, [], [new ModelLine("Chaplain", [], count: 1)]);
+
+        var attachedUnit = new AttachedUnit(bodyguard, [leaderOne, leaderTwo]);
+
+        var view = AttachedUnitAggregator.Build(attachedUnit);
+
+        view.Abilities.Where(e => e.Ability.Name == "Templar Vows").Should().ContainSingle();
+        view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Templar Vows" && e.ComponentName == null);
+    }
+
+    [Fact]
+    public void AbilityView_ASharedCoreRuleAbility_PersistsWhileAnyContributingComponentRemains()
+    {
+        var vow = new Ability { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
+        var bodyguardDatasheet = new Datasheet(
+            "Crusader Squad", factionKeywords: [], keywords: [], abilities: [vow],
+            statlines: [("Guardian", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
+        var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Guardian", [], count: 3)]);
+
+        var leaderDatasheet = new Datasheet(
+            "Ancient", factionKeywords: [], keywords: [], abilities: [vow],
+            statlines: [("Ancient", new Statline(6, 5, 3, 4, 6, 1))], weaponProfiles: []);
+        var leader = new Unit(leaderDatasheet, [], [new ModelLine("Ancient", [], count: 1)]);
+
+        var attachedUnit = new AttachedUnit(bodyguard, [leader]);
+        leader.ModelLines[0].RemoveCasualties(1); // leader fully dead, bodyguard still present
+
+        var view = AttachedUnitAggregator.Build(attachedUnit);
+
+        // Only the Bodyguard still contributes now - still promoted (ComponentName null), since
+        // an ArmyRule ability is an army-wide fact regardless of contributor count, not merely
+        // "shared by 2+" (see PromoteArmyRuleAbilities's own doc comment).
+        var entry = view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Templar Vows").Subject;
+        entry.ComponentName.Should().BeNull();
+        entry.ContributingComponentNames.Should().Equal("Crusader Squad");
+    }
+
+    [Fact]
+    public void AbilityView_AnArmyRuleAbilityOnAStandaloneUnit_IsStillPromoted()
+    {
+        // The bug this guards: an earlier "shared by 2+ present components" heuristic never
+        // triggered for a standalone Unit (only ever one component), even though an army-wide
+        // fact is just as much one there.
+        var datasheet = new Datasheet(
+            "Impulsor", factionKeywords: [], keywords: [],
+            abilities: [new Ability { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule }],
+            statlines: [("Black Templars Impulsor", new Statline(12, 9, 3, 11, 6, 2))], weaponProfiles: []);
+        var unit = new Unit(datasheet, [], [new ModelLine("Black Templars Impulsor", [], count: 1)]);
+
+        var view = AttachedUnitAggregator.Build(unit);
+
+        var entry = view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Templar Vows").Subject;
+        entry.ComponentName.Should().BeNull();
+        entry.ContributingComponentNames.Should().Equal("Impulsor");
+    }
+
+    [Fact]
+    public void AbilityView_ASharedCoreRuleAbility_DisappearsOnceEveryContributingComponentIsGone()
+    {
+        var vow = new Ability { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
+        var bodyguardDatasheet = new Datasheet(
+            "Crusader Squad", factionKeywords: [], keywords: [], abilities: [vow],
+            statlines: [("Guardian", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
+        var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Guardian", [], count: 3)]);
+
+        var leaderDatasheet = new Datasheet(
+            "Ancient", factionKeywords: [], keywords: [], abilities: [vow],
+            statlines: [("Ancient", new Statline(6, 5, 3, 4, 6, 1))], weaponProfiles: []);
+        var leader = new Unit(leaderDatasheet, [], [new ModelLine("Ancient", [], count: 1)]);
+
+        var attachedUnit = new AttachedUnit(bodyguard, [leader]);
+        bodyguard.ModelLines[0].RemoveCasualties(3);
+        leader.ModelLines[0].RemoveCasualties(1);
+
+        var view = AttachedUnitAggregator.Build(attachedUnit);
+
+        view.Abilities.Should().NotContain(e => e.Ability.Name == "Templar Vows");
+    }
+
+    [Fact]
     public void NameView_ForAPlainUnit_IsWiredToTheUnitsName()
     {
         var unit = UnitFixtures.CrusaderSquadMixedLoadout();

@@ -1,0 +1,86 @@
+{
+  "catalogue": {
+    "id": "test-cat-primary-catalogue-gating",
+    "name": "Test Faction (primary-catalogue-gating fixture)",
+    "gameSystemId": "",
+    "catalogueLinks": [],
+    "rules": [
+      {
+        "id": "r-chapter-vow",
+        "name": "Chapter Vow",
+        "description": "Visible only for chapter A - mirrors the real Templar Vows shape (hidden unless notInstanceOf is false, i.e. the army IS chapter A).",
+        "modifiers": [
+          {
+            "type": "set",
+            "field": "hidden",
+            "value": true,
+            "conditions": [
+              { "type": "notInstanceOf", "field": "selections", "scope": "primary-catalogue", "childId": "cat-a" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r-excluded-for-a",
+        "name": "Excluded For A",
+        "description": "Hidden specifically for chapter A, visible otherwise - the instanceOf-direction counterpart, confirmed as a recognized shape by design even though not yet observed in the real corpus.",
+        "modifiers": [
+          {
+            "type": "set",
+            "field": "hidden",
+            "value": true,
+            "conditions": [
+              { "type": "instanceOf", "field": "selections", "scope": "primary-catalogue", "childId": "cat-a" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r-unrecognized-gate",
+        "name": "Unrecognized Gate",
+        "description": "A primary-catalogue-scoped condition with a comparison type this loader does not recognize - must never be treated as provably true.",
+        "modifiers": [
+          {
+            "type": "set",
+            "field": "hidden",
+            "value": true,
+            "conditions": [
+              { "type": "atLeast", "field": "selections", "scope": "primary-catalogue", "childId": "cat-a" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r-ungated",
+        "name": "Ungated Rule",
+        "description": "No modifiers at all - a universal Core rule, always included regardless of chapter."
+      }
+    ],
+    "sharedSelectionEntries": [
+      {
+        "id": "e-unit",
+        "name": "Test Unit",
+        "type": "unit",
+        "profiles": [
+          { "id": "p-unit", "name": "Test Unit", "typeName": "Unit",
+            "characteristics": [
+              { "name": "M", "$text": "6\"" }, { "name": "T", "$text": "4" },
+              { "name": "Sv", "$text": "3+" }, { "name": "W", "$text": "2" },
+              { "name": "LD", "$text": "6+" }, { "name": "OC", "$text": "2" }
+            ] }
+        ],
+        "selectionEntries": [],
+        "selectionEntryGroups": [],
+        "entryLinks": [],
+        "infoLinks": [
+          { "name": "Chapter Vow", "type": "rule", "targetId": "r-chapter-vow" },
+          { "name": "Excluded For A", "type": "rule", "targetId": "r-excluded-for-a" },
+          { "name": "Unrecognized Gate", "type": "rule", "targetId": "r-unrecognized-gate" },
+          { "name": "Ungated Rule", "type": "rule", "targetId": "r-ungated" }
+        ]
+      }
+    ],
+    "sharedSelectionEntryGroups": [],
+    "sharedProfiles": []
+  }
+}

@@ -101,25 +101,37 @@ MeleeWeapon(Name, A, Ws, S, Ap, D) : WeaponProfile           // Type fixed to Me
 
 Ability(Name, Text, Choices: IReadOnlyList<AbilityChoice>, Scope: Model | Unit, Origin: AbilityOrigin)
 
-AbilityOrigin = Intrinsic | Enhancement | OptionalGrant   // since resolve-enhancement-abilities -
-                                                      // classifies where an ability came from
-                                                      // during BsdataDatasheetMapper's walk, not a
-                                                      // player-facing concept the export text ever
-                                                      // states directly. Intrinsic: a fact about
-                                                      // the datasheet, always in Datasheet
-                                                      // .Abilities. Enhancement: found nested
-                                                      // inside a "type: upgrade" selection entry
-                                                      // whose nearest enclosing selection group's
-                                                      // own Name contains "Enhancements" (case-
-                                                      // insensitive substring - confirmed necessary
-                                                      // for a nested sub-pool like "Legends of Saga
-                                                      // and Song Enhancements", not just a group
-                                                      // literally named "Enhancements"). Optional-
-                                                      // Grant: any other ability nested inside its
-                                                      // own "type: upgrade" selection entry (e.g.
-                                                      // Impulsor's "Shield Dome"). Both Enhancement
-                                                      // and OptionalGrant abilities are resolvable
-                                                      // only via Datasheet.TryResolveAbility, never
+AbilityOrigin = Intrinsic | Enhancement | OptionalGrant | CoreRule
+                                                      // since resolve-enhancement-abilities (first
+                                                      // three) / resolve-core-rule-abilities
+                                                      // (CoreRule) - classifies where an ability
+                                                      // came from during BsdataDatasheetMapper's
+                                                      // walk, not a player-facing concept the
+                                                      // export text ever states directly.
+                                                      // Intrinsic: a fact about the datasheet,
+                                                      // always in Datasheet.Abilities. Enhancement:
+                                                      // found nested inside a "type: upgrade"
+                                                      // selection entry whose nearest enclosing
+                                                      // selection group's own Name contains
+                                                      // "Enhancements" (case-insensitive substring -
+                                                      // confirmed necessary for a nested sub-pool
+                                                      // like "Legends of Saga and Song
+                                                      // Enhancements", not just a group literally
+                                                      // named "Enhancements"). OptionalGrant: any
+                                                      // other ability nested inside its own "type:
+                                                      // upgrade" selection entry (e.g. Impulsor's
+                                                      // "Shield Dome"). CoreRule: a datasheet-wide
+                                                      // reference to a separately-defined Core or
+                                                      // faction rule (Oath of Moment, a Chapter's
+                                                      // own Vows, Deadly Demise, Firing Deck,
+                                                      // Infiltrators, Scouts) - always in Datasheet
+                                                      // .Abilities like Intrinsic, never one of the
+                                                      // on-demand optional grants, since it's never
+                                                      // something a player did or didn't select -
+                                                      // see BsdataDatasheetMapper's "Core Rule
+                                                      // Ability Extraction" below. Enhancement and
+                                                      // OptionalGrant abilities are resolvable only
+                                                      // via Datasheet.TryResolveAbility, never
                                                       // enumerated in the public Abilities list -
                                                       // see BsdataDatasheetMapper's "Ability
                                                       // Extraction and Classification" below.
@@ -337,6 +349,103 @@ BsdataDatasheetMapper's Ability Extraction and Classification (resolve-enhanceme
                                        // since the Sword Brethren case is genuine, correctly-scoped
                                        // Black Templars content that simply wasn't selected).
 
+BsdataDatasheetMapper's Core Rule Ability Extraction (resolve-core-rule-abilities)
+                                       // A fourth, structurally distinct ability-sourcing shape,
+                                       // alongside the three above: an `infoLink` with `"type":
+                                       // "rule"` (confirmed real examples: Impulsor's "Oath of
+                                       // Moment"/"Deadly Demise"/"Firing Deck" infoLinks, Scout
+                                       // Squad's "Scouts"/"Infiltrators"/"Oath of Moment", every
+                                       // Black Templars datasheet's own "Templar Vows") - GW's own
+                                       // app shows these as "Core"/"Faction Abilities" above
+                                       // Datasheet Abilities; NewRecruit lists them as "Rules"
+                                       // underneath Abilities. Unlike every other ability shape,
+                                       // its Text isn't carried on the profile itself - it's
+                                       // resolved by looking the infoLink's own Name up against
+                                       // the closure's RuleGlossary (rules-glossary-popovers),
+                                       // the same glossary a [BRACKET] cross-reference resolves
+                                       // against. Its display Name is the infoLink's own Name plus
+                                       // any `"append"`/`field: "name"` modifier's value found
+                                       // directly on the infoLink (real shapes: a JSON string for
+                                       // "Deadly Demise" + "D3", a JSON number for "Firing Deck" +
+                                       // 6 - both must be handled). Extracted into
+                                       // Datasheet.Abilities with Origin CoreRule - always
+                                       // exposed, like Intrinsic, never routed through the
+                                       // on-demand OptionalAbilities index, since a Core/faction
+                                       // rule is never something a player did or didn't select.
+                                       // An unresolvable rule name (the id isn't reachable in this
+                                       // closure) is skipped silently, mirroring WalkLink's own
+                                       // "target not found... skipped rather than failing
+                                       // resolution" convention - caught in aggregate by the
+                                       // Full-Corpus InfoLink-Type Scan below, not by a single
+                                       // import failing.
+                                       //
+                                       // Since gate-and-dedupe-core-rule-abilities: the resolved
+                                       // rule's own `hidden`/`modifiers` are ALSO checked (via
+                                       // IsGameModeGated, generalized - see its own doc comment
+                                       // below) before the Ability is built - a Core rule can be
+                                       // chapter/sub-faction-exclusive (confirmed real shapes:
+                                       // Oath of Moment's rule definition is hidden unless the
+                                       // army's primary catalogue is one of 11 named chapters,
+                                       // Black Templars deliberately excluded; Templar Vows' is
+                                       // hidden unless it specifically IS Black Templars, by
+                                       // catalogue id). Found via a real user-reported bug: a
+                                       // Black Templars roster showed BOTH Oath of Moment and its
+                                       // own chapter-exclusive replacement Templar Vows together;
+                                       // running the same pipeline against a Salamanders closure
+                                       // produced the identical (and therefore equally wrong)
+                                       // list. A gated reference produces no Ability, the same
+                                       // silent-skip treatment as an unresolvable rule name.
+                                       //
+                                       // Critically, a "type: rule" infoLink ALSO appears nested
+                                       // inside a "type: upgrade" weapon/wargear-option entry
+                                       // (confirmed real shape: the Impulsor's "Ironhail Skytalon
+                                       // Array" weapon-option entry carries its own "Sustained
+                                       // Hits"/"Anti" infoLinks describing THAT WEAPON's own
+                                       // Keywords characteristic, redundant with what
+                                       // WeaponAbilityTags/RuleGlossary already independently
+                                       // resolve for that weapon's own keyword chip) - resolving
+                                       // against the glossary just as successfully as a genuine
+                                       // Core rule reference, but semantically unrelated. This is
+                                       // excluded via the exact same ancestry signal
+                                       // ProcessAbilityProfile already uses to distinguish
+                                       // Intrinsic from optional (nearest ancestor entry's own
+                                       // Type == "upgrade"): found not via design-time inspection
+                                       // but by running the fix against a real Black Templars
+                                       // export before shipping - the first working version leaked
+                                       // every weapon's own keyword rule-references into
+                                       // Datasheet.Abilities as bogus unit-wide entries
+                                       // ("Sustained Hits", "Anti", "Melta", "Rapid Fire", "Blast"
+                                       // all appearing on the Impulsor).
+                                       //
+                                       // A third infoLink type, "infoGroup", was found by this
+                                       // change's own new corpus scan (129 occurrences) and is a
+                                       // confirmed, real, NOT-yet-fixed ability-granting gap of the
+                                       // same class (targets a `sharedInfoGroups`/`infoGroups`
+                                       // container with its own nested `profiles` array of real
+                                       // Abilities content - confirmed: Adeptus Custodes' "Talons"
+                                       // holds two genuine, mutually-exclusive-by-modifier auras,
+                                       // "Null Aegis (Aura)" and "Deadly Unity (Aura)") -
+                                       // deliberately allowlisted rather than fixed here (no real
+                                       // infoGroup-carrying export was available to verify against
+                                       // at the time), tracked as a dedicated follow-up change. See
+                                       // tests/.../CorpusScan/InfoLinkTypeAllowlist.cs.
+
+BsdataDatasheetMapper's Full-Corpus InfoLink-Type Scan (resolve-core-rule-abilities)
+                                       // Same permanent, manually-triggered `[Fact(Explicit =
+                                       // true)]` pattern as the other CorpusScan tests (see
+                                       // "Full-Corpus Scan Tests" below) - added specifically
+                                       // because "rule" was itself once a silently-dropped
+                                       // infoLink type, the same way an unrecognized weapon
+                                       // keyword token or characteristic shape already gets a
+                                       // dedicated scan. Walks every closure's own `infoLinks` at
+                                       // every level (entry, group, nested - not through
+                                       // BuildDatasheet, which has no way to report "I saw this
+                                       // infoLink and did nothing with it"), collecting the
+                                       // distinct `Type` value of each, and asserts that set
+                                       // against InfoLinkTypeAllowlist.cs's maintained set
+                                       // (`"profile"`, `"rule"` as handled; `"infoGroup"` as a
+                                       // confirmed, tracked, not-yet-fixed gap - see above).
+
 InvulnerableSave(MeleeInSv, RangedInSv, Caveated, CaveatAbility)   // Domain/Catalogue/
                                        // InvulnerableSave.cs; sealed record, non-nullable on
                                        // Statline (0/0/false/null = absent, same convention as
@@ -485,6 +594,33 @@ BsdataDatasheetMapper.IsGameModeGated(modifiers, ctx) -> bool
                                        // out of scope, per catalogue-json-ingestion's design.md) -
                                        // only this one narrow, verified shape is ever read, now with
                                        // sound (not just existence-based) boolean evaluation over it.
+                                       //
+                                       // Generalized by gate-and-dedupe-core-rule-abilities to also
+                                       // recognize `scope: "primary-catalogue"` (chapter/sub-
+                                       // faction exclusivity) - a real, different shape from the
+                                       // force/roster gate above, needing its own comparison-type-
+                                       // aware evaluation rather than the force-gate's type-agnostic
+                                       // "is this id one of the known gates" check: a primary-
+                                       // catalogue condition's truth depends on whether it's
+                                       // `instanceOf`/`notInstanceOf` AND whether its `childId`
+                                       // matches the closure's own starting catalogue id (no name
+                                       // lookup needed - `childId` IS already the target catalogue's
+                                       // own literal `id`, confirmed by direct comparison against
+                                       // Black Templars' own `catalogue.id`). Called from
+                                       // ProcessRuleInfoLink on the resolved rule's own `Modifiers`
+                                       // (a genuinely different target from every existing call
+                                       // site's entry/group modifiers) - `BsRule.Modifiers` was
+                                       // added for this (previously silently dropped).
+                                       // `BuildDatasheet` gains a `primaryCatalogueId` parameter,
+                                       // same fail-open-default convention as `forceEntries`;
+                                       // `ResolvedBsdataCatalogue.ResolveDatasheet` passes
+                                       // `Closure.Files[0].Catalogue.Id`. A real bug found and
+                                       // fixed while wiring this up: the method's own early-return
+                                       // guard (`if GameModeGateIds.Count == 0 return false`)
+                                       // pre-dated this second gate concept and short-circuited
+                                       // before ever reaching a primary-catalogue check whenever no
+                                       // `forceEntries` were supplied - fixed to also check whether
+                                       // `PrimaryCatalogueId` is set.
 ```
 
 `BsdataDatasheetMapper.ParseThreshold(text, CharacteristicPattern)` (Sv/BS/WS/LD only — InSv is no
@@ -1142,7 +1278,8 @@ AggregateWeaponEntry(Profile: WeaponProfile, TotalAttacks: DiceExpression,
   // whichever contributor's WeaponProfile happened to be inserted first. Only TotalAttacks is
   // safe to render.
 
-AggregateAbilityEntry(ComponentName: string, StatlineName: string?, Ability: Ability)
+AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ability,
+                       ContributingComponentNames: IReadOnlyList<string> = [])
   // StatlineName is null for a Datasheet-sourced ability (Unit.Datasheet.Abilities) or a resolved
   // Enhancement (Unit.Enhancements, since display-resolved-enhancements) - neither is tied to any
   // one model-line, both apply to the whole component - and set to a specific statline name for a
@@ -1153,7 +1290,19 @@ AggregateAbilityEntry(ComponentName: string, StatlineName: string?, Ability: Abi
   // Enhancement-classified entry with its leading "✦ " indicator - see
   // openspec/specs/live-play-view/spec.md's "Enhancement Ability Visual Indicator". No
   // cross-component combination or deduplication - two components each having an ability of the
-  // same Name produce two separate entries.
+  // same Name produce two separate entries - EXCEPT (since gate-and-dedupe-core-rule-abilities)
+  // when two or more present components each carry a CoreRule-origin ability with an identical
+  // Name: confirmed structurally that every component's own reference resolves the identical
+  // BSData targetId, not independently-authored text (unlike e.g. "Leader"/"Support", which
+  // genuinely differ per datasheet) - collapsed into ONE entry with ComponentName null,
+  // StatlineName null, and ContributingComponentNames listing every contributor. Renders as its
+  // own dedicated grid row above every component's own rows (never spanning through them, unlike
+  // a component-wide ability). ContributingComponentNames is non-empty only for this one case -
+  // used solely to evaluate this entry's own collapse rule ("hidden once every contributing
+  // component is fully dead", distinct from a component-wide entry's single-component rule).
+  // Falls out for free from AttachedUnitAggregator re-running fresh every request: once fewer
+  // than two present components still contribute the same Name, it's simply no longer merged (or,
+  // with zero contributors left, doesn't appear at all) - no separate death-tracking needed.
 ```
 
 - `Statlines` — built by walking components in display order (an `AttachedUnit`'s `Attached` list,
