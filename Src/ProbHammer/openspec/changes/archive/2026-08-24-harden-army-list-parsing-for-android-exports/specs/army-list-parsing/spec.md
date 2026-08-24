@@ -1,12 +1,4 @@
-# army-list-parsing Specification
-
-## Purpose
-
-Parses raw GW-app 11th-edition army-list export text into a structured intermediate — army
-metadata plus, for every named model group, verbatim wargear selections already partitioned into
-per-loadout sub-groups — without depending on or resolving against any catalogue data.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Army Metadata Extraction
 The parser SHALL extract the army's Name, PointsSpent, an ordered Faction list (one entry for an
@@ -78,15 +70,6 @@ in the order they appear in the export.
   `"ATTACHED UNITS"` and `"Attached unit 1"`
 - **THEN** the section and its groups are recognized identically to the all-caps/lower-case forms
 
-### Requirement: Standalone Unit Section Recognition
-Outside `ATTACHED UNITS`, the parser SHALL treat each top-level section header (`CHARACTERS`,
-`BATTLELINE`, `DEDICATED TRANSPORTS`, `OTHER DATASHEETS`) as introducing a run of standalone
-(non-attached) units, ending at the next section header or the end of the export.
-
-#### Scenario: A standalone unit under a top-level section
-- **WHEN** a unit block appears under a `CHARACTERS` section header, outside any attachment group
-- **THEN** it is parsed as a standalone unit, not as a member of any attachment group
-
 ### Requirement: Model Group and Weapon Selection Parsing
 For each named unit, the parser SHALL parse its nested `"Nx ModelName"` bullet lines together with
 each one's own nested weapon-count lines, and SHALL partition each model group into one or more
@@ -143,12 +126,3 @@ not sum exactly to the group's total model count.
   immediately followed by the end of the unit's bullet block
 - **THEN** parsing continues with the next unit or section header, and the continuation line is
   never passed to unit-header parsing
-
-### Requirement: Enhancement Recognition
-A bullet line matching `"Enhancement:"` or `"Enhancements:"` SHALL be recognized as naming one or
-more Enhancements applied to the unit, distinct from its wargear/model selections.
-
-#### Scenario: A unit with a named Enhancement
-- **WHEN** a unit's bullet list includes a line `"Enhancements: Touched by the Warp"`
-- **THEN** the parsed unit's Enhancements includes `"Touched by the Warp"`, and that line is not
-  treated as a wargear selection
