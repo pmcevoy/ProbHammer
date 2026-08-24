@@ -1,0 +1,40 @@
+Barra's Army (725 points)
+
+Adeptus Custodes
+Auric Champions (2 Detachment Points)
+Priority Assets
+Incursion (1000 points)
+
+Attached Units
+Attached Unit 1
+
+Blade Champion (140 points)
+• Attached as: Leader (Character)
+  • Warlord
+  • 1x Vaultswords
+  • Enhancement: Martial Philosopher
+
+Custodian Wardens (250 points)
+• Attached as: Bodyguard
+  • 5x Custodian Warden
+    • 5x Guardian spear
+      1x Vexilla
+
+
+BATTLELINE
+
+Custodian Guard (170 points)
+  • 4x Custodian Guard
+    • 1x Guardian spear
+      3x Praesidium Shield
+      3x Sentinel blade
+
+
+OTHER DATASHEETS
+
+Allarus Custodians (165 points)
+  • 3x Allarus Custodian
+    • 3x Balistus grenade launcher
+      3x Guardian spear
+
+Exported with App Version: v2.4.0 (139), Data Version: v925
