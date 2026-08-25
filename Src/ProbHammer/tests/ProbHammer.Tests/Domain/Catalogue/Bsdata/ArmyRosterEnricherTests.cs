@@ -43,7 +43,7 @@ public class ArmyRosterEnricherTests
         roster.Name.Should().Be("Test Army");
         roster.PointsSpent.Should().Be(500);
         roster.Faction.Should().Equal("Space Marines", "Black Templars");
-        roster.Detachments.Should().Equal("Test Detachment");
+        roster.Detachments.Select(d => d.Name).Should().Equal("Test Detachment");
         roster.ForceDisposition.Should().Be("Test Disposition");
         roster.BattleSize.Should().Be("Incursion");
         roster.PointsLimit.Should().Be(1000);

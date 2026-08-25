@@ -107,6 +107,42 @@ entry once it's been turned into a change (archived changes remain the historica
     not a casualty) — a materially bigger scope than "classify once at import time," worth
     designing as its own change once picked up, not assumed.
 
+- **Detachment rule structural-modifier detection ("phase 2" of `display-army-header-and-
+  detachment-rules`).** That change captures every Detachment's rule text verbatim and renders it
+  army-wide in the `/LivePlay` header - deliberately not attempting to tie any rule to a specific
+  unit. A live-clone corpus scan (2026-08-25, during that change's exploration) found this is
+  possible for a real minority of the corpus: 22 of 280 Detachments (~8%) carry a BSData `modifiers`
+  entry - a characteristic increment/decrement/multiply, or a Keywords `append` - directly on a
+  specific existing unit's own profile, gated by the identical Detachment-selection condition
+  (`selections`/`force`-scope/`childId`) as the Detachment's own visibility gate. Confirmed
+  examples: Black Templars' `Marshal's Household` → Sword Brethren Squad's OC +1 (byte-for-byte
+  matches a `Statline` characteristic); Adepta Sororitas' `Sanctified Orators` → 14 different units'
+  Leadership improved; Chaos Space Marines' `Devotees of Destruction` / Agents of the Imperium's
+  `Ordo Hereticus, Purgation Force` → a literal `Keywords` append on several units each. For this
+  subset, the Detachment rule could render as an orphaned per-unit ability - Templar-Vows-style,
+  same `AbilityOrigin`/attachment shape `resolve-core-rule-abilities` already built for chapter-wide
+  Core rules - rather than only the army-wide header block. The detection signal (a Detachment's own
+  force-selection-gate id also appearing in some datasheet's own `modifiers`, on a field other than
+  `hidden`/`category`) is a natural fit for a permanent, explicit-only corpus-scan test, mirroring
+  `InfoLinkTypeScanTests`/`WeaponKeywordScanTests`, so a newly-shipped Detachment with this shape
+  gets caught rather than silently missed.
+
+  Deliberately **not** assumed to generalize to "detachment rules are statline modifiers" - the
+  other 258 Detachments (92%) either only gate visibility/availability (which Enhancements exist,
+  which units the army can include) or are genuinely free-form, phase-conditional, army-state-
+  tracking mechanics (Command-phase Doctrine switches, a mutable "Favoured Champions" unit, etc.)
+  with no structural per-unit binding at all - much closer to the still-deferred "Gameplay bounded
+  context" idea below than to a stat-mutation problem. A real example surfaced during discussion,
+  worth keeping as illustrative of the partial-mechanization risk: Black Templars' `Close-Range
+  Eradication` ("Ranged weapons equipped by Adeptus Astartes models from your army have the
+  [ASSAULT] ability, and each time an attack made [with] such a weapon targets a unit within 12",
+  add 1 to the Strength characteristic of that attack") is a plausible classifier target for the
+  `[ASSAULT]` keyword grant half, but the "+1 Strength within 12"" half is a range-conditional
+  combat-modifier with no structural BSData signal backing it at all - a rule can be *partially*
+  mechanizable, and a future classifier needs to handle that split cleanly rather than assume
+  all-or-nothing. Same permanently-deferred "no general ability-text-to-behavior parsing" boundary
+  as the "Ability-text interpretation pass" idea above applies to the un-mechanizable half.
+
 ## Bigger picture
 
 - **A full "Gameplay" bounded context** for live/mutable game state beyond casualty counts — turn

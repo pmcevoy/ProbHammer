@@ -18,7 +18,7 @@ public static class View
             name: "For the Emperor",
             pointsSpent: 1065,
             faction: ["Space Marines", "Black Templars"],
-            detachments: ["Companions of Vehemence"],
+            detachments: [new ResolvedDetachment("Companions of Vehemence", [])],
             forceDisposition: "Purge the Foe",
             battleSize: "Incursion",
             pointsLimit: 1000,

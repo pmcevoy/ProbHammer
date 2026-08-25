@@ -32,14 +32,27 @@ public static partial class RuleTextEmphasisRenderer
     [GeneratedRegex(@"\*\*\*|\*\*|\*|\^\^|\[[^\[\]]+\]")]
     private static partial Regex TokenPattern();
 
+    // A real BSData authoring quirk, confirmed on Black Templars' "Faith-Fuelled Resolve" (its own
+    // trailing "Restrictions: ..." sentence is separated from the main text by THREE newlines, not
+    // the usual one blank-line paragraph break e.g. "Lethal Hits"' own Designer's Note uses) -
+    // caught by direct user testing showing a visibly oversized gap in a popover body. Collapses any
+    // run of 3+ newlines down to exactly 2 (one blank line, the normal paragraph-break shape) before
+    // rendering; a genuine single blank line (already 2 newlines) is left untouched, so this can't
+    // flatten an intentional paragraph break down to a run-on line.
+    [GeneratedRegex(@"\n{3,}")]
+    private static partial Regex ExcessBlankLinesPattern();
+
     /// <summary>Renders <paramref name="text"/>, returning its inline HTML (text and any bracket
     /// triggers, in place) separately from any popover panel markup those brackets produced (to be
     /// emitted as flow-content siblings, never nested inside this text's own emphasis wrapping).
     /// <paramref name="renderBracket"/> receives a bracket's raw, un-normalized inner text (the
     /// literal substring between `[` and `]`) and returns the same (Inline, Popovers) shape - so
     /// it can itself call back into this method for its own label/body text, recursively.</summary>
-    public static (string Inline, string Popovers) Render(string text, Func<string, (string Inline, string Popovers)> renderBracket)
+    public static (string Inline, string Popovers) Render(string text,
+        Func<string, (string Inline, string Popovers)> renderBracket)
     {
+        text = ExcessBlankLinesPattern().Replace(text, "\n\n");
+
         var inlineSb = new StringBuilder();
         var popoversSb = new StringBuilder();
         var bold = false;

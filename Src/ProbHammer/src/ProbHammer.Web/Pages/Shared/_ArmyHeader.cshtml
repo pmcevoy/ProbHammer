@@ -1,0 +1,87 @@
+@model ProbHammer.Web.Pages.ArmyHeaderRenderModel
+@using System.Net
+@using ProbHammer.Web.Rendering
+@{
+    var header = Model.Header;
+    var glossary = Model.Glossary;
+
+    // "hdr" scopes this instance's own popover ids - distinct from every _UnitBlock.cshtml
+    // instance's own "u{i}" scope (see RulePopoverRenderer's own doc comment).
+    var popovers = new RulePopoverRenderer(glossary, "hdr");
+}
+<section class="army-header">
+    <h1 class="army-header-name">@header.Name</h1>
+    <div class="army-header-meta">
+        <span class="army-header-meta-item">@string.Join(" - ", header.Faction)</span>
+        <span class="army-header-meta-item">@header.BattleSize</span>
+        <span class="army-header-meta-item">@(header.PointsSpent) / @(header.PointsLimit) pts</span>
+        @if (!string.IsNullOrWhiteSpace(header.ForceDisposition))
+        {
+            <span class="army-header-meta-item">@header.ForceDisposition</span>
+        }
+    </div>
+
+    @if (header.ArmyRules.Any() || header.Detachments.Any())
+    {
+        <details class="lp-section" data-section="army-rules" open>
+            <summary>
+                <span class="section-title">Rules</span>
+            </summary>
+            <table class="army-rules-table">
+                <thead>
+                <tr>
+                    @if (header.ArmyRules.Any())
+                    {
+                        <th>Army</th>
+                    }
+                    @if (header.Detachments.Any())
+                    {
+                        <th>Detachment</th>
+                    }
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    @if (header.ArmyRules.Any())
+                    {
+                        <td>
+                            <div class="army-rules-cell">
+                                @foreach (var rule in header.ArmyRules)
+                                {
+                                    var (trigger, trailer) = popovers.BuildRulePopover(WebUtility.HtmlEncode(rule.Name), "ability-name-line", rule.Text, new HashSet<string>());
+                                    @Html.Raw(trigger)
+                                    @Html.Raw(trailer)
+                                }
+                            </div>
+                        </td>
+                    }
+                    @if (header.Detachments.Any())
+                    {
+                        <td>
+                            <div class="detachment-rules-cell">
+                                @foreach (var detachment in header.Detachments)
+                                {
+                                    <div class="detachment-entry">
+                                        <span class="detachment-name">@detachment.Name</span>
+                                        @if (detachment.Rules.Any())
+                                        {
+                                            <div class="detachment-entry-rules">
+                                                @foreach (var rule in detachment.Rules)
+                                                {
+                                                    var (trigger, trailer) = popovers.BuildRulePopover(WebUtility.HtmlEncode(rule.Name), "ability-name-line", rule.Text, new HashSet<string>());
+                                                    @Html.Raw(trigger)
+                                                    @Html.Raw(trailer)
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </td>
+                    }
+                </tr>
+                </tbody>
+            </table>
+        </details>
+    }
+</section>

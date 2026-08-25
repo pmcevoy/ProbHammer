@@ -14,13 +14,22 @@ public sealed class ResolvedBsdataCatalogue(
     IReadOnlyDictionary<string, BsSelectionEntry> idIndex,
     IReadOnlyDictionary<string, BsSelectionEntryGroup> groupIdIndex,
     IReadOnlyDictionary<string, BsProfile> profileIdIndex,
-    RuleGlossary glossary)
+    RuleGlossary glossary,
+    IReadOnlyList<BsSelectionEntry> detachmentEntries)
 {
     public BsdataClosure Closure { get; } = closure;
     public IReadOnlyDictionary<string, BsSelectionEntry> IdIndex { get; } = idIndex;
     public IReadOnlyDictionary<string, BsSelectionEntryGroup> GroupIdIndex { get; } = groupIdIndex;
     public IReadOnlyDictionary<string, BsProfile> ProfileIdIndex { get; } = profileIdIndex;
     public RuleGlossary Glossary { get; } = glossary;
+
+    /// <summary>Every real Detachment choice reachable in this closure (see
+    /// <see cref="BsdataNameResolver.ResolveDetachmentEntries"/>) - the set
+    /// <see cref="ProbHammer.Core.Domain.Roster.DetachmentNameResolver"/>'s greedy longest-name-first
+    /// match resolves a parsed Detachments entry's text against.</summary>
+    public IReadOnlyList<BsSelectionEntry> DetachmentEntries { get; } = detachmentEntries;
+
+    public IReadOnlyList<string> DetachmentNames { get; } = detachmentEntries.Select(e => e.Name).ToList();
 
     public static ResolvedBsdataCatalogue Build(IBsdataCatalogueSource source, string startingFileName)
     {
@@ -30,15 +39,36 @@ public sealed class ResolvedBsdataCatalogue(
             BsdataNameResolver.BuildIdIndex(closure),
             BsdataNameResolver.BuildGroupIdIndex(closure),
             BsdataNameResolver.BuildProfileIdIndex(closure),
-            RuleGlossary.Build(closure));
+            RuleGlossary.Build(closure),
+            BsdataNameResolver.ResolveDetachmentEntries(closure));
     }
 
     public Datasheet ResolveDatasheet(string entryName)
     {
         var entry = BsdataNameResolver.Resolve(Closure, entryName)
-            ?? throw new BsdataNameResolutionException(entryName, BuildFailureMessage(entryName));
+                    ?? throw new BsdataNameResolutionException(entryName, BuildFailureMessage(entryName));
 
-        return BsdataDatasheetMapper.BuildDatasheet(entry, IdIndex, GroupIdIndex, ProfileIdIndex, Closure.GameSystem?.ForceEntries, Glossary, Closure.Files[0].Catalogue.Id);
+        return BsdataDatasheetMapper.BuildDatasheet(entry, IdIndex, GroupIdIndex, ProfileIdIndex,
+            Closure.GameSystem?.ForceEntries, Glossary, Closure.Files[0].Catalogue.Id);
+    }
+
+    /// <summary>Exact-name lookup against <see cref="DetachmentEntries"/> - used by
+    /// <see cref="ProbHammer.Core.Domain.Roster.DetachmentNameResolver"/> once its own greedy chomp
+    /// has already isolated one known Detachment name from a parsed Detachments entry's text; the
+    /// chomp itself never calls this for an unknown name, but the "did you mean...?" contract is
+    /// kept here anyway, mirroring <see cref="ResolveDatasheet"/>.</summary>
+    public BsSelectionEntry ResolveDetachment(string name)
+    {
+        var match = DetachmentEntries.FirstOrDefault(e =>
+            string.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (match != null)
+            return match;
+
+        var suggestion = BsdataNameSuggestion.FindClosest(name, DetachmentNames);
+        var message = suggestion is null
+            ? $"No Detachment named '{name}' was found."
+            : $"No Detachment named '{name}' was found. Did you mean '{suggestion}'?";
+        throw new BsdataNameResolutionException(name, message);
     }
 
     private string BuildFailureMessage(string entryName)

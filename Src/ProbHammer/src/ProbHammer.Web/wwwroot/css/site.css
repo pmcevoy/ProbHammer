@@ -508,6 +508,139 @@ button[type="submit"]:hover { opacity: 0.85; }
 
 .live-play-page h1 { color: var(--text); }
 
+/* ── Army header (display-army-header-and-detachment-rules) ──
+   Same card shape as .unit-block (bg2 surface, --border outline, 4px radius) - the header reads as
+   a peer of the unit blocks below it, not a page-chrome element. */
+.army-header {
+    margin-bottom: 1.25rem;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Same bg3 name-bar treatment as .unit-block .unit-name - the army's own Name is this page's
+   actual h1 now (LivePlay.cshtml no longer renders a bare "Live Play" heading above it). Selector
+   deliberately two classes deep (matching .live-play-page .weapon-table's own precedent) so its
+   specificity (0,2,0) beats the page-wide ".live-play-page h1 { color: var(--text) }" rule (0,1,1) -
+   a plain ".army-header-name" alone (0,1,0) lost that fight, rendering the name in --text (near-
+   black) instead of white against the --bg3 fill, a real contrast bug caught by direct user
+   testing. */
+.live-play-page .army-header-name {
+    margin: 0;
+    padding: 0.6rem 0.85rem;
+    background: var(--bg3);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+/* Faction / Battle Size / Points / Force Disposition, one line, bordered-cell dividers rather than
+   a literal separator character - same convention as .unit-toolbar-item's own left-border split. */
+.army-header-meta {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+.army-header-meta-item { padding: 0 0.6rem; }
+.army-header-meta-item:first-child { padding-left: 0; }
+.army-header-meta-item + .army-header-meta-item { border-left: 1px solid var(--border); }
+
+/* The Rules section is a real .lp-section <details>/<summary> - collapsible, default open - the
+   exact same disclosure pattern Statline/Ranged/Melee already use, not a bespoke always-open block.
+   .unit-block > .lp-section's own margin only applies inside .unit-block, so it's redeclared here
+   for .army-header's own child. */
+.army-header > .lp-section { margin: 0.6rem 0.85rem; }
+
+/* Two columns (Army rules / Detachment rules) via the same <thead><th> convention the weapon
+   tables already use, rather than a new visual pattern - the Army column's own <th>/<td> are
+   simply omitted from the markup when no ArmyRule ability is present, so table-layout: auto sizes
+   the remaining Detachment column to fill the space without an empty column ever rendering. No
+   border/radius of its own - sits directly under the .lp-section summary bar, matching
+   .weapon-table's own precedent of relying on that bar for the section's visual boundary. */
+.army-rules-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+}
+.army-rules-table th {
+    text-align: left;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    padding: 0.3rem 0.6rem;
+    border-bottom: 1px solid var(--border);
+}
+.army-rules-table td {
+    vertical-align: top;
+    padding: 0.4rem 0.5rem;
+}
+
+/* Flex column lives on an inner <div> inside each <td>, never on the <td> itself - setting
+   display: flex directly on a table cell takes it out of table-cell layout entirely (a real bug
+   caught by direct user testing: both cells rendered as stacked block boxes spanning the table's
+   full width instead of sitting side by side as columns). The <td> stays a plain, unstyled table
+   cell; only its own content wrapper is a flex column.
+   .army-rules-cell (no per-entry name label to keep separate from) is itself the one fill/border
+   box, mirroring .statline-cell.spans-component/.spans-whole-unit's own uniform --bg fill and
+   dashed 3px-radius box directly. .detachment-rules-cell is a plain, unstyled list of
+   .detachment-entry blocks instead - see .detachment-entry-rules below for where that same
+   fill/border/striping actually lives on the Detachment side, scoped per Detachment rather than to
+   the whole column (a real fix from direct user testing: the Detachment name label itself was
+   getting pulled into the fill, and striping was alternating continuously across Detachment
+   boundaries instead of resetting at each one). */
+.army-rules-cell {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.detachment-rules-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+/* A Detachment's own name is a plain, non-interactive label (never a popover trigger) - regular
+   weight, distinct from the bold .ability-name-line rule triggers beneath it, and deliberately
+   OUTSIDE .detachment-entry-rules' own fill/border box below - it must never pick up that box's
+   --bg tint or its zebra striping, both scoped to the rule triggers alone. */
+.detachment-name {
+    display: block;
+    padding: 0.15rem 0.6rem;
+    font-weight: 400;
+    font-size: 0.78rem;
+    color: var(--text);
+}
+
+/* One box per Detachment's own resolved rules - mirrors .statline-cell.spans-component/
+   .spans-whole-unit's fill/border exactly (same reasoning as .army-rules-cell above), but scoped to
+   THIS Detachment's own <button> children only: each .detachment-entry is its own sibling-counting
+   context, so .ability-name-line:nth-of-type(even) naturally resets at every Detachment instead of
+   alternating continuously through the whole column - "zebra striping only matters within one
+   Detachment, never across Detachments" falls out of the DOM grouping alone, no extra CSS needed.
+   Indented (margin-left) relative to .detachment-name above it, rather than via padding on the
+   buttons themselves, so the whole box - fill, border, and all - reads as nested under its own
+   name. Omitted entirely (via @if in _ArmyHeader.cshtml) for a Detachment with no resolved rules,
+   matching a zero-rule Detachment showing its name with no box at all. */
+.detachment-entry-rules {
+    display: flex;
+    flex-direction: column;
+    margin-left: 1.2rem;
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
 .unit-block {
     margin-bottom: 1.25rem;
     background: var(--bg2);
@@ -1072,7 +1205,6 @@ button.filter-flag:hover { opacity: 0.8; }
    font/text-align/width/cursor), matching .weapon-name-toggle's own established reset pattern. */
 .ability-name-line {
     padding: 0.3rem 0.6rem;
-    font-weight: 700;
     border: none;
     border-bottom: 1px solid var(--border);
     flex: 1 1 auto;
@@ -1081,6 +1213,12 @@ button.filter-flag:hover { opacity: 0.8; }
     width: 100%;
     background: none;
     font: inherit;
+    /* font-weight MUST come after the `font: inherit` shorthand above - `font` resets font-weight
+       (among other font-* longhands) to its own value, so a `font-weight: 700` declared before it
+       was silently overwritten back to inherited (normal) weight - a real bug caught by direct user
+       testing: every ability/rule-name trigger on the page (not just the new army header) rendered
+       at normal weight despite this rule's own stated intent. */
+    font-weight: 700;
     color: inherit;
     text-align: left;
     cursor: pointer;

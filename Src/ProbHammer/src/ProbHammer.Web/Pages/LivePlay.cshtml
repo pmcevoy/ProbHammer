@@ -5,11 +5,11 @@
 }
 
 <main class="live-play-page">
-    <h1>Live Play</h1>
+    <partial name="_ArmyHeader" model="new ArmyHeaderRenderModel(Model.Header, Model.Glossary)"/>
 
     @for (var i = 0; i < Model.Units.Count; i++)
     {
-        <partial name="_UnitBlock" model="new UnitBlockRenderModel(i, Model.Units[i], Model.Glossary)" />
+        <partial name="_UnitBlock" model="new UnitBlockRenderModel(i, Model.Units[i], Model.Glossary)"/>
     }
 </main>
 

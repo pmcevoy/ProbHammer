@@ -2,11 +2,142 @@
 
 ## Active Work
 
-Nothing in progress.
+(none currently)
+
+**Next up (not started)**: the `infoGroup` ability-granting gap follow-up is now unblocked -
+`display-army-header-and-detachment-rules` (below) landed the "which Detachment(s) did this roster
+select" plumbing it needs. See auto-memory `project_infogroup_ability_followup` for the full
+DTO/evaluator shape (`BsInfoGroup`, `BsProfile.Modifiers`, `BsSelectionEntry.CategoryLinks`, a new
+"ancestor scope" condition kind) - Adeptus Custodes' `Talons` infoGroup is gated on both "is the
+Detachment specifically Talons of the Emperor" and "does the unit carry the Anathema Psykana BSData
+category"; neither existing captured Custodes export (`data/gw-android-export-custodes.txt` or its
+NewRecruit JSON re-export) uses that Detachment, so a new export would be needed to verify against.
 
 ---
 
 ## Recently Completed
+
+- OpenSpec change `display-army-header-and-detachment-rules` implemented, verified, and archived
+  (all 28 tasks; specs synced into `catalogue-json-ingestion`/`army-roster-enrichment`/
+  `roster-model`/`live-play-view`). Adds a `/LivePlay` header above the unit blocks (roster
+  Name/Faction/BattleSize/PointsSpent-PointsLimit/ForceDisposition, then a two-column Rules
+  section: every distinctly-named
+  `ArmyRule`-origin ability present anywhere in the roster, and every selected Detachment's own
+  resolved rule text) and resolves Detachment names/rules for real, closing a real gap - previously
+  `ArmyRoster.Detachments` was bare parsed strings, never checked against BSData or shown anywhere.
+  New `Domain.Roster` types `ResolvedDetachment(Name, Rules)`/`DetachmentRule(Name, Text)`;
+  `ArmyRoster.Detachments` changes from `IReadOnlyList<string>` to
+  `IReadOnlyList<ResolvedDetachment>` (**BREAKING**, updated in both the text-export pipeline
+  (`ArmyRosterEnricher`, new BSData resolution) and the BattleScribe JSON pipeline
+  (`BattleScribeRosterMapper.MapDetachment`, reading the roster's own already-inline
+  `selections[].rules[]` - no BSData involvement, per that pipeline's existing design)).
+  `ArmyListParser` itself stayed **unchanged**, confirming the exploration session's own finding:
+  the Oxford-comma/"and"-joined Detachments line (`RealExport_CommaBearingDetachmentName_
+  IsCapturedAsOneEntry`) is resolved downstream by a new greedy, longest-known-name-first "chomp"
+  (`Domain.Roster.DetachmentNameResolver`) - not a syntactic split - since a real Detachment can be
+  named *with* the word "and" in it ("Legends of Saga and Song") and one real Detachment name can be
+  a literal substring of another ("Warhost"/"Armoured Warhost"); both resolve correctly with no
+  special-casing.
+  **Two real, unanticipated corpus findings surfaced only by manually verifying against real data
+  (not caught by the change's own unit tests, which used hand-built fixtures)** - both investigated
+  and fixed generally, not allowlisted around: (1) the closure's own Detachment-choice group turned
+  out to need TWO structurally different real shapes, not the one shape design.md called
+  "unverified" - a full-corpus scan (`DetachmentGroupNameScanTests`, new, explicit-only) found 15 of
+  ~30 real faction files failing the original "a top-level selectionEntryGroup literally named
+  'Detachment'" assumption; generalizing `BsdataNameResolver.ResolveDetachmentEntries` to also
+  recognize a same-named wrapper *entry* holding one nested group (confirmed on Chaos Space Marines,
+  Necrons, Death Guard, Emperor's Children, Thousand Sons, World Eaters, Leagues of Votann, Chaos
+  Daemons) fixed 11 of the 15; the remaining 4 (Tyranids, Genestealer Cults, Drukhari, Unaligned
+  Forces) share one confirmed root cause - the real content lives behind a `catalogueLink` whose own
+  `importRootEntries` is `false` in the source data, so `BsdataClosureResolver` never actually
+  reaches it - deliberately left allowlisted (`DetachmentGroupNameAllowlist.cs`) rather than fixed,
+  since widening which links that resolver follows is a deep, unrelated architectural change out of
+  this proposal's scope. (2) verifying the proposal's own named infoLink-shape example (Necrons'
+  "Awakened Dynasty" → "Command Protocols") against the real bundled BSData snapshot found
+  `RuleGlossary.Build` silently failed to resolve it - `BsCatalogue.SharedRules`'s own doc comment
+  claimed it's "populated only on the game-system file", but Necrons.json defines its own local
+  `sharedRules` array (not `rules`), which is where "Command Protocols" actually lives; fixed by
+  having `RuleGlossary.Build` read every closure file's own `SharedRules` too, purely additive via
+  the existing `TryAdd` first-occurrence-wins convention - re-ran every other explicit-only corpus
+  scan against the live clone afterward to confirm no regression (all still green).
+  Also extracted `_UnitBlock.cshtml`'s popover trigger/panel-building logic (previously three local
+  closures) into a new, reusable `ProbHammer.Web.Rendering.RulePopoverRenderer` (id-scope-prefixed
+  per instance, `"u{i}"` for a unit block vs. `"hdr"` for the header) so the new `_ArmyHeader.cshtml`
+  partial gets the identical popover behavior with no duplication - `_UnitBlock.cshtml`'s own
+  rendering tests confirmed unaffected by the extraction.
+  Verified: 411 tests passing by default (28 new: `DetachmentRuleTextExtractorTests`,
+  `DetachmentNameResolverTests`, `LivePlayArmyHeaderRenderingTests`, plus updates to every test
+  asserting the old bare-string `Detachments` shape), 7 explicit-only corpus scans all green against
+  the live clone (including the two new ones this change added); `dotnet run` + `firefox-devtools-mcp`
+  against both real captured multi-Detachment exports (`data/gw-app-export-3-dp.txt`'s 3-way
+  Oxford-comma form, `data/gw-app-export-templars-multiple-detachments.txt`'s 2-way plain-"and"
+  form) confirmed the header renders correctly end-to-end, including a real popover
+  ("Faith-Fuelled Resolve", with its own "Restrictions: ..." sentence rendered verbatim) opening
+  correctly. Docs: `.claude/domain-model-11e.md` (new "Detachment Resolution" section, `ArmyRoster`
+  Detachments shape, `/LivePlay` wiring's `RulePopoverRenderer`/army-header note),
+  `.claude/design-tokens.md` (new "Army Header" section documenting the deliberate all-reused-
+  pattern decision).
+  **Update (same day, UI polish pass from direct user feedback on the shipped header)**: six fixes,
+  two of them real pre-existing bugs the header's own review just happened to surface (both general,
+  not header-specific): (1) `.army-header-name`'s white text lost to `.live-play-page h1`'s own
+  higher-specificity `color: var(--text)` rule - fixed by matching that rule's own two-class
+  specificity (`.live-play-page .army-header-name`, mirroring `.live-play-page .weapon-table`'s
+  precedent) rather than fighting cascade order. (2) The Rules section is now a real collapsible
+  `.lp-section <details>/<summary>` (default open), matching Statline/Ranged/Melee exactly, not a
+  bespoke always-open block. (3) The Army/Detachment `<td>` cells were rendering stacked full-width
+  instead of side by side - `display: flex` set directly on a `<td>` takes it out of table-cell
+  layout entirely; fixed by moving the flex column onto an inner `<div>`, leaving the `<td>` a plain
+  table cell. (4) **Real pre-existing bug, not new**: `.ability-name-line`'s own `font-weight: 700`
+  was silently overwritten by a `font: inherit` declared AFTER it in the same rule (the `font`
+  shorthand resets font-weight along with everything else it covers) - every ability/rule-name
+  trigger on the whole page, not just the header, has been rendering at normal weight instead of
+  bold since this class was introduced; fixed by reordering the two declarations. Detachment name
+  labels (deliberately never triggers) went from bold to the intended regular weight the same pass.
+  (5) **Second real pre-existing gap**: Black Templars' "Faith-Fuelled Resolve" rule text carries a
+  literal triple newline before its own "Restrictions: ..." sentence in the raw BSData source -
+  `.rule-popover-text`'s `white-space: pre-line` rendered that as a visibly oversized double-blank-
+  line gap; fixed generally in `RuleTextEmphasisRenderer.Render` (collapses any run of 3+ newlines
+  to exactly 2, leaving a genuine single-blank-line paragraph break like "Lethal Hits"' own
+  Designer's Note untouched) since every popover on the page shares that one rendering path - two
+  new `RuleTextEmphasisRendererTests` cover both the collapse and the must-not-flatten case. (6) The
+  header's rule-trigger buttons now zebra-stripe exactly like the Statline ability columns
+  (`.ability-name-line:nth-of-type(even)`, already shared CSS) - required flattening the Detachment
+  column's markup so every rule button across every Detachment is a direct sibling (no per-
+  Detachment wrapper `<div>` resetting the same-tag sibling count), which also simplified the
+  divider between one Detachment's own rules and the next to a `:not(:first-of-type)` border-top on
+  `.detachment-name` itself. Re-verified full test suite (413 passing, 2 new) and the same real
+  captured export end-to-end via `dotnet run` + `firefox-devtools-mcp` - all six fixes confirmed
+  visually correct in one screenshot pass.
+  **Second update (same day)**: the zebra-stripe COLOR already matched byte-for-byte (confirmed via
+  computed-style comparison), but the header's rule rows sat bare in the table cell with no framing
+  box, reading as differently styled from the Statline ability columns' own dashed-border, 3px-
+  radius box look - `.army-rules-cell`/`.detachment-rules-cell` now carry that exact same border
+  treatment. Full suite re-confirmed green (413) after the change.
+  **Third update (same day)**: still not quite matching - direct computed-style sampling across
+  every real Statline ability box found the actual mechanism is two-layered, not one: each
+  `.statline-cell.spans-component`/`.spans-whole-unit` BOX itself always carries a flat `--bg` fill,
+  and each `.ability-name-line` row is transparent on odd positions (revealing that fill) and only
+  paints its own tint on even ones - so a single-entry group's only visible color is the box's own
+  `--bg`, never the page's plain white, and genuine alternation only becomes visible once a group
+  has a second row to differ against. `.army-rules-cell`/`.detachment-rules-cell` had the border box
+  but not this base fill, so a single rule (e.g. "Skystrike") still read as page-white. Added
+  `background: var(--bg)` to both - this alone makes "striping only matters past one entry" fall out
+  for free, no separate conditional needed. Also added a left-padding indent
+  (`.detachment-rules-cell .ability-name-line`) so each rule trigger reads as nested under its own
+  Detachment name rather than flush-aligned with it, scoped to that one column only. Full suite
+  re-confirmed green (413) after both changes.
+  **Fourth update (same day)**: two follow-on corrections to the third update above - the `--bg`
+  fill had been applied to the whole `.detachment-rules-cell` column, so a Detachment's own NAME
+  label was picking it up too (should stay a plain, untinted label), and the continuous flattened
+  DOM meant zebra striping alternated across Detachment boundaries instead of resetting at each one.
+  Restructured: each Detachment's own resolved rules now live in their own `.detachment-entry-rules`
+  box (own `--bg` fill/dashed-border, indented via `margin-left` off the name above it, omitted
+  entirely for a zero-rule Detachment), while `.detachment-name` sits outside that box with no fill
+  of its own. Since each box is its own sibling-counting context, `.ability-name-line:nth-of-type
+  (even)` naturally resets per Detachment with no extra CSS - "striping only within one Detachment,
+  never across Detachments" falls out of the DOM grouping alone. `.army-rules-cell` (no per-entry
+  name label to conflict with) keeps its own single fill/border box unchanged. Full suite
+  re-confirmed green (413) after the restructuring.
 
 - OpenSpec change `import-battlescribe-json-rosters` implemented (22/22 tasks) — a second,
   independent import pipeline for BattleScribe/NewRecruit roster JSON exports

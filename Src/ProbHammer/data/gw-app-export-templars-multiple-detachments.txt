@@ -1,0 +1,100 @@
+Forever Crusade (900 Points)
+
+Space Marines
+Black Templars
+Fulguris Task Force and Marshal's Household (2 Detachment Points)
+Reconnaissance
+Incursion (1,000 Points)
+
+ATTACHED UNITS
+
+Attached unit 1
+
+High Marshal Helbrecht (110 Points)
+  • Attached as: Leader (Character)
+  • Warlord
+  • 1x Ferocity
+  • 1x Sword of the High Marshals
+
+Crusade Ancient (40 Points)
+  • Attached as: Support (Character)
+  • 1x Bolt pistol
+  • 1x Master-crafted power weapon
+
+Crusader Squad (150 Points)
+  • Attached as: Bodyguard (Battleline)
+  • 1x Sword Brother
+     ◦ 1x Master-crafted power weapon
+     ◦ 1x Pyre pistol
+  • 5x Initiate
+     ◦ 3x Astartes chainsword
+     ◦ 5x Bolt pistol
+     ◦ 5x Close combat weapon
+     ◦ 5x Heavy bolt pistol
+     ◦ 2x Power fist
+  • 4x Neophyte
+     ◦ 4x Astartes chainsword
+     ◦ 4x Bolt pistol
+
+Attached unit 2
+
+Marshal (80 Points)
+  • Attached as: Leader (Character)
+  • 1x Master-crafted power weapon
+  • 1x Plasma pistol
+
+Lieutenant (45 Points)
+  • Attached as: Support (Character)
+  • 1x Bolt Pistol
+  • 1x Close combat weapon
+  • 1x Master-crafted bolter
+
+Crusader Squad (150 Points)
+  • Attached as: Bodyguard (Battleline)
+  • 1x Sword Brother
+     ◦ 1x Master-crafted power weapon
+     ◦ 1x Pyre pistol
+  • 5x Initiate
+     ◦ 3x Astartes chainsword
+     ◦ 5x Bolt pistol
+     ◦ 5x Close combat weapon
+     ◦ 5x Heavy bolt pistol
+     ◦ 2x Power fist
+  • 4x Neophyte
+     ◦ 4x Astartes chainsword
+     ◦ 4x Bolt pistol
+
+Attached unit 3
+
+Marshal (80 Points)
+  • Attached as: Leader (Character)
+  • 1x Master-crafted power weapon
+  • 1x Plasma pistol
+
+Sword Brethren Squad (105 Points)
+  • Attached as: Bodyguard
+  • 4x Sword Brother
+     ◦ 4x Heavy bolt pistol
+     ◦ 4x Master-crafted power weapon
+
+DEDICATED TRANSPORTS
+
+Impulsor (75 Points)
+  • 1x Armoured hull
+  • 1x Multi-melta
+  • 1x Shield Dome
+  • 2x Storm bolter
+
+OTHER DATASHEETS
+
+Scout Squad (65 Points)
+  • 1x Scout Sergeant
+     ◦ 1x Astartes chainsword
+     ◦ 1x Bolt pistol
+     ◦ 1x Close combat weapon
+  • 4x Scout
+     ◦ 4x Astartes shotgun
+     ◦ 4x Bolt pistol
+     ◦ 4x Close combat weapon
+
+Exported with App Version: v2.4.0 (1), Data Version: v925

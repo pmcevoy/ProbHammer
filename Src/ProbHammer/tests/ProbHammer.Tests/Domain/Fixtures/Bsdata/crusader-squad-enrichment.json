@@ -105,7 +105,21 @@
         "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
       }
     ],
-    "sharedSelectionEntryGroups": [],
+    "sharedSelectionEntryGroups": [
+      {
+        "id": "g-detachment",
+        "name": "Detachment",
+        "selectionEntries": [
+          {
+            "id": "e-test-detachment",
+            "name": "Test Detachment",
+            "type": "upgrade",
+            "profiles": [], "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": [], "rules": []
+          }
+        ],
+        "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+      }
+    ],
     "sharedProfiles": []
   }
 }

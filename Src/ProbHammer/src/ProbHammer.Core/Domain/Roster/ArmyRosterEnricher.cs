@@ -22,11 +22,15 @@ public static class ArmyRosterEnricher
         units.AddRange(parsedArmyList.AttachmentGroups.Select(g => BuildAttachedUnit(g, catalogue)));
         units.AddRange(parsedArmyList.StandaloneUnits.Select(u => BuildUnit(u, catalogue)));
 
+        var detachments = parsedArmyList.Detachments
+            .SelectMany(text => DetachmentNameResolver.Resolve(text, catalogue))
+            .ToList();
+
         return new ArmyRoster(
             parsedArmyList.Name,
             parsedArmyList.PointsSpent,
             parsedArmyList.Faction,
-            parsedArmyList.Detachments,
+            detachments,
             parsedArmyList.ForceDisposition,
             parsedArmyList.BattleSize,
             parsedArmyList.PointsLimit,
@@ -54,7 +58,8 @@ public static class ArmyRosterEnricher
     /// project has consistently declined to add elsewhere (see resolve-enhancement-abilities'
     /// design.md). An empty Enhancements list resolves to an empty result - no Enhancement is ever
     /// attached merely because the Datasheet defines one available.</summary>
-    private static IReadOnlyList<Ability> ResolveEnhancements(IReadOnlyList<string> enhancementNames, Datasheet datasheet) =>
+    private static IReadOnlyList<Ability> ResolveEnhancements(IReadOnlyList<string> enhancementNames,
+        Datasheet datasheet) =>
         enhancementNames
             .Select(BsdataNameNormalization.Normalize)
             .Select(name =>
@@ -129,7 +134,8 @@ public static class ArmyRosterEnricher
     /// Ability instead is attached to this model-line's own Abilities rather than treated as an
     /// unresolved weapon. Throws with a "did you mean...?" suggestion when none of these
     /// resolve.</summary>
-    private static void ResolveWargearItem(string itemName, Datasheet datasheet, List<string> weapons, List<Ability> abilities)
+    private static void ResolveWargearItem(string itemName, Datasheet datasheet, List<string> weapons,
+        List<Ability> abilities)
     {
         if (datasheet.TryResolveWeaponProfile(itemName, out _))
         {
@@ -160,5 +166,6 @@ public static class ArmyRosterEnricher
         throw new BsdataNameResolutionException(itemName, message);
     }
 
-    private static string StripLeadingMarker(string name) => name.StartsWith("➤ ", StringComparison.Ordinal) ? name[2..] : name;
+    private static string StripLeadingMarker(string name) =>
+        name.StartsWith("➤ ", StringComparison.Ordinal) ? name[2..] : name;
 }

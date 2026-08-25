@@ -13,8 +13,10 @@ public sealed class ArmyRoster
     public IReadOnlyList<string> Faction { get; }
 
     /// <summary>Ordered by selection, one entry per detachment chosen (a battle size's detachment
-    /// points may buy more than one).</summary>
-    public IReadOnlyList<string> Detachments { get; }
+    /// points may buy more than one) - each carrying its own resolved rule text (see
+    /// army-roster-enrichment's Detachment Name Resolution), zero or more (Name, Text) pairs since
+    /// not every Detachment declares a rule of its own.</summary>
+    public IReadOnlyList<ResolvedDetachment> Detachments { get; }
 
     public string ForceDisposition { get; }
     public string BattleSize { get; }
@@ -25,7 +27,7 @@ public sealed class ArmyRoster
         string name,
         int pointsSpent,
         IEnumerable<string> faction,
-        IEnumerable<string> detachments,
+        IEnumerable<ResolvedDetachment> detachments,
         string forceDisposition,
         string battleSize,
         int pointsLimit,

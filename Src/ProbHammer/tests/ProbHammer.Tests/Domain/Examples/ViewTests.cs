@@ -23,7 +23,7 @@ public class ViewTests
         roster.Name.Should().Be("For the Emperor");
         roster.PointsSpent.Should().Be(1065);
         roster.Faction.Should().Equal("Space Marines", "Black Templars");
-        roster.Detachments.Should().Equal("Companions of Vehemence");
+        roster.Detachments.Select(d => d.Name).Should().Equal("Companions of Vehemence");
         roster.ForceDisposition.Should().Be("Purge the Foe");
         roster.BattleSize.Should().Be("Incursion");
         roster.PointsLimit.Should().Be(1000);

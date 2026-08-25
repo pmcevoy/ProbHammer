@@ -12,7 +12,8 @@ public class ArmyRosterTests
             name: "YO HO HO",
             pointsSpent: 700,
             faction: ["Chaos Space Marines"],
-            detachments: ["Cabal of Chaos", "Devotees of Destruction"],
+            detachments:
+            [new ResolvedDetachment("Cabal of Chaos", []), new ResolvedDetachment("Devotees of Destruction", [])],
             forceDisposition: "Priority Assets",
             battleSize: "Incursion",
             pointsLimit: 1000,
@@ -28,12 +29,19 @@ public class ArmyRosterTests
             name: "Crusade with me",
             pointsSpent: 575,
             faction: ["Space Marines", "Black Templars"],
-            detachments: ["Fulguris Task Force", "Marshal's Household", "Subversion Assets"],
+            detachments:
+            [
+                new ResolvedDetachment("Fulguris Task Force", []),
+                new ResolvedDetachment("Marshal's Household", [new DetachmentRule("Faith-Fuelled Resolve", "...")]),
+                new ResolvedDetachment("Subversion Assets", [])
+            ],
             forceDisposition: "Reconnaissance",
             battleSize: "Strike Force",
             pointsLimit: 2000,
             units: []);
 
-        roster.Detachments.Should().Equal("Fulguris Task Force", "Marshal's Household", "Subversion Assets");
+        roster.Detachments.Select(d => d.Name).Should()
+            .Equal("Fulguris Task Force", "Marshal's Household", "Subversion Assets");
+        roster.Detachments[1].Rules.Should().ContainSingle(r => r.Name == "Faith-Fuelled Resolve");
     }
 }

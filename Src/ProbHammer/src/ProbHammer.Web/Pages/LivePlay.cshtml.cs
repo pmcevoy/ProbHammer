@@ -14,6 +14,11 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
 {
     public List<UnitBlockViewModel> Units { get; private set; } = [];
 
+    // The roster's own metadata/rules header - see display-army-header-and-detachment-rules'
+    // Army Header Rendering requirement. Set alongside Units/Glossary in OnGet so all three come
+    // from the same ArmyRosterBuildResult.
+    public ArmyHeaderViewModel Header { get; private set; } = null!;
+
     // Consumed by _UnitBlock.cshtml (via UnitBlockRenderModel) to decide whether a weapon-keyword
     // chip or ability name is a resolvable rules-glossary reference - see live-play-view's
     // "Ability And Rule Text Popover"/rules-glossary's "Glossary Lookup By Normalized Name Or
@@ -31,6 +36,7 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
 
         var result = rosterProvider.Build(import);
         Units = BuildUnitBlocks(result.Roster);
+        Header = BuildArmyHeader(result.Roster);
         Glossary = result.Glossary;
         return Page();
     }
@@ -42,6 +48,37 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
     internal static List<UnitBlockViewModel> BuildUnitBlocks(ArmyRoster roster) =>
         SortRoster(roster.Units)
             .Select(unit => BuildUnitBlock(AttachedUnitAggregator.Build(unit), unit))
+            .ToList();
+
+    // Builds the header's own view model directly from the roster's army-level metadata plus the
+    // two new roster-wide aggregations (Army rules, Detachments) - a small, self-contained pipeline
+    // distinct from BuildUnitBlocks' own per-unit one, per design.md's "new, separate step from
+    // AttachedUnitAggregator's existing per-unit dedup - not a generalization of it".
+    internal static ArmyHeaderViewModel BuildArmyHeader(ArmyRoster roster) =>
+        new(
+            Name: roster.Name,
+            Faction: roster.Faction,
+            BattleSize: roster.BattleSize,
+            PointsSpent: roster.PointsSpent,
+            PointsLimit: roster.PointsLimit,
+            ForceDisposition: roster.ForceDisposition,
+            ArmyRules: BuildArmyRules(roster),
+            Detachments: roster.Detachments);
+
+    // Every distinctly-named ArmyRule-origin ability present on ANY unit in the roster, deduped by
+    // Name - computed independently of casualty/RemainingCount state (walks every component's own
+    // Datasheet.Abilities directly, not through AttachedUnitAggregator's present-only view): an
+    // ArmyRule ability is a fact about the army's chapter identity, not about which models are
+    // currently alive, so - unlike the existing per-unit box, which disappears once its
+    // contributing component is fully dead - this header entry never disappears over the course of
+    // a game. See design.md's "Roster-wide ArmyRule aggregation is a new, separate step...".
+    internal static IReadOnlyList<Ability> BuildArmyRules(ArmyRoster roster) =>
+        roster.Units
+            .SelectMany(unit => unit.Components)
+            .SelectMany(component => component.Datasheet.Abilities)
+            .Where(ability => ability.Origin == AbilityOrigin.ArmyRule)
+            .GroupBy(ability => ability.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
             .ToList();
 
     // Sorts the raw roster using the same criteria OnGet() has always applied to the built views
@@ -129,7 +166,9 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
         // the (unfiltered, StatlineName-matched) model-line list.
         var line = coordinate.LoadoutIndex < 0
             ? (lines.Count == 1 ? lines[0] : null)
-            : (coordinate.LoadoutIndex >= 0 && coordinate.LoadoutIndex < lines.Count ? lines[coordinate.LoadoutIndex] : null);
+            : (coordinate.LoadoutIndex >= 0 && coordinate.LoadoutIndex < lines.Count
+                ? lines[coordinate.LoadoutIndex]
+                : null);
 
         line?.SetRemainingCount(remainingCount);
     }
@@ -175,7 +214,8 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
 
         var statlineBlocks = GroupStatlines(view.Statlines, view.Abilities);
         var wholeUnitAbilitySpans = BuildWholeUnitAbilitySpans(statlineBlocks, view.Abilities);
-        var (adjustedStatlineBlocks, componentAbilitySpans) = BuildComponentAbilitySpans(statlineBlocks, view.Abilities);
+        var (adjustedStatlineBlocks, componentAbilitySpans) =
+            BuildComponentAbilitySpans(statlineBlocks, view.Abilities);
 
         return new(
             Name: view.Name,
@@ -208,8 +248,9 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
     // weapon itself were the contributor rather than a specific squad member. This lookup is only
     // consumed by BuildContributionBreakdown - GroupStatlines computes the Statline section's own
     // (unprefixed) loadout labels separately via CompressLoadoutLabels directly.
-    internal static Dictionary<(string ComponentName, string StatlineName, int LoadoutIndex), string> BuildLoadoutLabelLookup(
-        IReadOnlyList<AggregateStatlineEntry> statlines)
+    internal static Dictionary<(string ComponentName, string StatlineName, int LoadoutIndex), string>
+        BuildLoadoutLabelLookup(
+            IReadOnlyList<AggregateStatlineEntry> statlines)
     {
         var lookup = new Dictionary<(string, string, int), string>();
         foreach (var entry in statlines)
@@ -260,6 +301,7 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
                 groupIndex[key] = group;
                 groups.Add(group);
             }
+
             group.Add(contribution);
         }
 
@@ -283,7 +325,8 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
 
             foreach (var c in group)
             {
-                var label = loadoutLabels.GetValueOrDefault((c.ComponentName, c.StatlineName, c.LoadoutIndex), c.StatlineName);
+                var label = loadoutLabels.GetValueOrDefault((c.ComponentName, c.StatlineName, c.LoadoutIndex),
+                    c.StatlineName);
                 rows.Add(new WeaponContributionRow(
                     Label: label,
                     Count: c.Count,
@@ -366,7 +409,8 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
     // Walks a loadout's own weapon list in order, consuming one shared-multiset copy per matching
     // weapon before falling back to yielding it as distinguishing - so only weapons beyond what's
     // actually shared across every sibling loadout are kept.
-    private static IEnumerable<string> DistinguishingWeapons(IReadOnlyList<string> weapons, Dictionary<string, int> shared)
+    private static IEnumerable<string> DistinguishingWeapons(IReadOnlyList<string> weapons,
+        Dictionary<string, int> shared)
     {
         var remaining = new Dictionary<string, int>(shared);
         foreach (var weapon in weapons)
@@ -404,8 +448,9 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
     // row-bound cell. A multi-row span is left alone - its grid-row range strictly contains, but
     // is never identical to, any one row-bound cell's range, so the two nest visually rather than
     // colliding.
-    private static (IReadOnlyList<StatlineBlockViewModel> AdjustedBlocks, IReadOnlyList<ComponentAbilitySpanViewModel> Spans) BuildComponentAbilitySpans(
-        IReadOnlyList<StatlineBlockViewModel> statlineBlocks, IReadOnlyList<AggregateAbilityEntry> abilities)
+    private static (IReadOnlyList<StatlineBlockViewModel> AdjustedBlocks, IReadOnlyList<ComponentAbilitySpanViewModel>
+        Spans) BuildComponentAbilitySpans(
+            IReadOnlyList<StatlineBlockViewModel> statlineBlocks, IReadOnlyList<AggregateAbilityEntry> abilities)
     {
         var spans = abilities
             .Where(a => a.StatlineName == null && a.ComponentName != null)
@@ -427,15 +472,23 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
                 return new ComponentAbilitySpanViewModel(
                     FirstRunIndex: firstRun,
                     LastRunIndex: lastRun,
-                    ModelAbilities: [.. rowBoundModel, .. group.Where(a => a.Ability.Scope == AbilityScope.Model).Select(a => a.Ability)],
-                    UnitAbilities: [.. rowBoundUnit, .. group.Where(a => a.Ability.Scope == AbilityScope.Unit).Select(a => a.Ability)],
+                    ModelAbilities:
+                    [
+                        .. rowBoundModel,
+                        .. group.Where(a => a.Ability.Scope == AbilityScope.Model).Select(a => a.Ability)
+                    ],
+                    UnitAbilities:
+                    [.. rowBoundUnit, .. group.Where(a => a.Ability.Scope == AbilityScope.Unit).Select(a => a.Ability)],
                     IsFullyDead: runIndices.All(i => statlineBlocks[i].IsFullyDead));
             })
             .ToList();
 
-        var absorbedRunIndices = spans.Where(s => s.FirstRunIndex == s.LastRunIndex).Select(s => s.FirstRunIndex).ToHashSet();
+        var absorbedRunIndices = spans.Where(s => s.FirstRunIndex == s.LastRunIndex).Select(s => s.FirstRunIndex)
+            .ToHashSet();
         var adjustedBlocks = statlineBlocks
-            .Select((block, index) => absorbedRunIndices.Contains(index) ? block with { ModelAbilities = [], UnitAbilities = [] } : block)
+            .Select((block, index) => absorbedRunIndices.Contains(index)
+                ? block with { ModelAbilities = [], UnitAbilities = [] }
+                : block)
             .ToList();
 
         return (adjustedBlocks, spans);
@@ -463,8 +516,10 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
                     .All(block => block.IsFullyDead);
 
                 return new WholeUnitAbilitySpanViewModel(
-                    ModelAbilities: group.Where(a => a.Ability.Scope == AbilityScope.Model).Select(a => a.Ability).ToList(),
-                    UnitAbilities: group.Where(a => a.Ability.Scope == AbilityScope.Unit).Select(a => a.Ability).ToList(),
+                    ModelAbilities: group.Where(a => a.Ability.Scope == AbilityScope.Model).Select(a => a.Ability)
+                        .ToList(),
+                    UnitAbilities: group.Where(a => a.Ability.Scope == AbilityScope.Unit).Select(a => a.Ability)
+                        .ToList(),
                     IsFullyDead: isFullyDead);
             })
             .ToList();
@@ -556,7 +611,12 @@ public sealed record WholeUnitAbilitySpanViewModel(
 /// selection-driven filtering/recompute regardless of whether a visible expand trigger exists for
 /// this weapon - see <see cref="WeaponRowViewModel.ShowsBreakdownTrigger"/>).</summary>
 public sealed record WeaponContributionRow(
-    string Label, int Count, DiceExpression PerModelAttacks, DiceExpression Subtotal, string GroupKey, string? SelectKey)
+    string Label,
+    int Count,
+    DiceExpression PerModelAttacks,
+    DiceExpression Subtotal,
+    string GroupKey,
+    string? SelectKey)
 {
     /// <summary>The plain integer value of <see cref="Subtotal"/> when it's a fixed (non-dice)
     /// expression, for live-play.js to sum without needing any <see cref="DiceExpression"/>
@@ -573,7 +633,9 @@ public sealed record WeaponContributionRow(
 /// live-play.js needs its rows' selection keys to filter/recompute this entry even when no user-
 /// facing trigger exists for it.</summary>
 public sealed record WeaponRowViewModel(
-    AggregateWeaponEntry Entry, IReadOnlyList<WeaponContributionRow> Breakdown, bool ShowsBreakdownTrigger);
+    AggregateWeaponEntry Entry,
+    IReadOnlyList<WeaponContributionRow> Breakdown,
+    bool ShowsBreakdownTrigger);
 
 public sealed record UnitBlockViewModel(
     string Name,
@@ -605,3 +667,25 @@ public sealed record UnitBlockViewModel(
 /// <c>_UnitBlock.cshtml</c> directly rather than through a full page request) can supply it too.
 /// </summary>
 public sealed record UnitBlockRenderModel(int UnitIndex, UnitBlockViewModel Unit, RuleGlossary Glossary);
+
+/// <summary>The `/LivePlay` header's own view model - the roster's army-level metadata plus the two
+/// roster-wide aggregations <see cref="LivePlayModel.BuildArmyHeader"/> computes: every
+/// distinctly-named ArmyRule-origin ability present anywhere in the roster (<see cref="ArmyRules"/>,
+/// deduplicated army-wide - distinct from <see cref="AttachedUnitAggregator"/>'s existing per-unit
+/// dedup, see design.md), and the roster's own resolved <see cref="Detachments"/>. Deliberately
+/// carries no DP cost and no unit points cost - see live-play-view's Army Header Rendering
+/// requirement.</summary>
+public sealed record ArmyHeaderViewModel(
+    string Name,
+    IReadOnlyList<string> Faction,
+    string BattleSize,
+    int PointsSpent,
+    int PointsLimit,
+    string ForceDisposition,
+    IReadOnlyList<Ability> ArmyRules,
+    IReadOnlyList<ResolvedDetachment> Detachments);
+
+/// <summary>Wraps <see cref="ArmyHeaderViewModel"/> with the <see cref="RuleGlossary"/> the
+/// <c>_ArmyHeader</c> partial needs to build its own popover triggers - mirrors
+/// <see cref="UnitBlockRenderModel"/>'s own "view model + glossary" pairing exactly.</summary>
+public sealed record ArmyHeaderRenderModel(ArmyHeaderViewModel Header, RuleGlossary Glossary);

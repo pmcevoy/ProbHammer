@@ -23,7 +23,8 @@ public class LivePlayHalfStrengthAndBattleShockRenderingTests : IClassFixture<We
 {
     private readonly WebApplicationFactory<Program> _factory;
 
-    public LivePlayHalfStrengthAndBattleShockRenderingTests(WebApplicationFactory<Program> factory) => _factory = factory;
+    public LivePlayHalfStrengthAndBattleShockRenderingTests(WebApplicationFactory<Program> factory) =>
+        _factory = factory;
 
     private async Task<string> RenderAsync(ICombatUnit unit)
     {
@@ -37,6 +38,13 @@ public class LivePlayHalfStrengthAndBattleShockRenderingTests : IClassFixture<We
         var model = new UnitBlockRenderModel(0, unitBlock, glossary);
         return await renderer.RenderAsync(httpContext, "/Pages/Shared/_UnitBlock.cshtml", model);
     }
+
+    // Matches a rendered <button>'s own opening tag by a class it carries - across whatever
+    // whitespace/line breaks the Razor source (or any downstream reformatting of it) puts between
+    // attributes, since attribute order/line breaks are not a contract these tests should depend
+    // on; only which attributes are present matters.
+    private static string ButtonTag(string html, string glyphClass) =>
+        Regex.Match(html, $@"<button[^>]*{Regex.Escape(glyphClass)}[^>]*>").Value;
 
     [Fact]
     public async Task SingleModelUnit_HalfStrengthControlIsAlwaysActionable_ReflectingTheOverride()
@@ -68,8 +76,9 @@ public class LivePlayHalfStrengthAndBattleShockRenderingTests : IClassFixture<We
         var html = await RenderAsync(unit);
 
         html.Should().Contain("aria-label=\"At or below half strength (computed)\"");
-        html.Should().Contain("status-glyph-halfstrength \" disabled");
-        html.Should().NotContain("status-glyph-halfstrength is-active");
+        var button = ButtonTag(html, "status-glyph-halfstrength");
+        button.Should().Contain("disabled");
+        button.Should().NotContain("is-active");
     }
 
     [Fact]
@@ -83,7 +92,9 @@ public class LivePlayHalfStrengthAndBattleShockRenderingTests : IClassFixture<We
         var html = await RenderAsync(unit);
 
         // Still inert (disabled) - only the glyph color changes to reflect the computed status.
-        html.Should().Contain("status-glyph-halfstrength is-active\" disabled");
+        var button = ButtonTag(html, "status-glyph-halfstrength");
+        button.Should().Contain("is-active");
+        button.Should().Contain("disabled");
     }
 
     [Fact]
@@ -96,7 +107,7 @@ public class LivePlayHalfStrengthAndBattleShockRenderingTests : IClassFixture<We
         html.Should().Contain("status-glyph-battleshock");
         // Battle-shock is always actionable, for every unit regardless of starting strength -
         // unlike Half Strength, it never renders `disabled`.
-        html.Should().NotContain("status-glyph-battleshock \" disabled").And.NotContain("status-glyph-battleshock is-active\" disabled");
+        ButtonTag(html, "status-glyph-battleshock").Should().NotContain("disabled");
     }
 
     [Fact]

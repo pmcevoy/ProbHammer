@@ -87,6 +87,27 @@ public class RuleTextEmphasisRendererTests
     }
 
     [Fact]
+    public void ThreeOrMoreConsecutiveNewlines_CollapseToOneBlankLine()
+    {
+        // Real BSData authoring quirk (Black Templars' "Faith-Fuelled Resolve") - its own trailing
+        // "Restrictions: ..." sentence is separated by three newlines, not the usual one-blank-line
+        // paragraph break, producing a visibly oversized gap under white-space: pre-line.
+        var (inline, _) = Render("Main text.\n\n\nRestrictions: some text.");
+
+        inline.Should().Be("Main text.\n\nRestrictions: some text.");
+    }
+
+    [Fact]
+    public void ASingleBlankLine_IsLeftUntouched()
+    {
+        // A genuine one-blank-line paragraph break (e.g. "Lethal Hits"' own Designer's Note) must
+        // not be flattened into a run-on line by the collapsing above.
+        var (inline, _) = Render("First paragraph.\n\nSecond paragraph.");
+
+        inline.Should().Be("First paragraph.\n\nSecond paragraph.");
+    }
+
+    [Fact]
     public void A_bracket_token_stays_extractable_and_reaches_the_delegate_inside_open_emphasis()
     {
         var seen = new List<string>();

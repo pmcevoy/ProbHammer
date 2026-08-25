@@ -32,9 +32,23 @@ public class BattleScribeRosterMapperTests
         army.PointsSpent.Should().Be(915);
         army.PointsLimit.Should().Be(1000);
         army.Faction.Should().Equal("Imperium", "Adeptus Astartes", "Black Templars");
-        army.Detachments.Should().Equal("Companions of Vehemence");
+        army.Detachments.Select(d => d.Name).Should().Equal("Companions of Vehemence");
         army.ForceDisposition.Should().Be("Purge the Foe");
         army.BattleSize.Should().Be("Incursion");
+    }
+
+    [Fact]
+    public void SelectedDetachment_CarriesItsOwnInlineRuleTextDirectlyFromTheRosterJson()
+    {
+        // No BSData involvement in this pipeline (design.md's "Bypass BSData entirely") - a
+        // selected Detachment's own rule text is already inline on its own selections[].rules[]
+        // (confirmed real shape: "Companions of Vehemence" carries "Righteous Fervour").
+        var army = BuildRoster();
+
+        var detachment = army.Detachments.Should().ContainSingle().Subject;
+        detachment.Name.Should().Be("Companions of Vehemence");
+        detachment.Rules.Should()
+            .ContainSingle(r => r.Name == "Righteous Fervour" && !string.IsNullOrWhiteSpace(r.Text));
     }
 
     [Fact]
@@ -76,7 +90,8 @@ public class BattleScribeRosterMapperTests
         crusaderSquad.ModelLines.Select(ml => ml.StatlineName)
             .Should().Equal("Sword Brother", "Initiate", "Initiate", "Neophyte");
 
-        var chainswordInitiates = crusaderSquad.ModelLines.First(ml => ml.Weapons.Contains("Astartes Chainsword") && ml.Count == 3);
+        var chainswordInitiates =
+            crusaderSquad.ModelLines.First(ml => ml.Weapons.Contains("Astartes Chainsword") && ml.Count == 3);
         chainswordInitiates.Weapons.Should().BeEquivalentTo("Astartes Chainsword", "Bolt pistol", "Heavy Bolt Pistol");
 
         var powerFistInitiates = crusaderSquad.ModelLines.First(ml => ml.Weapons.Contains("Power fist"));
@@ -91,10 +106,14 @@ public class BattleScribeRosterMapperTests
         var helbrecht = FindUnit(army, "High Marshal Helbrecht");
 
         var line = helbrecht.ModelLines.Should().ContainSingle().Subject;
-        line.Weapons.Should().Contain(["Ferocity", "➤ Sword of the High Marshals - Sweep", "➤ Sword of the High Marshals - Strike"]);
+        line.Weapons.Should().Contain([
+            "Ferocity", "➤ Sword of the High Marshals - Sweep", "➤ Sword of the High Marshals - Strike"
+        ]);
 
-        helbrecht.Datasheet.ResolveWeaponProfile("➤ Sword of the High Marshals - Sweep").Should().BeOfType<MeleeWeapon>();
-        helbrecht.Datasheet.ResolveWeaponProfile("➤ Sword of the High Marshals - Strike").Should().BeOfType<MeleeWeapon>();
+        helbrecht.Datasheet.ResolveWeaponProfile("➤ Sword of the High Marshals - Sweep").Should()
+            .BeOfType<MeleeWeapon>();
+        helbrecht.Datasheet.ResolveWeaponProfile("➤ Sword of the High Marshals - Strike").Should()
+            .BeOfType<MeleeWeapon>();
     }
 
     [Fact]
@@ -106,7 +125,8 @@ public class BattleScribeRosterMapperTests
             .Single(u => u.Bodyguard.Name == "Crusader Squad" && u.Attached.Count == 2)
             .Attached.Single(u => u.Name == "Marshal");
 
-        marshal.Enhancements.Should().ContainSingle(a => a.Name == "Oathbound Exemplar" && a.Origin == AbilityOrigin.Enhancement);
+        marshal.Enhancements.Should()
+            .ContainSingle(a => a.Name == "Oathbound Exemplar" && a.Origin == AbilityOrigin.Enhancement);
         swordBrethren.Enhancements.Should().BeEmpty();
     }
 

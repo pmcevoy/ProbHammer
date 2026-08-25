@@ -856,9 +856,17 @@ ResolvedBsdataCatalogue.Glossary: RuleGlossary
 **`/LivePlay` wiring (`ProbHammer.Web`)**: `IArmyRosterProvider.Build` returns
 `ArmyRosterBuildResult(ArmyRoster Roster, RuleGlossary Glossary)` (was bare `ArmyRoster`) so both
 `LivePlayModel.OnGet` and `LivePlayCasualtyService`'s direct `_UnitBlock.cshtml` fragment
-re-render have the glossary available; `UnitBlockRenderModel` carries it as a third field.
-`_UnitBlock.cshtml`'s `BuildRulePopover`/`RenderNestedReference` local functions are the only glue
-code that touches `RuleGlossary` directly: every weapon-keyword chip (`WeaponAbilityTags()`'s
+re-render have the glossary available; `UnitBlockRenderModel` carries it as a third field. Since
+`display-army-header-and-detachment-rules`, the trigger/panel-building logic previously local to
+`_UnitBlock.cshtml` (`BuildRulePopover`/`NextPopoverId`/`RenderNestedReference`) is extracted into
+`ProbHammer.Web.Rendering.RulePopoverRenderer` - a small stateful class, one instance per render
+pass, constructed with the `RuleGlossary` plus an explicit id-scope prefix (`"u{i}"` for a unit
+block, `"hdr"` for the header) instead of implicitly relying on the unit's page index - so the new
+`_ArmyHeader.cshtml` partial (below) can produce the identical trigger/panel markup with no unit
+index to scope against. `_UnitBlock.cshtml`'s own local `BuildRulePopover` is now a one-line
+forwarder onto its own `RulePopoverRenderer` instance, kept only so its many call sites don't all
+need touching. `_UnitBlock.cshtml`'s glue code (via `RulePopoverRenderer`) is the only code that
+touches `RuleGlossary` directly: every weapon-keyword chip (`WeaponAbilityTags()`'s
 existing literal ALL-CAPS tag strings, unchanged - see "BSData JSON Ingestion" above) and every
 ability name is looked up via `TryResolve`; a match becomes a `<button popovertarget="p-{id}">`
 trigger with a sibling `<div id="p-{id}" popover="auto">` panel (never nested inside the trigger -
@@ -873,6 +881,25 @@ resolving back to a rule already open somewhere in its own chain renders as plai
 recursing - several real generic-mechanic rules self-reference their own name in their own text
 (confirmed: `Sustained Hits`, `Anti`, `Cleave`), and an unguarded first version of this
 stack-overflowed rendering a real weapon's chip.
+
+**Army header (`display-army-header-and-detachment-rules`)**: `LivePlay.cshtml` renders a new
+`_ArmyHeader.cshtml` partial above the unit-block loop, fed `ArmyHeaderRenderModel(ArmyHeaderViewModel
+Header, RuleGlossary Glossary)` - mirrors `UnitBlockRenderModel`'s own "view model + glossary"
+pairing. `LivePlayModel.BuildArmyHeader(roster)` builds the view model directly from the roster's
+own metadata (Name/Faction/BattleSize/PointsSpent/PointsLimit/ForceDisposition) plus two
+aggregations: the roster's own resolved `Detachments` (unchanged, just carried through), and
+`BuildArmyRules(roster)` - every distinctly-named `ArmyRule`-origin ability present on ANY unit in
+the roster, deduped by Name, computed by walking every component's own `Datasheet.Abilities`
+directly (NOT through `AttachedUnitAggregator`'s present-only view) - deliberately independent of
+casualty/`RemainingCount` state, since an `ArmyRule` ability is a fact about the army's chapter
+identity, not which models are currently alive, so (unlike the existing per-unit box) this header
+entry never disappears over the course of a game. A NEW, separate aggregation from
+`AttachedUnitAggregator.PromoteArmyRuleAbilities`'s existing per-unit dedup, which stays exactly
+as-is - the existing per-unit box keeps rendering unchanged alongside the new header. The header's
+own rules section lays out two columns (Army/Detachment) via the same `<thead><th>` convention the
+weapon tables already use; a Detachment renders its own name once as a plain (non-interactive)
+label with one `RulePopoverRenderer`-built trigger per resolved rule beneath it. No DP cost, no
+unit points cost, anywhere on the page.
 
 ### Full-Corpus Bracket-Token-Resolution Scan
 
@@ -1148,6 +1175,136 @@ diagnostic/fallback lookups that need to check existence or enumerate candidates
 throwing on a routine miss or breaking `ResolveWeaponProfile`'s existing on-demand-only contract.
 Since resolve-enhancement-abilities, it likewise gained `TryResolveAbility`/`OptionalAbilityNames`
 for the same reason, on the optional-ability side.
+
+### Detachment Resolution
+
+Full requirements: `openspec/changes/display-army-header-and-detachment-rules/` (proposal, design,
+specs, tasks). Resolves each entry in `ParsedArmyList.Detachments` (a raw captured text that MAY
+itself name more than one Detachment in natural-language list form, e.g. "Fulguris Task Force,
+Marshal's Household, and Subversion Assets") against the faction's `ResolvedBsdataCatalogue` into
+`ArmyRoster.Detachments`' new `ResolvedDetachment` shape (see "Roster Context" below).
+
+```
+BsdataNameResolver.ResolveDetachmentEntries(closure) -> IReadOnlyList<BsSelectionEntry>
+                                       // Locates the closure's own Detachment-choice group and
+                                       // returns its direct children - each one a real Detachment
+                                       // choice. Checked per file in closure order (local-over-
+                                       // imported precedence, mirroring Resolve's own "first match
+                                       // wins" convention). Confirmed by a full-corpus scan
+                                       // (DetachmentGroupNameScanTests, below) to need TWO real,
+                                       // structurally different shapes, not the one shape design.md
+                                       // originally assumed and flagged as merely "unverified":
+                                       //   1. A top-level sharedSelectionEntryGroup named
+                                       //      "Detachment" or "Detachments" (both real - singular on
+                                       //      Space Marines, plural on the Aeldari Library) directly.
+                                       //   2. A top-level sharedSelectionEntries ENTRY of the same
+                                       //      name (confirmed: Chaos Space Marines, Necrons, Death
+                                       //      Guard, Emperor's Children, Thousand Sons, World
+                                       //      Eaters, Leagues of Votann, Chaos Daemons) wrapping ONE
+                                       //      nested selectionEntryGroup that itself carries the
+                                       //      real choices directly. A handful of factions
+                                       //      (confirmed: Tyranids, Genestealer Cults) instead wrap
+                                       //      an empty-named, empty-entries group reaching the real
+                                       //      choices only via its own entryLink into a "Library"
+                                       //      file - unreachable today because that catalogueLink's
+                                       //      own importRootEntries is false in the source data (a
+                                       //      genuine, confirmed, allowlisted corpus gap in
+                                       //      BsdataClosureResolver's own link-following, distinct
+                                       //      from and out of scope for this method - see
+                                       //      DetachmentGroupNameAllowlist.cs for the full list,
+                                       //      including Drukhari's own identical-cause gap on its
+                                       //      Aeldari Library import). Falling through to a wrapper
+                                       //      entry's sole nested group regardless of ITS OWN name
+                                       //      is deliberately not attempted as a further fallback -
+                                       //      an empty-named, zero-entry group is indistinguishable
+                                       //      from "nothing reachable", so the honest answer is "no
+                                       //      known Detachments" (a loud downstream resolution
+                                       //      failure), not a guessed shape.
+
+DetachmentGroupNameScanTests           // tests/.../CorpusScan/ - same permanent, manually-
+                                       // triggered [Fact(Explicit = true)] pattern as every other
+                                       // corpus scan (see "Full-Corpus Scan Tests" above). Every
+                                       // real faction file (excluding "Library" files, matching
+                                       // BsdataFactionResolver's own exclusion) gets a turn as its
+                                       // own closure's starting file; its closure must resolve at
+                                       // least one Detachment entry. First real run: 15 failures
+                                       // against the original single-shape assumption; generalizing
+                                       // ResolveDetachmentEntries to the second shape fixed 11 of
+                                       // them; the remaining 4 are the confirmed importRootEntries
+                                       // gap above, allowlisted.
+
+ResolvedBsdataCatalogue.DetachmentEntries / .DetachmentNames / .ResolveDetachment(name)
+                                       // DetachmentEntries/DetachmentNames built once in Build()
+                                       // (same convention as IdIndex/GroupIdIndex/ProfileIdIndex -
+                                       // "built lazily" means once per closure, not per request).
+                                       // ResolveDetachment(name) is an exact-name lookup with the
+                                       // same "did you mean...?" contract as ResolveDatasheet.
+
+DetachmentRuleTextExtractor.Extract(detachmentEntry, glossary) -> IReadOnlyList<(Name, Text)>
+                                       // Domain.Catalogue.Bsdata (catalogue-json-ingestion) -
+                                       // extracts zero or more rule pairs from an already-resolved
+                                       // Detachment entry: a locally-declared rule
+                                       // (BsSelectionEntry.Rules, new field mirroring
+                                       // BsCatalogue.Rules' own shape) and a "type": "rule" infoLink
+                                       // resolved via RuleGlossary.TryResolve - the same lookup
+                                       // Core Rule Ability Extraction already uses, but WITHOUT that
+                                       // extraction's "nested inside a type: upgrade entry" ancestry
+                                       // guard, since a Detachment entry's own direct infoLinks
+                                       // carry no equivalent weapon-keyword-cross-reference
+                                       // ambiguity. An unresolvable infoLink reference is skipped,
+                                       // not failed.
+
+RuleGlossary.Build's own generalization (this change)  // A catalogue file's own local sharedRules
+                                       // field was originally assumed (BsCatalogue.SharedRules' own
+                                       // doc comment) to appear only on the game-system file - real
+                                       // data contradicts that: Necrons.json defines its own local
+                                       // sharedRules array (not rules), which is where "Command
+                                       // Protocols" (Awakened Dynasty's own infoLink target) is
+                                       // actually declared. Found only by manually verifying this
+                                       // change's own infoLink-shape test case (task 5.2) against
+                                       // real bundled data - RuleGlossary.Build now reads every
+                                       // closure file's own SharedRules too, not only the game
+                                       // system's, purely additive via the same TryAdd
+                                       // first-occurrence-wins convention.
+
+DetachmentNameResolver.Resolve(text, catalogue) -> IReadOnlyList<ResolvedDetachment>
+                                       // Domain.Roster (army-roster-enrichment) - the greedy,
+                                       // longest-known-name-first "chomp" that disambiguates a
+                                       // natural-language-joined Detachments entry without a
+                                       // syntactic split on "and"/commas: repeatedly finds the
+                                       // longest of catalogue.DetachmentNames still present in the
+                                       // (progressively space-masked, position-stable) working text,
+                                       // "claims" it, and loops. Never splices text out (masks
+                                       // matched spans with spaces instead) so a claim's own
+                                       // position in the ORIGINAL text stays stable, which is what
+                                       // lets the final result be ordered by claim position rather
+                                       // than match-discovery order - "in the order listed" per the
+                                       // spec, not "in decreasing-length order". Two confirmed real
+                                       // collision shapes this resolves correctly: a Detachment name
+                                       // that itself contains "and" ("Legends of Saga and Song" -
+                                       // never split, since it's matched as one whole name before
+                                       // any shorter name gets a chance), and one Detachment name
+                                       // that's a literal substring of another
+                                       // ("Warhost"/"Armoured Warhost" - longest-first ordering means
+                                       // "Armoured Warhost" is already masked out before "Warhost" is
+                                       // even checked). Fails with a BsdataNameResolutionException
+                                       // naming the unresolved remainder (stripped of separator
+                                       // punctuation/whitespace/"and") when any non-separator text is
+                                       // left unclaimed once no further known name matches.
+
+ArmyRosterEnricher.Enrich             // now also resolves each entry in parsedArmyList.Detachments
+                                       // via DetachmentNameResolver.Resolve, flattened (SelectMany)
+                                       // into ArmyRoster's own Detachments list, since one parsed
+                                       // entry may itself claim more than one ResolvedDetachment.
+
+BattleScribeRosterMapper.MapDetachment(selection) -> ResolvedDetachment
+                                       // BattleScribe pipeline - no BSData involvement, per that
+                                       // pipeline's existing design: a selected Detachment's own
+                                       // rule text is already inline on its own selections[].rules[]
+                                       // (confirmed real: Death Guard's "Virulent Vectorium" carries
+                                       // "Worldblight"; Black Templars' "Companions of Vehemence"
+                                       // carries "Righteous Fervour" the same way).
+```
 
 ### Session-Backed Import (`ProbHammer.Web`)
 
@@ -1665,7 +1822,10 @@ than through the `presentLines` filter.
 `IReadOnlyList<ICombatUnit>`) with the army-level metadata no `Unit`/`AttachedUnit`/`Datasheet`
 carries: `Name`, `PointsSpent`, `Faction` (ordered — parent codex before sub-faction, e.g.
 `["Space Marines", "Black Templars"]`, or a single entry when there's no split), `Detachments`
-(ordered by selection, one entry per detachment a battle size's detachment points bought),
+(ordered by selection, one entry per detachment a battle size's detachment points bought - since
+`display-army-header-and-detachment-rules`, `IReadOnlyList<ResolvedDetachment>` rather than bare
+names: `ResolvedDetachment(Name, Rules: IReadOnlyList<DetachmentRule>)`,
+`DetachmentRule(Name, Text)` - see "Detachment Resolution" above for how each entry is resolved),
 `ForceDisposition`, `BattleSize`, and `PointsLimit`. Originally added ahead of the (then-unbuilt)
 GW-app export parser so that parsing work would have a settled target type instead of inventing
 one mid-design; the shape and sample values (`Examples/View.Roster()`) were validated against a

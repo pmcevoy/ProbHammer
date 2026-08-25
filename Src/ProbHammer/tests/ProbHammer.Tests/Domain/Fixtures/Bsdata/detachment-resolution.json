@@ -1,0 +1,94 @@
+{
+  "catalogue": {
+    "id": "test-cat-detachment-resolution",
+    "name": "Test Faction (detachment-resolution fixture)",
+    "gameSystemId": "",
+    "catalogueLinks": [],
+    "rules": [
+      { "id": "r-command-protocols", "name": "Command Protocols", "description": "Full text of Command Protocols." }
+    ],
+    "sharedSelectionEntries": [],
+    "sharedSelectionEntryGroups": [
+      {
+        "id": "g-detachment",
+        "name": "Detachment",
+        "selectionEntries": [
+          {
+            "id": "e-marshals-household",
+            "name": "Marshal's Household",
+            "type": "upgrade",
+            "profiles": [], "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": [],
+            "rules": [
+              { "id": "r-faith-fuelled-resolve", "name": "Faith-Fuelled Resolve", "description": "Full text of Faith-Fuelled Resolve." }
+            ]
+          },
+          {
+            "id": "e-black-spear-task-force",
+            "name": "Black Spear Task Force",
+            "type": "upgrade",
+            "profiles": [], "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": [],
+            "rules": [
+              { "id": "r-kill-teams", "name": "Kill Teams", "description": "Full text of Kill Teams." },
+              { "id": "r-mission-tactics", "name": "Mission Tactics", "description": "Full text of Mission Tactics." }
+            ]
+          },
+          {
+            "id": "e-awakened-dynasty",
+            "name": "Awakened Dynasty",
+            "type": "upgrade",
+            "profiles": [], "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [],
+            "rules": [],
+            "infoLinks": [
+              { "name": "Command Protocols", "type": "rule", "targetId": "r-command-protocols" },
+              { "name": "Nonexistent Rule", "type": "rule", "targetId": "r-does-not-exist" }
+            ]
+          },
+          {
+            "id": "e-legends-of-saga-and-song",
+            "name": "Legends of Saga and Song",
+            "type": "upgrade",
+            "profiles": [], "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": [], "rules": []
+          },
+          {
+            "id": "e-warhost",
+            "name": "Warhost",
+            "type": "upgrade",
+            "profiles": [], "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": [], "rules": []
+          },
+          {
+            "id": "e-armoured-warhost",
+            "name": "Armoured Warhost",
+            "type": "upgrade",
+            "profiles": [], "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": [], "rules": []
+          },
+          {
+            "id": "e-cabal-of-chaos",
+            "name": "Cabal of Chaos",
+            "type": "upgrade",
+            "profiles": [], "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": [], "rules": []
+          },
+          {
+            "id": "e-devotees-of-destruction",
+            "name": "Devotees of Destruction",
+            "type": "upgrade",
+            "profiles": [], "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": [], "rules": []
+          },
+          {
+            "id": "e-fulguris-task-force",
+            "name": "Fulguris Task Force",
+            "type": "upgrade",
+            "profiles": [], "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": [], "rules": []
+          },
+          {
+            "id": "e-subversion-assets",
+            "name": "Subversion Assets",
+            "type": "upgrade",
+            "profiles": [], "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": [], "rules": []
+          }
+        ],
+        "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []
+      }
+    ],
+    "sharedProfiles": []
+  }
+}

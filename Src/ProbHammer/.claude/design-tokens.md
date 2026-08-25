@@ -158,6 +158,32 @@ No dedicated responsive breakpoint today — the page is a single centered colum
 
 ---
 
+## Army Header (`display-army-header-and-detachment-rules`)
+
+Deliberately introduces no new visual pattern — every piece is an existing convention applied to a
+new section, not a new design decision:
+
+- `.army-header`/`.army-header-name` reuse `.unit-block`/`.unit-block .unit-name`'s own card shape
+  and `--bg3` name bar exactly — the header reads as a peer of the unit blocks below it, not a
+  distinct page-chrome element.
+- `.army-header-meta`'s bordered-cell dividers (`border-left` between adjacent items, no literal
+  "|" character) reuse `.unit-toolbar-item`'s own convention.
+- `.army-rules-title` duplicates `.lp-section summary`'s own section-title bar styling directly
+  (background/color/weight/size/case/letter-spacing) rather than sharing one selector — the same
+  trade-off `.rule-popover-title` already made, for the same reason (a plain `<div>`, not a
+  toggling `<summary>`, can't share a selector with one).
+- `.army-rules-table`'s `<thead><th>` column labels (Army/Detachment) reuse the weapon-table
+  convention already established for Statline/Ranged/Melee — a label bar, not a new grid/column
+  scheme. Only one of the two `<th>`/`<td>` pair renders when its own column has nothing to show
+  (no `ArmyRule` ability present), rather than rendering an empty column.
+- Every rule trigger (Army column, and each Detachment's own chip beneath its name) is
+  `.ability-name-line` — the exact same popover-trigger button every ability name on the page
+  already uses, built by the same `RulePopoverRenderer` `_UnitBlock.cshtml` uses (see
+  `.claude/domain-model-11e.md`'s "Army header" note) — no new trigger style. A Detachment's own
+  name (`.detachment-name`) is deliberately plain, non-interactive text, never a trigger itself.
+
+---
+
 ## Popovers (`rules-glossary-popovers`)
 
 Every ability name and resolvable weapon-keyword chip is a native `popover="auto"` trigger — see

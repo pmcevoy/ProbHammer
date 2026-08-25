@@ -2,70 +2,21 @@
 @using System.Net
 @using ProbHammer.Core.Domain.Catalogue
 @using ProbHammer.Core.Domain.Catalogue.Bsdata
+@using ProbHammer.Web.Rendering
 @{
     var unit = Model.Unit;
     var i = Model.UnitIndex;
     var glossary = Model.Glossary;
 
-    // One running counter for every popover trigger/panel pair this unit block renders (ability
-    // names, resolvable weapon-keyword chips, and nested [BRACKET] references reached from either
-    // one's own text) - only needs to be unique within this unit's own fragment, since "i" (unique
-    // across the whole page) is part of every id this produces.
-    var popoverCounter = 0;
-    string NextPopoverId() => $"{i}-{popoverCounter++}";
+    // Popover trigger/panel building (ability names, resolvable weapon-keyword chips, and nested
+    // [BRACKET] references reached from either one's own text) is extracted into RulePopoverRenderer
+    // (design.md's "extract, don't duplicate" decision) so the header partial can produce the
+    // identical markup with no unit page index to scope popover ids against - "u{i}" here matches
+    // this unit block's own page index, "hdr" scopes the header's own instance.
+    var popovers = new RulePopoverRenderer(glossary, $"u{i}");
 
-    // Builds one trigger/popover pair: triggerHtml is already-safe inline HTML (a plain
-    // HtmlEncode'd name/tag for a top-level ability/chip trigger, or an emphasis-rendered bracket
-    // label for a nested reference - see RenderNestedReference below); ruleText is the raw source
-    // text the popover body renders, itself run through the emphasis renderer (recursing into
-    // RenderNestedReference for any further [BRACKET] references inside *that* text - this is what
-    // makes nesting work to arbitrary depth, per rules-glossary-popovers' "Nested Reference
-    // Popover" requirement, though the real corpus never goes more than one level deep). Returns
-    // the trigger's own markup separately from every popover panel this call (and its own nested
-    // references) produced, so a caller can splice the trigger in place while emitting every panel
-    // as a flow-content sibling later - never nested inside this trigger's own emphasis wrapping
-    // (see RuleTextEmphasisRenderer's own doc comment for why that specifically matters).
-    //
-    // shownRuleNames is every RuleDefinition.Name already being displayed somewhere in this
-    // popover's own ancestor chain (empty for a top-level ability trigger; the resolved rule's own
-    // Name for a top-level weapon-tag chip, since its popover already shows that rule's text) -
-    // threaded down so RenderNestedReference can refuse to re-enter one, which real BSData data
-    // makes a genuine, not just theoretical, concern: confirmed real self-references in "Sustained
-    // Hits" ("...**[SUSTAINED HITS X]**..."), "Anti" ("...**[ANTI-X Y+]**..."), and "Cleave"
-    // ("...**[CLEAVE X]**...") own description text - each would otherwise recurse into its own
-    // popover forever (confirmed live: an unguarded first version of this stack-overflowed
-    // rendering a real weapon's Sustained Hits chip).
-    (string Trigger, string Trailer) BuildRulePopover(string triggerHtml, string triggerClass, string ruleText, IReadOnlySet<string> shownRuleNames)
-    {
-        var popoverId = NextPopoverId();
-        var (bodyInline, bodyPopovers) = RuleTextEmphasisRenderer.Render(ruleText, raw => RenderNestedReference(raw, shownRuleNames));
-        var trigger = $"<button type=\"button\" id=\"t-{popoverId}\" class=\"{triggerClass}\" popovertarget=\"p-{popoverId}\" style=\"anchor-name: --a{popoverId}\">{triggerHtml}</button>";
-        var panel = $"<div id=\"p-{popoverId}\" class=\"rule-popover\" popover=\"auto\" style=\"position-anchor: --a{popoverId}\"><div class=\"rule-popover-title\">{triggerHtml}</div><div class=\"rule-popover-text\">{bodyInline}</div></div>";
-        return (trigger, panel + bodyPopovers);
-    }
-
-    // The bracket delegate RuleTextEmphasisRenderer.Render calls for every [BRACKET] token it
-    // encounters mid-parse. Normalizes the token's raw text the same way extraction always has
-    // (RuleTextTokenizer.Normalize - markup-char/Unicode-whitespace-hyphen cleanup) before
-    // resolving it against this unit's own glossary; an unresolved token renders as plain
-    // (emphasis-rendered) text with no trigger, per "Leave an unresolved bracket token as plain
-    // text" - never causing the surrounding text's own resolution to fail. A token that resolves
-    // back to a rule already in shownRuleNames (see BuildRulePopover) also degrades to plain text,
-    // the same graceful-fallback treatment as a genuinely unresolved one - tapping it would only
-    // ever reopen the popover already showing that exact text, and (for the self-reference case)
-    // recursing into it again is exactly what would otherwise overflow the stack.
-    (string Inline, string Popovers) RenderNestedReference(string rawInner, IReadOnlySet<string> shownRuleNames)
-    {
-        var normalized = RuleTextTokenizer.Normalize(rawInner);
-        var rule = glossary.TryResolve(normalized);
-        var (labelInline, labelPopovers) = RuleTextEmphasisRenderer.Render(rawInner, raw => RenderNestedReference(raw, shownRuleNames));
-        if (rule == null || shownRuleNames.Contains(rule.Name))
-            return (labelInline, labelPopovers);
-
-        var nextShownRuleNames = new HashSet<string>(shownRuleNames) { rule.Name };
-        var (trigger, trailer) = BuildRulePopover(labelInline, "rule-reference", rule.Text, nextShownRuleNames);
-        return (trigger, labelPopovers + trailer);
-    }
+    (string Trigger, string Trailer) BuildRulePopover(string triggerHtml, string triggerClass, string ruleText, IReadOnlySet<string> shownRuleNames) =>
+        popovers.BuildRulePopover(triggerHtml, triggerClass, ruleText, shownRuleNames);
 }
 <section class="unit-block" data-unit-index="@i">
     <h2 class="unit-name">
@@ -96,17 +47,22 @@
         @if (unit.IsSingleModelUnit)
         {
             <div class="unit-toolbar-item">
-                <button type="button" class="unit-toolbar-icon-btn status-glyph-halfstrength @(unit.IsAtOrBelowHalfStrength ? "is-active" : "")"
+                <button type="button"
+                        class="unit-toolbar-icon-btn status-glyph-halfstrength @(unit.IsAtOrBelowHalfStrength ? "is-active" : "")"
                         data-unit-index="@i" aria-pressed="@(unit.IsAtOrBelowHalfStrength ? "true" : "false")"
-                        aria-label="Toggle at-or-below half strength" title="At or below half strength (tap to set)">½</button>
+                        aria-label="Toggle at-or-below half strength" title="At or below half strength (tap to set)">½
+                </button>
                 <span class="unit-toolbar-label">Half Strength</span>
             </div>
         }
         else
         {
             <div class="unit-toolbar-item">
-                <button type="button" class="unit-toolbar-icon-btn status-glyph-halfstrength @(unit.IsAtOrBelowHalfStrength ? "is-active" : "")" disabled
-                        aria-label="At or below half strength (computed)" title="At or below half strength (computed)">½</button>
+                <button type="button"
+                        class="unit-toolbar-icon-btn status-glyph-halfstrength @(unit.IsAtOrBelowHalfStrength ? "is-active" : "")"
+                        disabled
+                        aria-label="At or below half strength (computed)" title="At or below half strength (computed)">½
+                </button>
                 <span class="unit-toolbar-label">Half Strength</span>
             </div>
         }
@@ -115,7 +71,8 @@
            alone now carries active/inactive (see .unit-toolbar-icon-btn.is-active in site.css) -
            the bolt's old outline-vs-solid duality is no longer needed. *@
         <div class="unit-toolbar-item">
-            <button type="button" class="unit-toolbar-icon-btn status-glyph-battleshock @(unit.IsBattleShocked ? "is-active" : "")"
+            <button type="button"
+                    class="unit-toolbar-icon-btn status-glyph-battleshock @(unit.IsBattleShocked ? "is-active" : "")"
                     data-unit-index="@i" aria-pressed="@(unit.IsBattleShocked ? "true" : "false")"
                     aria-label="Toggle Battle-shocked" title="Battle-shocked (tap to set)">
                 @Html.Raw(BoltSvgIcon("unit-toolbar-svg-icon"))
@@ -126,9 +83,12 @@
            it has no independent "active" fact, so its icon is amber exactly when actionable (see
            .is-active applied alongside `disabled` below, driven by the same HasCasualties check). *@
         <div class="unit-toolbar-item">
-            <button type="button" class="unit-toolbar-icon-btn casualty-reset-btn @(unit.HasCasualties ? "is-active" : "")" disabled="@(!unit.HasCasualties)"
+            <button type="button"
+                    class="unit-toolbar-icon-btn casualty-reset-btn @(unit.HasCasualties ? "is-active" : "")"
+                    disabled="@(!unit.HasCasualties)"
                     data-unit-index="@i"
-                    aria-label="Reset casualties for this unit" title="Reset casualties for this unit">@Html.Raw(SkullSvgIcon("unit-toolbar-svg-icon"))</button>
+                    aria-label="Reset casualties for this unit"
+                    title="Reset casualties for this unit">@Html.Raw(SkullSvgIcon("unit-toolbar-svg-icon"))</button>
             <span class="unit-toolbar-label">Reset Casualties</span>
         </div>
     </div>
@@ -141,7 +101,8 @@
                 <span class="statline-flags">
                     <button type="button" class="filter-flag clear-filter-btn" hidden
                             aria-label="Filtered - click to clear" title="Filtered - click to clear">
-                        <svg class="filter-flag-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2 L15 2 L10 8 L10 13 L6 15 L6 8 Z" /></svg>
+                        <svg class="filter-flag-icon" viewBox="0 0 16 16" aria-hidden="true"><path
+                                d="M1 2 L15 2 L10 8 L10 13 L6 15 L6 8 Z"/></svg>
                     </button>
                 </span>
             </summary>
@@ -160,7 +121,8 @@
                     var wholeUnitDeadAttr = wholeUnitSpan.IsFullyDead ? "true" : "false";
                     @if (wholeUnitSpan.ModelAbilities.Any())
                     {
-                        <div class="statline-cell col-model-abilities spans-whole-unit @wholeUnitCollapsedClass" data-dead="@wholeUnitDeadAttr" style="grid-row: 1; grid-column: 2;">
+                        <div class="statline-cell col-model-abilities spans-whole-unit @wholeUnitCollapsedClass"
+                             data-dead="@wholeUnitDeadAttr" style="grid-row: 1; grid-column: 2;">
                             @foreach (var ability in wholeUnitSpan.ModelAbilities)
                             {
                                 var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
@@ -172,7 +134,8 @@
 
                     @if (wholeUnitSpan.UnitAbilities.Any())
                     {
-                        <div class="statline-cell col-unit-abilities spans-whole-unit @wholeUnitCollapsedClass" data-dead="@wholeUnitDeadAttr" style="grid-row: 1; grid-column: 3;">
+                        <div class="statline-cell col-unit-abilities spans-whole-unit @wholeUnitCollapsedClass"
+                             data-dead="@wholeUnitDeadAttr" style="grid-row: 1; grid-column: 3;">
                             @foreach (var ability in wholeUnitSpan.UnitAbilities)
                             {
                                 var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
@@ -187,7 +150,8 @@
                     var block = unit.Statlines[runIndex];
                     var runCollapsedClass = block.IsFullyDead ? "run-collapsed" : "";
                     var runDeadAttr = block.IsFullyDead ? "true" : "false";
-                    <div class="statline-cell col-statline @runCollapsedClass" data-run-index="@runIndex" data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1 + rowOffset); grid-column: 1;">
+                    <div class="statline-cell col-statline @runCollapsedClass" data-run-index="@runIndex"
+                         data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1 + rowOffset); grid-column: 1;">
                         @for (var entryIndex = 0; entryIndex < block.Entries.Count; entryIndex++)
                         {
                             var entry = block.Entries[entryIndex];
@@ -199,7 +163,8 @@
                                     <div class="statline-header statline-toggle-group @entryDeadClass">
                                         <span class="select-indicator" aria-hidden="true"></span>
                                         <span class="statline-name">@entry.StatlineName</span>
-                                        <span class="statline-count">(@(entry.RemainingCount)/@(entry.InitialCount))</span>
+                                        <span
+                                            class="statline-count">(@(entry.RemainingCount)/@(entry.InitialCount))</span>
                                     </div>
                                     var loadoutLabels = block.LoadoutLabels[entryIndex];
                                     <ul class="loadout-breakdown">
@@ -208,12 +173,24 @@
                                             var loadout = entry.Loadouts[loadoutIndex];
                                             var loadoutCasualtyKey = LivePlayModel.CasualtyKey(i, entry.ComponentName, entry.StatlineName, loadoutIndex);
                                             var loadoutDeadClass = loadout.RemainingCount == 0 ? "loadout-dead" : "";
-                                            <li class="loadout-toggle @loadoutDeadClass" data-select-key="@LivePlayModel.SelectKey(entry.ComponentName, entry.StatlineName, loadoutIndex)">
+                                            <li class="loadout-toggle @loadoutDeadClass"
+                                                data-select-key="@LivePlayModel.SelectKey(entry.ComponentName, entry.StatlineName, loadoutIndex)">
                                                 <span class="select-indicator" aria-hidden="true"></span>
-                                                <span class="loadout-label">@loadoutLabels[loadoutIndex]</span> (@(loadout.RemainingCount)/@(loadout.InitialCount))
+                                                <span class="loadout-label">@loadoutLabels[loadoutIndex]</span>
+                                                (@(loadout.RemainingCount)/@(loadout.InitialCount))
                                                 <span class="casualty-controls">
-                                                    <button type="button" class="casualty-btn mod-step-btn casualty-dec" data-casualty-key="@loadoutCasualtyKey" data-remaining="@loadout.RemainingCount" data-initial="@loadout.InitialCount" aria-label="Mark casualty" disabled="@(loadout.RemainingCount == 0)">&minus;</button>
-                                                    <button type="button" class="casualty-btn mod-step-btn casualty-inc" data-casualty-key="@loadoutCasualtyKey" data-remaining="@loadout.RemainingCount" data-initial="@loadout.InitialCount" aria-label="Restore model" disabled="@(loadout.RemainingCount == loadout.InitialCount)">+</button>
+                                                    <button type="button" class="casualty-btn mod-step-btn casualty-dec"
+                                                            data-casualty-key="@loadoutCasualtyKey"
+                                                            data-remaining="@loadout.RemainingCount"
+                                                            data-initial="@loadout.InitialCount"
+                                                            aria-label="Mark casualty"
+                                                            disabled="@(loadout.RemainingCount == 0)">&minus;</button>
+                                                    <button type="button" class="casualty-btn mod-step-btn casualty-inc"
+                                                            data-casualty-key="@loadoutCasualtyKey"
+                                                            data-remaining="@loadout.RemainingCount"
+                                                            data-initial="@loadout.InitialCount"
+                                                            aria-label="Restore model"
+                                                            disabled="@(loadout.RemainingCount == loadout.InitialCount)">+</button>
                                                 </span>
                                             </li>
                                         }
@@ -223,24 +200,39 @@
                                 {
                                     var entryCasualtyKey = LivePlayModel.CasualtyKey(i, entry.ComponentName, entry.StatlineName, -1);
                                     var entryDeadClass = entry.RemainingCount == 0 ? "entry-dead" : "";
-                                    <div class="statline-header statline-toggle @entryDeadClass" data-select-key="@LivePlayModel.SelectKey(entry.ComponentName, entry.StatlineName, -1)">
+                                    <div class="statline-header statline-toggle @entryDeadClass"
+                                         data-select-key="@LivePlayModel.SelectKey(entry.ComponentName, entry.StatlineName, -1)">
                                         <span class="select-indicator" aria-hidden="true"></span>
                                         <span class="statline-name">@entry.StatlineName</span>
-                                        <span class="statline-count">(@(entry.RemainingCount)/@(entry.InitialCount))</span>
+                                        <span
+                                            class="statline-count">(@(entry.RemainingCount)/@(entry.InitialCount))</span>
                                         <span class="casualty-controls">
-                                            <button type="button" class="casualty-btn mod-step-btn casualty-dec" data-casualty-key="@entryCasualtyKey" data-remaining="@entry.RemainingCount" data-initial="@entry.InitialCount" aria-label="Mark casualty" disabled="@(entry.RemainingCount == 0)">&minus;</button>
-                                            <button type="button" class="casualty-btn mod-step-btn casualty-inc" data-casualty-key="@entryCasualtyKey" data-remaining="@entry.RemainingCount" data-initial="@entry.InitialCount" aria-label="Restore model" disabled="@(entry.RemainingCount == entry.InitialCount)">+</button>
+                                            <button type="button" class="casualty-btn mod-step-btn casualty-dec"
+                                                    data-casualty-key="@entryCasualtyKey"
+                                                    data-remaining="@entry.RemainingCount"
+                                                    data-initial="@entry.InitialCount" aria-label="Mark casualty"
+                                                    disabled="@(entry.RemainingCount == 0)">&minus;</button>
+                                            <button type="button" class="casualty-btn mod-step-btn casualty-inc"
+                                                    data-casualty-key="@entryCasualtyKey"
+                                                    data-remaining="@entry.RemainingCount"
+                                                    data-initial="@entry.InitialCount" aria-label="Restore model"
+                                                    disabled="@(entry.RemainingCount == entry.InitialCount)">+</button>
                                         </span>
                                     </div>
                                 }
                             </div>
                         }
                         <div class="statline-tiles">
-                            <div class="stat-tile"><span class="stat-label">M</span><span class="stat-value">@(block.Statline.M)"</span></div>
-                            <div class="stat-tile"><span class="stat-label">T</span><span class="stat-value">@(block.Statline.T)</span></div>
-                            <div class="stat-tile"><span class="stat-label">Sv</span><span class="stat-value">@(block.Statline.Sv)+</span></div>
-                            <div class="stat-tile"><span class="stat-label">W</span><span class="stat-value">@(block.Statline.W)</span></div>
-                            <div class="stat-tile"><span class="stat-label">Ld</span><span class="stat-value">@(block.Statline.Ld)+</span></div>
+                            <div class="stat-tile"><span class="stat-label">M</span><span
+                                    class="stat-value">@(block.Statline.M)"</span></div>
+                            <div class="stat-tile"><span class="stat-label">T</span><span
+                                    class="stat-value">@(block.Statline.T)</span></div>
+                            <div class="stat-tile"><span class="stat-label">Sv</span><span
+                                    class="stat-value">@(block.Statline.Sv)+</span></div>
+                            <div class="stat-tile"><span class="stat-label">W</span><span
+                                    class="stat-value">@(block.Statline.W)</span></div>
+                            <div class="stat-tile"><span class="stat-label">Ld</span><span
+                                    class="stat-value">@(block.Statline.Ld)+</span></div>
                             @* Battle-shocked: OC renders the same glyph as the header's Battle-shock
                                control, in the tile's own value color (never amber - see
                                design-tokens.md's "controls get amber ink when active, stat values
@@ -255,11 +247,13 @@
                                requirement). *@
                             @if (unit.IsBattleShocked)
                             {
-                                <div class="stat-tile stat-tile-flagged"><span class="stat-label">OC</span><span class="stat-value">@Html.Raw(BoltSvgIcon("oc-battleshock-icon"))</span></div>
+                                <div class="stat-tile stat-tile-flagged"><span class="stat-label">OC</span><span
+                                        class="stat-value">@Html.Raw(BoltSvgIcon("oc-battleshock-icon"))</span></div>
                             }
                             else
                             {
-                                <div class="stat-tile"><span class="stat-label">OC</span><span class="stat-value">@(block.Statline.Oc)</span></div>
+                                <div class="stat-tile"><span class="stat-label">OC</span><span
+                                        class="stat-value">@(block.Statline.Oc)</span></div>
                             }
                             @{
                                 var inv = block.Statline.InSv;
@@ -277,12 +271,12 @@
                                 // icon, a bullet), so Ranged is a small inline SVG crosshair instead, matching this
                                 // file's existing filter-flag icon precedent for exactly the same reason.
                                 var rangedIcon = "<svg class=\"insv-icon\" viewBox=\"0 0 16 16\" aria-hidden=\"true\">" +
-                                    "<circle cx=\"8\" cy=\"8\" r=\"5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
-                                    "<line x1=\"8\" y1=\"0\" x2=\"8\" y2=\"3\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
-                                    "<line x1=\"8\" y1=\"13\" x2=\"8\" y2=\"16\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
-                                    "<line x1=\"0\" y1=\"8\" x2=\"3\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
-                                    "<line x1=\"13\" y1=\"8\" x2=\"16\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
-                                    "</svg>";
+                                                 "<circle cx=\"8\" cy=\"8\" r=\"5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
+                                                 "<line x1=\"8\" y1=\"0\" x2=\"8\" y2=\"3\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
+                                                 "<line x1=\"8\" y1=\"13\" x2=\"8\" y2=\"16\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
+                                                 "<line x1=\"0\" y1=\"8\" x2=\"3\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
+                                                 "<line x1=\"13\" y1=\"8\" x2=\"16\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
+                                                 "</svg>";
                             }
                             @* The InSv box is a .stat-tile like M/T/Sv/W/Ld/Oc (label on top, value below, inside
                                one bordered box), not a separate box+label pair beside each other - matches the
@@ -342,7 +336,8 @@
 
                     @if (block.ModelAbilities.Any())
                     {
-                        <div class="statline-cell col-model-abilities @runCollapsedClass" data-run-index="@runIndex" data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1 + rowOffset); grid-column: 2;">
+                        <div class="statline-cell col-model-abilities @runCollapsedClass" data-run-index="@runIndex"
+                             data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1 + rowOffset); grid-column: 2;">
                             @foreach (var ability in block.ModelAbilities)
                             {
                                 var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
@@ -354,7 +349,8 @@
 
                     @if (block.UnitAbilities.Any())
                     {
-                        <div class="statline-cell col-unit-abilities @runCollapsedClass" data-run-index="@runIndex" data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1 + rowOffset); grid-column: 3;">
+                        <div class="statline-cell col-unit-abilities @runCollapsedClass" data-run-index="@runIndex"
+                             data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1 + rowOffset); grid-column: 3;">
                             @foreach (var ability in block.UnitAbilities)
                             {
                                 var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
@@ -371,7 +367,10 @@
                     var spanDeadAttr = span.IsFullyDead ? "true" : "false";
                     @if (span.ModelAbilities.Any())
                     {
-                        <div class="statline-cell col-model-abilities spans-component @spanCollapsedClass" data-first-run-index="@(span.FirstRunIndex)" data-last-run-index="@(span.LastRunIndex)" data-dead="@spanDeadAttr" style="grid-row: @(span.FirstRunIndex + 1 + rowOffset) / @(span.LastRunIndex + 2 + rowOffset); grid-column: 2;">
+                        <div class="statline-cell col-model-abilities spans-component @spanCollapsedClass"
+                             data-first-run-index="@(span.FirstRunIndex)" data-last-run-index="@(span.LastRunIndex)"
+                             data-dead="@spanDeadAttr"
+                             style="grid-row: @(span.FirstRunIndex + 1 + rowOffset) / @(span.LastRunIndex + 2 + rowOffset); grid-column: 2;">
                             @foreach (var ability in span.ModelAbilities)
                             {
                                 var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
@@ -383,7 +382,10 @@
 
                     @if (span.UnitAbilities.Any())
                     {
-                        <div class="statline-cell col-unit-abilities spans-component @spanCollapsedClass" data-first-run-index="@(span.FirstRunIndex)" data-last-run-index="@(span.LastRunIndex)" data-dead="@spanDeadAttr" style="grid-row: @(span.FirstRunIndex + 1 + rowOffset) / @(span.LastRunIndex + 2 + rowOffset); grid-column: 3;">
+                        <div class="statline-cell col-unit-abilities spans-component @spanCollapsedClass"
+                             data-first-run-index="@(span.FirstRunIndex)" data-last-run-index="@(span.LastRunIndex)"
+                             data-dead="@spanDeadAttr"
+                             style="grid-row: @(span.FirstRunIndex + 1 + rowOffset) / @(span.LastRunIndex + 2 + rowOffset); grid-column: 3;">
                             @foreach (var ability in span.UnitAbilities)
                             {
                                 var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
@@ -403,92 +405,95 @@
             <summary>
                 <span class="section-title">Ranged Weapons</span>
                 <span class="filter-flag filtered-badge" hidden aria-label="Filtered" title="Filtered">
-                    <svg class="filter-flag-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2 L15 2 L10 8 L10 13 L6 15 L6 8 Z" /></svg>
+                    <svg class="filter-flag-icon" viewBox="0 0 16 16" aria-hidden="true"><path
+                            d="M1 2 L15 2 L10 8 L10 13 L6 15 L6 8 Z"/></svg>
                 </span>
             </summary>
             <table class="weapon-table">
                 <colgroup>
-                    <col class="col-weapon" />
-                    <col class="col-slot" />
-                    <col class="col-slot" />
-                    <col class="col-slot" />
-                    <col class="col-slot" />
-                    <col class="col-slot" />
-                    <col class="col-slot" />
+                    <col class="col-weapon"/>
+                    <col class="col-slot"/>
+                    <col class="col-slot"/>
+                    <col class="col-slot"/>
+                    <col class="col-slot"/>
+                    <col class="col-slot"/>
+                    <col class="col-slot"/>
                 </colgroup>
                 <thead>
-                    <tr>
-                        <th>Weapon</th>
-                        <th>Rng</th>
-                        <th>A</th>
-                        <th>BS</th>
-                        <th>S</th>
-                        <th>AP</th>
-                        <th>D</th>
-                    </tr>
+                <tr>
+                    <th>Weapon</th>
+                    <th>Rng</th>
+                    <th>A</th>
+                    <th>BS</th>
+                    <th>S</th>
+                    <th>AP</th>
+                    <th>D</th>
+                </tr>
                 </thead>
                 <tbody>
-                    @for (var w = 0; w < unit.RangedWeapons.Count; w++)
-                    {
-                        var row = unit.RangedWeapons[w];
-                        var weapon = row.Entry.Profile;
-                        var tags = WeaponAbilityTags(weapon);
-                        var weaponId = $"w-{i}-r-{w}";
-                        <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId">
-                            <td class="weapon-name">
-                                @if (row.ShowsBreakdownTrigger)
-                                {
-                                    <button type="button" class="weapon-name-toggle" data-weapon-id="@weaponId" aria-expanded="false">
-                                        @weapon.Name
-                                    </button>
-                                }
-                                else
-                                {
+                @for (var w = 0; w < unit.RangedWeapons.Count; w++)
+                {
+                    var row = unit.RangedWeapons[w];
+                    var weapon = row.Entry.Profile;
+                    var tags = WeaponAbilityTags(weapon);
+                    var weaponId = $"w-{i}-r-{w}";
+                    <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId">
+                        <td class="weapon-name">
+                            @if (row.ShowsBreakdownTrigger)
+                            {
+                                <button type="button" class="weapon-name-toggle" data-weapon-id="@weaponId"
+                                        aria-expanded="false">
                                     @weapon.Name
-                                }
-                                @if (tags.Count > 0)
-                                {
-                                    <div class="weapon-tags">
-                                        @foreach (var tag in tags)
+                                </button>
+                            }
+                            else
+                            {
+                                @weapon.Name
+                            }
+                            @if (tags.Count > 0)
+                            {
+                                <div class="weapon-tags">
+                                    @foreach (var tag in tags)
+                                    {
+                                        var rule = glossary.TryResolve(tag);
+                                        if (rule != null)
                                         {
-                                            var rule = glossary.TryResolve(tag);
-                                            if (rule != null)
-                                            {
-                                                var (tagTrigger, tagTrailer) = BuildRulePopover(WebUtility.HtmlEncode(tag), "weapon-tag weapon-tag-resolved", rule.Text, new HashSet<string> { rule.Name });
-                                                @Html.Raw(tagTrigger)
-                                                @Html.Raw(tagTrailer)
-                                            }
-                                            else
-                                            {
-                                                <span class="weapon-tag weapon-tag-unresolved">@tag</span>
-                                            }
+                                            var (tagTrigger, tagTrailer) = BuildRulePopover(WebUtility.HtmlEncode(tag), "weapon-tag weapon-tag-resolved", rule.Text, new HashSet<string> { rule.Name });
+                                            @Html.Raw(tagTrigger)
+                                            @Html.Raw(tagTrailer)
                                         }
-                                    </div>
-                                }
-                            </td>
-                            <td>@(weapon.Range)"</td>
-                            <td class="weapon-attacks-value">@row.Entry.TotalAttacks</td>
-                            <td>@(weapon.Skill)+</td>
-                            <td>@weapon.S</td>
-                            <td>@weapon.Ap</td>
-                            <td>@weapon.D</td>
+                                        else
+                                        {
+                                            <span class="weapon-tag weapon-tag-unresolved">@tag</span>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </td>
+                        <td>@(weapon.Range)"</td>
+                        <td class="weapon-attacks-value">@row.Entry.TotalAttacks</td>
+                        <td>@(weapon.Skill)+</td>
+                        <td>@weapon.S</td>
+                        <td>@weapon.Ap</td>
+                        <td>@weapon.D</td>
+                    </tr>
+                    @foreach (var breakdown in row.Breakdown)
+                    {
+                        <tr class="weapon-contribution-row @(breakdown.SelectKey == null ? "contribution-merged" : "") @(w % 2 == 1 ? "weapon-row-alt" : "")"
+                            data-weapon-id="@weaponId" data-group-key="@breakdown.GroupKey"
+                            data-merged="@(breakdown.SelectKey == null ? "true" : "false")"
+                            data-select-key="@breakdown.SelectKey" data-subtotal-value="@breakdown.SubtotalValue"
+                            hidden>
+                            <td class="weapon-contribution-label">@breakdown.Label (@(breakdown.Count)&times;@(breakdown.PerModelAttacks))</td>
+                            <td></td>
+                            <td>@breakdown.Subtotal</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
                         </tr>
-                        @foreach (var breakdown in row.Breakdown)
-                        {
-                            <tr class="weapon-contribution-row @(breakdown.SelectKey == null ? "contribution-merged" : "") @(w % 2 == 1 ? "weapon-row-alt" : "")"
-                                data-weapon-id="@weaponId" data-group-key="@breakdown.GroupKey"
-                                data-merged="@(breakdown.SelectKey == null ? "true" : "false")"
-                                data-select-key="@breakdown.SelectKey" data-subtotal-value="@breakdown.SubtotalValue" hidden>
-                                <td class="weapon-contribution-label">@breakdown.Label (@(breakdown.Count)&times;@(breakdown.PerModelAttacks))</td>
-                                <td></td>
-                                <td>@breakdown.Subtotal</td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                        }
                     }
+                }
                 </tbody>
             </table>
         </details>
@@ -500,88 +505,91 @@
             <summary>
                 <span class="section-title">Melee Weapons</span>
                 <span class="filter-flag filtered-badge" hidden aria-label="Filtered" title="Filtered">
-                    <svg class="filter-flag-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2 L15 2 L10 8 L10 13 L6 15 L6 8 Z" /></svg>
+                    <svg class="filter-flag-icon" viewBox="0 0 16 16" aria-hidden="true"><path
+                            d="M1 2 L15 2 L10 8 L10 13 L6 15 L6 8 Z"/></svg>
                 </span>
             </summary>
             <table class="weapon-table">
                 <colgroup>
-                    <col class="col-weapon-melee" />
-                    <col class="col-slot" />
-                    <col class="col-slot" />
-                    <col class="col-slot" />
-                    <col class="col-slot" />
-                    <col class="col-slot" />
+                    <col class="col-weapon-melee"/>
+                    <col class="col-slot"/>
+                    <col class="col-slot"/>
+                    <col class="col-slot"/>
+                    <col class="col-slot"/>
+                    <col class="col-slot"/>
                 </colgroup>
                 <thead>
-                    <tr>
-                        <th>Weapon</th>
-                        <th>A</th>
-                        <th>WS</th>
-                        <th>S</th>
-                        <th>AP</th>
-                        <th>D</th>
-                    </tr>
+                <tr>
+                    <th>Weapon</th>
+                    <th>A</th>
+                    <th>WS</th>
+                    <th>S</th>
+                    <th>AP</th>
+                    <th>D</th>
+                </tr>
                 </thead>
                 <tbody>
-                    @for (var w = 0; w < unit.MeleeWeapons.Count; w++)
-                    {
-                        var row = unit.MeleeWeapons[w];
-                        var weapon = row.Entry.Profile;
-                        var tags = WeaponAbilityTags(weapon);
-                        var weaponId = $"w-{i}-m-{w}";
-                        <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId">
-                            <td class="weapon-name">
-                                @if (row.ShowsBreakdownTrigger)
-                                {
-                                    <button type="button" class="weapon-name-toggle" data-weapon-id="@weaponId" aria-expanded="false">
-                                        @weapon.Name
-                                    </button>
-                                }
-                                else
-                                {
+                @for (var w = 0; w < unit.MeleeWeapons.Count; w++)
+                {
+                    var row = unit.MeleeWeapons[w];
+                    var weapon = row.Entry.Profile;
+                    var tags = WeaponAbilityTags(weapon);
+                    var weaponId = $"w-{i}-m-{w}";
+                    <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId">
+                        <td class="weapon-name">
+                            @if (row.ShowsBreakdownTrigger)
+                            {
+                                <button type="button" class="weapon-name-toggle" data-weapon-id="@weaponId"
+                                        aria-expanded="false">
                                     @weapon.Name
-                                }
-                                @if (tags.Count > 0)
-                                {
-                                    <div class="weapon-tags">
-                                        @foreach (var tag in tags)
+                                </button>
+                            }
+                            else
+                            {
+                                @weapon.Name
+                            }
+                            @if (tags.Count > 0)
+                            {
+                                <div class="weapon-tags">
+                                    @foreach (var tag in tags)
+                                    {
+                                        var rule = glossary.TryResolve(tag);
+                                        if (rule != null)
                                         {
-                                            var rule = glossary.TryResolve(tag);
-                                            if (rule != null)
-                                            {
-                                                var (tagTrigger, tagTrailer) = BuildRulePopover(WebUtility.HtmlEncode(tag), "weapon-tag weapon-tag-resolved", rule.Text, new HashSet<string> { rule.Name });
-                                                @Html.Raw(tagTrigger)
-                                                @Html.Raw(tagTrailer)
-                                            }
-                                            else
-                                            {
-                                                <span class="weapon-tag weapon-tag-unresolved">@tag</span>
-                                            }
+                                            var (tagTrigger, tagTrailer) = BuildRulePopover(WebUtility.HtmlEncode(tag), "weapon-tag weapon-tag-resolved", rule.Text, new HashSet<string> { rule.Name });
+                                            @Html.Raw(tagTrigger)
+                                            @Html.Raw(tagTrailer)
                                         }
-                                    </div>
-                                }
-                            </td>
-                            <td class="weapon-attacks-value">@row.Entry.TotalAttacks</td>
-                            <td>@(weapon.Skill)+</td>
-                            <td>@weapon.S</td>
-                            <td>@weapon.Ap</td>
-                            <td>@weapon.D</td>
+                                        else
+                                        {
+                                            <span class="weapon-tag weapon-tag-unresolved">@tag</span>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </td>
+                        <td class="weapon-attacks-value">@row.Entry.TotalAttacks</td>
+                        <td>@(weapon.Skill)+</td>
+                        <td>@weapon.S</td>
+                        <td>@weapon.Ap</td>
+                        <td>@weapon.D</td>
+                    </tr>
+                    @foreach (var breakdown in row.Breakdown)
+                    {
+                        <tr class="weapon-contribution-row @(breakdown.SelectKey == null ? "contribution-merged" : "") @(w % 2 == 1 ? "weapon-row-alt" : "")"
+                            data-weapon-id="@weaponId" data-group-key="@breakdown.GroupKey"
+                            data-merged="@(breakdown.SelectKey == null ? "true" : "false")"
+                            data-select-key="@breakdown.SelectKey" data-subtotal-value="@breakdown.SubtotalValue"
+                            hidden>
+                            <td class="weapon-contribution-label">@breakdown.Label (@(breakdown.Count)&times;@(breakdown.PerModelAttacks))</td>
+                            <td>@breakdown.Subtotal</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
                         </tr>
-                        @foreach (var breakdown in row.Breakdown)
-                        {
-                            <tr class="weapon-contribution-row @(breakdown.SelectKey == null ? "contribution-merged" : "") @(w % 2 == 1 ? "weapon-row-alt" : "")"
-                                data-weapon-id="@weaponId" data-group-key="@breakdown.GroupKey"
-                                data-merged="@(breakdown.SelectKey == null ? "true" : "false")"
-                                data-select-key="@breakdown.SelectKey" data-subtotal-value="@breakdown.SubtotalValue" hidden>
-                                <td class="weapon-contribution-label">@breakdown.Label (@(breakdown.Count)&times;@(breakdown.PerModelAttacks))</td>
-                                <td>@breakdown.Subtotal</td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                        }
                     }
+                }
                 </tbody>
             </table>
         </details>
@@ -594,6 +602,7 @@
 </section>
 
 @functions {
+
     static string AbilityDisplayName(Ability ability) =>
         ability.Origin == AbilityOrigin.Enhancement ? $"✦ {ability.Name}" : ability.Name;
 
@@ -636,4 +645,5 @@
             tags.Add($"ANTI-{keyword.ToUpperInvariant()} {threshold}+");
         return tags;
     }
+
 }

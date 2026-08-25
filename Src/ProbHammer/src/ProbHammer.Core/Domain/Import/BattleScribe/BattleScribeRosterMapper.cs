@@ -18,26 +18,41 @@ public static partial class BattleScribeRosterMapper
     public static ArmyRoster Map(BsRoster roster)
     {
         var force = roster.Forces.FirstOrDefault()
-            ?? throw new BattleScribeRosterParseException("Roster has no forces.");
+                    ?? throw new BattleScribeRosterParseException("Roster has no forces.");
 
         var pointsSpent = ReadCost(roster.Costs, "pts");
         var pointsLimit = ReadCost(roster.CostLimits, "pts");
         var faction = SplitFaction(force.CatalogueName);
-        var detachments = FindGroup(force.Selections, "Detachment").Select(s => s.Name).ToList();
-        var forceDisposition = FindGroup(force.Selections, "Force Disposition").Select(s => s.Name).FirstOrDefault() ?? "";
+        var detachments = FindGroup(force.Selections, "Detachment").Select(MapDetachment).ToList();
+        var forceDisposition =
+            FindGroup(force.Selections, "Force Disposition").Select(s => s.Name).FirstOrDefault() ?? "";
         var battleSize = StripTrailingParenthetical(
             FindGroup(force.Selections, "Battle Size").Select(s => s.Name).FirstOrDefault() ?? "");
 
         var units = BuildUnits(force.Selections);
 
-        return new ArmyRoster(roster.Name, pointsSpent, faction, detachments, forceDisposition, battleSize, pointsLimit, units);
+        return new ArmyRoster(roster.Name, pointsSpent, faction, detachments, forceDisposition, battleSize, pointsLimit,
+            units);
     }
 
     private static int ReadCost(IReadOnlyList<BsRosterCost> costs, string name) =>
-        (int)Math.Round(costs.FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase))?.Value ?? 0);
+        (int)Math.Round(costs.FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase))
+            ?.Value ?? 0);
 
-    private static IReadOnlyList<BsRosterSelection> FindGroup(IReadOnlyList<BsRosterSelection> topSelections, string groupName) =>
-        topSelections.FirstOrDefault(s => string.Equals(s.Name, groupName, StringComparison.OrdinalIgnoreCase))?.Selections ?? [];
+    /// <summary>Maps a selected Detachment's own top-level selection directly into a
+    /// <see cref="ResolvedDetachment"/> - no BSData involvement, per this pipeline's existing
+    /// "synthesizes everything from the JSON's own already-resolved data" design. A roster JSON
+    /// already carries a selected Detachment's own rule text inline on its own
+    /// <c>selections[].rules[]</c> (confirmed real shape: Death Guard's "Virulent Vectorium" carries
+    /// a nested "Worldblight" rule with name/description inline; Black Templars' "Companions of
+    /// Vehemence" carries "Righteous Fervour" the same way).</summary>
+    private static ResolvedDetachment MapDetachment(BsRosterSelection selection) =>
+        new(selection.Name, selection.Rules.Select(r => new DetachmentRule(r.Name, r.Description)).ToList());
+
+    private static IReadOnlyList<BsRosterSelection> FindGroup(IReadOnlyList<BsRosterSelection> topSelections,
+        string groupName) =>
+        topSelections.FirstOrDefault(s => string.Equals(s.Name, groupName, StringComparison.OrdinalIgnoreCase))
+            ?.Selections ?? [];
 
     /// <summary>Splits a force's catalogue name (e.g. "Imperium - Adeptus Astartes - Black
     /// Templars") into an ordered segment list, matching <c>ArmyRoster.Faction</c>'s "parent codex
@@ -46,7 +61,8 @@ public static partial class BattleScribeRosterMapper
     /// design.md's Risks - Faction is otherwise unread outside the text pipeline).</summary>
     private static List<string> SplitFaction(string catalogueName)
     {
-        var segments = catalogueName.Split(" - ", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        var segments =
+            catalogueName.Split(" - ", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         return segments.Length > 0 ? segments.ToList() : [catalogueName];
     }
 
@@ -70,7 +86,8 @@ public static partial class BattleScribeRosterMapper
         var unitSelections = topSelections.Where(s => s.Type is "unit" or "model").ToList();
 
         var outgoing = unitSelections
-            .Select(s => (Selection: s, Target: s.Associations.FirstOrDefault(a => a.Name is "Leading" or "Supporting")?.To))
+            .Select(s => (Selection: s,
+                Target: s.Associations.FirstOrDefault(a => a.Name is "Leading" or "Supporting")?.To))
             .ToList();
 
         var bodyguardIds = outgoing.Where(x => x.Target is not null).Select(x => x.Target!).ToHashSet();
@@ -192,7 +209,8 @@ public static partial class BattleScribeRosterMapper
                 if (IsEnhancement(child))
                     continue;
 
-                var weaponProfiles = child.Profiles.Where(p => p.TypeName is "Ranged Weapons" or "Melee Weapons").ToList();
+                var weaponProfiles = child.Profiles.Where(p => p.TypeName is "Ranged Weapons" or "Melee Weapons")
+                    .ToList();
                 var abilityProfiles = child.Profiles.Where(p => p.TypeName == "Abilities").ToList();
 
                 if (weaponProfiles.Count > 0)
@@ -315,19 +333,22 @@ public static partial class BattleScribeRosterMapper
         return new InvulnerableSave(digit, digit, caveated: true, caveatAbility: caveatAbility);
     }
 
-    private static Ability ResolveCaveatAbility(int digit, BsRosterSelection node, BsRosterSelection top, string rawText)
+    private static Ability ResolveCaveatAbility(int digit, BsRosterSelection node, BsRosterSelection top,
+        string rawText)
     {
         var expectedNames = new[] { $"Invulnerable Save ({digit}+*)", "*Invulnerable Save" };
 
         foreach (var candidate in new[] { node, top })
         {
             var match = candidate.Profiles.FirstOrDefault(p =>
-                p.TypeName == "Abilities" && expectedNames.Any(n => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase)));
+                p.TypeName == "Abilities" &&
+                expectedNames.Any(n => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase)));
             if (match is not null)
                 return MapAbility(match, AbilityOrigin.Intrinsic);
         }
 
-        throw new BattleScribeRosterParseException($"Could not resolve caveated invulnerable save ability for '{rawText}'.");
+        throw new BattleScribeRosterParseException(
+            $"Could not resolve caveated invulnerable save ability for '{rawText}'.");
     }
 
     [GeneratedRegex(@"^(\d+)\+\s*\((Ranged|Melee)\)$")]
@@ -376,7 +397,8 @@ public static partial class BattleScribeRosterMapper
             Origin = AbilityOrigin.CoreRule
         };
 
-    private static bool IsNotApplicable(string text) => text == "-" || text.Equals("N/A", StringComparison.OrdinalIgnoreCase);
+    private static bool IsNotApplicable(string text) =>
+        text == "-" || text.Equals("N/A", StringComparison.OrdinalIgnoreCase);
 
     private static int ParseMeasurement(string? text)
     {

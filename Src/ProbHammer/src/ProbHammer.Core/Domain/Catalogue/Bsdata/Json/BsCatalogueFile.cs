@@ -58,10 +58,15 @@ public sealed class BsCatalogue
     /// Rule Text Extraction".</summary>
     public List<BsRule> Rules { get; set; } = [];
 
-    /// <summary>Universal special-rule text (e.g. "Lethal Hits", "Devastating Wounds") - populated
-    /// only on the game-system file ("Warhammer 40,000.json"), reached via
+    /// <summary>Universal special-rule text (e.g. "Lethal Hits", "Devastating Wounds") - primarily
+    /// populated on the game-system file ("Warhammer 40,000.json"), reached via
     /// <see cref="BsdataClosure.GameSystem"/>. See rules-glossary's "Universal Rule Text
-    /// Extraction".</summary>
+    /// Extraction". A plain faction file can ALSO populate its own `sharedRules` locally
+    /// (confirmed real: Necrons.json's own "Command Protocols", "Reanimation Protocols" etc. - the
+    /// original assumption that only the game-system file uses this field was wrong; see
+    /// display-army-header-and-detachment-rules' Necrons "Awakened Dynasty" investigation) - so
+    /// <see cref="RuleGlossary.Build"/> reads this field on every closure file, not only the game
+    /// system.</summary>
     public List<BsRule> SharedRules { get; set; } = [];
 }
 
@@ -81,6 +86,7 @@ public sealed class BsRule
     /// reference should be excluded for the current closure. Previously silently dropped like
     /// every other unmapped BSData field on this type.</summary>
     public List<BsModifier> Modifiers { get; set; } = [];
+
     public string Description { get; set; } = "";
     public List<string> Alias { get; set; } = [];
 }
@@ -121,6 +127,13 @@ public sealed class BsSelectionEntry
     /// scaling, composition rules, etc.) is deliberately left unmapped/unread, unchanged from this
     /// project's existing "no wargear constraint validation" stance.</summary>
     public List<BsModifier> Modifiers { get; set; } = [];
+
+    /// <summary>Rule text declared locally on this entry (identical shape to the already-modeled
+    /// <see cref="BsCatalogue.Rules"/>/<see cref="BsCatalogue.SharedRules"/>, just nested one level
+    /// differently) - confirmed real on a Detachment's own selectionEntry (e.g. Black Templars'
+    /// "Marshal's Household" declaring "Faith-Fuelled Resolve"). See
+    /// <see cref="DetachmentRuleTextExtractor"/>.</summary>
+    public List<BsRule> Rules { get; set; } = [];
 }
 
 public sealed class BsSelectionEntryGroup
@@ -198,6 +211,5 @@ public sealed class BsCharacteristic
 {
     public string Name { get; set; } = "";
 
-    [JsonPropertyName("$text")]
-    public string Text { get; set; } = "";
+    [JsonPropertyName("$text")] public string Text { get; set; } = "";
 }

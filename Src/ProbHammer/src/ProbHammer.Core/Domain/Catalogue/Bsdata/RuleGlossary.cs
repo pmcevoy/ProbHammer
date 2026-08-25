@@ -49,7 +49,19 @@ public sealed partial class RuleGlossary
         }
 
         foreach (var (_, catalogue) in closure.Files)
+        {
             AddAll(catalogue.Rules);
+
+            // A catalogue file's own `sharedRules` was originally assumed to appear only on the
+            // game-system file (see BsCatalogue.SharedRules' own doc comment) - real data
+            // contradicts that: confirmed on Necrons.json, whose own local `sharedRules` array is
+            // where "Command Protocols" (the rule Awakened Dynasty's own infoLink references) is
+            // actually declared, not in `rules`. Reading it here too is purely additive - a file
+            // with no local `sharedRules` of its own contributes nothing extra, and `TryAdd`'s
+            // first-occurrence-wins convention means this can never override a name/alias already
+            // found via `catalogue.Rules` or the game system's own `SharedRules`.
+            AddAll(catalogue.SharedRules);
+        }
 
         if (closure.GameSystem is not null)
             AddAll(closure.GameSystem.SharedRules);
