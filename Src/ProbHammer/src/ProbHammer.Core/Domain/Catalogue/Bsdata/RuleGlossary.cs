@@ -57,6 +57,26 @@ public sealed partial class RuleGlossary
         return new RuleGlossary(index);
     }
 
+    /// <summary>Builds a RuleGlossary directly from an already-known flat set of
+    /// <see cref="RuleDefinition"/>s, indexed the same way <see cref="Build"/> indexes a
+    /// <see cref="BsdataClosure"/>'s own rules (by each definition's Name and every Alias,
+    /// normalized, first occurrence wins) - used by battlescribe-roster-import, whose "closure" is
+    /// just a roster JSON's own already-resolved rule entries, with no <see cref="BsdataClosure"/>/
+    /// BSData catalogue involved at all (see design.md's "Roster-scoped RuleGlossary, reusing the
+    /// existing type").</summary>
+    public static RuleGlossary BuildFrom(IEnumerable<RuleDefinition> definitions)
+    {
+        var index = new Dictionary<string, RuleDefinition>(StringComparer.Ordinal);
+        foreach (var definition in definitions)
+        {
+            index.TryAdd(Normalize(definition.Name), definition);
+            foreach (var alias in definition.Aliases)
+                index.TryAdd(Normalize(alias), definition);
+        }
+
+        return new RuleGlossary(index);
+    }
+
     /// <summary>Resolves a normalized bracket token (per <see cref="RuleTextTokenizer"/>) or a
     /// literal weapon-keyword tag (per `WeaponAbilityTags()`) by comparing its own
     /// <see cref="Normalize"/>d form against every rule's Name/Alias, normalized the same way -

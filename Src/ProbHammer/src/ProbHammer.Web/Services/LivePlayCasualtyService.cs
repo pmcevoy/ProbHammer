@@ -29,11 +29,11 @@ public class LivePlayCasualtyService(
             .Concat(request.StatusAdjustments.Select(a => a.UnitIndex))
             .Distinct()
             .ToList();
-        var parsedArmyList = sessionStore.Load(ctx.Session);
-        if (unitIndexes.Count == 0 || parsedArmyList is null)
+        var import = sessionStore.Load(ctx.Session);
+        if (unitIndexes.Count == 0 || import is null)
             return Results.Json(new Dictionary<int, string>());
 
-        var result = rosterProvider.Build(parsedArmyList);
+        var result = rosterProvider.Build(import);
         var roster = LivePlayModel.RebuildRosterWithStatus(
             result.Roster.Units, request.CasualtyAdjustments, request.StatusAdjustments);
         var fragments = new Dictionary<int, string>();

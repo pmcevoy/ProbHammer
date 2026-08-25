@@ -8,6 +8,41 @@ Nothing in progress.
 
 ## Recently Completed
 
+- OpenSpec change `import-battlescribe-json-rosters` implemented (22/22 tasks) — a second,
+  independent import pipeline for BattleScribe/NewRecruit roster JSON exports
+  (`roster.xmlns == "http://www.battlescribe.net/schema/rosterSchema"`), for players who use
+  NewRecruit instead of the (paywalled-per-book) official GW app. Unlike the GW-app text pipeline,
+  this JSON is already fully resolved — statlines, weapon profiles, ability/rule text, and the
+  Leader/Support/Bodyguard attachment relationship are all present inline — so the new mapper
+  (`Domain.Import.BattleScribe.BattleScribeRosterMapper`) synthesizes `Datasheet`/`Statline`/
+  `WeaponProfile`/`Ability` directly from the JSON's own `profiles`/`rules`, bypassing
+  `Domain.Catalogue.Bsdata` entirely — no BSData catalogue lookup, no name-mismatch risk. Analyzed
+  against one real captured sample (`data/gw-app-export-templars.json`, the existing Templars
+  fixture round-tripped through NewRecruit) in detail before implementing; see
+  `.claude/domain-model-11e.md`'s new "BattleScribe/NewRecruit JSON Import Pipeline" section for
+  the full field-mapping detail. Key findings from that analysis: attachment resolves via a
+  structural `associations: [{to, name: "Leading"|"Supporting"}]` field (no role-text parsing);
+  multi-model squads are already split into per-loadout sub-selections, each carrying its own count
+  and weapon list (eliminating the text pipeline's partition-ambiguity bug class entirely); a
+  wargear selection is tagged as a selected Enhancement via a distinct `costs["Enhancements"]`
+  entry rather than the text pipeline's group-name substring match — and, since a roster JSON only
+  ever contains selections the player actually made, this pipeline structurally cannot reproduce
+  `resolve-enhancement-abilities`' original bug (an available-but-unselected Enhancement leaking
+  onto every eligible unit). `ISessionArmyListStore`/`IArmyRosterProvider` changed from being
+  hard-typed to `ParsedArmyList` to a small format-discriminated wrapper (`StoredArmyImport`, with
+  `TextArmyImport`/`BattleScribeArmyImport` variants) so `/Import` can route to either pipeline
+  while `/LivePlay`/`LivePlayCasualtyService` stay unchanged beyond the parameter type — validated
+  by a real end-to-end test asserting both pipelines render the same real Templars list
+  equivalently. **Deferred / unverified, both flagged in the change's own design.md Risks**: (1)
+  invulnerable-save caveat resolution for this format was implemented by analogy to the BSData
+  mapper's own two naming conventions, but the one real sample in hand has no caveated InSv to
+  verify it against; (2) the real sample's own attachment groups are only 2-member and Leader-only
+  shapes — no 3-member group exists in it, so that specific shape (mentioned as an aspiration in
+  the change's own tasks.md) remains unverified. Both should be confirmed against a second,
+  independently-sourced roster JSON (a different faction, ideally with a caveated invulnerable save,
+  a vehicle, and a 3-member attachment group) before this pipeline is considered fully robust — see
+  `.claude/vnext-ideas.md` if a further follow-up change is warranted once such a sample turns up.
+
 - OpenSpec change `harden-army-list-parsing-for-android-exports` implemented (12/12 tasks) —
   `ArmyListParser` was only ever verified against iOS-captured exports; two real Android exports
   (`data/gw-android-export-custodes.txt`, `data/gw-android-export-deathguard.txt`, both relayed

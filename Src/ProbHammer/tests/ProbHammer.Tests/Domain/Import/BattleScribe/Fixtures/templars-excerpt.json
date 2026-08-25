@@ -1,0 +1,3148 @@
+{
+ "roster": {
+  "costs": [
+   {
+    "name": "pts",
+    "value": 915
+   }
+  ],
+  "costLimits": [
+   {
+    "name": "pts",
+    "value": 1000
+   }
+  ],
+  "forces": [
+   {
+    "rules": [
+     {
+      "description": "If your Army Faction is **^^Adeptus Astartes^^**, at the start of the first battle round, select one of the following Vows to be active for **^^Adeptus Astartes^^** units from your army. While a Vow is active for your army, that unit has the associated ability below. \n\n**Abhor the Witch, Destroy the Witch**\n■ Each time this unit declares a charge, if one or more targets of that charge have the **^^Psyker^^** keyword, you can re-roll the Charge roll. Melee weapons equipped by models in this unit have the **[PRECISION]** ability while targeting **^^Psyker^^** units. \n\n**Accept Any Challenge, No Matter the Odds**\n■ Each time a model in this unit makes a melee attack, if the Strength characteristic of that attack is less than or equal to the Toughness characteristic of the target, add 1 to the wound roll\n\n**Suffer Not the Unclean to Live**\n■ This unit is eligible to declare a charge in a turn in which it Fell Back, and each time a model in this unit makes a Pile-in or Consolidation move, it does not need to end that move closer to the closest enemy model, provided it ends that move as close as possible to the nearest enemy unit. \n\n**Uphold the Honour of the Emperor**\nIf this unit has the **^^Infantry^^** keyword:\n■ At the end of your Command phase, if this unit is within range of an objective marker you control, that objective marker remains under your control until your opponent's level of control over that objective marker is greater than yours at the end of the phase. \n■ If the mission you are playing features Actions, this unit is eligible to start to perform an Action in a turn in which it Advanced.",
+      "id": "f26c-4b28-aaea-40cf",
+      "name": "Templar Vows"
+     },
+     {
+      "description": "If your Army Faction is **^^Adeptus Astartes^^**, at the start of the first battle round, select one of the following Vows to be active for **^^Adeptus Astartes^^** units from your army. While a Vow is active for your army, that unit has the associated ability below. \n\n**Abhor the Witch, Destroy the Witch**\n■ Each time this unit declares a charge, if one or more targets of that charge have the **^^Psyker^^** keyword, you can re-roll the Charge roll. Melee weapons equipped by models in this unit have the **[PRECISION]** ability while targeting **^^Psyker^^** units. \n\n**Accept Any Challenge, No Matter the Odds**\n■ Each time a model in this unit makes a melee attack, if the Strength characteristic of that attack is less than or equal to the Toughness characteristic of the target, add 1 to the wound roll\n\n**Suffer Not the Unclean to Live**\n■ This unit is eligible to declare a charge in a turn in which it Fell Back, and each time a model in this unit makes a Pile-in or Consolidation move, it does not need to end that move closer to the closest enemy model, provided it ends that move as close as possible to the nearest enemy unit. \n\n**Uphold the Honour of the Emperor**\nIf this unit has the **^^Infantry^^** keyword:\n■ At the end of your Command phase, if this unit is within range of an objective marker you control, that objective marker remains under your control until your opponent's level of control over that objective marker is greater than yours at the end of the phase. \n■ If the mission you are playing features Actions, this unit is eligible to start to perform an Action in a turn in which it Advanced.",
+      "id": "f26c-4b28-aaea-40cf",
+      "name": "Templar Vows"
+     }
+    ],
+    "selections": [
+     {
+      "selections": [
+       {
+        "id": "oqbe7n",
+        "name": "Incursion (1000 Point limit)",
+        "number": 1,
+        "type": "upgrade"
+       }
+      ],
+      "id": "opg9m7",
+      "name": "Battle Size",
+      "number": 1,
+      "type": "upgrade"
+     },
+     {
+      "selections": [
+       {
+        "rules": [
+         {
+          "description": "You can re-roll Advance and Charge rolls made for ^^**Adeptus Astartes^^** unit from your army.",
+          "id": "e2ba-ad00-9361-86b0",
+          "name": "Righteous Fervour"
+         }
+        ],
+        "costs": [
+         {
+          "name": "Detachment Points",
+          "value": 2
+         }
+        ],
+        "id": "o9hssaq",
+        "name": "Companions of Vehemence",
+        "number": 1,
+        "type": "upgrade"
+       }
+      ],
+      "id": "o2uimpa",
+      "name": "Detachment",
+      "number": 1,
+      "type": "upgrade"
+     },
+     {
+      "selections": [
+       {
+        "id": "nxihq4ap",
+        "name": "Purge the Foe",
+        "number": 1,
+        "type": "upgrade"
+       }
+      ],
+      "id": "nwqszsn",
+      "name": "Force Disposition",
+      "number": 1,
+      "type": "upgrade"
+     },
+     {
+      "rules": [
+       {
+        "description": "If your Army Faction is **^^Adeptus Astartes^^**, at the start of the first battle round, select one of the following Vows to be active for **^^Adeptus Astartes^^** units from your army. While a Vow is active for your army, that unit has the associated ability below. \n\n**Abhor the Witch, Destroy the Witch**\n■ Each time this unit declares a charge, if one or more targets of that charge have the **^^Psyker^^** keyword, you can re-roll the Charge roll. Melee weapons equipped by models in this unit have the **[PRECISION]** ability while targeting **^^Psyker^^** units. \n\n**Accept Any Challenge, No Matter the Odds**\n■ Each time a model in this unit makes a melee attack, if the Strength characteristic of that attack is less than or equal to the Toughness characteristic of the target, add 1 to the wound roll\n\n**Suffer Not the Unclean to Live**\n■ This unit is eligible to declare a charge in a turn in which it Fell Back, and each time a model in this unit makes a Pile-in or Consolidation move, it does not need to end that move closer to the closest enemy model, provided it ends that move as close as possible to the nearest enemy unit. \n\n**Uphold the Honour of the Emperor**\nIf this unit has the **^^Infantry^^** keyword:\n■ At the end of your Command phase, if this unit is within range of an objective marker you control, that objective marker remains under your control until your opponent's level of control over that objective marker is greater than yours at the end of the phase. \n■ If the mission you are playing features Actions, this unit is eligible to start to perform an Action in a turn in which it Advanced.",
+        "id": "f26c-4b28-aaea-40cf",
+        "name": "Templar Vows"
+       },
+       {
+        "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+        "id": "08fb-4cb5-36fb-d638",
+        "name": "Scouts 6\""
+       }
+      ],
+      "profiles": [
+       {
+        "characteristics": [
+         {
+          "$text": "6\"",
+          "name": "M"
+         },
+         {
+          "$text": "4",
+          "name": "T"
+         },
+         {
+          "$text": "2+",
+          "name": "Sv"
+         },
+         {
+          "$text": "6",
+          "name": "W"
+         },
+         {
+          "$text": "6+",
+          "name": "LD"
+         },
+         {
+          "$text": "3",
+          "name": "OC"
+         },
+         {
+          "$text": "4+",
+          "name": "InSv"
+         }
+        ],
+        "id": "a76b-7037-be97-29d7",
+        "name": "High Marshal Helbrecht",
+        "typeName": "Unit"
+       },
+       {
+        "characteristics": [
+         {
+          "$text": "While this model is leading a unit, add 1 to the Attacks and Strength characteristic of melee weapons equipped by models in that unit.",
+          "name": "Description"
+         }
+        ],
+        "id": "89a6-52b4-cba8-4f11",
+        "name": "Crusade of Wrath",
+        "typeName": "Abilities"
+       },
+       {
+        "characteristics": [
+         {
+          "$text": "At the start of the Fight phase, select one enemy unit within Engagement Range of this model’s unit and roll one D6, adding 1 to the result for every five models in this model's unit: on a 2-3, that enemy unit suffers D3 mortal wounds; on a 4-5, that enemy unit suffers 3 mortal wounds; on a 6, that enemy unit suffers D3+3 mortal wounds.",
+          "name": "Description"
+         }
+        ],
+        "id": "6e7f-e156-fc38-c2a4",
+        "name": "High Marshal",
+        "typeName": "Abilities"
+       },
+       {
+        "characteristics": [
+         {
+          "$text": "This model can be attached to the following units:\n\n■ Assault Intercessor Squad\n■ Intercessor Squad\n■ Crusader Squad\n■ Sword Brethren",
+          "name": "Description"
+         }
+        ],
+        "id": "298-2fa3-345c-5083",
+        "name": "Leader",
+        "typeName": "Abilities"
+       }
+      ],
+      "associations": [
+       {
+        "type": "outgoing",
+        "to": "tn6r8lm",
+        "associationId": "8800-9606-a527-a562",
+        "name": "Leading",
+        "action": "group"
+       }
+      ],
+      "selections": [
+       {
+        "rules": [
+         {
+          "description": "Each time an attack made with a **[DEVASTATING WOUNDS]** weapon results in a **critical wound**, the attack sequence for that attack ends and the target unit suffers a number of **mortal wounds** equal to the **D** characteristic of that weapon. These are inflicted after resolving any normal damage inflicted by those attacks. \n**Mortal wounds** inflicted by **[DEVASTATING WOUNDS]** weapons can damage a maximum of one model for each **critical wound**; any remaining **mortal wounds** inflicted by that attack are lost. \n***Example:** An attack made with a **[DEVASTATING WOUNDS]** weapon with a **D** characteristic of 3 results in a **critical wound** against an Intercessor Squad, so inflicts 3 **mortal wounds**. The first 2 **mortal wounds** are sufficient to **destroy** 1 Intercessor model, so the remaining **mortal wound** is lost.*",
+          "id": "be1e-ac8e-1e2c-3528",
+          "name": "Devastating Wounds"
+         },
+         {
+          "description": "This ability always takes the form **[ANTI-X Y+]**. Each time an attack is made with an **[ANTI]** weapon, if the target unit has the keyword denoted by **X**, an unmodified **wound roll** of **Y+** is a **critical wound**.\n***Example:** An attack made with an **[ANTI-VEHICLE 4+]** weapon against a ^^**Vehicle**^^ unit will result in a **critical wound** on an unmodified **wound roll** of 4+, while an attack made with an **[ANTI-PSYKER 2+]** weapon against a ^^**Psyker**^^ unit will result in a **critical wound** on an unmodified **wound roll** of 2+.*",
+          "id": "4111-82e3-9444-e942",
+          "name": "Anti"
+         },
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "24\"",
+            "name": "Range"
+           },
+           {
+            "$text": "2",
+            "name": "A"
+           },
+           {
+            "$text": "2+",
+            "name": "BS"
+           },
+           {
+            "$text": "5",
+            "name": "S"
+           },
+           {
+            "$text": "-1",
+            "name": "AP"
+           },
+           {
+            "$text": "2",
+            "name": "D"
+           },
+           {
+            "$text": "Anti-infantry 4+, Devastating Wounds",
+            "name": "Keywords"
+           }
+          ],
+          "id": "679c-4453-866f-c5bd",
+          "name": "Ferocity",
+          "typeName": "Ranged Weapons"
+         }
+        ],
+        "id": "quu7a7b",
+        "name": "Ferocity",
+        "number": 1,
+        "type": "upgrade"
+       },
+       {
+        "rules": [
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "Melee",
+            "name": "Range"
+           },
+           {
+            "$text": "13",
+            "name": "A"
+           },
+           {
+            "$text": "2+",
+            "name": "WS"
+           },
+           {
+            "$text": "7",
+            "name": "S"
+           },
+           {
+            "$text": "-3",
+            "name": "AP"
+           },
+           {
+            "$text": "1",
+            "name": "D"
+           },
+           {
+            "name": "Keywords"
+           }
+          ],
+          "id": "c3e-6082-7fab-f709",
+          "name": "➤ Sword of the High Marshals - Sweep",
+          "typeName": "Melee Weapons"
+         },
+         {
+          "characteristics": [
+           {
+            "$text": "Melee",
+            "name": "Range"
+           },
+           {
+            "$text": "7",
+            "name": "A"
+           },
+           {
+            "$text": "2+",
+            "name": "WS"
+           },
+           {
+            "$text": "9",
+            "name": "S"
+           },
+           {
+            "$text": "-3",
+            "name": "AP"
+           },
+           {
+            "$text": "3",
+            "name": "D"
+           },
+           {
+            "name": "Keywords"
+           }
+          ],
+          "id": "f42f-4480-b003-9f57",
+          "name": "➤ Sword of the High Marshals - Strike",
+          "typeName": "Melee Weapons"
+         }
+        ],
+        "id": "qusw3xj",
+        "name": "Sword of the High Marshals",
+        "number": 1,
+        "type": "upgrade"
+       },
+       {
+        "rules": [
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "id": "qvgrnus",
+        "name": "Warlord",
+        "number": 1,
+        "type": "upgrade"
+       }
+      ],
+      "costs": [
+       {
+        "name": "pts",
+        "value": 110
+       }
+      ],
+      "id": "qtvk09p",
+      "name": "High Marshal Helbrecht",
+      "number": 1,
+      "type": "model"
+     },
+     {
+      "rules": [
+       {
+        "description": "Before the battle, in the Muster Armies step, for each **leader** and **support** unit in your army, you can select one friendly **bodyguard** unit that unit can lead. That unit will then lead that **bodyguard** unit for the battle and form an **attached** unit with it. \nUnless otherwise stated, each **bodyguard** unit can only have one **leader** unit and one **support** unit attached to it.",
+        "id": "3342-2180-9c5d-925f",
+        "name": "Support"
+       },
+       {
+        "description": "If your Army Faction is **^^Adeptus Astartes^^**, at the start of the first battle round, select one of the following Vows to be active for **^^Adeptus Astartes^^** units from your army. While a Vow is active for your army, that unit has the associated ability below. \n\n**Abhor the Witch, Destroy the Witch**\n■ Each time this unit declares a charge, if one or more targets of that charge have the **^^Psyker^^** keyword, you can re-roll the Charge roll. Melee weapons equipped by models in this unit have the **[PRECISION]** ability while targeting **^^Psyker^^** units. \n\n**Accept Any Challenge, No Matter the Odds**\n■ Each time a model in this unit makes a melee attack, if the Strength characteristic of that attack is less than or equal to the Toughness characteristic of the target, add 1 to the wound roll\n\n**Suffer Not the Unclean to Live**\n■ This unit is eligible to declare a charge in a turn in which it Fell Back, and each time a model in this unit makes a Pile-in or Consolidation move, it does not need to end that move closer to the closest enemy model, provided it ends that move as close as possible to the nearest enemy unit. \n\n**Uphold the Honour of the Emperor**\nIf this unit has the **^^Infantry^^** keyword:\n■ At the end of your Command phase, if this unit is within range of an objective marker you control, that objective marker remains under your control until your opponent's level of control over that objective marker is greater than yours at the end of the phase. \n■ If the mission you are playing features Actions, this unit is eligible to start to perform an Action in a turn in which it Advanced.",
+        "id": "f26c-4b28-aaea-40cf",
+        "name": "Templar Vows"
+       },
+       {
+        "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+        "id": "08fb-4cb5-36fb-d638",
+        "name": "Scouts 6\""
+       },
+       {
+        "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+        "id": "08fb-4cb5-36fb-d638",
+        "name": "Scouts 6\""
+       }
+      ],
+      "profiles": [
+       {
+        "characteristics": [
+         {
+          "$text": "6\"",
+          "name": "M"
+         },
+         {
+          "$text": "4",
+          "name": "T"
+         },
+         {
+          "$text": "3+",
+          "name": "Sv"
+         },
+         {
+          "$text": "4",
+          "name": "W"
+         },
+         {
+          "$text": "6+",
+          "name": "LD"
+         },
+         {
+          "$text": "1",
+          "name": "OC"
+         },
+         {
+          "$text": "-",
+          "name": "InSv"
+         }
+        ],
+        "id": "1ff2-cb28-a9a8-5ca",
+        "name": "Lieutenant",
+        "typeName": "Unit"
+       },
+       {
+        "characteristics": [
+         {
+          "$text": "This model can be attached to the following units:\n\n■ ASSAULT INTERCESSOR SQUAD\n■ BLADEGUARD VETERAN SQUAD\n■ COMPANY HEROES\n■ CRUSADER SQUAD\n■ DEATHWATCH VETERANS\n■ DECIMUS KILL TEAM\n■ FORTIS KILL TEAM\n■ HELLBLASTER SQUAD\n■ INFERNUS SQUAD\n■ INNER CIRCLE COMPANIONS\n■ INTERCESSOR SQUAD\n■ STERNGUARD VETERAN SQUAD\n■ SWORD BRETHREN SQUAD\n■ TACTICAL SQUAD",
+          "name": "Description"
+         }
+        ],
+        "id": "ba72-8a45-4bf0-d10c",
+        "name": "Support",
+        "typeName": "Abilities"
+       },
+       {
+        "characteristics": [
+         {
+          "$text": "This model’s unit is eligible to shoot and declare a charge in a turn in which it Fell Back",
+          "name": "Description"
+         }
+        ],
+        "id": "623-5a90-2d25-679",
+        "name": "Target Priority",
+        "typeName": "Abilities"
+       },
+       {
+        "characteristics": [
+         {
+          "$text": "While this model is leading a unit, weapons equipped by models in that unit have the [LETHAL HITS] ability.",
+          "name": "Description"
+         }
+        ],
+        "id": "b07f-3052-e85f-d6d3",
+        "name": "Tactical Precision",
+        "typeName": "Abilities"
+       }
+      ],
+      "associations": [
+       {
+        "type": "outgoing",
+        "to": "6ad4ioq",
+        "associationId": "c764-c8d8-f680-f17e",
+        "name": "Supporting",
+        "action": "group"
+       }
+      ],
+      "selections": [
+       {
+        "rules": [
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         },
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "selections": [
+         {
+          "rules": [
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "Melee",
+              "name": "Range"
+             },
+             {
+              "$text": "5",
+              "name": "A"
+             },
+             {
+              "$text": "2+",
+              "name": "WS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "0",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Lethal Hits",
+              "name": "Keywords"
+             }
+            ],
+            "id": "bd3d-3dc5-c4dd-56fd",
+            "name": "Close combat weapon",
+            "typeName": "Melee Weapons"
+           }
+          ],
+          "id": "0yrpvv7",
+          "name": "Close combat weapon",
+          "number": 1,
+          "type": "upgrade"
+         },
+         {
+          "rules": [
+           {
+            "description": "**[PISTOL]** and **[CLOSE-QUARTERS]** are identical for all rules purposes. \n\nUnits containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using **close-quarters shooting** (10.06). When using another **shooting type**, for each model in that unit (excluding **MONSTER/VEHICLE** models), you can only select one of the following to make attacks with: \n- One or more of its **[CLOSE-QUARTERS]** weapons. \n- One or more of its other ranged weapons.",
+            "id": "8bf7-8812-923d-29e4",
+            "name": "Pistol"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "12\"",
+              "name": "Range"
+             },
+             {
+              "$text": "1",
+              "name": "A"
+             },
+             {
+              "$text": "2+",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "0",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Pistol, Lethal Hits",
+              "name": "Keywords"
+             }
+            ],
+            "id": "3104-8d29-e431-05d7",
+            "name": "Bolt pistol",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "0ypujld",
+          "name": "Bolt pistol",
+          "number": 1,
+          "type": "upgrade"
+         },
+         {
+          "rules": [
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "24\"",
+              "name": "Range"
+             },
+             {
+              "$text": "2",
+              "name": "A"
+             },
+             {
+              "$text": "2+",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "-1",
+              "name": "AP"
+             },
+             {
+              "$text": "2",
+              "name": "D"
+             },
+             {
+              "$text": "Lethal Hits",
+              "name": "Keywords"
+             }
+            ],
+            "id": "eff9-b1b3-de43-fb11",
+            "name": "Master-crafted bolter",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "107htup",
+          "name": "Master-crafted bolter",
+          "number": 1,
+          "type": "upgrade"
+         }
+        ],
+        "id": "0klydxz",
+        "name": "Pistol, Master-crafted Bolter & Melee Weapon",
+        "number": 1,
+        "type": "upgrade"
+       }
+      ],
+      "costs": [
+       {
+        "name": "pts",
+        "value": 45
+       }
+      ],
+      "id": "0jbckua",
+      "name": "Lieutenant",
+      "number": 1,
+      "type": "model"
+     },
+     {
+      "rules": [
+       {
+        "description": "Before the battle, in the Muster Armies step, for each leader and support unit in your army, you can select one friendly bodyguard unit that unit can lead. That unit will then lead that bodyguard unit for the battle and form an attached unit with it. Unless otherwise stated, each bodyguard unit can only have one leader unit and one support unit attached to it.",
+        "id": "b4dd-3e1f-41cb-218f",
+        "name": "Leader"
+       },
+       {
+        "description": "If your Army Faction is **^^Adeptus Astartes^^**, at the start of the first battle round, select one of the following Vows to be active for **^^Adeptus Astartes^^** units from your army. While a Vow is active for your army, that unit has the associated ability below. \n\n**Abhor the Witch, Destroy the Witch**\n■ Each time this unit declares a charge, if one or more targets of that charge have the **^^Psyker^^** keyword, you can re-roll the Charge roll. Melee weapons equipped by models in this unit have the **[PRECISION]** ability while targeting **^^Psyker^^** units. \n\n**Accept Any Challenge, No Matter the Odds**\n■ Each time a model in this unit makes a melee attack, if the Strength characteristic of that attack is less than or equal to the Toughness characteristic of the target, add 1 to the wound roll\n\n**Suffer Not the Unclean to Live**\n■ This unit is eligible to declare a charge in a turn in which it Fell Back, and each time a model in this unit makes a Pile-in or Consolidation move, it does not need to end that move closer to the closest enemy model, provided it ends that move as close as possible to the nearest enemy unit. \n\n**Uphold the Honour of the Emperor**\nIf this unit has the **^^Infantry^^** keyword:\n■ At the end of your Command phase, if this unit is within range of an objective marker you control, that objective marker remains under your control until your opponent's level of control over that objective marker is greater than yours at the end of the phase. \n■ If the mission you are playing features Actions, this unit is eligible to start to perform an Action in a turn in which it Advanced.",
+        "id": "f26c-4b28-aaea-40cf",
+        "name": "Templar Vows"
+       },
+       {
+        "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+        "id": "08fb-4cb5-36fb-d638",
+        "name": "Scouts 6\""
+       },
+       {
+        "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+        "id": "08fb-4cb5-36fb-d638",
+        "name": "Scouts 6\""
+       }
+      ],
+      "profiles": [
+       {
+        "characteristics": [
+         {
+          "$text": "6\"",
+          "name": "M"
+         },
+         {
+          "$text": "4",
+          "name": "T"
+         },
+         {
+          "$text": "3+",
+          "name": "Sv"
+         },
+         {
+          "$text": "5",
+          "name": "W"
+         },
+         {
+          "$text": "6+",
+          "name": "LD"
+         },
+         {
+          "$text": "1",
+          "name": "OC"
+         },
+         {
+          "$text": "4+",
+          "name": "InSv"
+         }
+        ],
+        "id": "ac2d-3f07-3f38-5d51",
+        "name": "Marshal",
+        "typeName": "Unit"
+       },
+       {
+        "characteristics": [
+         {
+          "$text": "This model can be attached to the following units:\n\n■ Assault Intercessor Squad\n■ Infernus Squad\n■ Intercessor Squad\n■ Crusader Squad\n■ Sword Brethren\n■ Sternguard Veteran Squad",
+          "name": "Description"
+         }
+        ],
+        "id": "7985-3a9a-2b9e-6c17",
+        "name": "Leader",
+        "typeName": "Abilities"
+       },
+       {
+        "characteristics": [
+         {
+          "$text": "While this model is leading a unit, each time a model in that unit makes a melee attack, an unmodified Hit roll of 5+ scores a Critical Hit.",
+          "name": "Description"
+         }
+        ],
+        "id": "33d5-9c8e-db2f-63b5",
+        "name": "Inspirational Exemplar",
+        "typeName": "Abilities"
+       },
+       {
+        "characteristics": [
+         {
+          "$text": "Each time this model's unit is selected to fight, until the end of the phase, add 1 to the Attacks characteristic of this model's Master-Crafted Power Weapon for each enemy unit within 6\" of this model (to a maximum of +3).",
+          "name": "Description"
+         }
+        ],
+        "id": "ae8f-82c1-8730-21fa",
+        "name": "Pious Fervour",
+        "typeName": "Abilities"
+       }
+      ],
+      "associations": [
+       {
+        "type": "outgoing",
+        "to": "6ad4ioq",
+        "associationId": "b4f3-502d-579d-1e86",
+        "name": "Leading",
+        "action": "group"
+       }
+      ],
+      "selections": [
+       {
+        "rules": [
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         },
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "ADEPTUS ASTARTES INFANTRY model only. Add 1 to the Advance rolls made for the bearer's unit. If the mission pack you are playing features Actions, the bearer's unit is eligible to start to perform an Action in a turn in which it Advanced.",
+            "name": "Description"
+           }
+          ],
+          "id": "66f4-4d79-9857-0054",
+          "name": "Oathbound Exemplar",
+          "typeName": "Abilities"
+         }
+        ],
+        "costs": [
+         {
+          "name": "pts",
+          "value": 15
+         },
+         {
+          "name": "Enhancements",
+          "value": 1
+         }
+        ],
+        "id": "y2hg5na",
+        "name": "Oathbound Exemplar",
+        "number": 1,
+        "type": "upgrade"
+       },
+       {
+        "rules": [
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         },
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "Melee",
+            "name": "Range"
+           },
+           {
+            "$text": "7",
+            "name": "A"
+           },
+           {
+            "$text": "2+",
+            "name": "WS"
+           },
+           {
+            "$text": "5",
+            "name": "S"
+           },
+           {
+            "$text": "-2",
+            "name": "AP"
+           },
+           {
+            "$text": "2",
+            "name": "D"
+           },
+           {
+            "$text": "Lethal Hits, Lethal Hits",
+            "name": "Keywords"
+           }
+          ],
+          "id": "646c-a341-f427-32bf",
+          "name": "Master-crafted Power Weapon",
+          "typeName": "Melee Weapons"
+         }
+        ],
+        "id": "xvo1aa5",
+        "name": "Master-crafted Power Weapon",
+        "number": 1,
+        "type": "upgrade"
+       },
+       {
+        "rules": [
+         {
+          "description": "Each time a unit is **selected to shoot** or **selected to fight**, after that unit has resolved all of its attacks, make a number of **hazard rolls** (06.03) for that unit equal to the number of **[HAZARDOUS]** weapons you selected in the Select Weapons step.",
+          "id": "8367-374c-f87-c627",
+          "name": "Hazardous"
+         },
+         {
+          "description": "**[PISTOL]** and **[CLOSE-QUARTERS]** are identical for all rules purposes. \n\nUnits containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using **close-quarters shooting** (10.06). When using another **shooting type**, for each model in that unit (excluding **MONSTER/VEHICLE** models), you can only select one of the following to make attacks with: \n- One or more of its **[CLOSE-QUARTERS]** weapons. \n- One or more of its other ranged weapons.",
+          "id": "8bf7-8812-923d-29e4",
+          "name": "Pistol"
+         },
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         },
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "12\"",
+            "name": "Range"
+           },
+           {
+            "$text": "1",
+            "name": "A"
+           },
+           {
+            "$text": "2+",
+            "name": "BS"
+           },
+           {
+            "$text": "7",
+            "name": "S"
+           },
+           {
+            "$text": "-2",
+            "name": "AP"
+           },
+           {
+            "$text": "1",
+            "name": "D"
+           },
+           {
+            "$text": "Pistol, Lethal Hits",
+            "name": "Keywords"
+           }
+          ],
+          "id": "3844-3c6d-1d29-d804",
+          "name": "➤ Plasma Pistol - Standard",
+          "typeName": "Ranged Weapons"
+         },
+         {
+          "characteristics": [
+           {
+            "$text": "12\"",
+            "name": "Range"
+           },
+           {
+            "$text": "1",
+            "name": "A"
+           },
+           {
+            "$text": "2+",
+            "name": "BS"
+           },
+           {
+            "$text": "8",
+            "name": "S"
+           },
+           {
+            "$text": "-3",
+            "name": "AP"
+           },
+           {
+            "$text": "2",
+            "name": "D"
+           },
+           {
+            "$text": "Hazardous, Pistol, Lethal Hits",
+            "name": "Keywords"
+           }
+          ],
+          "id": "78bf-495d-5438-d37e",
+          "name": "➤ Plasma Pistol - Supercharge",
+          "typeName": "Ranged Weapons"
+         }
+        ],
+        "id": "xw4jti6",
+        "name": "Plasma Pistol",
+        "number": 1,
+        "type": "upgrade"
+       }
+      ],
+      "costs": [
+       {
+        "name": "pts",
+        "value": 80
+       }
+      ],
+      "id": "xt6ir99",
+      "name": "Marshal",
+      "number": 1,
+      "type": "model"
+     },
+     {
+      "rules": [
+       {
+        "description": "If your Army Faction is **^^Adeptus Astartes^^**, at the start of the first battle round, select one of the following Vows to be active for **^^Adeptus Astartes^^** units from your army. While a Vow is active for your army, that unit has the associated ability below. \n\n**Abhor the Witch, Destroy the Witch**\n■ Each time this unit declares a charge, if one or more targets of that charge have the **^^Psyker^^** keyword, you can re-roll the Charge roll. Melee weapons equipped by models in this unit have the **[PRECISION]** ability while targeting **^^Psyker^^** units. \n\n**Accept Any Challenge, No Matter the Odds**\n■ Each time a model in this unit makes a melee attack, if the Strength characteristic of that attack is less than or equal to the Toughness characteristic of the target, add 1 to the wound roll\n\n**Suffer Not the Unclean to Live**\n■ This unit is eligible to declare a charge in a turn in which it Fell Back, and each time a model in this unit makes a Pile-in or Consolidation move, it does not need to end that move closer to the closest enemy model, provided it ends that move as close as possible to the nearest enemy unit. \n\n**Uphold the Honour of the Emperor**\nIf this unit has the **^^Infantry^^** keyword:\n■ At the end of your Command phase, if this unit is within range of an objective marker you control, that objective marker remains under your control until your opponent's level of control over that objective marker is greater than yours at the end of the phase. \n■ If the mission you are playing features Actions, this unit is eligible to start to perform an Action in a turn in which it Advanced.",
+        "id": "f26c-4b28-aaea-40cf",
+        "name": "Templar Vows"
+       },
+       {
+        "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+        "id": "08fb-4cb5-36fb-d638",
+        "name": "Scouts 6\""
+       }
+      ],
+      "profiles": [
+       {
+        "characteristics": [
+         {
+          "$text": "In your opponent's Shooting phase, each time an enemy unit has shot, if any models in this unit were destroyed as a result of those attacks, this unit can make a surge move of up to D6+2.",
+          "name": "Description"
+         }
+        ],
+        "id": "eb4a-e30-3fd1-5dec",
+        "name": "Righteous Zeal",
+        "typeName": "Abilities"
+       },
+       {
+        "characteristics": [
+         {
+          "$text": "If a CHARACTER from your army with the Leader ability can be attached to an INTERCESSOR SQUAD, it can be attached to this unit instead.",
+          "name": "Description"
+         }
+        ],
+        "id": "63d9-2355-9727-3346",
+        "name": "Attached Unit",
+        "typeName": "Abilities"
+       }
+      ],
+      "selections": [
+       {
+        "rules": [
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "6\"",
+            "name": "M"
+           },
+           {
+            "$text": "4",
+            "name": "T"
+           },
+           {
+            "$text": "3+",
+            "name": "Sv"
+           },
+           {
+            "$text": "2",
+            "name": "W"
+           },
+           {
+            "$text": "6+",
+            "name": "LD"
+           },
+           {
+            "$text": "2",
+            "name": "OC"
+           },
+           {
+            "$text": "-",
+            "name": "InSv"
+           }
+          ],
+          "id": "61eb-c914-1768-1649",
+          "name": "Sword Brother",
+          "typeName": "Unit"
+         }
+        ],
+        "selections": [
+         {
+          "rules": [
+           {
+            "description": "Each time an attack made with a **[LETHAL HITS]** weapon results in a **critical hit**, you can choose for that attack to automatically wound the target. \n***Designer’s Note:** Choosing to automatically wound the target means that no **wound roll** is made for that attack. You may decide against this, as it means that attack cannot result in a **critical wound** and so cannot trigger other abilities such as [DEVASTATING WOUNDS].*",
+            "id": "d1d1-611e-5191-1095",
+            "name": "Lethal Hits"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "Melee",
+              "name": "Range"
+             },
+             {
+              "$text": "4",
+              "name": "A"
+             },
+             {
+              "$text": "2+",
+              "name": "WS"
+             },
+             {
+              "$text": "6",
+              "name": "S"
+             },
+             {
+              "$text": "-2",
+              "name": "AP"
+             },
+             {
+              "$text": "2",
+              "name": "D"
+             },
+             {
+              "$text": "Lethal Hits",
+              "name": "Keywords"
+             }
+            ],
+            "id": "e22b-3d78-b0d2-f2b0",
+            "name": "Master-crafted Power Weapon",
+            "typeName": "Melee Weapons"
+           }
+          ],
+          "id": "tt96lfg",
+          "name": "Master-crafted Power Weapon",
+          "number": 1,
+          "type": "upgrade"
+         },
+         {
+          "rules": [
+           {
+            "description": "Each time an attack is made with an **[IGNORES COVER]** weapon, the target cannot have the **benefit of cover** against that attack (13.08), including from rules that give a model or unit the **benefit of cover** (e.g. **Stealth**).",
+            "id": "4640-43e7-30b-215a",
+            "name": "Ignores Cover"
+           },
+           {
+            "description": "Each time an attack is made with a **[TORRENT]** weapon, that attack automatically hits the target.",
+            "id": "5edf-d619-23e0-9b56",
+            "name": "Torrent"
+           },
+           {
+            "description": "**[PISTOL]** and **[CLOSE-QUARTERS]** are identical for all rules purposes. \n\nUnits containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using **close-quarters shooting** (10.06). When using another **shooting type**, for each model in that unit (excluding **MONSTER/VEHICLE** models), you can only select one of the following to make attacks with: \n- One or more of its **[CLOSE-QUARTERS]** weapons. \n- One or more of its other ranged weapons.",
+            "id": "8bf7-8812-923d-29e4",
+            "name": "Pistol"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "12\"",
+              "name": "Range"
+             },
+             {
+              "$text": "D6",
+              "name": "A"
+             },
+             {
+              "$text": "N/A",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "0",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Ignores Cover, Pistol, Torrent",
+              "name": "Keywords"
+             }
+            ],
+            "id": "62bd-9f6-bc09-5fd",
+            "name": "Pyre Pistol",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "tuj1mxu",
+          "name": "Pyre Pistol",
+          "number": 1,
+          "type": "upgrade"
+         }
+        ],
+        "id": "tojf5zq",
+        "name": "Sword Brother",
+        "number": 1,
+        "type": "model"
+       },
+       {
+        "rules": [
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "6\"",
+            "name": "M"
+           },
+           {
+            "$text": "4",
+            "name": "T"
+           },
+           {
+            "$text": "3+",
+            "name": "Sv"
+           },
+           {
+            "$text": "2",
+            "name": "W"
+           },
+           {
+            "$text": "6+",
+            "name": "LD"
+           },
+           {
+            "$text": "2",
+            "name": "OC"
+           },
+           {
+            "$text": "-",
+            "name": "InSv"
+           }
+          ],
+          "id": "3f96-6a6f-2b9b-21e6",
+          "name": "Initiate",
+          "typeName": "Unit"
+         }
+        ],
+        "selections": [
+         {
+          "rules": [
+           {
+            "description": "This ability always takes the form **[SUSTAINED HITS X]**. Each time an attack made with a **[SUSTAINED HITS]** weapon results in a **critical hit**, that attack results in a number of additional hits on the target as denoted by **X**.\n***Example:** An attack made with a **[SUSTAINED HITS 2]** weapon results in a **critical hit**. That attack therefore hits the target three times (once from the **critical hit**, and twice more from the **[SUSTAINED HITS 2]** ability).*",
+            "id": "1897-c22c-9597-12b1",
+            "name": "Sustained Hits"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "Melee",
+              "name": "Range"
+             },
+             {
+              "$text": "5",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "WS"
+             },
+             {
+              "$text": "5",
+              "name": "S"
+             },
+             {
+              "$text": "-1",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Sustained Hits 1",
+              "name": "Keywords"
+             }
+            ],
+            "id": "4507-8dff-0077-9b0f",
+            "name": "Astartes Chainsword",
+            "typeName": "Melee Weapons"
+           }
+          ],
+          "id": "vq4y73k",
+          "name": "Astartes Chainsword",
+          "number": 3,
+          "type": "upgrade"
+         },
+         {
+          "rules": [
+           {
+            "description": "Units containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using **close-quarters shooting** (10.06). When using another **shooting type**, for each model in that unit (excluding **MONSTER/VEHICLE** models), you can only select one of the following to make attacks with: \n- One or more of its **[CLOSE-QUARTERS]** weapons. \n- One or more of its other ranged weapons.",
+            "id": "5238-5ad4-52f7-6eb4",
+            "name": "Close-quarters"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "12\"",
+              "name": "Range"
+             },
+             {
+              "$text": "1",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "0",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Close-Quarters",
+              "name": "Keywords"
+             }
+            ],
+            "id": "d093-797a-4c76-eea3",
+            "name": "Bolt pistol",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "vqfywz4",
+          "name": "Bolt pistol",
+          "number": 3,
+          "type": "upgrade"
+         },
+         {
+          "rules": [
+           {
+            "description": "**[PISTOL]** and **[CLOSE-QUARTERS]** are identical for all rules purposes. \n\nUnits containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using **close-quarters shooting** (10.06). When using another **shooting type**, for each model in that unit (excluding **MONSTER/VEHICLE** models), you can only select one of the following to make attacks with: \n- One or more of its **[CLOSE-QUARTERS]** weapons. \n- One or more of its other ranged weapons.",
+            "id": "8bf7-8812-923d-29e4",
+            "name": "Pistol"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "18\"",
+              "name": "Range"
+             },
+             {
+              "$text": "1",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "-1",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Pistol",
+              "name": "Keywords"
+             }
+            ],
+            "id": "fe04-97bc-6b13-fd1c",
+            "name": "Heavy Bolt Pistol",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "vql6v0g",
+          "name": "Heavy Bolt Pistol",
+          "number": 3,
+          "type": "upgrade"
+         }
+        ],
+        "id": "vq956nj",
+        "name": "Initiate w/Chainsword & Heavy Bolt Pistol",
+        "number": 3,
+        "type": "model"
+       },
+       {
+        "rules": [
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "6\"",
+            "name": "M"
+           },
+           {
+            "$text": "4",
+            "name": "T"
+           },
+           {
+            "$text": "3+",
+            "name": "Sv"
+           },
+           {
+            "$text": "2",
+            "name": "W"
+           },
+           {
+            "$text": "6+",
+            "name": "LD"
+           },
+           {
+            "$text": "2",
+            "name": "OC"
+           },
+           {
+            "$text": "-",
+            "name": "InSv"
+           }
+          ],
+          "id": "8e55-546e-9c9c-a3cf",
+          "name": "Initiate",
+          "typeName": "Unit"
+         }
+        ],
+        "selections": [
+         {
+          "rules": [
+           {
+            "description": "Units containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using **close-quarters shooting** (10.06). When using another **shooting type**, for each model in that unit (excluding **MONSTER/VEHICLE** models), you can only select one of the following to make attacks with: \n- One or more of its **[CLOSE-QUARTERS]** weapons. \n- One or more of its other ranged weapons.",
+            "id": "5238-5ad4-52f7-6eb4",
+            "name": "Close-quarters"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "12\"",
+              "name": "Range"
+             },
+             {
+              "$text": "1",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "0",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Close-Quarters",
+              "name": "Keywords"
+             }
+            ],
+            "id": "d093-797a-4c76-eea3",
+            "name": "Bolt pistol",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "uavh75",
+          "name": "Bolt pistol",
+          "number": 2,
+          "type": "upgrade"
+         },
+         {
+          "rules": [
+           {
+            "description": "**[PISTOL]** and **[CLOSE-QUARTERS]** are identical for all rules purposes. \n\nUnits containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using **close-quarters shooting** (10.06). When using another **shooting type**, for each model in that unit (excluding **MONSTER/VEHICLE** models), you can only select one of the following to make attacks with: \n- One or more of its **[CLOSE-QUARTERS]** weapons. \n- One or more of its other ranged weapons.",
+            "id": "8bf7-8812-923d-29e4",
+            "name": "Pistol"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "18\"",
+              "name": "Range"
+             },
+             {
+              "$text": "1",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "-1",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Pistol",
+              "name": "Keywords"
+             }
+            ],
+            "id": "fe04-97bc-6b13-fd1c",
+            "name": "Heavy Bolt Pistol",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "u9ycoed",
+          "name": "Heavy Bolt Pistol",
+          "number": 2,
+          "type": "upgrade"
+         },
+         {
+          "rules": [
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "Melee",
+              "name": "Range"
+             },
+             {
+              "$text": "4",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "WS"
+             },
+             {
+              "$text": "9",
+              "name": "S"
+             },
+             {
+              "$text": "-2",
+              "name": "AP"
+             },
+             {
+              "$text": "2",
+              "name": "D"
+             },
+             {
+              "name": "Keywords"
+             }
+            ],
+            "id": "3a24-34af-7558-5365",
+            "name": "Power fist",
+            "typeName": "Melee Weapons"
+           }
+          ],
+          "id": "uaj1j",
+          "name": "Power fist",
+          "number": 2,
+          "type": "upgrade"
+         }
+        ],
+        "id": "tp43vj",
+        "name": "Initiate w/Power Fist & Heavy Bolt Pistol",
+        "number": 2,
+        "type": "model"
+       },
+       {
+        "rules": [
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "6\"",
+            "name": "M"
+           },
+           {
+            "$text": "4",
+            "name": "T"
+           },
+           {
+            "$text": "4+",
+            "name": "Sv"
+           },
+           {
+            "$text": "2",
+            "name": "W"
+           },
+           {
+            "$text": "6+",
+            "name": "LD"
+           },
+           {
+            "$text": "2",
+            "name": "OC"
+           },
+           {
+            "$text": "-",
+            "name": "InSv"
+           }
+          ],
+          "id": "1f75-3cc0-3706-0807",
+          "name": "Neophyte",
+          "typeName": "Unit"
+         }
+        ],
+        "selections": [
+         {
+          "rules": [
+           {
+            "description": "This ability always takes the form **[SUSTAINED HITS X]**. Each time an attack made with a **[SUSTAINED HITS]** weapon results in a **critical hit**, that attack results in a number of additional hits on the target as denoted by **X**.\n***Example:** An attack made with a **[SUSTAINED HITS 2]** weapon results in a **critical hit**. That attack therefore hits the target three times (once from the **critical hit**, and twice more from the **[SUSTAINED HITS 2]** ability).*",
+            "id": "1897-c22c-9597-12b1",
+            "name": "Sustained Hits"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "Melee",
+              "name": "Range"
+             },
+             {
+              "$text": "5",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "WS"
+             },
+             {
+              "$text": "5",
+              "name": "S"
+             },
+             {
+              "$text": "-1",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Sustained Hits 1",
+              "name": "Keywords"
+             }
+            ],
+            "id": "4507-8dff-0077-9b0f",
+            "name": "Astartes Chainsword",
+            "typeName": "Melee Weapons"
+           }
+          ],
+          "id": "tzhaiwm",
+          "name": "Astartes Chainsword",
+          "number": 4,
+          "type": "upgrade"
+         },
+         {
+          "rules": [
+           {
+            "description": "Units containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using **close-quarters shooting** (10.06). When using another **shooting type**, for each model in that unit (excluding **MONSTER/VEHICLE** models), you can only select one of the following to make attacks with: \n- One or more of its **[CLOSE-QUARTERS]** weapons. \n- One or more of its other ranged weapons.",
+            "id": "5238-5ad4-52f7-6eb4",
+            "name": "Close-quarters"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "12\"",
+              "name": "Range"
+             },
+             {
+              "$text": "1",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "0",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Close-Quarters",
+              "name": "Keywords"
+             }
+            ],
+            "id": "d093-797a-4c76-eea3",
+            "name": "Bolt pistol",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "tz46k4",
+          "name": "Bolt pistol",
+          "number": 4,
+          "type": "upgrade"
+         }
+        ],
+        "id": "tzlw4so",
+        "name": "Neophyte w/ Astartes Chainsword",
+        "number": 4,
+        "type": "model"
+       }
+      ],
+      "costs": [
+       {
+        "name": "pts",
+        "value": 150
+       }
+      ],
+      "id": "tn6r8lm",
+      "name": "Crusader Squad",
+      "number": 1,
+      "type": "unit"
+     },
+     {
+      "rules": [
+       {
+        "description": "If your Army Faction is **^^Adeptus Astartes^^**, at the start of the first battle round, select one of the following Vows to be active for **^^Adeptus Astartes^^** units from your army. While a Vow is active for your army, that unit has the associated ability below. \n\n**Abhor the Witch, Destroy the Witch**\n■ Each time this unit declares a charge, if one or more targets of that charge have the **^^Psyker^^** keyword, you can re-roll the Charge roll. Melee weapons equipped by models in this unit have the **[PRECISION]** ability while targeting **^^Psyker^^** units. \n\n**Accept Any Challenge, No Matter the Odds**\n■ Each time a model in this unit makes a melee attack, if the Strength characteristic of that attack is less than or equal to the Toughness characteristic of the target, add 1 to the wound roll\n\n**Suffer Not the Unclean to Live**\n■ This unit is eligible to declare a charge in a turn in which it Fell Back, and each time a model in this unit makes a Pile-in or Consolidation move, it does not need to end that move closer to the closest enemy model, provided it ends that move as close as possible to the nearest enemy unit. \n\n**Uphold the Honour of the Emperor**\nIf this unit has the **^^Infantry^^** keyword:\n■ At the end of your Command phase, if this unit is within range of an objective marker you control, that objective marker remains under your control until your opponent's level of control over that objective marker is greater than yours at the end of the phase. \n■ If the mission you are playing features Actions, this unit is eligible to start to perform an Action in a turn in which it Advanced.",
+        "id": "f26c-4b28-aaea-40cf",
+        "name": "Templar Vows"
+       },
+       {
+        "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+        "id": "08fb-4cb5-36fb-d638",
+        "name": "Scouts 6\""
+       },
+       {
+        "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+        "id": "08fb-4cb5-36fb-d638",
+        "name": "Scouts 6\""
+       }
+      ],
+      "profiles": [
+       {
+        "characteristics": [
+         {
+          "$text": "In your opponent's Shooting phase, each time an enemy unit has shot, if any models in this unit were destroyed as a result of those attacks, this unit can make a surge move of up to D6+2.",
+          "name": "Description"
+         }
+        ],
+        "id": "eb4a-e30-3fd1-5dec",
+        "name": "Righteous Zeal",
+        "typeName": "Abilities"
+       },
+       {
+        "characteristics": [
+         {
+          "$text": "If a CHARACTER from your army with the Leader ability can be attached to an INTERCESSOR SQUAD, it can be attached to this unit instead.",
+          "name": "Description"
+         }
+        ],
+        "id": "63d9-2355-9727-3346",
+        "name": "Attached Unit",
+        "typeName": "Abilities"
+       }
+      ],
+      "selections": [
+       {
+        "rules": [
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         },
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "6\"",
+            "name": "M"
+           },
+           {
+            "$text": "4",
+            "name": "T"
+           },
+           {
+            "$text": "3+",
+            "name": "Sv"
+           },
+           {
+            "$text": "2",
+            "name": "W"
+           },
+           {
+            "$text": "6+",
+            "name": "LD"
+           },
+           {
+            "$text": "2",
+            "name": "OC"
+           },
+           {
+            "$text": "-",
+            "name": "InSv"
+           }
+          ],
+          "id": "61eb-c914-1768-1649",
+          "name": "Sword Brother",
+          "typeName": "Unit"
+         }
+        ],
+        "selections": [
+         {
+          "rules": [
+           {
+            "description": "Each time an attack made with a **[LETHAL HITS]** weapon results in a **critical hit**, you can choose for that attack to automatically wound the target. \n***Designer’s Note:** Choosing to automatically wound the target means that no **wound roll** is made for that attack. You may decide against this, as it means that attack cannot result in a **critical wound** and so cannot trigger other abilities such as [DEVASTATING WOUNDS].*",
+            "id": "d1d1-611e-5191-1095",
+            "name": "Lethal Hits"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "Melee",
+              "name": "Range"
+             },
+             {
+              "$text": "3",
+              "name": "A"
+             },
+             {
+              "$text": "2+",
+              "name": "WS"
+             },
+             {
+              "$text": "5",
+              "name": "S"
+             },
+             {
+              "$text": "-2",
+              "name": "AP"
+             },
+             {
+              "$text": "2",
+              "name": "D"
+             },
+             {
+              "$text": "Lethal Hits, Lethal Hits",
+              "name": "Keywords"
+             }
+            ],
+            "id": "e22b-3d78-b0d2-f2b0",
+            "name": "Master-crafted Power Weapon",
+            "typeName": "Melee Weapons"
+           }
+          ],
+          "id": "6do4byz",
+          "name": "Master-crafted Power Weapon",
+          "number": 1,
+          "type": "upgrade"
+         },
+         {
+          "rules": [
+           {
+            "description": "Each time an attack is made with an **[IGNORES COVER]** weapon, the target cannot have the **benefit of cover** against that attack (13.08), including from rules that give a model or unit the **benefit of cover** (e.g. **Stealth**).",
+            "id": "4640-43e7-30b-215a",
+            "name": "Ignores Cover"
+           },
+           {
+            "description": "Each time an attack is made with a **[TORRENT]** weapon, that attack automatically hits the target.",
+            "id": "5edf-d619-23e0-9b56",
+            "name": "Torrent"
+           },
+           {
+            "description": "**[PISTOL]** and **[CLOSE-QUARTERS]** are identical for all rules purposes. \n\nUnits containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using **close-quarters shooting** (10.06). When using another **shooting type**, for each model in that unit (excluding **MONSTER/VEHICLE** models), you can only select one of the following to make attacks with: \n- One or more of its **[CLOSE-QUARTERS]** weapons. \n- One or more of its other ranged weapons.",
+            "id": "8bf7-8812-923d-29e4",
+            "name": "Pistol"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "12\"",
+              "name": "Range"
+             },
+             {
+              "$text": "D6",
+              "name": "A"
+             },
+             {
+              "$text": "N/A",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "0",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Ignores Cover, Pistol, Torrent, Lethal Hits",
+              "name": "Keywords"
+             }
+            ],
+            "id": "62bd-9f6-bc09-5fd",
+            "name": "Pyre Pistol",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "6d4tsy",
+          "name": "Pyre Pistol",
+          "number": 1,
+          "type": "upgrade"
+         }
+        ],
+        "id": "6bxk62q",
+        "name": "Sword Brother",
+        "number": 1,
+        "type": "model"
+       },
+       {
+        "rules": [
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         },
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "6\"",
+            "name": "M"
+           },
+           {
+            "$text": "4",
+            "name": "T"
+           },
+           {
+            "$text": "3+",
+            "name": "Sv"
+           },
+           {
+            "$text": "2",
+            "name": "W"
+           },
+           {
+            "$text": "6+",
+            "name": "LD"
+           },
+           {
+            "$text": "2",
+            "name": "OC"
+           },
+           {
+            "$text": "-",
+            "name": "InSv"
+           }
+          ],
+          "id": "3f96-6a6f-2b9b-21e6",
+          "name": "Initiate",
+          "typeName": "Unit"
+         }
+        ],
+        "selections": [
+         {
+          "rules": [
+           {
+            "description": "This ability always takes the form **[SUSTAINED HITS X]**. Each time an attack made with a **[SUSTAINED HITS]** weapon results in a **critical hit**, that attack results in a number of additional hits on the target as denoted by **X**.\n***Example:** An attack made with a **[SUSTAINED HITS 2]** weapon results in a **critical hit**. That attack therefore hits the target three times (once from the **critical hit**, and twice more from the **[SUSTAINED HITS 2]** ability).*",
+            "id": "1897-c22c-9597-12b1",
+            "name": "Sustained Hits"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "Melee",
+              "name": "Range"
+             },
+             {
+              "$text": "4",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "WS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "-1",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Sustained Hits 1, Lethal Hits",
+              "name": "Keywords"
+             }
+            ],
+            "id": "4507-8dff-0077-9b0f",
+            "name": "Astartes Chainsword",
+            "typeName": "Melee Weapons"
+           }
+          ],
+          "id": "8fqjjff",
+          "name": "Astartes Chainsword",
+          "number": 3,
+          "type": "upgrade"
+         },
+         {
+          "rules": [
+           {
+            "description": "Units containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using **close-quarters shooting** (10.06). When using another **shooting type**, for each model in that unit (excluding **MONSTER/VEHICLE** models), you can only select one of the following to make attacks with: \n- One or more of its **[CLOSE-QUARTERS]** weapons. \n- One or more of its other ranged weapons.",
+            "id": "5238-5ad4-52f7-6eb4",
+            "name": "Close-quarters"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "12\"",
+              "name": "Range"
+             },
+             {
+              "$text": "1",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "0",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Close-Quarters, Lethal Hits",
+              "name": "Keywords"
+             }
+            ],
+            "id": "d093-797a-4c76-eea3",
+            "name": "Bolt pistol",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "8fodlc",
+          "name": "Bolt pistol",
+          "number": 3,
+          "type": "upgrade"
+         },
+         {
+          "rules": [
+           {
+            "description": "**[PISTOL]** and **[CLOSE-QUARTERS]** are identical for all rules purposes. \n\nUnits containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using **close-quarters shooting** (10.06). When using another **shooting type**, for each model in that unit (excluding **MONSTER/VEHICLE** models), you can only select one of the following to make attacks with: \n- One or more of its **[CLOSE-QUARTERS]** weapons. \n- One or more of its other ranged weapons.",
+            "id": "8bf7-8812-923d-29e4",
+            "name": "Pistol"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "18\"",
+              "name": "Range"
+             },
+             {
+              "$text": "1",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "-1",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Pistol, Lethal Hits",
+              "name": "Keywords"
+             }
+            ],
+            "id": "fe04-97bc-6b13-fd1c",
+            "name": "Heavy Bolt Pistol",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "8ftlytn",
+          "name": "Heavy Bolt Pistol",
+          "number": 3,
+          "type": "upgrade"
+         }
+        ],
+        "id": "8e5fcoj",
+        "name": "Initiate w/Chainsword & Heavy Bolt Pistol",
+        "number": 3,
+        "type": "model"
+       },
+       {
+        "rules": [
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         },
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "6\"",
+            "name": "M"
+           },
+           {
+            "$text": "4",
+            "name": "T"
+           },
+           {
+            "$text": "3+",
+            "name": "Sv"
+           },
+           {
+            "$text": "2",
+            "name": "W"
+           },
+           {
+            "$text": "6+",
+            "name": "LD"
+           },
+           {
+            "$text": "2",
+            "name": "OC"
+           },
+           {
+            "$text": "-",
+            "name": "InSv"
+           }
+          ],
+          "id": "8e55-546e-9c9c-a3cf",
+          "name": "Initiate",
+          "typeName": "Unit"
+         }
+        ],
+        "selections": [
+         {
+          "rules": [
+           {
+            "description": "Units containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using **close-quarters shooting** (10.06). When using another **shooting type**, for each model in that unit (excluding **MONSTER/VEHICLE** models), you can only select one of the following to make attacks with: \n- One or more of its **[CLOSE-QUARTERS]** weapons. \n- One or more of its other ranged weapons.",
+            "id": "5238-5ad4-52f7-6eb4",
+            "name": "Close-quarters"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "12\"",
+              "name": "Range"
+             },
+             {
+              "$text": "1",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "0",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Close-Quarters, Lethal Hits",
+              "name": "Keywords"
+             }
+            ],
+            "id": "d093-797a-4c76-eea3",
+            "name": "Bolt pistol",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "6ufr2la",
+          "name": "Bolt pistol",
+          "number": 2,
+          "type": "upgrade"
+         },
+         {
+          "rules": [
+           {
+            "description": "**[PISTOL]** and **[CLOSE-QUARTERS]** are identical for all rules purposes. \n\nUnits containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using **close-quarters shooting** (10.06). When using another **shooting type**, for each model in that unit (excluding **MONSTER/VEHICLE** models), you can only select one of the following to make attacks with: \n- One or more of its **[CLOSE-QUARTERS]** weapons. \n- One or more of its other ranged weapons.",
+            "id": "8bf7-8812-923d-29e4",
+            "name": "Pistol"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "18\"",
+              "name": "Range"
+             },
+             {
+              "$text": "1",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "-1",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Pistol, Lethal Hits",
+              "name": "Keywords"
+             }
+            ],
+            "id": "fe04-97bc-6b13-fd1c",
+            "name": "Heavy Bolt Pistol",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "6uuyzx",
+          "name": "Heavy Bolt Pistol",
+          "number": 2,
+          "type": "upgrade"
+         },
+         {
+          "rules": [
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "Melee",
+              "name": "Range"
+             },
+             {
+              "$text": "3",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "WS"
+             },
+             {
+              "$text": "8",
+              "name": "S"
+             },
+             {
+              "$text": "-2",
+              "name": "AP"
+             },
+             {
+              "$text": "2",
+              "name": "D"
+             },
+             {
+              "$text": "Lethal Hits",
+              "name": "Keywords"
+             }
+            ],
+            "id": "3a24-34af-7558-5365",
+            "name": "Power fist",
+            "typeName": "Melee Weapons"
+           }
+          ],
+          "id": "6uuvrsr",
+          "name": "Power fist",
+          "number": 2,
+          "type": "upgrade"
+         }
+        ],
+        "id": "6c0eoq6",
+        "name": "Initiate w/Power Fist & Heavy Bolt Pistol",
+        "number": 2,
+        "type": "model"
+       },
+       {
+        "rules": [
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         },
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "6\"",
+            "name": "M"
+           },
+           {
+            "$text": "4",
+            "name": "T"
+           },
+           {
+            "$text": "4+",
+            "name": "Sv"
+           },
+           {
+            "$text": "2",
+            "name": "W"
+           },
+           {
+            "$text": "6+",
+            "name": "LD"
+           },
+           {
+            "$text": "2",
+            "name": "OC"
+           },
+           {
+            "$text": "-",
+            "name": "InSv"
+           }
+          ],
+          "id": "1f75-3cc0-3706-0807",
+          "name": "Neophyte",
+          "typeName": "Unit"
+         }
+        ],
+        "selections": [
+         {
+          "rules": [
+           {
+            "description": "This ability always takes the form **[SUSTAINED HITS X]**. Each time an attack made with a **[SUSTAINED HITS]** weapon results in a **critical hit**, that attack results in a number of additional hits on the target as denoted by **X**.\n***Example:** An attack made with a **[SUSTAINED HITS 2]** weapon results in a **critical hit**. That attack therefore hits the target three times (once from the **critical hit**, and twice more from the **[SUSTAINED HITS 2]** ability).*",
+            "id": "1897-c22c-9597-12b1",
+            "name": "Sustained Hits"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "Melee",
+              "name": "Range"
+             },
+             {
+              "$text": "4",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "WS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "-1",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Sustained Hits 1, Lethal Hits",
+              "name": "Keywords"
+             }
+            ],
+            "id": "4507-8dff-0077-9b0f",
+            "name": "Astartes Chainsword",
+            "typeName": "Melee Weapons"
+           }
+          ],
+          "id": "6hewibd",
+          "name": "Astartes Chainsword",
+          "number": 4,
+          "type": "upgrade"
+         },
+         {
+          "rules": [
+           {
+            "description": "Units containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using **close-quarters shooting** (10.06). When using another **shooting type**, for each model in that unit (excluding **MONSTER/VEHICLE** models), you can only select one of the following to make attacks with: \n- One or more of its **[CLOSE-QUARTERS]** weapons. \n- One or more of its other ranged weapons.",
+            "id": "5238-5ad4-52f7-6eb4",
+            "name": "Close-quarters"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "12\"",
+              "name": "Range"
+             },
+             {
+              "$text": "1",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "0",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Close-Quarters, Lethal Hits",
+              "name": "Keywords"
+             }
+            ],
+            "id": "d093-797a-4c76-eea3",
+            "name": "Bolt pistol",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "6hvj25",
+          "name": "Bolt pistol",
+          "number": 4,
+          "type": "upgrade"
+         }
+        ],
+        "id": "6hwlx3t",
+        "name": "Neophyte w/ Astartes Chainsword",
+        "number": 4,
+        "type": "model"
+       }
+      ],
+      "costs": [
+       {
+        "name": "pts",
+        "value": 150
+       }
+      ],
+      "id": "6ad4ioq",
+      "name": "Crusader Squad",
+      "number": 1,
+      "type": "unit"
+     },
+     {
+      "rules": [
+       {
+        "description": "If your Army Faction is **^^Adeptus Astartes^^**, at the start of the first battle round, select one of the following Vows to be active for **^^Adeptus Astartes^^** units from your army. While a Vow is active for your army, that unit has the associated ability below. \n\n**Abhor the Witch, Destroy the Witch**\n■ Each time this unit declares a charge, if one or more targets of that charge have the **^^Psyker^^** keyword, you can re-roll the Charge roll. Melee weapons equipped by models in this unit have the **[PRECISION]** ability while targeting **^^Psyker^^** units. \n\n**Accept Any Challenge, No Matter the Odds**\n■ Each time a model in this unit makes a melee attack, if the Strength characteristic of that attack is less than or equal to the Toughness characteristic of the target, add 1 to the wound roll\n\n**Suffer Not the Unclean to Live**\n■ This unit is eligible to declare a charge in a turn in which it Fell Back, and each time a model in this unit makes a Pile-in or Consolidation move, it does not need to end that move closer to the closest enemy model, provided it ends that move as close as possible to the nearest enemy unit. \n\n**Uphold the Honour of the Emperor**\nIf this unit has the **^^Infantry^^** keyword:\n■ At the end of your Command phase, if this unit is within range of an objective marker you control, that objective marker remains under your control until your opponent's level of control over that objective marker is greater than yours at the end of the phase. \n■ If the mission you are playing features Actions, this unit is eligible to start to perform an Action in a turn in which it Advanced.",
+        "id": "f26c-4b28-aaea-40cf",
+        "name": "Templar Vows"
+       },
+       {
+        "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+        "id": "08fb-4cb5-36fb-d638",
+        "name": "Scouts 6\""
+       }
+      ],
+      "profiles": [
+       {
+        "characteristics": [
+         {
+          "$text": "Each time an enemy unit within Engagement Range of this unit is selected to Fall Back, after it ends that Fall Back move, if this unit is not within Engagement Range of one or more enemy units, this unit can make a Normal move.",
+          "name": "Description"
+         }
+        ],
+        "id": "de7b-731d-90db-dfd9",
+        "name": "Exploit Their Cowardice",
+        "typeName": "Abilities"
+       },
+       {
+        "characteristics": [
+         {
+          "$text": "6\"",
+          "name": "M"
+         },
+         {
+          "$text": "4",
+          "name": "T"
+         },
+         {
+          "$text": "3+",
+          "name": "Sv"
+         },
+         {
+          "$text": "3",
+          "name": "W"
+         },
+         {
+          "$text": "6+",
+          "name": "LD"
+         },
+         {
+          "$text": "1",
+          "name": "OC"
+         },
+         {
+          "$text": "-",
+          "name": "InSv"
+         }
+        ],
+        "id": "75ff-c1eb-d48b-8e7d",
+        "name": "Sword Brethren",
+        "typeName": "Unit"
+       },
+       {
+        "characteristics": [
+         {
+          "$text": "If a CHARACTER from your army with the Leader ability can be attached to an INTERCESSOR SQUAD, it can be attached to this unit instead.",
+          "name": "Description"
+         }
+        ],
+        "id": "63d9-2355-9727-3346",
+        "name": "Attached Unit",
+        "typeName": "Abilities"
+       }
+      ],
+      "selections": [
+       {
+        "rules": [
+         {
+          "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+          "id": "08fb-4cb5-36fb-d638",
+          "name": "Scouts 6\""
+         }
+        ],
+        "selections": [
+         {
+          "rules": [
+           {
+            "description": "Each time an attack made with a **[LETHAL HITS]** weapon results in a **critical hit**, you can choose for that attack to automatically wound the target. \n***Designer’s Note:** Choosing to automatically wound the target means that no **wound roll** is made for that attack. You may decide against this, as it means that attack cannot result in a **critical wound** and so cannot trigger other abilities such as [DEVASTATING WOUNDS].*",
+            "id": "d1d1-611e-5191-1095",
+            "name": "Lethal Hits"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "Melee",
+              "name": "Range"
+             },
+             {
+              "$text": "3",
+              "name": "A"
+             },
+             {
+              "$text": "2+",
+              "name": "WS"
+             },
+             {
+              "$text": "5",
+              "name": "S"
+             },
+             {
+              "$text": "-2",
+              "name": "AP"
+             },
+             {
+              "$text": "2",
+              "name": "D"
+             },
+             {
+              "$text": "Lethal Hits",
+              "name": "Keywords"
+             }
+            ],
+            "id": "bdbc-9616-ead8-e35a",
+            "name": "Master-crafted Power Weapon",
+            "typeName": "Melee Weapons"
+           }
+          ],
+          "id": "dotwym8h",
+          "name": "Master-crafted Power Weapon",
+          "number": 4,
+          "type": "upgrade"
+         },
+         {
+          "rules": [
+           {
+            "description": "**[PISTOL]** and **[CLOSE-QUARTERS]** are identical for all rules purposes. \n\nUnits containing one or more models with a **[CLOSE-QUARTERS]** weapon can shoot using **close-quarters shooting** (10.06). When using another **shooting type**, for each model in that unit (excluding **MONSTER/VEHICLE** models), you can only select one of the following to make attacks with: \n- One or more of its **[CLOSE-QUARTERS]** weapons. \n- One or more of its other ranged weapons.",
+            "id": "8bf7-8812-923d-29e4",
+            "name": "Pistol"
+           },
+           {
+            "description": "This ability always takes the form **Scouts X\"**. In the Resolve Pre-battle Abilities step, if every model in a unit has this ability, you can do one of the following: \n- If that unit is in **strategic reserves**, you can set up that unit anywhere that is wholly within your deployment zone. \n- If that unit is wholly within your deployment zone, it can make a **scout move**. \n- If that unit is embarked within a **DEDICATED TRANSPORT** that is wholly within your deployment zone, and if every model embarked within that **DEDICATED TRANSPORT** has the Scouts ability, that **DEDICATED TRANSPORT** can make a **scout move**.",
+            "id": "08fb-4cb5-36fb-d638",
+            "name": "Scouts 6\""
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "18\"",
+              "name": "Range"
+             },
+             {
+              "$text": "1",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "-1",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Pistol",
+              "name": "Keywords"
+             }
+            ],
+            "id": "a91e-df17-b8f6-bf88",
+            "name": "Heavy Bolt Pistol",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "dn6hapa",
+          "name": "Heavy Bolt Pistol",
+          "number": 4,
+          "type": "upgrade"
+         }
+        ],
+        "id": "dmygg3zh",
+        "name": "Sword Brother",
+        "number": 4,
+        "type": "model"
+       }
+      ],
+      "costs": [
+       {
+        "name": "pts",
+        "value": 105
+       }
+      ],
+      "id": "dkgx27",
+      "name": "Sword Brethren Squad",
+      "number": 1,
+      "type": "unit"
+     },
+     {
+      "rules": [
+       {
+        "description": "This ability always takes the form **Deadly Demise X**. Each time a model in this unit is **destroyed**, after the units embarked within it (if any) have made their **emergency disembark moves**, roll one D6. On a 6, that model suffers a **deadly demise**; each unit within 6\" of that model suffers a number of **mortal wounds** denoted by **X** (if this is a random number, roll separately for each unit within 6\"). \n***Example:** An Impulsor with a unit of Intercessors embarked within it is **destroyed** by ranged attacks. First, any unresolved attacks made by the attacking unit are resolved. Then the Intercessors make an **emergency disembark move**. Then the roll is made for the **Deadly Demise** ability, and on a 6, that ability is resolved. Finally, the Impulsor is removed from the battlefield.*",
+        "id": "b68a-5ded-65ac-98c",
+        "name": "Deadly Demise D3"
+       },
+       {
+        "description": "This ability always takes the form **Firing Deck X**. In your Shooting phase, each time this **TRANSPORT** is **selected to shoot**, if one or more units are embarked within it, resolve the following sequence: \n1. Select up to **X** models embarked within this **TRANSPORT** (excluding models whose units have already been **selected to shoot** this phase). \n2. For each selected model, select one of its ranged weapons (excluding **[ONE SHOT]** weapons). \n3. Until this **TRANSPORT** has resolved all of its attacks, it has all of those selected weapons in addition to its other weapons. \n4. Until the end of the turn, units embarked within this **TRANSPORT** are not eligible to shoot.",
+        "id": "13b2-6518-dab3-7ea1",
+        "name": "Firing Deck 6"
+       },
+       {
+        "description": "If your Army Faction is **^^Adeptus Astartes^^**, at the start of the first battle round, select one of the following Vows to be active for **^^Adeptus Astartes^^** units from your army. While a Vow is active for your army, that unit has the associated ability below. \n\n**Abhor the Witch, Destroy the Witch**\n■ Each time this unit declares a charge, if one or more targets of that charge have the **^^Psyker^^** keyword, you can re-roll the Charge roll. Melee weapons equipped by models in this unit have the **[PRECISION]** ability while targeting **^^Psyker^^** units. \n\n**Accept Any Challenge, No Matter the Odds**\n■ Each time a model in this unit makes a melee attack, if the Strength characteristic of that attack is less than or equal to the Toughness characteristic of the target, add 1 to the wound roll\n\n**Suffer Not the Unclean to Live**\n■ This unit is eligible to declare a charge in a turn in which it Fell Back, and each time a model in this unit makes a Pile-in or Consolidation move, it does not need to end that move closer to the closest enemy model, provided it ends that move as close as possible to the nearest enemy unit. \n\n**Uphold the Honour of the Emperor**\nIf this unit has the **^^Infantry^^** keyword:\n■ At the end of your Command phase, if this unit is within range of an objective marker you control, that objective marker remains under your control until your opponent's level of control over that objective marker is greater than yours at the end of the phase. \n■ If the mission you are playing features Actions, this unit is eligible to start to perform an Action in a turn in which it Advanced.",
+        "id": "f26c-4b28-aaea-40cf",
+        "name": "Templar Vows"
+       }
+      ],
+      "profiles": [
+       {
+        "characteristics": [
+         {
+          "$text": "12\"",
+          "name": "M"
+         },
+         {
+          "$text": "9",
+          "name": "T"
+         },
+         {
+          "$text": "3+",
+          "name": "Sv"
+         },
+         {
+          "$text": "11",
+          "name": "W"
+         },
+         {
+          "$text": "6+",
+          "name": "LD"
+         },
+         {
+          "$text": "2",
+          "name": "OC"
+         },
+         {
+          "$text": "-",
+          "name": "InSv"
+         }
+        ],
+        "id": "14d9-b559-444b-245",
+        "name": "Black Templars Impulsor",
+        "typeName": "Unit"
+       },
+       {
+        "characteristics": [
+         {
+          "$text": "This model has a transport capacity of 7 TACTICUS or PHOBOS INFANTRY models. It cannot transport JUMP PACK models.",
+          "name": "Description"
+         }
+        ],
+        "id": "81d0-6092-93e0-d602",
+        "name": "Transport",
+        "typeName": "Abilities"
+       },
+       {
+        "characteristics": [
+         {
+          "$text": "Units can disembark from this Transport after it has Advanced. Units that do so count as having made a Normal move, and cannot declare a charge that turn.",
+          "name": "Description"
+         }
+        ],
+        "id": "5acc-d822-413-23b4",
+        "name": "Assault Vehicle",
+        "typeName": "Abilities"
+       }
+      ],
+      "selections": [
+       {
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "Melee",
+            "name": "Range"
+           },
+           {
+            "$text": "3",
+            "name": "A"
+           },
+           {
+            "$text": "4+",
+            "name": "WS"
+           },
+           {
+            "$text": "6",
+            "name": "S"
+           },
+           {
+            "$text": "0",
+            "name": "AP"
+           },
+           {
+            "$text": "1",
+            "name": "D"
+           },
+           {
+            "name": "Keywords"
+           }
+          ],
+          "id": "b695-6a40-93a3-f048",
+          "name": "Armoured Hull",
+          "typeName": "Melee Weapons"
+         }
+        ],
+        "id": "fkmovlk",
+        "name": "Armoured Hull",
+        "number": 1,
+        "type": "upgrade"
+       },
+       {
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "The bearer has a 5+ invulnerable save.",
+            "name": "Description"
+           }
+          ],
+          "id": "32cb-25c5-f0e7-9a98",
+          "name": "Shield Dome",
+          "typeName": "Abilities"
+         }
+        ],
+        "id": "fi9bukl",
+        "name": "Shield Dome",
+        "number": 1,
+        "type": "upgrade"
+       },
+       {
+        "rules": [
+         {
+          "description": "This ability always takes the form **[MELTA X]**. Each time a model makes an attack with a **[MELTA]** weapon, if the target unit was within half range of that weapon in the Select Targets step, until the attacking unit’s attacks have been resolved, add **X** to that weapon’s **D** characteristic. \n***Example:** A model targets a unit that is within half range of a **[MELTA 2]** weapon with a **D** characteristic of D6. While resolving those attacks, that weapon has a **D** characteristic of **D6+2**.*",
+          "id": "7cdb-fb99-44a9-8849",
+          "name": "Melta"
+         }
+        ],
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "18\"",
+            "name": "Range"
+           },
+           {
+            "$text": "2",
+            "name": "A"
+           },
+           {
+            "$text": "3+",
+            "name": "BS"
+           },
+           {
+            "$text": "9",
+            "name": "S"
+           },
+           {
+            "$text": "-4",
+            "name": "AP"
+           },
+           {
+            "$text": "D6",
+            "name": "D"
+           },
+           {
+            "$text": "Melta 2",
+            "name": "Keywords"
+           }
+          ],
+          "id": "e7ca-a953-c254-dc54",
+          "name": "Multi-melta",
+          "typeName": "Ranged Weapons"
+         }
+        ],
+        "id": "fj6uqya",
+        "name": "Multi-melta",
+        "number": 1,
+        "type": "upgrade"
+       },
+       {
+        "selections": [
+         {
+          "rules": [
+           {
+            "description": "This ability always takes the form **[RAPID FIRE X]**. Each time you gather **attack dice** for a **[RAPID FIRE]** weapon, add **X** additional **attack dice** if the target unit was within half range of that weapon in the Select Targets step. \n***Example:** If a **[RAPID FIRE 1]** weapon with an **A** characteristic of 1 targets a unit that is within half range, you would gather one additional **attack dice** for that weapon (for a total of two for that weapon).*",
+            "id": "c5c8-8b58-b8b6-7786",
+            "name": "Rapid Fire"
+           }
+          ],
+          "profiles": [
+           {
+            "characteristics": [
+             {
+              "$text": "24\"",
+              "name": "Range"
+             },
+             {
+              "$text": "2",
+              "name": "A"
+             },
+             {
+              "$text": "3+",
+              "name": "BS"
+             },
+             {
+              "$text": "4",
+              "name": "S"
+             },
+             {
+              "$text": "0",
+              "name": "AP"
+             },
+             {
+              "$text": "1",
+              "name": "D"
+             },
+             {
+              "$text": "Rapid Fire 2",
+              "name": "Keywords"
+             }
+            ],
+            "id": "83a0-da0c-752f-b4b3",
+            "name": "Storm bolter",
+            "typeName": "Ranged Weapons"
+           }
+          ],
+          "id": "fm26grc",
+          "name": "Storm bolter",
+          "number": 2,
+          "type": "upgrade"
+         }
+        ],
+        "id": "fjg5ru7",
+        "name": "2 Storm Bolters",
+        "number": 1,
+        "type": "upgrade"
+       }
+      ],
+      "costs": [
+       {
+        "name": "pts",
+        "value": 75
+       }
+      ],
+      "id": "ff4ofbf",
+      "name": "Impulsor",
+      "number": 1,
+      "type": "model"
+     }
+    ],
+    "id": "hvt6zp9",
+    "name": "Army Roster",
+    "catalogueId": "36d3-36bc-68dd-40ac",
+    "catalogueRevision": 1,
+    "catalogueName": "Imperium - Adeptus Astartes - Black Templars"
+   }
+  ],
+  "id": "hmrkuvd",
+  "name": "Imported List",
+  "battleScribeVersion": 2.03,
+  "generatedBy": "https://newrecruit.eu",
+  "gameSystemId": "sys-352e-adc2-7639-d610",
+  "gameSystemName": "Warhammer 40,000 11th Edition",
+  "gameSystemRevision": 11,
+  "xmlns": "http://www.battlescribe.net/schema/rosterSchema"
+ }
+}

@@ -25,11 +25,11 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
     // page instead of rendering an empty/erroring page.
     public IActionResult OnGet()
     {
-        var parsedArmyList = sessionStore.Load(HttpContext.Session);
-        if (parsedArmyList is null)
+        var import = sessionStore.Load(HttpContext.Session);
+        if (import is null)
             return RedirectToPage("/Import");
 
-        var result = rosterProvider.Build(parsedArmyList);
+        var result = rosterProvider.Build(import);
         Units = BuildUnitBlocks(result.Roster);
         Glossary = result.Glossary;
         return Page();

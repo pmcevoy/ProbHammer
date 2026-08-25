@@ -3,29 +3,30 @@ using ProbHammer.Core.Domain.Import;
 
 namespace ProbHammer.Web.Services;
 
-/// <summary>Stores a session's successfully-parsed army list (see army-list-import's Per-Session
-/// Roster Storage requirement) - the intermediate <see cref="ParsedArmyList"/>, never the built
+/// <summary>Stores a session's successfully-parsed army import (see army-list-import's Per-Session
+/// Roster Storage requirement) - the format-discriminated <see cref="StoredArmyImport"/> wrapper
+/// around a <see cref="ParsedArmyList"/> (GW-app text) or a BattleScribe roster JSON (see
+/// import-battlescribe-json-rosters' design.md), never a built
 /// <see cref="ProbHammer.Core.Domain.Roster.ArmyRoster"/> itself (see design.md's "Session stores
 /// the intermediate, not the graph"). Plain JSON round-trip via ASP.NET Core Session's string
-/// storage - <see cref="ParsedArmyList"/> and everything it references are plain records of
-/// primitives/lists, with no <see cref="ProbHammer.Core.Domain.Catalogue.Datasheet"/>/abstract
-/// <see cref="ProbHammer.Core.Domain.Catalogue.WeaponProfile"/> graph to serialize.</summary>
+/// storage, using System.Text.Json's polymorphic serialization (<see cref="StoredArmyImport"/>'s
+/// own <c>[JsonDerivedType]</c> attributes) to preserve which variant was stored.</summary>
 public interface ISessionArmyListStore
 {
-    void Save(ISession session, ParsedArmyList armyList);
-    ParsedArmyList? Load(ISession session);
+    void Save(ISession session, StoredArmyImport import);
+    StoredArmyImport? Load(ISession session);
 }
 
 public sealed class SessionArmyListStore : ISessionArmyListStore
 {
-    private const string SessionKey = "ParsedArmyList";
+    private const string SessionKey = "ArmyImport";
 
-    public void Save(ISession session, ParsedArmyList armyList) =>
-        session.SetString(SessionKey, JsonSerializer.Serialize(armyList));
+    public void Save(ISession session, StoredArmyImport import) =>
+        session.SetString(SessionKey, JsonSerializer.Serialize(import));
 
-    public ParsedArmyList? Load(ISession session)
+    public StoredArmyImport? Load(ISession session)
     {
         var json = session.GetString(SessionKey);
-        return json is null ? null : JsonSerializer.Deserialize<ParsedArmyList>(json);
+        return json is null ? null : JsonSerializer.Deserialize<StoredArmyImport>(json);
     }
 }

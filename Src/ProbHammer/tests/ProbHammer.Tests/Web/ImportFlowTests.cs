@@ -29,6 +29,37 @@ public class ImportFlowTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task SuccessfulBattleScribeJsonImport_RedirectsToLivePlay_MatchingTheEquivalentTextImport()
+    {
+        // gw-app-export-templars.json is the same real Templars list as gw-app-export.txt,
+        // re-exported from NewRecruit as BattleScribe roster JSON (see
+        // import-battlescribe-json-rosters' proposal.md) - both pipelines should produce an
+        // equivalent rendered army for the same real list, which is exactly the cross-check this
+        // sample was chosen for.
+        var client = _factory.CreateClient();
+
+        var response = await ImportAsync(client, ReadRealExport("gw-app-export-templars.json"));
+
+        response.EnsureSuccessStatusCode();
+        response.RequestMessage!.RequestUri!.AbsolutePath.Should().Be("/LivePlay");
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        html.Should().Contain("High Marshal Helbrecht").And.Contain("Crusader Squad").And.Contain("Sword Brethren Squad").And.Contain("Impulsor");
+    }
+
+    [Fact]
+    public async Task NonBattleScribeJson_FallsThroughToTheTextPipeline_AndFailsWithItsOwnDiagnostics()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await ImportAsync(client, """{"someOtherJson": true}""");
+
+        response.EnsureSuccessStatusCode();
+        response.RequestMessage!.RequestUri!.AbsolutePath.Should().Be("/Import");
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        html.Should().Contain("import-error");
+    }
+
+    [Fact]
     public async Task UnparseableText_IsReportedOnTheImportPage_WithoutCrashing()
     {
         var client = _factory.CreateClient();

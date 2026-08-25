@@ -11,9 +11,13 @@ populate `Datasheet` objects from a local BSData clone. Since `import-army-list-
 (`Domain/Import/` — see "Army List Import Pipeline" below), resolved against BSData
 (`ArmyRosterEnricher`, same section), and rendered — `Examples/`-fixture data is no longer
 referenced anywhere in `Web`, though the `Examples/` files themselves remain in the tree unchanged
-for future domain-model exploration. Coexists with the 10th-edition model
-(`.claude/domain-model.md`), which remains in the tree, untouched and fully unused (superseded, not
-just paused — see `PROGRESS.md` for that history).
+for future domain-model exploration. Since `import-battlescribe-json-rosters`, `/Import` also
+recognizes and routes a BattleScribe/NewRecruit roster JSON export through a second, independent
+pipeline (`Domain/Import/BattleScribe/` — see "BattleScribe/NewRecruit JSON Import Pipeline" below)
+that synthesizes this same model directly from the JSON's own already-resolved data, with no BSData
+involvement at all. Coexists with the 10th-edition model (`.claude/domain-model.md`), which remains
+in the tree, untouched and fully unused (superseded, not just paused — see `PROGRESS.md` for that
+history).
 
 ---
 
@@ -1147,42 +1151,63 @@ for the same reason, on the optional-ability side.
 
 ### Session-Backed Import (`ProbHammer.Web`)
 
+Since `import-battlescribe-json-rosters`, `ISessionArmyListStore`/`IArmyRosterProvider` are no
+longer hard-typed to `ParsedArmyList` - they accept/return `StoredArmyImport`
+(`Domain.Import.StoredArmyImport`), a small `[JsonPolymorphic]` wrapper with two variants,
+`TextArmyImport(ParsedArmyList)` (the GW-app text pipeline, unchanged) and
+`BattleScribeArmyImport(BsRoster)` (see "BattleScribe/NewRecruit JSON Import Pipeline" below) - so
+`/LivePlay`/`LivePlayCasualtyService` stay format-agnostic, never branching on which pipeline
+produced the session's stored import.
+
 ```
-ISessionArmyListStore.Save(ISession, ParsedArmyList)
-                     .Load(ISession) -> ParsedArmyList?
+ISessionArmyListStore.Save(ISession, StoredArmyImport)
+                     .Load(ISession) -> StoredArmyImport?
                                        // plain System.Text.Json round-trip through ISession's string
-                                       // storage - ParsedArmyList and everything it references are
-                                       // plain records of primitives/lists, no Datasheet/abstract
-                                       // WeaponProfile graph to serialize. The session stores only
-                                       // this intermediate, never the built ArmyRoster (see "Session
+                                       // storage, using StoredArmyImport's own [JsonDerivedType]
+                                       // attributes for polymorphic (de)serialization - every type
+                                       // reachable from either variant is a plain record/class of
+                                       // primitives/lists, no Datasheet/abstract WeaponProfile graph
+                                       // to serialize. The session stores only this source-level
+                                       // intermediate, never the built ArmyRoster (see "Session
                                        // stores the intermediate, not the graph" in design.md) - every
-                                       // request re-enriches fresh via IArmyRosterProvider.
+                                       // request re-builds fresh via IArmyRosterProvider.
 
-IArmyRosterProvider.Build(ParsedArmyList) -> ArmyRoster
-                                       // shared three-step orchestration (BsdataFactionResolver ->
-                                       // BsdataCatalogueCache.GetOrBuild -> ArmyRosterEnricher.Enrich)
-                                       // used by both the import page (to validate before writing to
-                                       // session) and /LivePlay's per-request rebuild - one place for
-                                       // a sequence needed at three call sites (import, LivePlay GET,
-                                       // the casualty sync endpoint).
+IArmyRosterProvider.Build(StoredArmyImport) -> ArmyRosterBuildResult
+                                       // dispatches on which variant: TextArmyImport runs the
+                                       // existing three-step orchestration (BsdataFactionResolver ->
+                                       // BsdataCatalogueCache.GetOrBuild -> ArmyRosterEnricher.Enrich);
+                                       // BattleScribeArmyImport runs BattleScribeRosterMapper.Map
+                                       // directly (no BSData catalogue involvement) plus
+                                       // BattleScribeRuleGlossaryBuilder.Build for its own
+                                       // roster-scoped RuleGlossary. Used by both the import page (to
+                                       // validate before writing to session) and /LivePlay's
+                                       // per-request rebuild - one place for a sequence needed at
+                                       // three call sites (import, LivePlay GET, the casualty sync
+                                       // endpoint), regardless of format.
 
-ImportModel (/Import Razor Page)      // paste box + submit. OnPost parses, then calls
-                                       // IArmyRosterProvider.Build to validate BEFORE calling
-                                       // ISessionArmyListStore.Save - so a failed re-import never
-                                       // touches a previously-successful session import. Catches
-                                       // ArmyListParseException / BsdataFactionResolutionException /
+ImportModel (/Import Razor Page)      // paste box + submit. OnPost first attempts
+                                       // BattleScribeRosterFormat.TryParse (format recognition - see
+                                       // below); on a match it wraps the result as a
+                                       // BattleScribeArmyImport, otherwise it falls through to the
+                                       // existing ArmyListParser and wraps as a TextArmyImport. Either
+                                       // way it then calls IArmyRosterProvider.Build to validate
+                                       // BEFORE calling ISessionArmyListStore.Save - so a failed
+                                       // re-import never touches a previously-successful session
+                                       // import. Catches ArmyListParseException /
+                                       // BsdataFactionResolutionException /
                                        // BsdataNameResolutionException / AmbiguousCharacteristicException
-                                       // and reports the message on the page rather than crashing;
-                                       // any other exception type is an unhandled bug, not a
-                                       // reportable import failure.
+                                       // / BattleScribeRosterParseException and reports the message on
+                                       // the page rather than crashing; any other exception type is an
+                                       // unhandled bug, not a reportable import failure.
 
-LivePlayModel.OnGet()                 // loads the session's ParsedArmyList; redirects to /Import if
+LivePlayModel.OnGet()                 // loads the session's StoredArmyImport; redirects to /Import if
                                        // absent (live-play-view's "Live Play Redirects Without An
                                        // Active Import"), otherwise builds via IArmyRosterProvider and
-                                       // renders exactly as before. RebuildRoster (casualty rebuild)
-                                       // now takes the roster's Units as an explicit parameter
-                                       // instead of reading Examples.View.MyArmyRoster() internally.
-LivePlayCasualtyService.SyncAsync()   // loads the session's ParsedArmyList itself (via
+                                       // renders exactly as before, unaware of which pipeline produced
+                                       // it. RebuildRoster (casualty rebuild) takes the roster's Units
+                                       // as an explicit parameter instead of reading
+                                       // Examples.View.MyArmyRoster() internally.
+LivePlayCasualtyService.SyncAsync()   // loads the session's StoredArmyImport itself (via
                                        // ISessionArmyListStore) before calling RebuildRoster; an
                                        // empty batch OR no active session import both short-circuit
                                        // to an empty response.
@@ -1190,11 +1215,230 @@ LivePlayCasualtyService.SyncAsync()   // loads the session's ParsedArmyList itse
 
 `Program.cs` reintroduces `AddDistributedMemoryCache`/`AddSession`/`UseSession` (removed by
 `archive-10e-pipeline` as a 10e-only dependency; brought back here for a new purpose - per-session
-`ParsedArmyList` storage, not the old `Enricher` cache) and registers `BsdataCatalogueCache` as a
+`StoredArmyImport` storage, not the old `Enricher` cache) and registers `BsdataCatalogueCache` as a
 singleton over a `LocalDiskBsdataCatalogueSource` rooted at `Bsdata:RootDirectory` (appsettings.json,
 default `"BsData"`, resolved against `IWebHostEnvironment.ContentRootPath`) - the bundled snapshot
 at `src/ProbHammer.Web/BsData/`, copied into the Docker image as its own layer (see
-`catalogue-json-ingestion`'s packaging notes), not a live GitHub fetch.
+`catalogue-json-ingestion`'s packaging notes), not a live GitHub fetch. `BsdataCatalogueCache` is
+untouched by `import-battlescribe-json-rosters` - the BattleScribe JSON pipeline never reads it.
+
+---
+
+## BattleScribe/NewRecruit JSON Import Pipeline
+
+Full requirements: `openspec/changes/import-battlescribe-json-rosters/` (proposal, design, specs,
+tasks). A second, independent import pipeline, parallel to "Army List Import Pipeline" above:
+`BattleScribe roster JSON text → BattleScribeRosterFormat.TryParse → BsRoster (session-stored, as
+a BattleScribeArmyImport) → BattleScribeRosterMapper.Map → ArmyRoster`, with no
+`Domain.Catalogue.Bsdata`/BSData catalogue involvement anywhere in this path - every
+`Datasheet`/`Statline`/`WeaponProfile`/`Ability` needed is synthesized directly from the roster
+JSON's own already-resolved `profiles`/`rules`, since (unlike a GW-app text export) the JSON
+BattleScribe/NewRecruit produces already carries every characteristic, weapon profile, and
+ability/rule text fully resolved inline. Serves NewRecruit-only users (whose per-army-book content
+in the official GW app is paywalled) directly, and gives Android GW-app users a reliable
+alternative path to `/LivePlay` when the native text export hits one of that pipeline's own
+still-open ambiguities (see `harden-army-list-parsing-for-android-exports`): export from GW app,
+clean up in NewRecruit, export as JSON. Analyzed against exactly one real captured sample so far
+(`data/gw-app-export-templars.json`, the existing Templars fixture round-tripped through
+NewRecruit) - see this section's own callouts for what remains unverified pending a second,
+independently-sourced sample.
+
+Namespace: `ProbHammer.Core.Domain.Import.BattleScribe`, JSON DTOs in its own `Json` sub-namespace
+(mirrors `Domain.Catalogue.Bsdata`/`Domain.Catalogue.Bsdata.Json`'s own split).
+
+```
+Json/BsRosterFile.cs                  // System.Text.Json-backed record/class types for the subset
+                                       // of the BattleScribe rosterSchema this pipeline reads -
+                                       // BsRoster (Xmlns, Name, Costs, CostLimits, Forces),
+                                       // BsRosterForce (CatalogueName, Rules, Selections),
+                                       // BsRosterSelection (Id, Name, Type, Number, Profiles, Rules,
+                                       // Costs, Selections, Associations - the same shape reused at
+                                       // every nesting level, mirroring BsSelectionEntry's own
+                                       // precedent), BsRosterProfile (+ CharacteristicText(name),
+                                       // mirroring BsProfile's own helper), BsRosterCharacteristic
+                                       // ($text via [JsonPropertyName]), BsRosterCost (Name, Value -
+                                       // shared shape for the roster's own totals and a single
+                                       // selection's own cost tags, e.g. "Enhancements",
+                                       // "Detachment Points"), BsRosterAssociation (Type, To, Name).
+                                       // Only what this pipeline's mapping needs is modeled -
+                                       // everything else (constraints, points-cost-modifier detail,
+                                       // etc.) is silently ignored on deserialize, same convention as
+                                       // Json/BsCatalogueFile.cs.
+
+BattleScribeRosterFormat.TryParse(text, out BsRoster?) -> bool
+                                       // Format Recognition: true only for text that parses as JSON
+                                       // AND contains a top-level "roster" object whose "xmlns"
+                                       // equals the standard, cross-tool BattleScribe roster schema
+                                       // URL - never throws, so non-JSON text or JSON of some other
+                                       // shape simply isn't recognized (falls through to the GW-app
+                                       // text pipeline at the /Import call site) rather than failing
+                                       // loudly. Uses a CamelCase/case-insensitive
+                                       // JsonSerializerOptions, matching BsdataCatalogueReader's own
+                                       // convention, since the source JSON's own field names are
+                                       // camelCase.
+
+BattleScribeRosterParseException(message)
+                                       // Thrown by the mapper when a recognized payload doesn't
+                                       // resolve into an ArmyRoster (e.g. a selection with no
+                                       // resolvable Unit-typeName profile anywhere reachable) -
+                                       // mirrors ArmyListParseException's role, caught by
+                                       // ImportModel.OnPost and reported on the page.
+
+BattleScribeRosterMapper.Map(BsRoster) -> ArmyRoster
+                                       // Army metadata: PointsSpent/PointsLimit from
+                                       // roster.costs/costLimits' own "pts" entry; Faction from
+                                       // splitting force.catalogueName on " - " (e.g. "Imperium -
+                                       // Adeptus Astartes - Black Templars" -> 3 segments) - NOT
+                                       // required to match BsdataFactionResolver's own suffix-
+                                       // matching convention, since that resolver is never invoked
+                                       // by this pipeline (confirmed via a repo-wide search: Faction
+                                       // is otherwise unread outside the text pipeline - see
+                                       // design.md's Risks); Detachments/ForceDisposition/BattleSize
+                                       // from the "Detachment"/"Force Disposition"/"Battle Size"
+                                       // top-level selections' own nested selection name(s) -
+                                       // BattleSize additionally strips a trailing parenthetical
+                                       // (e.g. "Incursion (1000 Point limit)" -> "Incursion",
+                                       // matching the text pipeline's own BattleSize convention even
+                                       // though this format's own parenthetical wording differs
+                                       // ("Point limit" vs. "Points")).
+                                       //
+                                       // Attachment resolution (BuildUnits): every top-level
+                                       // "unit"/"model" selection's own outgoing
+                                       // associations[].name in ("Leading","Supporting") targets
+                                       // another top-level selection by id - the target becomes a
+                                       // Bodyguard, every selection targeting it becomes an Attached
+                                       // member, and a selection with neither an outgoing nor an
+                                       // incoming association is standalone. Confirmed against all
+                                       // three real associations in the sample: two 2-member groups,
+                                       // one Leader-only (1-member) group - no 3-member group exists
+                                       // in this particular sample, so that shape (mentioned in the
+                                       // change's own tasks.md) remains UNVERIFIED pending a second
+                                       // sample.
+                                       //
+                                       // Unit assembly (BuildUnit): a top-level selection's own
+                                       // "Abilities"-typeName profiles become Intrinsic Datasheet
+                                       // Abilities; its own "rules" entries become CoreRule-origin
+                                       // Abilities (per design.md's decision, deliberately with NO
+                                       // additional chapter/mode gating - a roster JSON only ever
+                                       // contains rules that already apply to the exported army, so
+                                       // gate-and-dedupe-core-rule-abilities' own gating need simply
+                                       // doesn't arise here; also deliberately never AbilityOrigin
+                                       // .ArmyRule, so AttachedUnitAggregator.PromoteArmyRuleAbilities
+                                       // never merges a CoreRule ability shared by this pipeline's
+                                       // components - e.g. "Templar Vows" renders once per present
+                                       // component here, unlike the BSData pipeline's deduplicated
+                                       // rendering for the same rule - an accepted, spec-mandated
+                                       // difference, not a bug). Enhancement resolution
+                                       // (FindEnhancements) walks the WHOLE selection tree (not just
+                                       // the model-line weapon subtree) for any descendant selection
+                                       // carrying a costs entry named "Enhancements", resolving its
+                                       // own "Abilities"-typeName profile into an Enhancement-origin
+                                       // Ability on Unit.Enhancements - structurally cannot leak an
+                                       // unselected Enhancement, since a roster JSON only contains
+                                       // actual selections (see design.md's "Enhancement recognition"
+                                       // decision).
+                                       //
+                                       // ModelLine assembly (BuildModelLines): when the top-level
+                                       // selection has one or more immediate "model"-typed nested
+                                       // selections, each is its own loadout ModelLine - using its
+                                       // own Unit-typeName profile when it has one (Crusader Squad's
+                                       // Sword Brother/Initiate/Neophyte, each a genuinely distinct
+                                       // per-loadout statline), or falling back to the TOP-LEVEL
+                                       // selection's own Unit profile when it has none (Sword
+                                       // Brethren Squad's "Sword Brother" wrapper selection carries
+                                       // only the shared wargear, not its own statline - the whole
+                                       // squad shares "Sword Brethren", declared once on the
+                                       // top-level selection itself). When there are NO such nested
+                                       // "model" children at all, the top-level selection is itself a
+                                       // single/solo model (Helbrecht, Impulsor) and produces exactly
+                                       // one ModelLine (Count = its own Number, normally 1). Either
+                                       // way, no partition inference is ever needed - each already-
+                                       // split loadout node carries its own count directly (see
+                                       // battlescribe-roster-import's own "no partition inference"
+                                       // scenario) - this is the one class of bug
+                                       // (`harden-army-list-parsing-for-android-exports`' still-open
+                                       // Custodian Guard case) this pipeline cannot reproduce by
+                                       // construction.
+                                       //
+                                       // Weapon/ability collection (CollectWeaponsAndAbilities):
+                                       // walks a loadout node's own nested wargear `selections`
+                                       // recursively. A weapon-carrying child (its own "Ranged
+                                       // Weapons"/"Melee Weapons"-typeName profile(s) - every
+                                       // resolved profile retained, e.g. Helbrecht's "Sword of the
+                                       // High Marshals" -> both "- Sweep"/"- Strike" profiles) has
+                                       // its own `number` divided by the loadout's model count to
+                                       // recover the PER-MODEL weapon quantity (confirmed real shape:
+                                       // Impulsor's "2 Storm Bolters" wrapper, itself carrying no
+                                       // profiles of its own, nests a "Storm bolter" child with its
+                                       // own number=2 against a model count of 1 -> two "Storm
+                                       // bolter" Weapons entries, matching ModelLine.Weapons' own
+                                       // "duplicates are meaningful" convention). A selection with
+                                       // neither weapon nor "Abilities"-typeName profiles of its own
+                                       // (a pure grouping wrapper) is walked one level deeper rather
+                                       // than skipped - this is what makes the Storm Bolters case
+                                       // fall out with no special-cased wrapper handling. An
+                                       // "Abilities"-typeName child (e.g. Impulsor's own "Shield
+                                       // Dome", granting a 5+ invulnerable save) becomes an
+                                       // OptionalGrant-origin Ability on that specific ModelLine -
+                                       // mirrors the BSData pipeline's own classification for the
+                                       // equivalent shape (a wargear-granted ability nested inside its
+                                       // own selection, not a datasheet-wide fact). An
+                                       // Enhancement-tagged selection is skipped entirely here (never
+                                       // walked into) - it's resolved once, separately, by
+                                       // FindEnhancements above, so it can't double-count as a
+                                       // ModelLine ability too.
+                                       //
+                                       // Characteristic-text parsing reuses DiceExpression.Parse (A/D)
+                                       // and WeaponKeywordParser.Apply (Keywords) directly - both
+                                       // already public, and this format's own text shapes (confirmed
+                                       // from the sample) are byte-for-byte the same convention BSData
+                                       // uses (e.g. "Anti-infantry 4+, Devastating Wounds"). Plain-int/
+                                       // threshold/measurement parsing (S/AP/W/OC/BS/WS/Sv/LD/M/Range)
+                                       // is NOT shared with BsdataDatasheetMapper's own private
+                                       // ParsePlainInt/ParseThreshold/ParseMeasurement (inaccessible
+                                       // outside that class) - this mapper carries its own small,
+                                       // functionally-identical local equivalents instead (same "-"/
+                                       // "N/A" -> 0 convention, same trailing "+"/`"`-stripping),
+                                       // rather than widening that existing file's visibility for a
+                                       // marginal reuse gain.
+                                       //
+                                       // Invulnerable-save caveat resolution (ResolveInvulnerableSave/
+                                       // ResolveCaveatAbility) is this format's OWN, simpler
+                                       // resolution (per design.md's Decisions) - there is no
+                                       // BSData-style entryLink ancestry chain to walk here, so a
+                                       // footnoted value's linked ability is searched for directly on
+                                       // the owning loadout node, then the top-level selection, under
+                                       // the same two BSData naming conventions ("Invulnerable Save
+                                       // ({digit}+*)" / "*Invulnerable Save"). UNVERIFIED - the one
+                                       // real sample analyzed has no caveated InSv at all.
+
+BattleScribeRuleGlossaryBuilder.Build(BsRoster) -> RuleGlossary
+                                       // Builds a roster-scoped RuleGlossary (see design.md's
+                                       // "Roster-scoped RuleGlossary, reusing the existing type") by
+                                       // walking the WHOLE roster once - the force's own `rules`,
+                                       // every top-level selection's own `rules`, and every nested
+                                       // wargear selection's own `rules` (e.g. a weapon's own
+                                       // "Sustained Hits"/"Anti" keyword rule text) - deduped by id,
+                                       // first occurrence wins, into RuleDefinitions via the new
+                                       // RuleGlossary.BuildFrom (below). This is what gives
+                                       // `/LivePlay`'s existing `[BRACKET]` cross-reference resolution
+                                       // and weapon-keyword-chip popovers (rules-glossary-popovers)
+                                       // working text for a BattleScribe-sourced roster too, with ZERO
+                                       // changes to that existing rendering pipeline - `/LivePlay`
+                                       // only ever needs *a* RuleGlossary, not specifically a
+                                       // BSData-sourced one.
+
+RuleGlossary.BuildFrom(IEnumerable<RuleDefinition>) -> RuleGlossary
+                                       // Added by import-battlescribe-json-rosters alongside the
+                                       // existing Build(BsdataClosure) factory - indexes an
+                                       // already-known flat set of RuleDefinitions the same way
+                                       // (by Name and every Alias, normalized, first occurrence
+                                       // wins), for a caller (BattleScribeRuleGlossaryBuilder) whose
+                                       // "closure" isn't a BsdataClosure at all.
+```
+
+`StoredArmyImport`/`TextArmyImport`/`BattleScribeArmyImport` live in `Domain.Import` itself (not
+this namespace) - see "Session-Backed Import" above.
 
 ---
 
