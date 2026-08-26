@@ -15,12 +15,12 @@ namespace ProbHammer.Tests.Domain.Import.BattleScribe;
 /// (Sword Brethren Squad), and a wrapper-group weapon quantity (Impulsor's "2 Storm Bolters").</summary>
 public class BattleScribeRosterMapperTests
 {
-    private static string ReadFixture([CallerFilePath] string here = "") =>
-        File.ReadAllText(Path.Combine(Path.GetDirectoryName(here)!, "Fixtures", "templars-excerpt.json"));
+    private static string ReadFixture(string fileName = "templars-excerpt.json", [CallerFilePath] string here = "") =>
+        File.ReadAllText(Path.Combine(Path.GetDirectoryName(here)!, "Fixtures", fileName));
 
-    private static ArmyRoster BuildRoster()
+    private static ArmyRoster BuildRoster(string fileName = "templars-excerpt.json")
     {
-        BattleScribeRosterFormat.TryParse(ReadFixture(), out var roster).Should().BeTrue();
+        BattleScribeRosterFormat.TryParse(ReadFixture(fileName), out var roster).Should().BeTrue();
         return BattleScribeRosterMapper.Map(roster!);
     }
 
@@ -49,6 +49,24 @@ public class BattleScribeRosterMapperTests
         detachment.Name.Should().Be("Companions of Vehemence");
         detachment.Rules.Should()
             .ContainSingle(r => r.Name == "Righteous Fervour" && !string.IsNullOrWhiteSpace(r.Text));
+    }
+
+    [Fact]
+    public void PluralDetachmentsGroupName_StillResolvesTheSelectedDetachment()
+    {
+        // A real Adeptus Custodes NewRecruit export (data/gw-android-export-custodes.json) names
+        // its top-level Detachment-choice selection "Detachments" (plural), not "Detachment"
+        // (singular, as Death Guard/Black Templars use) - mirroring the exact same
+        // singular-vs-plural inconsistency the BSData pipeline's own
+        // DetachmentGroupNameScanTests already documents for catalogue group names. FindGroup
+        // previously matched "Detachment" only, so this shape silently resolved zero
+        // Detachments - "Auric Champions"/"Assemblage of Might" never appearing on /LivePlay
+        // despite being present in the roster JSON.
+        var army = BuildRoster("custodes-detachments-plural-excerpt.json");
+
+        var detachment = army.Detachments.Should().ContainSingle().Subject;
+        detachment.Name.Should().Be("Auric Champions");
+        detachment.Rules.Should().ContainSingle(r => r.Name == "Assemblage of Might");
     }
 
     [Fact]

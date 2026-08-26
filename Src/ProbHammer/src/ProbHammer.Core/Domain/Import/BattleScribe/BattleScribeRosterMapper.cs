@@ -23,7 +23,7 @@ public static partial class BattleScribeRosterMapper
         var pointsSpent = ReadCost(roster.Costs, "pts");
         var pointsLimit = ReadCost(roster.CostLimits, "pts");
         var faction = SplitFaction(force.CatalogueName);
-        var detachments = FindGroup(force.Selections, "Detachment").Select(MapDetachment).ToList();
+        var detachments = FindGroup(force.Selections, "Detachment", "Detachments").Select(MapDetachment).ToList();
         var forceDisposition =
             FindGroup(force.Selections, "Force Disposition").Select(s => s.Name).FirstOrDefault() ?? "";
         var battleSize = StripTrailingParenthetical(
@@ -51,8 +51,9 @@ public static partial class BattleScribeRosterMapper
         new(selection.Name, selection.Rules.Select(r => new DetachmentRule(r.Name, r.Description)).ToList());
 
     private static IReadOnlyList<BsRosterSelection> FindGroup(IReadOnlyList<BsRosterSelection> topSelections,
-        string groupName) =>
-        topSelections.FirstOrDefault(s => string.Equals(s.Name, groupName, StringComparison.OrdinalIgnoreCase))
+        params string[] groupNames) =>
+        topSelections.FirstOrDefault(s =>
+                groupNames.Any(n => string.Equals(s.Name, n, StringComparison.OrdinalIgnoreCase)))
             ?.Selections ?? [];
 
     /// <summary>Splits a force's catalogue name (e.g. "Imperium - Adeptus Astartes - Black

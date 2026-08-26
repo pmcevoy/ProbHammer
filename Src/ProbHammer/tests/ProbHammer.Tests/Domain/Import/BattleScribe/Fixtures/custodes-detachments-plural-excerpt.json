@@ -1,0 +1,57 @@
+{
+ "roster": {
+  "costs": [
+   {
+    "name": "pts",
+    "value": 725
+   }
+  ],
+  "costLimits": [
+   {
+    "name": "pts",
+    "value": 500
+   }
+  ],
+  "forces": [
+   {
+    "catalogueName": "Imperium - Adeptus Custodes",
+    "selections": [
+     {
+      "selections": [
+       {
+        "rules": [
+         {
+          "description": "At the start of your Command phase, select one unit from your opponent's army. Until the start of your next Command phase, each time a model in an Adeptus Custodes Character unit from your army makes an attack that targets that enemy unit, add 1 to the Wound roll.",
+          "id": "9eb2-2cdd-3df7-a94e",
+          "name": "Assemblage of Might"
+         }
+        ],
+        "costs": [
+         {
+          "name": "Detachment Points",
+          "value": 2
+         }
+        ],
+        "id": "qstjnrv",
+        "name": "Auric Champions",
+        "number": 1,
+        "type": "upgrade"
+       }
+      ],
+      "id": "qr9rf4m",
+      "name": "Detachments",
+      "number": 1,
+      "type": "upgrade"
+     }
+    ]
+   }
+  ],
+  "id": "roster-id",
+  "name": "Custodes Detachments-Plural Excerpt",
+  "gameSystemId": "sys-352e-adc2-7639-d610",
+  "gameSystemName": "Warhammer 40,000 11th Edition",
+  "gameSystemRevision": 11,
+  "battleScribeVersion": "2.03",
+  "xmlns": "http://www.battlescribe.net/schema/rosterSchema"
+ }
+}

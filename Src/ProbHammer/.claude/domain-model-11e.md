@@ -1362,6 +1362,27 @@ BattleScribeRosterMapper.MapDetachment(selection) -> ResolvedDetachment
                                        // (confirmed real: Death Guard's "Virulent Vectorium" carries
                                        // "Worldblight"; Black Templars' "Companions of Vehemence"
                                        // carries "Righteous Fervour" the same way).
+                                       //
+                                       // FindGroup(force.Selections, "Detachment", "Detachments")
+                                       // matches the top-level Detachment-choice selection by EITHER
+                                       // name (params string[], first match wins) - a real, confirmed
+                                       // user-reported bug found this format has the identical
+                                       // singular-vs-plural naming inconsistency the BSData pipeline's
+                                       // own DetachmentGroupNameScanTests already documents for
+                                       // catalogue group names, just never previously observed on
+                                       // this pipeline: Adeptus Custodes' own NewRecruit export names
+                                       // its top-level selection "Detachments" (plural; Death Guard/
+                                       // Black Templars use singular "Detachment") - the original
+                                       // exact-match-only FindGroup silently resolved zero
+                                       // Detachments for that one shape, so "Auric Champions"/its
+                                       // "Assemblage of Might" rule never appeared on /LivePlay despite
+                                       // being present in the roster JSON, with no exception or other
+                                       // symptom to flag the miss. Regression fixture:
+                                       // tests/.../BattleScribe/Fixtures/custodes-detachments-plural-
+                                       // excerpt.json. Same fix pattern applies to Force
+                                       // Disposition/Battle Size only if a real export is ever found
+                                       // using an alternate name for those - not attempted speculatively
+                                       // here since none has been observed.
 ```
 
 ### Session-Backed Import (`ProbHammer.Web`)
