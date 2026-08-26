@@ -848,11 +848,20 @@ it.
   the closing `*` renders italic only, matching the source markup's own nesting
 
 ### Requirement: Keyword Section Rendering
-Each unit block SHALL render the view's `Keywords` as a single list of the unit's effective keywords.
+Each unit block SHALL render the view's `Keywords` in a dedicated "Keywords" section, positioned
+immediately after the Melee Weapons section, following the same disclosure/section-header
+convention as the Statline, Ranged Weapons, and Melee Weapons sections. Each keyword in the set
+SHALL render as its own individual pill/chip, not joined with other keywords into a single string.
+The section SHALL be omitted entirely when the view's `Keywords` set is empty.
 
 #### Scenario: Keywords render when present
 - **WHEN** a unit's aggregate view has a non-empty `Keywords` set
-- **THEN** every keyword in that set is rendered somewhere in the unit's block
+- **THEN** a "Keywords" section renders after the Melee Weapons section, containing one pill per
+  keyword in the set
+
+#### Scenario: Keywords section omitted when empty
+- **WHEN** a unit's aggregate view has an empty `Keywords` set
+- **THEN** no "Keywords" section renders for that unit block
 
 ### Requirement: Empty Sections Render Without Error
 If any of `Statlines`, `Weapons`, the per-component ability data, or `Keywords` is empty for a
@@ -865,14 +874,14 @@ empty section or column.
   markup in the Unit Abilities column
 
 ### Requirement: Per-Section Disclosure Defaults to Collapsed
-Each unit block's statline (including its two ability columns), ranged-weapons, and melee-weapons
-sections SHALL be independently collapsible, and SHALL render collapsed by default when the page
-first loads.
+Each unit block's statline (including its two ability columns), ranged-weapons, melee-weapons, and
+keywords sections SHALL be independently collapsible, and SHALL render collapsed by default when
+the page first loads.
 
 #### Scenario: Sections load collapsed
 - **WHEN** a user navigates to `/LivePlay`
-- **THEN** every unit block's statline, ranged-weapons, and melee-weapons sections render in a
-  collapsed state, showing no section's detail content until expanded
+- **THEN** every unit block's statline, ranged-weapons, melee-weapons, and keywords sections render
+  in a collapsed state, showing no section's detail content until expanded
 
 #### Scenario: Expanding one section does not affect others
 - **WHEN** a user expands one unit's ranged-weapons section

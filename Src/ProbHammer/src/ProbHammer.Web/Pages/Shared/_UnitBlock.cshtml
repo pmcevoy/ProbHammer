@@ -597,7 +597,17 @@
 
     @if (unit.Keywords.Any())
     {
-        <div class="keywords">@string.Join(", ", unit.Keywords)</div>
+        <details class="lp-section" data-section="keywords">
+            <summary>
+                <span class="section-title">Keywords</span>
+            </summary>
+            <div class="weapon-tags">
+                @foreach (var keyword in unit.Keywords)
+                {
+                    <span class="weapon-tag">@keyword</span>
+                }
+            </div>
+        </details>
     }
 </section>
 

@@ -178,16 +178,6 @@ button[type="submit"]:hover { opacity: 0.85; }
     border-top: 1px solid var(--border);
 }
 
-/* ── Keywords ── */
-
-.keywords {
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    margin-bottom: 0.5rem;
-    font-variant: small-caps;
-    letter-spacing: 0.03em;
-}
-
 /* ── Model section ── */
 
 .model-section { margin-bottom: 0.5rem; }
@@ -795,8 +785,7 @@ button.filter-flag:hover { opacity: 0.8; }
 }
 .statline-flags .filter-flag { margin-left: 0; }
 
-.unit-block > .lp-section,
-.unit-block > .keywords {
+.unit-block > .lp-section {
     margin: 0.6rem 0.85rem;
 }
 .unit-block > .lp-section:last-of-type { margin-bottom: 0.85rem; }
@@ -1240,13 +1229,6 @@ button.filter-flag:hover { opacity: 0.8; }
    restyle-ability-list-rows/design.md for the full comparison trail. */
 .ability-name-line:nth-of-type(even) {
     background: color-mix(in srgb, var(--border) 70%, var(--bg2));
-}
-
-.live-play-page .keywords {
-    margin-top: 0.5rem;
-    margin-bottom: 0;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--border);
 }
 
 /* ── Rule/ability text popover (rules-glossary-popovers) ── */
