@@ -41,15 +41,6 @@ entry once it's been turned into a change (archived changes remain the historica
 
 ## Domain / data pipeline
 
-- **Rewrite `ArmyListParser.cs` for the 11e export format** — the Warhammer App export format
-  changed for 11th edition; `/LivePlay` currently runs entirely on hand-built fixture data
-  (`Examples/Units.cs`, `Examples/Datasheets.cs`), not a parsed army list. No 11e parser exists.
-- **Rebuild `Simulation/*` (CombatSimulator, SimulationAdapter, WoundPool) against the 11e domain
-  model.** Paused, not abandoned — the old design assumes one flat Toughness per defender, with
-  no notion of Attached Units or multi-statline targets, so it doesn't fit the new shape as-is.
-- **Wire `Simulation`/`CombatSimulator` into `/LivePlay`** — today `/LivePlay` is a static
-  per-request reference view, not a dice-rolling tool; this is separate from rebuilding the
-  simulator itself.
 - **Ability-text interpretation pass.** A distinct pass, run *after* `BsdataDatasheetMapper
   .BuildDatasheet` (not inside it), that classifies a specific ability's `Description` text
   against a small closed vocabulary of known fixed phrasings and folds the result back into the
