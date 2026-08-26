@@ -17,6 +17,77 @@ NewRecruit JSON re-export) uses that Detachment, so a new export would be needed
 
 ## Recently Completed
 
+- OpenSpec change `classify-known-army-rules` implemented (19/19 tasks): replaces the structural
+  `HasPrimaryCatalogueScope` check as the signal for `AbilityOrigin.ArmyRule` classification with a
+  curated, per-faction name table (`ArmyRuleNameLookup`, `Domain.Catalogue` — deliberately decoupled
+  from `Domain.Catalogue.Bsdata` so the BattleScribe/JSON pipeline can use it too). **The bug this
+  fixes**: the structural signal ("does this rule's own gating carry a `primary-catalogue`-scoped
+  condition anywhere") was confirmed, via a live-clone corpus scan, to also match three real
+  mustering/composition rules that are not army-wide gameplay rules at all — `Assigned Agents`
+  (Agents of the Imperium allies), `Disparate Paths` (Aeldari), `Corsairs and Travelling Players`
+  (Drukhari) — all misclassified as `ArmyRule` under the old check whenever a roster included one of
+  those allied units. An OR of old-signal-or-name-match was considered and rejected: it can only add
+  matches, never remove a wrong one, so it can't fix this class of bug — only removing runtime
+  reliance on the structural signal does. `BsdataDatasheetMapper.BuildDatasheet` and
+  `BattleScribeRosterMapper` both now take a `knownArmyRuleNames` set (resolved once per roster from
+  `Faction` by `ArmyRosterEnricher`/`BattleScribeRosterMapper.Map`, same fail-open-default
+  convention as `forceEntries`/`primaryCatalogueId`) and classify `ArmyRule` purely on
+  `knownArmyRuleNames.Contains(name)`. The old structural check is repurposed, not discarded: a new
+  explicit-only corpus scan (`PrimaryCatalogueGatedRuleTriageScanTests`) walks every
+  `primary-catalogue`-gated rule in the live clone and requires each to be accounted for by either
+  the inclusion table or a new curated exclusion list, failing on anything untriaged — this is what
+  would catch a future codex update introducing a new shared-library rule of this shape.
+  **Real findings from running that scan against the live clone** (see `ArmyRuleNameLookup.cs`'s own
+  comments): two table entries had wrong faction keys from the original design research
+  ("Custodes"→should be "Adeptus Custodes", "Aeldari"→should be "Craftworlds" — neither matched any
+  real catalogue file); one entry needed its exact declared suffix ("Nurgle's Gift"→"Nurgle's Gift
+  (Aura)"); the triage scan surfaced two genuine previously-missing army rules (Tyranids' "Synapse"
+  and "Shadow in the Warp" — a real single-faction case of two simultaneous `ArmyRule` abilities,
+  both opening with the same "If your Army Faction is TYRANIDS" phrase every confirmed genuine row
+  shares) plus one more genuine mustering-rule exclusion ("Voice Of Command", a model-granted
+  Order-issuing keyword, not a roster-wide fact). `LivePlayArmyHeaderRenderingTests`'
+  `TwoSimultaneousArmyRuleAbilities...` test (from `display-army-header-and-detachment-rules`, which
+  had illustrated its scenario with "Power from Pain"/"Corsairs and Travelling Players" — the latter
+  now a confirmed-fake `ArmyRule` example) was swapped to cite the real Tyranids pair instead.
+  Verified end-to-end via `dotnet run` + `firefox-devtools-mcp` against four real captured exports
+  across both pipelines (Death Guard JSON, Black Templars text, Custodes JSON, plus a live-clone-only
+  `AssignedAgentsRegressionTests` fact resolving a real allied Vindicare Assassin through a
+  Custodes-starting closure, since no captured sample includes an ally) — confirmed no regression on
+  Oath of Moment/Templar Vows, and confirmed Assigned Agents no longer renders in the header. Two
+  known, accepted, out-of-scope gaps found during verification: Drukhari's "Power from Pain" and
+  Tyranids' "Synapse"/"Shadow in the Warp" are correct names but currently unreachable via the BSData
+  text pipeline's own closure resolution — a pre-existing `BsdataClosureResolver` gap, identical root
+  cause to `DetachmentGroupNameAllowlist`'s existing entries, allowlisted rather than worked around
+  (the BattleScribe/JSON pipeline is unaffected, since it reads a roster's own already-resolved rule
+  text directly). Docs updated: `.claude/domain-model-11e.md`'s "Core Versus Army Rule Origin
+  Classification" and the BattleScribe pipeline's own Unit-assembly note (the latter's prior claim
+  that this pipeline never produces `ArmyRule` — and therefore never cross-component-dedups a shared
+  rule like Templar Vows — is now corrected).
+  **Update (same day, Full-Faction Coverage follow-up)**: user spot-checked `ArmyRuleNameLookup`
+  directly ("where is Orks?") right after the change was reported complete. A manual diff of the
+  live BSData clone's own file list against the table confirmed the table was far more partial than
+  documented — 15 of 37 real playable-faction catalogue files had no entry at all (Orks, Necrons,
+  T'au Empire, Adepta Sororitas, Adeptus Mechanicus, Agents of the Imperium, Astra Militarum, Chaos
+  Space Marines, Emperor's Children, Leagues of Votann, Thousand Sons, Unaligned Forces, World
+  Eaters, plus `Adeptus Titanicus`/`Titanicus Traitoris`, whose "deliberately left unmapped"
+  treatment had only ever been prose, never an enforced table entry). Rather than guess names, added
+  a permanent explicit-only `ArmyRuleNameCoverageScanTests` first (per explicit user request) that
+  enumerates every real faction file and requires `ArmyRuleNameLookup` to carry an explicit entry
+  for each — a populated name list, or a deliberately empty one for a faction confirmed to have no
+  single unifying rule — so a gap is always visible going forward, never silently missed the way
+  this one was. First run failed on exactly the 15 predicted; user independently validated every
+  candidate name against Wahapedia (catching one real error in the process: `Assigned Agents`, the
+  higher-frequency candidate for Agents of the Imperium, was the composition-eligibility rule other
+  factions use to take these units as allies, not this faction's own rule, which is actually `Kill
+  Team`) and confirmed Unaligned Forces genuinely has none. One candidate (Astra Militarum's `Voice
+  Of Command`) had been shipped on the *exclusion* list by this same change's own earlier work,
+  reasoned as a model-granted ability rather than a roster-wide fact — Wahapedia confirmed it IS the
+  genuine army rule, so it moved to the inclusion table instead; its own closure turned out unable
+  to reach the rule's text at all (the identical `BsdataClosureResolver` import gap already
+  documented for Drukhari/Tyranids), allowlisted the same way. All 15 factions now have a validated
+  entry; `ArmyRuleNameCoverageScanTests` and all 10 other explicit-only corpus scans pass clean
+  against the live clone; default suite unaffected (436 total, 0 failed, 11 not-run).
+
 - OpenSpec change `display-army-header-and-detachment-rules` implemented, verified, and archived
   (all 28 tasks; specs synced into `catalogue-json-ingestion`/`army-roster-enrichment`/
   `roster-model`/`live-play-view`). Adds a `/LivePlay` header above the unit blocks (roster

@@ -123,24 +123,27 @@ public class LivePlayArmyHeaderRenderingTests : IClassFixture<WebApplicationFact
     [Fact]
     public async Task TwoSimultaneousArmyRuleAbilities_BothRenderIndependentlyInTheArmyColumn()
     {
-        // design.md's Risk: no real captured export in the repo is Drukhari/Aeldari, the two
-        // confirmed real cases of two simultaneous ArmyRule-origin abilities - hand-built here.
-        var powerFromPain = new Ability
-            { Name = "Power from Pain", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
-        var corsairs = new Ability
+        // classify-known-army-rules confirmed "Corsairs and Travelling Players" is a mustering
+        // rule (composition eligibility for allied units), never genuinely ArmyRule-origin in real
+        // data - swapped for Tyranids' own real, confirmed pair, "Synapse" and "Shadow in the
+        // Warp" (see ArmyRuleNameLookup.cs), a genuine single-faction case of two simultaneous
+        // ArmyRule-origin abilities.
+        var synapse = new Ability
+            { Name = "Synapse", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
+        var shadowInTheWarp = new Ability
         {
-            Name = "Corsairs and Travelling Players", Text = "...", Scope = AbilityScope.Unit,
+            Name = "Shadow in the Warp", Text = "...", Scope = AbilityScope.Unit,
             Origin = AbilityOrigin.ArmyRule
         };
         var roster = Roster(
-            [UnitWithAbility("Kabalite Warriors", powerFromPain), UnitWithAbility("Wracks", corsairs)],
+            [UnitWithAbility("Hive Tyrant", synapse), UnitWithAbility("Norn Emissary", shadowInTheWarp)],
             [new ResolvedDetachment("Test Detachment", [])]);
 
         var html = await RenderHeaderAsync(roster);
 
         html.Should().Contain(">Army<");
-        html.Should().Contain("Power from Pain");
-        html.Should().Contain("Corsairs and Travelling Players");
+        html.Should().Contain("Synapse");
+        html.Should().Contain("Shadow in the Warp");
     }
 
     [Fact]

@@ -18,9 +18,12 @@ public static class ArmyRosterEnricher
 {
     public static ArmyRoster Enrich(ParsedArmyList parsedArmyList, ResolvedBsdataCatalogue catalogue)
     {
+        var knownArmyRuleNames = ArmyRuleNameLookup.Resolve(parsedArmyList.Faction);
+
         var units = new List<ICombatUnit>();
-        units.AddRange(parsedArmyList.AttachmentGroups.Select(g => BuildAttachedUnit(g, catalogue)));
-        units.AddRange(parsedArmyList.StandaloneUnits.Select(u => BuildUnit(u, catalogue)));
+        units.AddRange(
+            parsedArmyList.AttachmentGroups.Select(g => BuildAttachedUnit(g, catalogue, knownArmyRuleNames)));
+        units.AddRange(parsedArmyList.StandaloneUnits.Select(u => BuildUnit(u, catalogue, knownArmyRuleNames)));
 
         var detachments = parsedArmyList.Detachments
             .SelectMany(text => DetachmentNameResolver.Resolve(text, catalogue))
@@ -37,13 +40,16 @@ public static class ArmyRosterEnricher
             units);
     }
 
-    private static AttachedUnit BuildAttachedUnit(ParsedAttachmentGroup group, ResolvedBsdataCatalogue catalogue) =>
-        new(BuildUnit(group.Bodyguard, catalogue), group.Attached.Select(u => BuildUnit(u, catalogue)));
+    private static AttachedUnit BuildAttachedUnit(
+        ParsedAttachmentGroup group, ResolvedBsdataCatalogue catalogue, IReadOnlySet<string> knownArmyRuleNames) =>
+        new(BuildUnit(group.Bodyguard, catalogue, knownArmyRuleNames),
+            group.Attached.Select(u => BuildUnit(u, catalogue, knownArmyRuleNames)));
 
-    private static Unit BuildUnit(ParsedUnit parsedUnit, ResolvedBsdataCatalogue catalogue)
+    private static Unit BuildUnit(ParsedUnit parsedUnit, ResolvedBsdataCatalogue catalogue,
+        IReadOnlySet<string> knownArmyRuleNames)
     {
         var unitName = BsdataNameNormalization.Normalize(parsedUnit.Name);
-        var datasheet = catalogue.ResolveDatasheet(unitName);
+        var datasheet = catalogue.ResolveDatasheet(unitName, knownArmyRuleNames);
         var modelLines = parsedUnit.ModelGroups.Select(g => BuildModelLine(g, datasheet)).ToList();
         var enhancements = ResolveEnhancements(parsedUnit.Enhancements, datasheet);
 

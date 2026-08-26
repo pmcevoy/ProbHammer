@@ -13,14 +13,16 @@ namespace ProbHammer.Tests.Domain.Catalogue.Bsdata;
 /// ability list.</summary>
 public class PrimaryCatalogueGatingTests
 {
-    private static ProbHammer.Core.Domain.Catalogue.Datasheet Build(string? primaryCatalogueId)
+    private static Datasheet Build(
+        string? primaryCatalogueId, IReadOnlySet<string>? knownArmyRuleNames = null)
     {
         var closure = BsdataClosureResolver.Resolve(BsdataFixtures.Source(), "primary-catalogue-gating.json");
         var entry = BsdataNameResolver.Resolve(closure, "Test Unit")!;
         var idIndex = BsdataNameResolver.BuildIdIndex(closure);
         var groupIndex = BsdataNameResolver.BuildGroupIdIndex(closure);
         var glossary = RuleGlossary.Build(closure);
-        return BsdataDatasheetMapper.BuildDatasheet(entry, idIndex, groupIndex, glossary: glossary, primaryCatalogueId: primaryCatalogueId);
+        return BsdataDatasheetMapper.BuildDatasheet(entry, idIndex, groupIndex, glossary: glossary,
+            primaryCatalogueId: primaryCatalogueId, knownArmyRuleNames: knownArmyRuleNames);
     }
 
     [Fact]
@@ -64,14 +66,25 @@ public class PrimaryCatalogueGatingTests
     }
 
     [Fact]
-    public void AChapterExclusiveVow_HasArmyRuleOrigin_NotPlainCoreRule()
+    public void AChapterExclusiveVowMatchingTheCuratedLookup_HasArmyRuleOrigin()
     {
-        // The structural signal ("does this rule's own gating carry a primary-catalogue
-        // condition") is what distinguishes an army-wide fact from an ordinary per-datasheet
-        // Core rule - not how many components in a given roster happen to reference it.
-        var sheet = Build("cat-a");
+        // classify-known-army-rules: chapter/sub-faction gating is no longer itself the Origin
+        // signal (the same shape is also used for real mustering rules like Assigned Agents) -
+        // Origin is driven entirely by the caller-supplied knownArmyRuleNames set.
+        var sheet = Build("cat-a", knownArmyRuleNames: new HashSet<string> { "Chapter Vow" });
 
         sheet.Abilities.Single(a => a.Name == "Chapter Vow").Origin.Should().Be(AbilityOrigin.ArmyRule);
+    }
+
+    [Fact]
+    public void AChapterExclusiveVowNotMatchingTheCuratedLookup_HasPlainCoreRuleOrigin()
+    {
+        // The regression case classify-known-army-rules fixes: a rule carrying primary-catalogue
+        // gating (the Assigned-Agents shape) is no longer promoted to ArmyRule on that structural
+        // signal alone.
+        var sheet = Build("cat-a");
+
+        sheet.Abilities.Single(a => a.Name == "Chapter Vow").Origin.Should().Be(AbilityOrigin.CoreRule);
     }
 
     [Fact]
@@ -96,6 +109,7 @@ public class PrimaryCatalogueGatingTests
         // open, same convention as GatedContent_IsIncluded_WhenNoForceEntriesAreProvided.
         var sheet = Build(primaryCatalogueId: null);
 
-        sheet.Abilities.Select(a => a.Name).Should().Contain(["Chapter Vow", "Excluded For A", "Unrecognized Gate", "Ungated Rule"]);
+        sheet.Abilities.Select(a => a.Name).Should()
+            .Contain(["Chapter Vow", "Excluded For A", "Unrecognized Gate", "Ungated Rule"]);
     }
 }

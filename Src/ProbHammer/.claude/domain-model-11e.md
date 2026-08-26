@@ -105,13 +105,20 @@ MeleeWeapon(Name, A, Ws, S, Ap, D) : WeaponProfile           // Type fixed to Me
 
 Ability(Name, Text, Choices: IReadOnlyList<AbilityChoice>, Scope: Model | Unit, Origin: AbilityOrigin)
 
-AbilityOrigin = Intrinsic | Enhancement | OptionalGrant | CoreRule
+AbilityOrigin = Intrinsic | Enhancement | OptionalGrant | CoreRule | ArmyRule
                                                       // since resolve-enhancement-abilities (first
                                                       // three) / resolve-core-rule-abilities
                                                       // (CoreRule) - classifies where an ability
                                                       // came from during BsdataDatasheetMapper's
                                                       // walk, not a player-facing concept the
-                                                      // export text ever states directly.
+                                                      // export text ever states directly. ArmyRule
+                                                      // is a CoreRule-shaped reference whose own
+                                                      // Name matches classify-known-army-rules'
+                                                      // curated per-faction `ArmyRuleNameLookup`
+                                                      // table (e.g. Oath of Moment, Templar Vows,
+                                                      // Nurgle's Gift (Aura)) - see
+                                                      // BsdataDatasheetMapper's "Core Versus Army
+                                                      // Rule Origin Classification" below.
                                                       // Intrinsic: a fact about the datasheet,
                                                       // always in Datasheet.Abilities. Enhancement:
                                                       // found nested inside a "type: upgrade"
@@ -372,8 +379,9 @@ BsdataDatasheetMapper's Core Rule Ability Extraction (resolve-core-rule-abilitie
                                        // directly on the infoLink (real shapes: a JSON string for
                                        // "Deadly Demise" + "D3", a JSON number for "Firing Deck" +
                                        // 6 - both must be handled). Extracted into
-                                       // Datasheet.Abilities with Origin CoreRule - always
-                                       // exposed, like Intrinsic, never routed through the
+                                       // Datasheet.Abilities with Origin CoreRule or ArmyRule (see
+                                       // "Core Versus Army Rule Origin Classification" below) -
+                                       // always exposed, like Intrinsic, never routed through the
                                        // on-demand OptionalAbilities index, since a Core/faction
                                        // rule is never something a player did or didn't select.
                                        // An unresolvable rule name (the id isn't reachable in this
@@ -398,7 +406,57 @@ BsdataDatasheetMapper's Core Rule Ability Extraction (resolve-core-rule-abilitie
                                        // running the same pipeline against a Salamanders closure
                                        // produced the identical (and therefore equally wrong)
                                        // list. A gated reference produces no Ability, the same
-                                       // silent-skip treatment as an unresolvable rule name.
+                                       // silent-skip treatment as an unresolvable rule name. This
+                                       // gating decides only whether an Ability is produced at
+                                       // all - it has no bearing on Origin (see next paragraph),
+                                       // and is untouched by classify-known-army-rules.
+                                       //
+                                       // Core Versus Army Rule Origin Classification
+                                       // (classify-known-army-rules): Origin is ArmyRule when the
+                                       // resolved rule's own Name matches one of the known
+                                       // army-wide rule names for the roster's own Faction, per
+                                       // `ArmyRuleNameLookup.Resolve` (Domain.Catalogue, decoupled
+                                       // from Bsdata so the BattleScribe/JSON pipeline below can
+                                       // use it too) - CoreRule otherwise. `ArmyRosterEnricher`
+                                       // resolves this name set once per roster from
+                                       // `parsedArmyList.Faction` and threads it through
+                                       // `ResolvedBsdataCatalogue.ResolveDatasheet` into
+                                       // `BuildDatasheet`'s `knownArmyRuleNames` parameter (fail-
+                                       // open default: empty, same convention as
+                                       // `forceEntries`/`primaryCatalogueId` - every reference
+                                       // classifies CoreRule when omitted). This REPLACED an
+                                       // earlier structural-only signal - "does this rule's own
+                                       // gating carry a `scope: primary-catalogue` condition
+                                       // anywhere" (the same signal `IsGameModeGated`/
+                                       // `IsConditionProvablyTrue` above still read for the
+                                       // gating decision) - once real corpus data proved that
+                                       // signal unreliable: `Assigned Agents` (Agents of the
+                                       // Imperium), `Disparate Paths` (Aeldari), and `Corsairs and
+                                       // Travelling Players` (Drukhari) all carry the identical
+                                       // gating shape but are mustering/composition rules, not
+                                       // army-wide gameplay rules - the old signal misclassified
+                                       // all three as ArmyRule whenever a roster included one of
+                                       // those allied units. See `ArmyRuleNameLookup`'s own doc
+                                       // comment for the curated inclusion table (verified against
+                                       // the bundled corpus) and exclusion list (confirmed
+                                       // non-army-rule names sharing the gating shape, consulted
+                                       // only by bsdata-corpus-scan's Full-Corpus Primary-
+                                       // Catalogue-Gated Rule Triage Scan, never at runtime) - and
+                                       // openspec/changes/classify-known-army-rules/design.md for
+                                       // the full investigation, including why an OR of the two
+                                       // signals couldn't fix the false-positive class (it can
+                                       // only ever add matches, never remove a wrong one). A second,
+                                       // separate scan (`ArmyRuleNameCoverageScanTests`) enumerates
+                                       // every real playable-faction catalogue file in the live
+                                       // clone and requires each to be an explicit key in
+                                       // `ArmyRuleNameLookup.Entries` - a populated name list, or a
+                                       // deliberately empty one for a faction confirmed to have no
+                                       // single unifying army-wide rule - so a faction can never
+                                       // silently sit uncovered with neither; added after this
+                                       // change's own initial table turned out to omit roughly half
+                                       // the real corpus (Orks, Necrons, T'au Empire, and 10 others),
+                                       // found only by manually diffing the file list, not by any
+                                       // automated check.
                                        //
                                        // Critically, a "type: rule" infoLink ALSO appears nested
                                        // inside a "type: upgrade" weapon/wargear-option entry
@@ -1474,18 +1532,26 @@ BattleScribeRosterMapper.Map(BsRoster) -> ArmyRoster
                                        //
                                        // Unit assembly (BuildUnit): a top-level selection's own
                                        // "Abilities"-typeName profiles become Intrinsic Datasheet
-                                       // Abilities; its own "rules" entries become CoreRule-origin
-                                       // Abilities (per design.md's decision, deliberately with NO
-                                       // additional chapter/mode gating - a roster JSON only ever
-                                       // contains rules that already apply to the exported army, so
-                                       // gate-and-dedupe-core-rule-abilities' own gating need simply
-                                       // doesn't arise here; also deliberately never AbilityOrigin
-                                       // .ArmyRule, so AttachedUnitAggregator.PromoteArmyRuleAbilities
-                                       // never merges a CoreRule ability shared by this pipeline's
-                                       // components - e.g. "Templar Vows" renders once per present
-                                       // component here, unlike the BSData pipeline's deduplicated
-                                       // rendering for the same rule - an accepted, spec-mandated
-                                       // difference, not a bug). Enhancement resolution
+                                       // Abilities; its own "rules" entries become CoreRule- or
+                                       // ArmyRule-origin Abilities, deliberately with NO additional
+                                       // chapter/mode gating of the kind
+                                       // gate-and-dedupe-core-rule-abilities added for the BSData
+                                       // pipeline - a roster JSON only ever contains rules that
+                                       // already apply to the exported army, so that gating need
+                                       // simply doesn't arise here. Since classify-known-army-rules,
+                                       // Origin is decided by the identical
+                                       // `ArmyRuleNameLookup.Resolve(Faction).Contains(rule.Name)`
+                                       // check the BSData pipeline uses (Map() resolves it once from
+                                       // the roster's own already-computed Faction and threads it into
+                                       // BuildUnits/BuildUnit) - ArmyRule on a match, CoreRule
+                                       // otherwise. Because Faction here is roster-scoped, not
+                                       // per-component, `AttachedUnitAggregator
+                                       // .PromoteArmyRuleAbilities`' cross-component dedup (see "Core
+                                       // Versus Army Rule Origin Classification" below) now applies to
+                                       // this pipeline's output too - e.g. "Templar Vows" collapses to
+                                       // one entry across present components here exactly as it does
+                                       // for the BSData pipeline, no longer the accepted difference an
+                                       // earlier version of this file documented. Enhancement resolution
                                        // (FindEnhancements) walks the WHOLE selection tree (not just
                                        // the model-line weapon subtree) for any descendant selection
                                        // carrying a costs entry named "Enhancements", resolving its

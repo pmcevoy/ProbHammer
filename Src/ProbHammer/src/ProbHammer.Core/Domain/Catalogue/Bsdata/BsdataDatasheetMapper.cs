@@ -42,14 +42,16 @@ public static partial class BsdataDatasheetMapper
         IReadOnlyDictionary<string, BsProfile>? profileIdIndex = null,
         IReadOnlyList<BsForceEntry>? forceEntries = null,
         RuleGlossary? glossary = null,
-        string? primaryCatalogueId = null)
+        string? primaryCatalogueId = null,
+        IReadOnlySet<string>? knownArmyRuleNames = null)
     {
         var gateIds = (forceEntries ?? [])
             .Where(f => GameModeGateNames.Contains(f.Name, StringComparer.OrdinalIgnoreCase))
             .Select(f => f.Id)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var context = new WalkContext(idIndex, groupIdIndex, profileIdIndex ?? new Dictionary<string, BsProfile>(), gateIds, glossary, primaryCatalogueId);
+        var context = new WalkContext(idIndex, groupIdIndex, profileIdIndex ?? new Dictionary<string, BsProfile>(),
+            gateIds, glossary, primaryCatalogueId, knownArmyRuleNames);
         WalkEntry(entry, context, [], enclosingGroupName: null);
 
         return new Datasheet(
@@ -68,7 +70,8 @@ public static partial class BsdataDatasheetMapper
         IReadOnlyDictionary<string, BsProfile> profileIdIndex,
         IReadOnlySet<string> gameModeGateIds,
         RuleGlossary? glossary = null,
-        string? primaryCatalogueId = null)
+        string? primaryCatalogueId = null,
+        IReadOnlySet<string>? knownArmyRuleNames = null)
     {
         public IReadOnlyDictionary<string, BsSelectionEntry> IdIndex { get; } = idIndex;
         public IReadOnlyDictionary<string, BsSelectionEntryGroup> GroupIdIndex { get; } = groupIdIndex;
@@ -82,6 +85,15 @@ public static partial class BsdataDatasheetMapper
         /// Rule's own target rule (chapter/sub-faction exclusivity) - see
         /// IsProvablyAlwaysTrueInMatchedPlay.</summary>
         public string? PrimaryCatalogueId { get; } = primaryCatalogueId;
+
+        /// <summary>The roster's own known army-wide rule names (see
+        /// ArmyRuleNameLookup.Resolve), resolved once per roster by the caller that owns Faction
+        /// and threaded in here - the sole signal Core Rule Ability Extraction uses to decide
+        /// ArmyRule vs. CoreRule Origin (classify-known-army-rules). Empty when not supplied
+        /// (every pre-existing BuildDatasheet call site) - every reference then classifies
+        /// CoreRule, same fail-open-default shape as PrimaryCatalogueId/GameModeGateIds.</summary>
+        public IReadOnlySet<string> KnownArmyRuleNames { get; } =
+            knownArmyRuleNames ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public List<(string Name, Statline Statline)> Statlines { get; } = [];
         public HashSet<string> SeenStatlineNames { get; } = new(StringComparer.OrdinalIgnoreCase);
@@ -149,7 +161,8 @@ public static partial class BsdataDatasheetMapper
     /// would incorrectly exclude a real, always-available matched-play Enhancement for players
     /// using that exact Detachment.</summary>
     private static bool IsProvablyAlwaysTrueInMatchedPlay(
-        IReadOnlyList<BsCondition> conditions, IReadOnlyList<BsConditionGroup> groups, string combinator, WalkContext ctx)
+        IReadOnlyList<BsCondition> conditions, IReadOnlyList<BsConditionGroup> groups, string combinator,
+        WalkContext ctx)
     {
         var items = conditions
             .Select(c => IsConditionProvablyTrue(c, ctx))
@@ -185,7 +198,8 @@ public static partial class BsdataDatasheetMapper
 
             return c.Type switch
             {
-                "notInstanceOf" => !string.Equals(c.ChildId, ctx.PrimaryCatalogueId, StringComparison.OrdinalIgnoreCase),
+                "notInstanceOf" => !string.Equals(c.ChildId, ctx.PrimaryCatalogueId,
+                    StringComparison.OrdinalIgnoreCase),
                 "instanceOf" => string.Equals(c.ChildId, ctx.PrimaryCatalogueId, StringComparison.OrdinalIgnoreCase),
                 _ => false
             };
@@ -194,7 +208,8 @@ public static partial class BsdataDatasheetMapper
         return ctx.GameModeGateIds.Contains(c.ChildId);
     }
 
-    private static void WalkEntry(BsSelectionEntry entry, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry, string? enclosingGroupName)
+    private static void WalkEntry(BsSelectionEntry entry, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry,
+        string? enclosingGroupName)
     {
         if (!string.IsNullOrEmpty(entry.Id) && !ctx.VisitedEntryIds.Add(entry.Id))
             return;
@@ -220,7 +235,8 @@ public static partial class BsdataDatasheetMapper
             WalkInfoLink(link, ctx, chain, enclosingGroupName);
     }
 
-    private static void WalkGroup(BsSelectionEntryGroup group, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry, string? enclosingGroupName)
+    private static void WalkGroup(BsSelectionEntryGroup group, WalkContext ctx,
+        IReadOnlyList<BsSelectionEntry> ancestry, string? enclosingGroupName)
     {
         if (!string.IsNullOrEmpty(group.Id) && !ctx.VisitedGroupIds.Add(group.Id))
             return;
@@ -272,7 +288,8 @@ public static partial class BsdataDatasheetMapper
         // model) - skipped rather than failing resolution.
     }
 
-    private static void WalkInfoLink(BsEntryLink link, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry, string? enclosingGroupName)
+    private static void WalkInfoLink(BsEntryLink link, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry,
+        string? enclosingGroupName)
     {
         if (link.Type == "profile" && ctx.ProfileIdIndex.TryGetValue(link.TargetId, out var profile))
         {
@@ -335,28 +352,9 @@ public static partial class BsdataDatasheetMapper
                 Name = name,
                 Text = rule.Text,
                 Scope = AbilityScope.Unit,
-                Origin = HasPrimaryCatalogueScope(rule.Modifiers) ? AbilityOrigin.ArmyRule : AbilityOrigin.CoreRule
+                Origin = ctx.KnownArmyRuleNames.Contains(rule.Name) ? AbilityOrigin.ArmyRule : AbilityOrigin.CoreRule
             });
         }
-    }
-
-    /// <summary>True when any of the given modifiers' condition tree contains a
-    /// "scope: primary-catalogue" condition ANYWHERE, regardless of comparison type or whether it
-    /// actually excludes content for the current closure - a structural fact about the rule
-    /// itself (found via a real user-reported gap: the earlier "shared by 2+ present components"
-    /// dedup heuristic never triggered for a standalone Unit, since chapter/army-wide-ness isn't
-    /// really about how many components in one particular roster happen to reference a rule).
-    /// Deliberately simpler than <see cref="IsConditionProvablyTrue"/> - this asks "is this rule
-    /// chapter-scoped at all", not "is it excluded here", so it doesn't need
-    /// <see cref="WalkContext.PrimaryCatalogueId"/> or any evaluation logic, only a presence
-    /// check.</summary>
-    private static bool HasPrimaryCatalogueScope(IReadOnlyList<BsModifier> modifiers)
-    {
-        bool HasScope(IReadOnlyList<BsCondition> conditions, IReadOnlyList<BsConditionGroup> groups) =>
-            conditions.Any(c => c.Scope == "primary-catalogue")
-            || groups.Any(g => HasScope(g.Conditions, g.ConditionGroups));
-
-        return modifiers.Any(m => m.Field == "hidden" && HasScope(m.Conditions, m.ConditionGroups));
     }
 
     /// <summary>Builds a "type: rule" infoLink's display name: its own base Name, plus every
@@ -384,7 +382,8 @@ public static partial class BsdataDatasheetMapper
         return name;
     }
 
-    private static void ProcessProfile(BsProfile profile, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry, string? enclosingGroupName)
+    private static void ProcessProfile(BsProfile profile, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry,
+        string? enclosingGroupName)
     {
         switch (profile.TypeName)
         {
@@ -417,7 +416,8 @@ public static partial class BsdataDatasheetMapper
     /// match - confirmed necessary: a nested Enhancement sub-pool like "Legends of Saga and Song
     /// Enhancements" is the *directly* enclosing group for its own entries, not the outer
     /// "Enhancements" group one hop up), else a plain optional grant.</summary>
-    private static void ProcessAbilityProfile(BsProfile profile, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry, string? enclosingGroupName)
+    private static void ProcessAbilityProfile(BsProfile profile, WalkContext ctx,
+        IReadOnlyList<BsSelectionEntry> ancestry, string? enclosingGroupName)
     {
         var isOptional = ancestry.Count > 0 && ancestry[^1].Type == "upgrade";
         if (!isOptional)
@@ -427,7 +427,8 @@ public static partial class BsdataDatasheetMapper
             return;
         }
 
-        var origin = enclosingGroupName is not null && enclosingGroupName.Contains("Enhancements", StringComparison.OrdinalIgnoreCase)
+        var origin = enclosingGroupName is not null &&
+                     enclosingGroupName.Contains("Enhancements", StringComparison.OrdinalIgnoreCase)
             ? AbilityOrigin.Enhancement
             : AbilityOrigin.OptionalGrant;
         ctx.OptionalAbilities.TryAdd(profile.Name, MapAbility(profile, origin));
@@ -437,7 +438,7 @@ public static partial class BsdataDatasheetMapper
         new(
             M: ParseMeasurement(profile.CharacteristicText("M")),
             T: ParsePlainInt(profile.CharacteristicText("T")),
-            Sv: ParseThreshold(profile.CharacteristicText("Sv"),CharacteristicPattern.Sv),
+            Sv: ParseThreshold(profile.CharacteristicText("Sv"), CharacteristicPattern.Sv),
             W: ParsePlainInt(profile.CharacteristicText("W")),
             Ld: ParseThreshold(profile.CharacteristicText("LD"), CharacteristicPattern.Ld),
             Oc: ParsePlainInt(profile.CharacteristicText("OC")))
@@ -457,7 +458,8 @@ public static partial class BsdataDatasheetMapper
     /// ability's Description text says (see ResolveCaveatAbility) - only which specific ability is
     /// linked, by id. Throws <see cref="AmbiguousCharacteristicException"/> for any text matching
     /// none of these shapes.</summary>
-    private static InvulnerableSave ResolveInvulnerableSave(string? text, IReadOnlyList<BsSelectionEntry> ancestry, WalkContext ctx)
+    private static InvulnerableSave ResolveInvulnerableSave(string? text, IReadOnlyList<BsSelectionEntry> ancestry,
+        WalkContext ctx)
     {
         if (string.IsNullOrWhiteSpace(text)) return new InvulnerableSave();
         text = text.Trim();
@@ -526,7 +528,8 @@ public static partial class BsdataDatasheetMapper
     /// Save (2+*)" sits directly in his own entry.Profiles, not behind any link). Throws when no
     /// entry in the ancestry has a matching candidate under either naming convention - a footnote
     /// with no resolvable ability is a new, unprecedented shape, not something to guess at.</summary>
-    private static Ability ResolveCaveatAbility(int digit, IReadOnlyList<BsSelectionEntry> ancestry, WalkContext ctx, string rawText)
+    private static Ability ResolveCaveatAbility(int digit, IReadOnlyList<BsSelectionEntry> ancestry, WalkContext ctx,
+        string rawText)
     {
         var expectedNames = new[] { $"Invulnerable Save ({digit}+*)", "*Invulnerable Save" };
 
@@ -535,12 +538,14 @@ public static partial class BsdataDatasheetMapper
             var candidate = ancestry[i];
 
             var localProfile = candidate.Profiles.FirstOrDefault(p =>
-                p.TypeName == "Abilities" && expectedNames.Any(n => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase)));
+                p.TypeName == "Abilities" &&
+                expectedNames.Any(n => string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase)));
             if (localProfile is not null)
                 return MapAbility(localProfile, AbilityOrigin.Intrinsic);
 
             var link = candidate.InfoLinks.FirstOrDefault(l =>
-                l.Type == "profile" && expectedNames.Any(n => string.Equals(l.Name, n, StringComparison.OrdinalIgnoreCase)));
+                l.Type == "profile" &&
+                expectedNames.Any(n => string.Equals(l.Name, n, StringComparison.OrdinalIgnoreCase)));
             if (link is not null && ctx.ProfileIdIndex.TryGetValue(link.TargetId, out var linkedProfile))
                 return MapAbility(linkedProfile, AbilityOrigin.Intrinsic);
         }
@@ -615,7 +620,7 @@ public static partial class BsdataDatasheetMapper
         return int.Parse(text.TrimEnd('"', '+'));
     }
 
-    
+
     /// <summary>Parses a single-value threshold characteristic (Sv, BS, WS, LD) against the shape
     /// permitted for that specific characteristic (see <see cref="CharacteristicPattern"/>):
     /// digits with an optional trailing "+". An empty string, "N/A" (BSData's no-hit-roll-required
@@ -629,9 +634,9 @@ public static partial class BsdataDatasheetMapper
         if (string.IsNullOrWhiteSpace(text)) return 0;
         text = text.Trim();
         if (IsNotApplicable(text) || IsNA(text)) return 0;
-        
+
         var match = expectedPattern.Pattern.Match(text);
-        if(!match.Success)
+        if (!match.Success)
             throw new AmbiguousCharacteristicException(expectedPattern.Characteristic, text);
 
         return int.Parse(match.Groups[1].Value);
@@ -664,7 +669,7 @@ public partial class CharacteristicPattern
         Pattern = pattern;
     }
 
-    internal static readonly CharacteristicPattern Ws  = new ("Ws", WsRegex());
+    internal static readonly CharacteristicPattern Ws = new("Ws", WsRegex());
     internal static readonly CharacteristicPattern Bs = new("Bs", BsRegex());
     internal static readonly CharacteristicPattern Sv = new("Sv", SvRegex());
     internal static readonly CharacteristicPattern Ld = new("Ld", LdRegex());
@@ -674,10 +679,13 @@ public partial class CharacteristicPattern
 
     [GeneratedRegex(@"^(\d+)[+]?$")]
     private static partial Regex WsRegex();
+
     [GeneratedRegex(@"^(\d+)[+]?$")]
     private static partial Regex BsRegex();
+
     [GeneratedRegex(@"^(\d+)[+]?$")]
     private static partial Regex SvRegex();
+
     [GeneratedRegex(@"^(\d+)[+]?$")]
     private static partial Regex LdRegex();
 }
@@ -690,7 +698,8 @@ public partial class CharacteristicPattern
 /// and the raw offending text as properties, not just baked into the message, so a catching
 /// corpus-wide test can check a failure against a maintained "known limitation" allowlist without
 /// needing to parse <see cref="Exception.Message"/>.</summary>
-public class AmbiguousCharacteristicException(string characteristic, string text) : Exception($"Unexpected text for characteristic: {characteristic}={text}")
+public class AmbiguousCharacteristicException(string characteristic, string text)
+    : Exception($"Unexpected text for characteristic: {characteristic}={text}")
 {
     public string Text { get; } = text;
     public string Characteristic { get; } = characteristic;

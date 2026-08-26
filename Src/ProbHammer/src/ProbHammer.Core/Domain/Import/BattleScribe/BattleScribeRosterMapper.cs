@@ -29,7 +29,8 @@ public static partial class BattleScribeRosterMapper
         var battleSize = StripTrailingParenthetical(
             FindGroup(force.Selections, "Battle Size").Select(s => s.Name).FirstOrDefault() ?? "");
 
-        var units = BuildUnits(force.Selections);
+        var knownArmyRuleNames = ArmyRuleNameLookup.Resolve(faction);
+        var units = BuildUnits(force.Selections, knownArmyRuleNames);
 
         return new ArmyRoster(roster.Name, pointsSpent, faction, detachments, forceDisposition, battleSize, pointsLimit,
             units);
@@ -81,7 +82,8 @@ public static partial class BattleScribeRosterMapper
     /// <see cref="AttachedUnit"/>. Every other top-level selection (Battle Size, Detachment, Force
     /// Disposition, Show/Hide Options - all "upgrade"-typed) is not a real army entry and is
     /// excluded here.</summary>
-    private static List<ICombatUnit> BuildUnits(IReadOnlyList<BsRosterSelection> topSelections)
+    private static List<ICombatUnit> BuildUnits(
+        IReadOnlyList<BsRosterSelection> topSelections, IReadOnlySet<string> knownArmyRuleNames)
     {
         var unitSelections = topSelections.Where(s => s.Type is "unit" or "model").ToList();
 
@@ -101,12 +103,13 @@ public static partial class BattleScribeRosterMapper
 
             if (bodyguardIds.Contains(selection.Id))
             {
-                var attached = outgoing.Where(x => x.Target == selection.Id).Select(x => BuildUnit(x.Selection));
-                units.Add(new AttachedUnit(BuildUnit(selection), attached));
+                var attached = outgoing.Where(x => x.Target == selection.Id)
+                    .Select(x => BuildUnit(x.Selection, knownArmyRuleNames));
+                units.Add(new AttachedUnit(BuildUnit(selection, knownArmyRuleNames), attached));
             }
             else
             {
-                units.Add(BuildUnit(selection));
+                units.Add(BuildUnit(selection, knownArmyRuleNames));
             }
         }
 
@@ -119,7 +122,7 @@ public static partial class BattleScribeRosterMapper
     /// Extraction), its ModelLines and their Statlines/weapon profiles from BuildModelLines, and
     /// its Enhancements from every descendant selection tagged with a <c>costs["Enhancements"]</c>
     /// entry anywhere in its tree.</summary>
-    private static Unit BuildUnit(BsRosterSelection top)
+    private static Unit BuildUnit(BsRosterSelection top, IReadOnlySet<string> knownArmyRuleNames)
     {
         var statlines = new List<(string Name, Statline Statline)>();
         var seenStatlineNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -139,7 +142,7 @@ public static partial class BattleScribeRosterMapper
         var intrinsicAbilities = top.Profiles
             .Where(p => p.TypeName == "Abilities")
             .Select(p => MapAbility(p, AbilityOrigin.Intrinsic));
-        var coreRuleAbilities = top.Rules.Select(MapCoreRuleAbility);
+        var coreRuleAbilities = top.Rules.Select(rule => MapCoreRuleAbility(rule, knownArmyRuleNames));
 
         var datasheet = new Datasheet(
             top.Name,
@@ -388,13 +391,13 @@ public static partial class BattleScribeRosterMapper
             Origin = origin
         };
 
-    private static Ability MapCoreRuleAbility(BsRosterRule rule) =>
+    private static Ability MapCoreRuleAbility(BsRosterRule rule, IReadOnlySet<string> knownArmyRuleNames) =>
         new()
         {
             Name = rule.Name,
             Text = rule.Description,
             Scope = AbilityScope.Unit,
-            Origin = AbilityOrigin.CoreRule
+            Origin = knownArmyRuleNames.Contains(rule.Name) ? AbilityOrigin.ArmyRule : AbilityOrigin.CoreRule
         };
 
     private static bool IsNotApplicable(string text) =>
