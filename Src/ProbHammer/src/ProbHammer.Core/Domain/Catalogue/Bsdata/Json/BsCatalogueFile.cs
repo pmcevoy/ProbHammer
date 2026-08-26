@@ -134,6 +134,11 @@ public sealed class BsSelectionEntry
     /// "Marshal's Household" declaring "Faith-Fuelled Resolve"). See
     /// <see cref="DetachmentRuleTextExtractor"/>.</summary>
     public List<BsRule> Rules { get; set; } = [];
+
+    /// <summary>This entry's own keyword/category tags (e.g. "Infantry", "Faction: Black
+    /// Templars") - already fully-resolved display names, unlike a weapon profile/rule/InSv text,
+    /// so no id cross-reference is needed. See resolve-category-keywords.</summary>
+    public List<BsCategoryLink> CategoryLinks { get; set; } = [];
 }
 
 public sealed class BsSelectionEntryGroup
@@ -194,6 +199,14 @@ public sealed class BsEntryLink
     /// the displayed "Deadly Demise D3") - see BsdataDatasheetMapper's Core Rule ability
     /// extraction. Empty for every other link shape.</summary>
     public List<BsModifier> Modifiers { get; set; } = [];
+}
+
+/// <summary>One `categoryLinks` entry - already carries the fully-resolved display name directly
+/// (`name`), unlike a weapon profile/rule/InSv text; no id cross-reference needed. See
+/// resolve-category-keywords.</summary>
+public sealed class BsCategoryLink
+{
+    public string Name { get; set; } = "";
 }
 
 public sealed class BsProfile

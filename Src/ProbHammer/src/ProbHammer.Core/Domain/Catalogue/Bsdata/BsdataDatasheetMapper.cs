@@ -57,12 +57,24 @@ public static partial class BsdataDatasheetMapper
         return new Datasheet(
             entry.Name,
             factionKeywords: [],
-            keywords: [],
+            keywords: MapCategoryLinks(entry.CategoryLinks),
             abilities: context.Abilities,
             statlines: context.Statlines,
             weaponProfiles: context.Weapons.Values,
-            optionalAbilities: context.OptionalAbilities.Values);
+            optionalAbilities: context.OptionalAbilities.Values,
+            modelKeywords: context.ModelKeywords);
     }
+
+    /// <summary>Maps a `categoryLinks` list into a Keywords set: each entry's `name`, with a
+    /// literal "Faction: " prefix stripped when present, otherwise kept verbatim - no exclusions,
+    /// including an entry matching the owning entry's own name (see proposal.md/design.md's
+    /// reversed decision on this).</summary>
+    private static IReadOnlyList<string> MapCategoryLinks(IReadOnlyList<BsCategoryLink> categoryLinks) =>
+        categoryLinks
+            .Select(c => c.Name.StartsWith("Faction: ", StringComparison.OrdinalIgnoreCase)
+                ? c.Name["Faction: ".Length..]
+                : c.Name)
+            .ToList();
 
     private sealed class WalkContext(
         IReadOnlyDictionary<string, BsSelectionEntry> idIndex,
@@ -97,6 +109,13 @@ public static partial class BsdataDatasheetMapper
 
         public List<(string Name, Statline Statline)> Statlines { get; } = [];
         public HashSet<string> SeenStatlineNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>One (Name, Keywords) pair per named model whose own `categoryLinks` were
+        /// collected at the same visit that extracted its Statline - see
+        /// resolve-category-keywords. Populated 1:1 with Statlines, gated by the same
+        /// SeenStatlineNames check, so no separate dedup is needed here.</summary>
+        public List<(string Name, IReadOnlySet<string> Keywords)> ModelKeywords { get; } = [];
+
         public Dictionary<string, WeaponProfile> Weapons { get; } = new(StringComparer.OrdinalIgnoreCase);
         public List<Ability> Abilities { get; } = [];
         public HashSet<string> SeenAbilityNames { get; } = new(StringComparer.OrdinalIgnoreCase);
@@ -389,7 +408,19 @@ public static partial class BsdataDatasheetMapper
         {
             case "Unit":
                 if (ctx.SeenStatlineNames.Add(profile.Name))
+                {
                     ctx.Statlines.Add((profile.Name, MapStatline(profile, ancestry, ctx)));
+                    // The nearest entry in the ancestry is the one that actually owns this Unit
+                    // profile (directly, or via its own "profile"-type infoLink) - its own
+                    // categoryLinks are that specific named model's own Keywords, distinct from
+                    // the Datasheet's own top-level ones (confirmed real shape: Masters of the
+                    // Maelstrom's "Garlon Souleater" child entry carries a "Psyker" categoryLink
+                    // the unit's own top-level entry does not).
+                    var owningEntry = ancestry.Count > 0 ? ancestry[^1] : null;
+                    ctx.ModelKeywords.Add((profile.Name, new HashSet<string>(
+                        MapCategoryLinks(owningEntry?.CategoryLinks ?? []), StringComparer.OrdinalIgnoreCase)));
+                }
+
                 break;
             case "Ranged Weapons":
                 ctx.Weapons.TryAdd(profile.Name, MapRangedWeapon(profile));

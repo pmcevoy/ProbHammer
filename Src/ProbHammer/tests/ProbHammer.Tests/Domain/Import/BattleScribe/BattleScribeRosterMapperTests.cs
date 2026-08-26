@@ -197,6 +197,33 @@ public class BattleScribeRosterMapperTests
         line.Abilities.Should().ContainSingle(a => a.Name == "Shield Dome" && a.Origin == AbilityOrigin.OptionalGrant);
     }
 
+    [Fact]
+    public void TopLevelSelectionsOwnCategories_PopulateTheSynthesizedDatasheetsKeywords()
+    {
+        // Trimmed real excerpt of data/nr-app-export-masters-of-the-maelstrom.json - see
+        // Fixtures/masters-of-the-maelstrom-keywords-excerpt.json.
+        var army = BuildRoster("masters-of-the-maelstrom-keywords-excerpt.json");
+        var unit = FindUnit(army, "Masters of the Maelstrom");
+
+        unit.Datasheet.Keywords.Should().Contain("Infantry");
+        unit.Datasheet.Keywords.Should().Contain("Heretic Astartes");
+        unit.Datasheet.Keywords.Should().NotContain("Faction: Heretic Astartes");
+    }
+
+    [Fact]
+    public void NestedModelSelectionsOwnCategories_PopulateOnlyThatModelLinesKeywords()
+    {
+        var army = BuildRoster("masters-of-the-maelstrom-keywords-excerpt.json");
+        var unit = FindUnit(army, "Masters of the Maelstrom");
+
+        var garlon = unit.ModelLines.Single(ml => ml.StatlineName == "Garlon Souleater");
+        var garreon = unit.ModelLines.Single(ml => ml.StatlineName == "Garreon the Corpsemaster");
+
+        garlon.Keywords.Should().Contain("Psyker");
+        garreon.Keywords.Should().BeEmpty();
+        unit.Datasheet.Keywords.Should().NotContain("Psyker");
+    }
+
     private static Unit FindUnit(ArmyRoster army, string name) =>
         army.Units.SelectMany(u => u.Components).First(u => u.Name == name && u.Datasheet.Name == name);
 }

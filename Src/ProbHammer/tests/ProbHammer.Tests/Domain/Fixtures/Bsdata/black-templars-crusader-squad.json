@@ -8,6 +8,17 @@
         "id": "8bbe-e7fc-44b7-ed94",
         "name": "Crusader Squad",
         "type": "unit",
+        "categoryLinks": [
+          {
+            "name": "Infantry"
+          },
+          {
+            "name": "Faction: Black Templars"
+          },
+          {
+            "name": "Crusader Squad"
+          }
+        ],
         "profiles": [
           {
             "name": "Righteous Zeal",
@@ -30,6 +41,11 @@
                 "id": "49a9-1a03-6520-3a64",
                 "name": "Sword Brother",
                 "type": "model",
+                "categoryLinks": [
+                  {
+                    "name": "Psyker"
+                  }
+                ],
                 "profiles": [
                   {
                     "name": "Sword Brother",

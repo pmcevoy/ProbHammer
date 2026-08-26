@@ -97,6 +97,25 @@ public class ArmyRosterEnricherTests
     }
 
     [Fact]
+    public void ModelLine_GetsKeywordsFromTheDatasheetsPerModelLookupForItsOwnStatlineName()
+    {
+        // The crusader-squad-enrichment.json fixture's "Sword Brother" entry carries a "Psyker"
+        // categoryLinks entry; "Initiate" does not.
+        var modelGroups = new ParsedModelGroup[]
+        {
+            new("Sword Brother", 1, ["Master-crafted power weapon", "Pyre pistol"]),
+            new("Initiate", 1, [])
+        };
+        var parsed = ArmyListWith(standaloneUnits: [CrusaderSquadUnit(modelGroups)]);
+
+        var roster = ArmyRosterEnricher.Enrich(parsed, CrusaderSquadCatalogue());
+
+        var unit = (Unit)roster.Units[0];
+        unit.ModelLines.Single(ml => ml.StatlineName == "Sword Brother").Keywords.Should().Contain("Psyker");
+        unit.ModelLines.Single(ml => ml.StatlineName == "Initiate").Keywords.Should().BeEmpty();
+    }
+
+    [Fact]
     public void UnresolvableUnitName_ThrowsNamingTheUnresolvedText()
     {
         var parsed = ArmyListWith(standaloneUnits:

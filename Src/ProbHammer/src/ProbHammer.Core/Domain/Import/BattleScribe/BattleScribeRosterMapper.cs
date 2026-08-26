@@ -156,13 +156,25 @@ public static partial class BattleScribeRosterMapper
         var datasheet = new Datasheet(
             top.Name,
             factionKeywords: [],
-            keywords: [],
+            keywords: MapCategories(top.Categories),
             abilities: intrinsicAbilities.Concat(coreRuleAbilities).ToList(),
             statlines: statlines,
             weaponProfiles: weapons.Values);
 
         return new Unit(datasheet, FindEnhancements(top), modelLines);
     }
+
+    /// <summary>Maps a `categories` list into a Keywords set: each entry's `name`, with a literal
+    /// "Faction: " prefix stripped when present, otherwise kept verbatim - no exclusions, mirroring
+    /// <c>BsdataDatasheetMapper</c>'s identical extraction rule (this pipeline's own small,
+    /// functionally-identical local equivalent, per this file's existing convention rather than
+    /// reusing that mapper's own private helper).</summary>
+    private static IReadOnlyList<string> MapCategories(IReadOnlyList<BsRosterCategory> categories) =>
+        categories
+            .Select(c => c.Name.StartsWith("Faction: ", StringComparison.OrdinalIgnoreCase)
+                ? c.Name["Faction: ".Length..]
+                : c.Name)
+            .ToList();
 
     /// <summary>Builds one <see cref="ModelLine"/> per per-loadout model group (see
     /// battlescribe-roster-import's Statline, Weapon, and Ability Extraction requirement): when the
@@ -185,7 +197,8 @@ public static partial class BattleScribeRosterMapper
             addStatline(statlineProfile.Name, MapStatline(statlineProfile, node, top));
 
             var (lineWeapons, lineAbilities) = CollectWeaponsAndAbilities(node, node.Number, addWeaponProfile);
-            modelLines.Add(new ModelLine(statlineProfile.Name, lineWeapons, node.Number, lineAbilities));
+            modelLines.Add(new ModelLine(statlineProfile.Name, lineWeapons, node.Number, lineAbilities,
+                MapCategories(node.Categories)));
         }
 
         return modelLines;

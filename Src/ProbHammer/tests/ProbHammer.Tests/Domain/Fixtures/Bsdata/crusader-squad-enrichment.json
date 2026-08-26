@@ -15,6 +15,7 @@
             "id": "e-sword-brother-member",
             "name": "Sword Brother",
             "type": "model",
+            "categoryLinks": [ { "name": "Psyker" } ],
             "profiles": [
               { "id": "p-sb-unit", "name": "Sword Brother", "typeName": "Unit",
                 "characteristics": [

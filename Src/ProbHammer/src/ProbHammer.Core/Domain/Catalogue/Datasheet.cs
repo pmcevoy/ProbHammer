@@ -19,6 +19,7 @@ public sealed class Datasheet
     private readonly IReadOnlyDictionary<string, Statline> _statlinesByName;
     private readonly IReadOnlyDictionary<string, WeaponProfile> _weaponProfiles;
     private readonly IReadOnlyDictionary<string, Ability> _optionalAbilities;
+    private readonly IReadOnlyDictionary<string, IReadOnlySet<string>> _modelKeywordsByName;
 
     /// <summary><paramref name="weaponProfiles"/>/<paramref name="optionalAbilities"/> are plain
     /// enumerables, not pre-built dictionaries - the internal lookups are built from each item's
@@ -35,7 +36,8 @@ public sealed class Datasheet
         IEnumerable<Ability> abilities,
         IReadOnlyList<(string Name, Statline Statline)> statlines,
         IEnumerable<WeaponProfile> weaponProfiles,
-        IEnumerable<Ability>? optionalAbilities = null)
+        IEnumerable<Ability>? optionalAbilities = null,
+        IEnumerable<(string Name, IReadOnlySet<string> Keywords)>? modelKeywords = null)
     {
         Name = name;
         FactionKeywords = new HashSet<string>(factionKeywords, StringComparer.OrdinalIgnoreCase);
@@ -45,6 +47,8 @@ public sealed class Datasheet
         _statlinesByName = statlines.ToDictionary(x => x.Name, x => x.Statline, StringComparer.OrdinalIgnoreCase);
         _weaponProfiles = weaponProfiles.ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
         _optionalAbilities = (optionalAbilities ?? []).ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
+        _modelKeywordsByName =
+            (modelKeywords ?? []).ToDictionary(x => x.Name, x => x.Keywords, StringComparer.OrdinalIgnoreCase);
     }
 
     public Statline GetStatline(string name) =>
@@ -53,6 +57,12 @@ public sealed class Datasheet
             : throw new KeyNotFoundException($"Datasheet '{Name}' has no statline named '{name}'.");
 
     public bool TryGetStatline(string name, out Statline statline) => _statlinesByName.TryGetValue(name, out statline!);
+
+    /// <summary>Keywords scoped to one named statline (e.g. a squad's single named individual),
+    /// distinct from the Datasheet's own top-level Keywords - empty for a name with no such data,
+    /// never throwing.</summary>
+    public IReadOnlySet<string> GetModelKeywords(string name) =>
+        _modelKeywordsByName.TryGetValue(name, out var keywords) ? keywords : new HashSet<string>();
 
     /// <summary>Resolves a single named weapon profile without enumerating every profile the datasheet defines.</summary>
     public WeaponProfile ResolveWeaponProfile(string name) =>

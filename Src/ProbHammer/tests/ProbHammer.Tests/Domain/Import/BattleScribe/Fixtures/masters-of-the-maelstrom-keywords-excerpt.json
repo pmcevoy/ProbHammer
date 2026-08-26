@@ -1,0 +1,149 @@
+{
+ "roster": {
+  "costs": [
+   {
+    "name": "pts",
+    "value": 845
+   }
+  ],
+  "forces": [
+   {
+    "catalogueName": "Chaos - Chaos Space Marines",
+    "selections": [
+     {
+      "categories": [
+       {
+        "id": "4f3a-f0f7-6647-348d",
+        "name": "Epic Hero",
+        "primary": true
+       },
+       {
+        "id": "cf47-a0d7-7207-29dc",
+        "name": "Infantry",
+        "primary": false
+       },
+       {
+        "id": "b8dd-a61e-59db-8ed4",
+        "name": "Masters of the Maelstrom",
+        "primary": false
+       },
+       {
+        "id": "1e42-dfae-cbdd-207d",
+        "name": "Faction: Heretic Astartes",
+        "primary": false
+       }
+      ],
+      "id": "f91i1ef",
+      "name": "Masters of the Maelstrom",
+      "number": 1,
+      "type": "unit",
+      "selections": [
+       {
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "6\"",
+            "name": "M"
+           },
+           {
+            "$text": "4",
+            "name": "T"
+           },
+           {
+            "$text": "3+",
+            "name": "Sv"
+           },
+           {
+            "$text": "4",
+            "name": "W"
+           },
+           {
+            "$text": "6+",
+            "name": "LD"
+           },
+           {
+            "$text": "1",
+            "name": "OC"
+           },
+           {
+            "$text": "-",
+            "name": "InSv"
+           }
+          ],
+          "id": "8bee-32dc-f004-ea6c",
+          "name": "Garlon Souleater",
+          "typeName": "Unit"
+         }
+        ],
+        "categories": [
+         {
+          "id": "13bf-2bee-3ae0-b414",
+          "name": "Psyker",
+          "primary": false
+         }
+        ],
+        "id": "fbr37fr",
+        "name": "Garlon Souleater",
+        "number": 1,
+        "type": "model",
+        "selections": []
+       },
+       {
+        "profiles": [
+         {
+          "characteristics": [
+           {
+            "$text": "6\"",
+            "name": "M"
+           },
+           {
+            "$text": "4",
+            "name": "T"
+           },
+           {
+            "$text": "3+",
+            "name": "Sv"
+           },
+           {
+            "$text": "4",
+            "name": "W"
+           },
+           {
+            "$text": "6+",
+            "name": "LD"
+           },
+           {
+            "$text": "1",
+            "name": "OC"
+           },
+           {
+            "$text": "-",
+            "name": "InSv"
+           }
+          ],
+          "id": "7859-c28b-12e3-6e17",
+          "name": "Garreon the Corpsemaster",
+          "typeName": "Unit"
+         }
+        ],
+        "id": "fb1n3g",
+        "name": "Garreon the Corpsemaster",
+        "number": 1,
+        "type": "model",
+        "selections": []
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "id": "roster-id",
+  "name": "Masters of the Maelstrom Keywords Excerpt",
+  "gameSystemId": "sys-352e-adc2-7639-d610",
+  "gameSystemName": "Warhammer 40,000 11th Edition",
+  "gameSystemRevision": 11,
+  "battleScribeVersion": "2.03",
+  "xmlns": "http://www.battlescribe.net/schema/rosterSchema"
+ }
+}

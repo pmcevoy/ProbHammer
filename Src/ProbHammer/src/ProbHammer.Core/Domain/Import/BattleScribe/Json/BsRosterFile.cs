@@ -70,6 +70,18 @@ public sealed class BsRosterSelection
     /// selection's own <c>incomingAssociations</c> field is redundant with this and deliberately
     /// not modeled.</summary>
     public List<BsRosterAssociation> Associations { get; set; } = [];
+
+    /// <summary>This selection's own keyword/category tags (e.g. "Infantry", "Faction: Heretic
+    /// Astartes") - already fully-resolved display names, mirroring
+    /// <c>Domain.Catalogue.Bsdata.Json.BsCategoryLink</c>'s identical role for the BSData
+    /// pipeline. See resolve-category-keywords.</summary>
+    public List<BsRosterCategory> Categories { get; set; } = [];
+}
+
+/// <summary>One `categories` entry - see <see cref="BsRosterSelection.Categories"/>.</summary>
+public sealed class BsRosterCategory
+{
+    public string Name { get; set; } = "";
 }
 
 public sealed class BsRosterAssociation

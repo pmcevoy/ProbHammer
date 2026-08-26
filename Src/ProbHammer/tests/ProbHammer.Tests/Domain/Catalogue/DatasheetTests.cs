@@ -134,8 +134,12 @@ public class DatasheetTests
     [Fact]
     public void OptionalAbilityNames_EnumeratesOnlyTheOptionalSet()
     {
-        var intrinsic = new Ability { Name = "Vengeful Exhortation", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
-        var enhancement = new Ability { Name = "Thirst for Glory", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Enhancement };
+        var intrinsic = new Ability
+        {
+            Name = "Vengeful Exhortation", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic
+        };
+        var enhancement = new Ability
+            { Name = "Thirst for Glory", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Enhancement };
         var datasheet = new Datasheet(
             "Crusade Ancient",
             factionKeywords: [],
@@ -146,6 +150,28 @@ public class DatasheetTests
             optionalAbilities: [enhancement]);
 
         datasheet.OptionalAbilityNames.Should().ContainSingle().Which.Should().Be("Thirst for Glory");
+    }
+
+    [Fact]
+    public void GetModelKeywords_ReturnsTheMatchingSetOrEmptyForAnUnknownName()
+    {
+        var statline = new Statline(6, 4, 3, 2, 6, 2);
+        var datasheet = new Datasheet(
+            "Masters of the Maelstrom",
+            factionKeywords: [],
+            keywords: [],
+            abilities: [],
+            statlines:
+            [
+                ("Garlon Souleater", statline),
+                ("Garreon the Corpsemaster", statline),
+            ],
+            weaponProfiles: [],
+            modelKeywords: [("Garlon Souleater", new HashSet<string>(["Psyker"], StringComparer.OrdinalIgnoreCase))]);
+
+        datasheet.GetModelKeywords("Garlon Souleater").Should().Contain("Psyker");
+        datasheet.GetModelKeywords("Garreon the Corpsemaster").Should().BeEmpty();
+        datasheet.GetModelKeywords("Does not exist").Should().BeEmpty();
     }
 
     [Fact]
@@ -160,7 +186,8 @@ public class DatasheetTests
             .GetProperties()
             .Select(p => p.Name);
 
-        properties.Should().NotContain(n => n.Contains("Point") || n.Contains("Constraint") || n.Contains("Composition"));
+        properties.Should()
+            .NotContain(n => n.Contains("Point") || n.Contains("Constraint") || n.Contains("Composition"));
         datasheet.Should().NotBeNull();
     }
 }

@@ -25,7 +25,8 @@ public class BsdataDatasheetMapperTests
         sheet.Statlines.Should().ContainSingle();
         var (name, statline) = sheet.Statlines[0];
         name.Should().Be("Darnath Lysander");
-        statline.Should().Be(new ProbHammer.Core.Domain.Catalogue.Statline(M: 5, T: 5, Sv: 2, W: 7, Ld: 6, Oc: 1) { InSv = 4 });
+        statline.Should().Be(new ProbHammer.Core.Domain.Catalogue.Statline(M: 5, T: 5, Sv: 2, W: 7, Ld: 6, Oc: 1)
+            { InSv = 4 });
     }
 
     [Fact]
@@ -43,7 +44,8 @@ public class BsdataDatasheetMapperTests
         fistOfDorn.DevastatingWounds.Should().BeTrue();
         fistOfDorn.KeywordsText.Should().Equal("Devastating Wounds");
 
-        sheet.Abilities.Select(a => a.Name).Should().Contain(["Icon of Obstinacy", "Rampart", "Leader", "Inspiring Commander"]);
+        sheet.Abilities.Select(a => a.Name).Should()
+            .Contain(["Icon of Obstinacy", "Rampart", "Leader", "Inspiring Commander"]);
     }
 
     [Fact]
@@ -64,9 +66,12 @@ public class BsdataDatasheetMapperTests
     {
         var sheet = Build("black-templars-crusader-squad.json", "Crusader Squad");
 
-        sheet.GetStatline("Sword Brother").Should().Be(new ProbHammer.Core.Domain.Catalogue.Statline(M: 6, T: 4, Sv: 3, W: 2, Ld: 6, Oc: 2));
-        sheet.GetStatline("Initiate").Should().Be(new ProbHammer.Core.Domain.Catalogue.Statline(M: 6, T: 4, Sv: 3, W: 2, Ld: 6, Oc: 2));
-        sheet.GetStatline("Neophyte").Should().Be(new ProbHammer.Core.Domain.Catalogue.Statline(M: 6, T: 4, Sv: 4, W: 2, Ld: 6, Oc: 2));
+        sheet.GetStatline("Sword Brother").Should()
+            .Be(new ProbHammer.Core.Domain.Catalogue.Statline(M: 6, T: 4, Sv: 3, W: 2, Ld: 6, Oc: 2));
+        sheet.GetStatline("Initiate").Should()
+            .Be(new ProbHammer.Core.Domain.Catalogue.Statline(M: 6, T: 4, Sv: 3, W: 2, Ld: 6, Oc: 2));
+        sheet.GetStatline("Neophyte").Should()
+            .Be(new ProbHammer.Core.Domain.Catalogue.Statline(M: 6, T: 4, Sv: 4, W: 2, Ld: 6, Oc: 2));
     }
 
     [Fact]
@@ -80,6 +85,27 @@ public class BsdataDatasheetMapperTests
         var sheet = Build("chaos-space-marines-legionaries.json", "Legionaries");
 
         sheet.Statlines.Select(s => s.Name).Should().Contain("Legionaries");
+    }
+
+    [Fact]
+    public void CategoryLinks_populate_the_datasheets_top_level_keywords()
+    {
+        var sheet = Build("black-templars-crusader-squad.json", "Crusader Squad");
+
+        sheet.Keywords.Should().Contain("Infantry");
+        sheet.Keywords.Should().Contain("Black Templars");
+        sheet.Keywords.Should().NotContain("Faction: Black Templars");
+        sheet.Keywords.Should().Contain("Crusader Squad");
+    }
+
+    [Fact]
+    public void A_child_model_entrys_own_categoryLinks_populate_only_that_models_own_keywords()
+    {
+        var sheet = Build("black-templars-crusader-squad.json", "Crusader Squad");
+
+        sheet.GetModelKeywords("Sword Brother").Should().Contain("Psyker");
+        sheet.GetModelKeywords("Initiate").Should().NotContain("Psyker").And.BeEmpty();
+        sheet.Keywords.Should().NotContain("Psyker");
     }
 
     [Fact]

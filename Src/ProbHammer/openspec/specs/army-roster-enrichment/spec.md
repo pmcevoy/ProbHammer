@@ -115,7 +115,8 @@ the resolved `Unit` for the group's Bodyguard-role member and whose `Attached` c
 the resolved `Unit`s for the group's Leader/Support-role members, in the order captured during
 parsing. Each parsed standalone unit SHALL become a plain `Unit`. Each resolved model sub-group
 SHALL become one `ModelLine`, referencing its resolved `Statline`'s name, its resolved weapon
-names, and its own model count.
+names, its own model count, and its own Keywords resolved from the Datasheet's per-model Keyword
+lookup for that Statline's name.
 
 #### Scenario: An attachment group assembles into one AttachedUnit
 - **WHEN** a parsed attachment group has one Bodyguard-role member and two Leader/Support-role
@@ -132,6 +133,12 @@ names, and its own model count.
   Crusader Squad's Initiate 3/2 split)
 - **THEN** the resolved `Unit` has two `ModelLine`s, both referencing the same resolved `Statline`
   name, each with its own count and weapon list
+
+#### Scenario: A model-line's Keywords come from its own statline name, not a sibling's
+- **WHEN** a resolved `Unit`'s Datasheet has per-model Keywords data for one named statline (e.g.
+  "Garlon Souleater" carrying Psyker) but not for another statline name sharing the same squad
+- **THEN** only the `ModelLine` referencing "Garlon Souleater" has Psyker in its own Keywords; a
+  `ModelLine` referencing a different statline name does not
 
 ### Requirement: Army Roster Assembly
 The system SHALL assemble every resolved `Unit`/`AttachedUnit` together with the parsed army
