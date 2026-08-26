@@ -20,6 +20,14 @@ public sealed class Datasheet
     private readonly IReadOnlyDictionary<string, WeaponProfile> _weaponProfiles;
     private readonly IReadOnlyDictionary<string, Ability> _optionalAbilities;
 
+    /// <summary><paramref name="weaponProfiles"/>/<paramref name="optionalAbilities"/> are plain
+    /// enumerables, not pre-built dictionaries - the internal lookups are built from each item's
+    /// own <c>Name</c> here, so a dictionary key can never disagree with its own Name (a real bug
+    /// once let fixture call sites drift the two apart). <paramref name="statlines"/> is an
+    /// ordered list, not a caller-supplied dictionary - Dictionary enumeration order was never a
+    /// documented contract, so declared order (the Sergeant/leader entry first, matching the real
+    /// NewRecruit/GW app export convention) is an explicit, tested guarantee instead of an
+    /// accident of insertion order.</summary>
     public Datasheet(
         string name,
         IEnumerable<string> factionKeywords,
@@ -52,7 +60,8 @@ public sealed class Datasheet
             ? profile
             : throw new KeyNotFoundException($"Datasheet '{Name}' has no weapon profile named '{name}'.");
 
-    public bool TryResolveWeaponProfile(string name, out WeaponProfile profile) => _weaponProfiles.TryGetValue(name, out profile!);
+    public bool TryResolveWeaponProfile(string name, out WeaponProfile profile) =>
+        _weaponProfiles.TryGetValue(name, out profile!);
 
     /// <summary>Every weapon profile name this Datasheet defines - exposed for diagnostic purposes
     /// (e.g. army-roster-enrichment's "did you mean" suggestion on a resolution failure), not for
@@ -64,7 +73,8 @@ public sealed class Datasheet
     /// enumerating every optional ability the Datasheet defines - mirrors
     /// TryResolveWeaponProfile's on-demand-only design exactly. An optional ability never appears
     /// in the public Abilities list; this is the only way to reach one.</summary>
-    public bool TryResolveAbility(string name, out Ability ability) => _optionalAbilities.TryGetValue(name, out ability!);
+    public bool TryResolveAbility(string name, out Ability ability) =>
+        _optionalAbilities.TryGetValue(name, out ability!);
 
     /// <summary>Every optional ability name this Datasheet defines - exposed for diagnostic
     /// purposes (a "did you mean" suggestion on a resolution failure), not for enumerating a full

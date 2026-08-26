@@ -50,6 +50,14 @@ public static partial class BattleScribeRosterMapper
     private static ResolvedDetachment MapDetachment(BsRosterSelection selection) =>
         new(selection.Name, selection.Rules.Select(r => new DetachmentRule(r.Name, r.Description)).ToList());
 
+    /// <summary>Finds a top-level selection group, trying each candidate name in order (first
+    /// match wins) rather than a single exact name - real NewRecruit exports use inconsistent
+    /// singular/plural naming for the same group (confirmed real bug: Adeptus Custodes' own
+    /// export names its Detachment-choice selection "Detachments", plural, while Death Guard/
+    /// Black Templars use singular "Detachment"). The original exact-match-only version silently
+    /// resolved zero Detachments for the plural shape, with no exception to flag the miss - Auric
+    /// Champions' own "Assemblage of Might" rule never rendered. Regression fixture:
+    /// <c>tests/.../BattleScribe/Fixtures/custodes-detachments-plural-excerpt.json</c>.</summary>
     private static IReadOnlyList<BsRosterSelection> FindGroup(IReadOnlyList<BsRosterSelection> topSelections,
         params string[] groupNames) =>
         topSelections.FirstOrDefault(s =>

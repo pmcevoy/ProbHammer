@@ -97,9 +97,19 @@ public sealed partial class ArmyListParser : IArmyListParser
             attachmentGroups, standaloneUnits);
     }
 
-    private enum BodyMode { None, Attached, Standalone }
+    private enum BodyMode
+    {
+        None,
+        Attached,
+        Standalone
+    }
 
-    private enum Role { Bodyguard, Leader, Support }
+    private enum Role
+    {
+        Bodyguard,
+        Leader,
+        Support
+    }
 
     private static void FlushGroup(
         List<(ParsedUnit Unit, Role Role)>? members, List<ParsedAttachmentGroup> groups)
@@ -180,7 +190,12 @@ public sealed partial class ArmyListParser : IArmyListParser
     /// bolt rifle" / "1x Master-crafted heavy bolter" are two distinct 1-model sub-groups, not one
     /// 1-model sub-group carrying both weapons - grouping by count value instead of by weapon entry
     /// would incorrectly collapse them and fail the total-count sum). Throws when the non-common
-    /// counts don't sum exactly to the total, rather than guessing a split.</summary>
+    /// counts don't sum exactly to the total, rather than guessing a split. Known open gap:
+    /// Adeptus Custodes' Custodian Guard ("1x Guardian spear" / "3x Praesidium Shield" / "3x
+    /// Sentinel blade" against a total of 4) needs Shield+blade paired as one 3-model sub-group,
+    /// which this count-only rule can't infer without risking a wrong merge on the Company
+    /// Veteran case above - left throwing loudly rather than guessed at; see PROGRESS.md's Known
+    /// Issues.</summary>
     private static IEnumerable<ParsedModelGroup> PartitionModelGroup(
         string unitName, string modelName, int totalCount, IReadOnlyList<(string Name, int Count)> weapons)
     {
@@ -200,10 +215,11 @@ public sealed partial class ArmyListParser : IArmyListParser
                 unitName, rawText);
         }
 
-        return remaining.Select(w => new ParsedModelGroup(modelName, w.Count, [..shared, w.Name]));
+        return remaining.Select(w => new ParsedModelGroup(modelName, w.Count, [.. shared, w.Name]));
     }
 
-    private static ParsedModelGroup SynthesizeImplicitGroup(string unitName, IReadOnlyList<(string Name, int Count)> directWeapons)
+    private static ParsedModelGroup SynthesizeImplicitGroup(string unitName,
+        IReadOnlyList<(string Name, int Count)> directWeapons)
     {
         var weapons = directWeapons.SelectMany(w => Enumerable.Repeat(w.Name, w.Count)).ToList();
         return new ParsedModelGroup(unitName, 1, weapons);
@@ -259,7 +275,8 @@ public sealed partial class ArmyListParser : IArmyListParser
             else if (line.Content.StartsWith('◦'))
             {
                 if (blocks.Count == 0)
-                    throw new ArmyListParseException($"Nested bullet line '{line.Content}' has no preceding top-level bullet.");
+                    throw new ArmyListParseException(
+                        $"Nested bullet line '{line.Content}' has no preceding top-level bullet.");
                 blocks[^1].Nested.Add(StripBulletPrefix(line.Content));
                 openListTextColumn = line.Indent + 2;
                 cursor.Next();

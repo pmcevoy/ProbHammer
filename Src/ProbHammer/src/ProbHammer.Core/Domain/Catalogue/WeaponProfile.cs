@@ -9,7 +9,7 @@ public sealed record RangedWeapon(
     int Ap,
     DiceExpression D) : WeaponProfile(Name, WeaponType.Ranged, Range, A, S, Ap, D)
 {
-    public override  int Skill => Bs;
+    public override int Skill => Bs;
 }
 
 public sealed record MeleeWeapon(
@@ -23,18 +23,31 @@ public sealed record MeleeWeapon(
     public override int Skill => Ws;
 }
 
+/// <summary>Abstract base with sealed <see cref="RangedWeapon"/>/<see cref="MeleeWeapon"/>
+/// subtypes rather than one record with a Type field, so a weapon's Type and Range can never
+/// disagree with its own shape (a melee weapon can't accidentally carry a non-zero range).</summary>
 public abstract record WeaponProfile(
     string Name,
     WeaponType Type,
     int Range,
-    DiceExpression A, int S, int Ap, DiceExpression D)
+    DiceExpression A,
+    int S,
+    int Ap,
+    DiceExpression D)
 {
+    /// <summary>Computed per subtype (<see cref="RangedWeapon.Skill"/> => Bs, <see
+    /// cref="MeleeWeapon.Skill"/> => Ws) rather than a stored/init value here, so Bs/Ws stay the
+    /// single source of truth per subtype while shared logic (<see cref="EqualityKey"/>) reads
+    /// one name. An earlier draft stored Skill separately, forwarded from Bs/Ws at construction -
+    /// that let the two backing values desync under a <c>with</c> expression; computing Skill
+    /// from the subtype's own field removes that failure mode structurally.</summary>
     public abstract int Skill { get; }
+
     public bool Torrent { get; init; }
     public bool Blast { get; init; }
-    public int Melta { get; init; }          // 0 = absent
-    public int RapidFire { get; init; }      // 0 = absent
-    public int SustainedHits { get; init; }  // 0 = absent
+    public int Melta { get; init; } // 0 = absent
+    public int RapidFire { get; init; } // 0 = absent
+    public int SustainedHits { get; init; } // 0 = absent
     public bool LethalHits { get; init; }
     public bool DevastatingWounds { get; init; }
     public bool TwinLinked { get; init; }
