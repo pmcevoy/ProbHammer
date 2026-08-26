@@ -84,4 +84,17 @@
             </table>
         </details>
     }
+
+    @* All Keywords section (highlight-units-by-army-keyword) - deliberately empty placeholder
+       markup: no render-model field backs it, live-play.js scans every unit's own Keywords
+       section chips client-side and populates/hides this on every page load and casualty sync
+       (see design.md Decision 1 - casualty-aware, so a server-side aggregation here would be a
+       second, redundant definition of "currently active keywords"). Closed by default (no `open`
+       attribute), matching every other lp-section's own default except Rules above. *@
+    <details class="lp-section" data-section="army-keywords">
+        <summary>
+            <span class="section-title">All Keywords</span>
+        </summary>
+        <div class="army-keyword-chips"></div>
+    </details>
 </section>

@@ -16,8 +16,19 @@ const BATTLESHOCKED_STORAGE_KEY = 'probhammer.livePlay.battleShocked';
 // reload" requirement - only in-session swaps of the same load now preserve it.
 const deselectedByUnit = new Map();
 
+// Army-wide keyword filter state (highlight-units-by-army-keyword) - a page-scope Set of active
+// keyword filters, keyed by normalized (trimmed, case-folded) keyword text so it can be compared
+// directly against a per-unit chip's own textContent with no new data-keyword attribute needed on
+// the already-shipped _UnitBlock.cshtml Keywords markup (design.md Decision 2). Lives alongside
+// deselectedByUnit for the same reason: must survive a swapUnitBlock without resetting, but must
+// NOT survive a real page reload/navigation - reinitialized empty on each load, matching the
+// per-unit selection filter's own "Selection State Does Not Persist Across A Page Reload"
+// precedent (design.md Decision 3), not the casualty/status localStorage precedent.
+const activeKeywordFilters = new Set();
+
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.unit-block').forEach(initUnitBlock);
+    refreshArmyKeywordFilters();
     void syncLivePlayState();
 });
 
@@ -43,7 +54,9 @@ function initWeaponProvenanceToggles(unitEl) {
             const expanded = button.getAttribute('aria-expanded') === 'true';
 
             unitEl.querySelectorAll(`tr.weapon-contribution-row[data-weapon-id="${weaponId}"]`)
-                .forEach(row => { row.hidden = expanded; });
+                .forEach(row => {
+                    row.hidden = expanded;
+                });
 
             button.setAttribute('aria-expanded', String(!expanded));
         });
@@ -127,7 +140,9 @@ function initCasualtyReset(unitEl) {
         if (keysToReset.size === 0) return;
 
         const stored = getStoredCasualties();
-        keysToReset.forEach((initialValue, key) => { stored[key] = initialValue; });
+        keysToReset.forEach((initialValue, key) => {
+            stored[key] = initialValue;
+        });
         setStoredCasualties(stored);
 
         const succeeded = await syncLivePlayState();
@@ -137,7 +152,9 @@ function initCasualtyReset(unitEl) {
         // "reset to initial" markers forever - safe to do only after a confirmed successful sync,
         // since the swapped-in fragment already reflects the reset regardless of what's stored.
         const afterReset = getStoredCasualties();
-        keysToReset.forEach((_, key) => { delete afterReset[key]; });
+        keysToReset.forEach((_, key) => {
+            delete afterReset[key];
+        });
         setStoredCasualties(afterReset);
     });
 }
@@ -157,8 +174,13 @@ function writeJsonMap(storageKey, map) {
     localStorage.setItem(storageKey, JSON.stringify(map));
 }
 
-function getStoredCasualties() { return readJsonMap(CASUALTY_STORAGE_KEY); }
-function setStoredCasualties(map) { writeJsonMap(CASUALTY_STORAGE_KEY, map); }
+function getStoredCasualties() {
+    return readJsonMap(CASUALTY_STORAGE_KEY);
+}
+
+function setStoredCasualties(map) {
+    writeJsonMap(CASUALTY_STORAGE_KEY, map);
+}
 
 // Reverses LivePlayModel.CasualtyKey's "{unitIndex}::{componentName}::{statlineName}[::{loadoutIndex}]"
 // format. Returns null for a malformed key rather than throwing - defensive against a stale/
@@ -184,7 +206,7 @@ function buildCasualtyAdjustments() {
     return Object.entries(stored)
         .map(([key, remainingCount]) => {
             const coordinate = parseCasualtyKey(key);
-            return coordinate ? { coordinate, remainingCount } : null;
+            return coordinate ? {coordinate, remainingCount} : null;
         })
         .filter(entry => entry !== null);
 }
@@ -222,8 +244,8 @@ async function syncLivePlayState() {
     try {
         response = await fetch('/api/live-play/casualties', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ casualtyAdjustments, statusAdjustments })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({casualtyAdjustments, statusAdjustments})
         });
     } catch {
         return false; // offline/network failure - leave the DOM as-is, localStorage still holds the state
@@ -232,7 +254,100 @@ async function syncLivePlayState() {
 
     const fragments = await response.json();
     Object.entries(fragments).forEach(([unitIndex, html]) => swapUnitBlock(unitIndex, html));
+    refreshArmyKeywordFilters();
     return true;
+}
+
+// Same trim + case-fold normalization design.md Decision 2 relies on for matching a header pill's
+// own keyword against a per-unit chip's rendered text with no shared identity scheme.
+function normalizeKeyword(text) {
+    return text.trim().toLowerCase();
+}
+
+// Scans every currently-rendered unit's own Keywords section chips - mirrors
+// recomputeWeaponSections' "recompute from what's actually in the DOM right now" approach
+// (design.md Decision 1) rather than a second server-side keyword aggregation. Returns a Map of
+// normalized keyword -> its first-seen display text, so original casing survives the dedup pass.
+function scanRenderedKeywords() {
+    const found = new Map();
+    document.querySelectorAll('.unit-block [data-section="keywords"] .weapon-tag').forEach(chip => {
+        const text = chip.textContent.trim();
+        if (!text) return;
+        const key = normalizeKeyword(text);
+        if (!found.has(key)) found.set(key, text);
+    });
+    return found;
+}
+
+// Renders/replaces the header's own pill list from a freshly-scanned keyword map, one <button> per
+// keyword, marked .is-active per the (already-pruned) activeKeywordFilters Set. Hides the whole
+// section when the map is empty (Requirement: "All Keywords section omitted when no unit has any
+// keyword") - there's no server-rendered fallback content for this purely client-side section.
+// Each pill carries both .weapon-tag (the plain pill look) and .army-keyword-chip (the button-
+// reset-over-a-pill layer) - the same two-class pattern .weapon-tag-resolved already uses.
+function renderArmyKeywordChips(keywordMap) {
+    const section = document.querySelector('[data-section="army-keywords"]');
+    if (!section) return;
+
+    section.hidden = keywordMap.size === 0;
+    if (keywordMap.size === 0) return;
+
+    const container = section.querySelector('.army-keyword-chips');
+    if (!container) return;
+
+    container.innerHTML = '';
+    [...keywordMap.entries()]
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .forEach(([key, text]) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'weapon-tag army-keyword-chip' + (activeKeywordFilters.has(key) ? ' is-active' : '');
+            button.textContent = text;
+            button.addEventListener('click', () => {
+                if (activeKeywordFilters.has(key)) activeKeywordFilters.delete(key);
+                else activeKeywordFilters.add(key);
+                // A pure click never changes which keywords exist, only which are active - no need
+                // to rescan, just re-render the pill list and re-apply cross-unit highlighting.
+                renderArmyKeywordChips(keywordMap);
+                applyKeywordHighlighting();
+            });
+            container.appendChild(button);
+        });
+}
+
+// Cross-unit highlighting pass: for every unit block, for every rendered Keywords pill, add/remove
+// the flagged style based on activeKeywordFilters membership; force a matching unit's Keywords
+// section open. A one-way ratchet - never forces a section closed (design.md Decision 5), so no
+// "opened by filter" bookkeeping is needed at all.
+function applyKeywordHighlighting() {
+    document.querySelectorAll('.unit-block').forEach(unitEl => {
+        const section = unitEl.querySelector('[data-section="keywords"]');
+        if (!section) return;
+
+        let anyFlagged = false;
+        section.querySelectorAll('.weapon-tag').forEach(chip => {
+            const flagged = activeKeywordFilters.has(normalizeKeyword(chip.textContent));
+            chip.classList.toggle('weapon-tag-flagged', flagged);
+            if (flagged) anyFlagged = true;
+        });
+
+        if (anyFlagged) section.open = true;
+    });
+}
+
+// One orchestrating pass: scan -> prune -> render header pills -> apply cross-unit highlighting.
+// Pruning the active Set against a freshly-scanned keyword set (rather than any explicit "clear
+// this filter" step) is what makes both dropout and reappearance fall out for free - see design.md
+// Decisions 6/7. Called once on DOMContentLoaded and once per syncLivePlayState() batch, after
+// every fragment in that batch has been swapped in - never once per individual swapped unit, since
+// an active filter can match units that weren't part of this particular sync.
+function refreshArmyKeywordFilters() {
+    const keywordMap = scanRenderedKeywords();
+    [...activeKeywordFilters].forEach(key => {
+        if (!keywordMap.has(key)) activeKeywordFilters.delete(key);
+    });
+    renderArmyKeywordChips(keywordMap);
+    applyKeywordHighlighting();
 }
 
 // Replaces one unit-block's markup with server-rendered HTML and re-initializes only that node -
@@ -355,14 +470,18 @@ function initUnitSelection(unitEl) {
     function entryState(entryEl) {
         const singleToggle = entryEl.querySelector(':scope > .statline-toggle');
         if (singleToggle) {
-            return { toggle: singleToggle, loadouts: [], state: deselected.has(singleToggle.dataset.selectKey) ? 'deselected' : 'selected' };
+            return {
+                toggle: singleToggle,
+                loadouts: [],
+                state: deselected.has(singleToggle.dataset.selectKey) ? 'deselected' : 'selected'
+            };
         }
 
         const groupHeader = entryEl.querySelector(':scope > .statline-toggle-group');
         const loadouts = [...entryEl.querySelectorAll(':scope > .loadout-breakdown > .loadout-toggle')];
         const selectedCount = loadouts.filter(li => !deselected.has(li.dataset.selectKey)).length;
         const state = selectedCount === 0 ? 'deselected' : selectedCount === loadouts.length ? 'selected' : 'partial';
-        return { toggle: groupHeader, loadouts, state };
+        return {toggle: groupHeader, loadouts, state};
     }
 
     function isEntryFullyDeselected(entryEl) {
@@ -371,7 +490,7 @@ function initUnitSelection(unitEl) {
 
     function updateIndicators() {
         entries.forEach(entryEl => {
-            const { toggle, loadouts, state } = entryState(entryEl);
+            const {toggle, loadouts, state} = entryState(entryEl);
             if (!toggle) return;
             loadouts.forEach(li => setState(li, deselected.has(li.dataset.selectKey) ? 'deselected' : 'selected'));
             setState(toggle, state);

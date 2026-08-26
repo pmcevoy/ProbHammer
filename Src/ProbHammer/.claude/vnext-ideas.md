@@ -15,7 +15,15 @@ entry once it's been turned into a change (archived changes remain the historica
   indicators`' exploration, as the motivation for putting that change's half-strength/Battle-
   shock status glyphs directly on the unit-name header (the one thing that stays visible
   regardless of section collapse state) rather than in a separate row — deliberately kept out of
-  that change's own scope, still a candidate for its own change.
+  that change's own scope, still a candidate for its own change. Raised again post-`highlight-
+  units-by-army-keyword`: that change's Decision 5 (deselecting a keyword filter never
+  auto-collapses a Keywords section it had force-expanded — a one-way ratchet, no "opened by
+  filter" bookkeeping) trades correctness for simplicity by leaving a section open with no way to
+  tell whether it's open because of an old filter or because the player expanded it deliberately
+  for an unrelated reason. An explicit "collapse all sections" control on the Army Header would
+  resolve that ambiguity directly (the player just closes everything when it's no longer needed)
+  without adding the bookkeeping that tracking "opened by filter" specifically would require —
+  same underlying mechanism as this bullet's original ask, new motivating use case.
 - **Core/Faction/Psychic ability source tagging** — distinguish where an ability comes from,
   not just its name/scope.
 - **Per-`ModelLine` keywords.** Needed so a leader's personal keyword leaves the unit's effective

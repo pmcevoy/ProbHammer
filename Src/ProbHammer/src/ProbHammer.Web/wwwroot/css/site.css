@@ -631,6 +631,36 @@ button[type="submit"]:hover { opacity: 0.85; }
     overflow: hidden;
 }
 
+/* All Keywords section pill list (highlight-units-by-army-keyword) - laid out identically to
+   .weapon-tags (flex-wrap row of pills), entirely populated by live-play.js. */
+.army-keyword-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin: 0.6rem 0.85rem 0.85rem;
+}
+
+/* Header's own keyword-filter pill - a real <button> (built by refreshArmyKeywordFilters in
+   live-play.js), always rendered with the base .weapon-tag pill class alongside this one, so the
+   plain pill look (border/padding/uppercase/--bg2 fill) comes free - the exact same button-reset-
+   over-a-pill pattern .weapon-tag-resolved already uses (design.md Decision 4). */
+.army-keyword-chip {
+    font: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    cursor: pointer;
+}
+.army-keyword-chip:hover { opacity: 0.8; }
+
+/* Active/selected state: the page's existing filled --bg3/white "control" look, distinct from the
+   --amber "flagged value" look on .weapon-tag-flagged below - a control gets active-state ink
+   directly, a value never does even when flagged (design-tokens.md). No new colour tokens. */
+.army-keyword-chip.is-active {
+    background: var(--bg3);
+    border-color: var(--bg3);
+    color: #fff;
+}
+
 .unit-block {
     margin-bottom: 1.25rem;
     background: var(--bg2);
@@ -1141,6 +1171,17 @@ button.filter-flag:hover { opacity: 0.8; }
    reads as "not tappable" without implying a resolvable chip's own popover-trigger styling. */
 .weapon-tag-unresolved {
     opacity: 0.55;
+}
+
+/* A per-unit Keywords pill flagged by an active header filter (highlight-units-by-army-keyword) -
+   the existing --amber-tint "flagged value" convention (.stat-tile-flagged's own pattern), applied
+   by live-play.js's applyKeywordHighlighting only while that specific keyword's filter is active.
+   A passive highlight, not itself a new control - the per-unit pill stays a plain, non-interactive
+   <span> (see design.md Decision 4 / design-tokens.md's control-vs-value rule). No changes to
+   .weapon-tag's own base style. */
+.weapon-tag-flagged {
+    background: var(--amber-tint);
+    border-color: var(--amber);
 }
 
 /* ── Statline ability columns ── */
