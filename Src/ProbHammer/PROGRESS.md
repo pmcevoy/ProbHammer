@@ -17,6 +17,67 @@ NewRecruit JSON re-export) uses that Detachment, so a new export would be needed
 
 ## Recently Completed
 
+- OpenSpec change `live-play-phase-turn-tracker` implemented (17/17 tasks): a player-set phase/turn
+  tracker for `/LivePlay`, plus a section-relevance model that collapses/expands each unit block's
+  Statline/Ranged/Melee/Keywords sections based on it.
+  - **Core**: `GameTurn`/`GamePhase` enums and `PhaseTurnSelection(Turn, Phase?)` (`Domain.Roster`,
+    `PhaseTurnSelection.cs`) — a `null` Phase is a row-label-only selection; `Default` is My
+    Turn/Command. Purely the player-asserted value, never computed.
+  - **Web session store**: `IPhaseTurnStore`/`PhaseTurnStore` mirror `SessionArmyListStore` exactly
+    (session-JSON round trip under its own key), registered as a singleton.
+  - **Relevance table**: `LivePlayModel.ExpandedSections`/`ForcedSections` (static, unit-tested
+    against all twelve selection states in `LivePlayPhaseTurnRelevanceTests`) implement the
+    proposal's table — a row label or any Their Turn phase forces all four sections; My Turn/
+    Shooting and My Turn/Fight force Statline+Ranged+Melee; every other My Turn phase forces
+    Statline alone. `LivePlayModel.SectionName` maps each `UnitBlockSection` to its
+    `data-section` token.
+  - **Rendering**: `UnitBlockRenderModel` gained a nullable `ExpandedSections` field (null defaults
+    to "nothing expanded", so pre-existing test call sites needed no changes);
+    `_UnitBlock.cshtml`'s four `<details>` elements now bake their `open` state from it.
+    `_PhaseTurnTracker.cshtml` (new partial) renders the 2×5 grid + two row-label cells,
+    model-driven from `PhaseTurnSelection`, wired into `_ArmyHeader.cshtml` between the metadata
+    line and the Rules section; `ArmyHeaderRenderModel` gained a nullable `PhaseTurn` field
+    (defaults to `PhaseTurnSelection.Default` in the partial) for the same backward-compat reason.
+  - **Sync endpoint**: `LivePlaySyncRequest` gained an optional `PhaseTurnAdjustment(Turn, Phase?)`.
+    `LivePlayCasualtyService.SyncAsync`, when present, saves it, expands the affected-unit set to
+    the whole roster, and returns the new `LivePlaySyncResponse(Fragments, ForcedSections)` envelope
+    instead of a bare fragment dictionary — a breaking response-shape change, so the existing
+    `LivePlayCasualtyEndpointTests` were updated to deserialize the new envelope (still asserting
+    identical `Fragments` behavior; `ForcedSections` is empty for a casualty/status-only sync).
+    `Program.cs` also registers a global `JsonStringEnumConverter(CamelCase)` on `HttpJsonOptions` so
+    `GameTurn`/`GamePhase` round-trip as `"mine"`/`"command"` etc. rather than raw integers.
+  - **Client**: `swapUnitBlock` generalized to accept a `forcedSections` Set — a section named there
+    takes the fresh server markup's own `open` state; every other section carries forward the old
+    DOM's state exactly as before (an empty/absent set, the casualty/status-only case, is
+    byte-for-byte unchanged). New `syncPhaseTurn(turn, phase)` POSTs a `PhaseTurnAdjustment`, moves
+    `.is-active` to the clicked cell immediately, and applies the response via a new shared
+    `applySyncResponse` helper (also used by `syncLivePlayState` now). `initPhaseTurnTracker` wires
+    all twelve grid cells once at `DOMContentLoaded`.
+  - **Verified live** via `dotnet run` + `firefox-devtools-mcp` against the real
+    `data/gw-app-export.txt` Black Templars roster: default My Turn/Command; My Turn/Shooting
+    expanded Ranged, force-closed a manually-opened Melee, left a manually-opened Keywords
+    untouched; Their Turn/Fight force-reset all four (closing Keywords, expanding Statline+Melee)
+    even over manual toggles; the selection and the Army Header's own unrelated Rules/All Keywords
+    disclosure state all survived a full page reload unaffected by each other; the "My Turn" row
+    label force-collapsed all four sections; a subsequent Battle-shock toggle (no
+    `PhaseTurnAdjustment`) left manually-set section disclosure exactly unchanged.
+  - **Live CSS refinement session** (post-ship, `firefox-devtools-mcp` against the real running
+    page, iterated cell-by-cell with the user before landing in `site.css`): removed the cells' own
+    gap and per-cell pill border/radius in favour of `.unit-toolbar-item`'s exact convention
+    (touching cells divided only by a `--border` `border-left`, cluster centered via
+    `justify-content: center`); row labels right-aligned with their own `padding-right`; each row's
+    own background is `--bg2` (matches `.army-header`'s card surface) while the CELLS carry the
+    zebra identity instead (`--bg` for My Turn, the existing `.ability-name-line:nth-of-type(even)`
+    zebra-mix for Their Turn — an early row-level-background attempt was reverted after it painted
+    the empty centering margin the same tint); a `--border` `border-top` divides the two rows,
+    applied per-cell so its width matches only the cell cluster. `.claude/design-tokens.md`'s
+    "Phase/Turn Tracker" section documents the final decisions and both reverted attempts.
+  - **Synced and archived** the same day via `/opsx:sync` + `/opsx:archive`: new main spec
+    `openspec/specs/live-play-phase-tracker/spec.md` (6 requirements), `live-play-view/spec.md`'s
+    "Per-Section Disclosure Defaults to Collapsed" requirement modified in place
+    (`openspec validate --specs` passes, 16/16); archived to
+    `openspec/changes/archive/2026-09-01-live-play-phase-turn-tracker/`.
+
 - OpenSpec change `resolve-known-ability-effects` implemented (26/26 tasks): resolves a small,
   closed set of previously-catalogued ability phrasings into real stat values, and drops three
   purely-redundant attachment-eligibility abilities. Three pieces:

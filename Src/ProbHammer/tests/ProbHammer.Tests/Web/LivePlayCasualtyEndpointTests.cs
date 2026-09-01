@@ -1,6 +1,8 @@
 using System.Net.Http.Json;
+using System.Text.RegularExpressions;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
+using ProbHammer.Core.Domain.Roster;
 using ProbHammer.Web.Pages;
 using static ProbHammer.Tests.Web.ImportTestHelper;
 
@@ -38,9 +40,10 @@ public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory
         var response = await client.PostAsJsonAsync("/api/live-play/casualties", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
 
-        var fragments = await response.Content.ReadFromJsonAsync<Dictionary<int, string>>(TestContext.Current.CancellationToken);
-        fragments.Should().ContainKey(0);
-        fragments![0].Should().Contain("Neophyte").And.Contain("(2/4)");
+        var body = await response.Content.ReadFromJsonAsync<LivePlaySyncResponse>(TestContext.Current.CancellationToken);
+        body!.Fragments.Should().ContainKey(0);
+        body.Fragments[0].Should().Contain("Neophyte").And.Contain("(2/4)");
+        body.ForcedSections.Should().BeEmpty(); // no PhaseTurnAdjustment in this request
     }
 
     [Fact]
@@ -52,8 +55,9 @@ public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory
         var response = await client.PostAsJsonAsync("/api/live-play/casualties", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
 
-        var fragments = await response.Content.ReadFromJsonAsync<Dictionary<int, string>>(TestContext.Current.CancellationToken);
-        fragments.Should().BeEmpty();
+        var body = await response.Content.ReadFromJsonAsync<LivePlaySyncResponse>(TestContext.Current.CancellationToken);
+        body!.Fragments.Should().BeEmpty();
+        body.ForcedSections.Should().BeEmpty();
     }
 
     [Fact]
@@ -67,8 +71,8 @@ public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory
         var response = await client.PostAsJsonAsync("/api/live-play/casualties", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
 
-        var fragments = await response.Content.ReadFromJsonAsync<Dictionary<int, string>>(TestContext.Current.CancellationToken);
-        fragments.Should().ContainKey(0); // still rendered, just identical to pristine
+        var body = await response.Content.ReadFromJsonAsync<LivePlaySyncResponse>(TestContext.Current.CancellationToken);
+        body!.Fragments.Should().ContainKey(0); // still rendered, just identical to pristine
     }
 
     [Fact]
@@ -82,8 +86,8 @@ public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory
         var response = await client.PostAsJsonAsync("/api/live-play/casualties", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
 
-        var fragments = await response.Content.ReadFromJsonAsync<Dictionary<int, string>>(TestContext.Current.CancellationToken);
-        fragments.Should().BeEmpty();
+        var body = await response.Content.ReadFromJsonAsync<LivePlaySyncResponse>(TestContext.Current.CancellationToken);
+        body!.Fragments.Should().BeEmpty();
     }
 
     [Fact]
@@ -97,9 +101,9 @@ public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory
         var response = await client.PostAsJsonAsync("/api/live-play/casualties", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
 
-        var fragments = await response.Content.ReadFromJsonAsync<Dictionary<int, string>>(TestContext.Current.CancellationToken);
-        fragments.Should().ContainKey(0);
-        fragments![0].Should().Contain("status-glyph-battleshock is-active");
+        var body = await response.Content.ReadFromJsonAsync<LivePlaySyncResponse>(TestContext.Current.CancellationToken);
+        body!.Fragments.Should().ContainKey(0);
+        body.Fragments[0].Should().Contain("status-glyph-battleshock is-active");
     }
 
     [Fact]
@@ -113,7 +117,33 @@ public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory
         var response = await client.PostAsJsonAsync("/api/live-play/casualties", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
 
-        var fragments = await response.Content.ReadFromJsonAsync<Dictionary<int, string>>(TestContext.Current.CancellationToken);
-        fragments![0].Should().Contain("(2/4)").And.Contain("status-glyph-battleshock is-active");
+        var body = await response.Content.ReadFromJsonAsync<LivePlaySyncResponse>(TestContext.Current.CancellationToken);
+        body!.Fragments[0].Should().Contain("(2/4)").And.Contain("status-glyph-battleshock is-active");
+    }
+
+    [Fact]
+    public async Task PostingAPhaseTurnAdjustment_PersistsSelection_AndReturnsEveryUnitsFragmentPlusForcedSections()
+    {
+        var client = await ClientWithImportedArmyAsync();
+        var request = new LivePlaySyncRequest(
+            CasualtyAdjustments: [],
+            StatusAdjustments: [],
+            PhaseTurnAdjustment: new PhaseTurnAdjustment(GameTurn.Theirs, GamePhase.Fight));
+
+        var response = await client.PostAsJsonAsync("/api/live-play/casualties", request, TestContext.Current.CancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var body = await response.Content.ReadFromJsonAsync<LivePlaySyncResponse>(TestContext.Current.CancellationToken);
+        body!.Fragments.Should().NotBeEmpty(); // every unit in the roster, not just an adjusted one
+        body.ForcedSections.Should().BeEquivalentTo(["statline", "ranged", "melee", "keywords"]);
+
+        // The selection persists across a subsequent request with no adjustment of its own -
+        // reflected in the just-rendered fragment's own baked-in disclosure state (Their Turn/Fight
+        // expands Statline and Melee).
+        var reloadResponse = await client.GetAsync("/LivePlay", TestContext.Current.CancellationToken);
+        reloadResponse.EnsureSuccessStatusCode();
+        var html = await reloadResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Regex.IsMatch(html, "class=\"phase-turn-cell is-active\"\\s+data-turn=\"theirs\"\\s+data-phase=\"fight\"")
+            .Should().BeTrue();
     }
 }

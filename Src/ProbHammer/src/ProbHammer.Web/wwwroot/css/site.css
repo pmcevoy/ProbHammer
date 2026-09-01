@@ -546,6 +546,93 @@ button[type="submit"]:hover { opacity: 0.85; }
    for .army-header's own child. */
 .army-header > .lp-section { margin: 0.6rem 0.85rem; }
 
+/* Phase/turn selector (live-play-phase-tracker) - one page-wide 2-row x 5-phase-column grid, plus
+   each row's own selectable label, sitting between the Army Header's metadata line and its Rules
+   section (design.md Decision 5). Selection semantics, not a momentary toggle - reuses
+   .army-keyword-chip.is-active's own filled --bg3/white "this is the current one" look
+   (design-tokens.md: a control gets active-state ink directly) rather than the --amber(-bright)
+   icon convention, which signals "toggled on" for a binary per-unit fact - a different kind of
+   control from a mutually-exclusive twelve-cell selection.
+
+   Cell layout reworked (post-ship, live-edited via firefox-devtools-mcp against a real running
+   page, then landed here) to match .unit-toolbar's own convention: cells touch with no gap between
+   them, separated by a border-left divider rather than each cell carrying its own pill-shaped
+   border/radius, and each row's cell cluster is centered rather than stretched edge-to-edge - see
+   design-tokens.md's own note for the full before/after. */
+.phase-turn-tracker {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 0.6rem 0.85rem;
+}
+
+/* background: var(--bg2) is the row's own "nothing in particular" colour - the same surface colour
+   as .army-header itself, so the empty margin either side of a row's centered cell cluster (from
+   justify-content: center) reads as part of the card, not as a third, distinct band. The two rows'
+   own visual distinction lives entirely on their CELLS (below), not here. */
+.phase-turn-row {
+    display: flex;
+    gap: 0;
+    justify-content: center;
+    background: var(--bg2);
+}
+
+.phase-turn-cell {
+    flex: 0 0 auto;
+    width: 6.5rem;
+    padding: 0.35rem 0.3rem;
+    color: var(--text);
+    border: none;
+    border-radius: 0;
+    font: inherit;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: center;
+    cursor: pointer;
+}
+.phase-turn-cell:hover:not(.is-active) { opacity: 0.8; }
+.phase-turn-cell.is-active {
+    background: var(--bg3);
+    color: #fff;
+}
+
+/* Adjacent cells touch (no gap - see .phase-turn-row above); this is their only visible boundary,
+   the same --border-coloured divider convention .unit-toolbar-item + .unit-toolbar-item already
+   uses, rather than every cell carrying its own all-round border. */
+.phase-turn-cell + .phase-turn-cell { border-left: 1px solid var(--border); }
+
+/* Each row's own zebra-style identity lives on its CELLS, not the row itself (see .phase-turn-row
+   above): the "My Turn" row's cells are var(--bg) - the page's own background, distinct from the
+   row/card's own --bg2 - and the "Their Turn" row's cells reuse .ability-name-line:nth-of-type(even)'s
+   exact zebra-stripe mix, the same "plain colour vs. its own named alternate" pairing that pattern
+   already establishes elsewhere on this page. :not(.is-active) so the selected cell's own --bg3 fill
+   (above) is never overridden by either. */
+.phase-turn-tracker > .phase-turn-row:first-child .phase-turn-cell:not(.is-active) {
+    background: var(--bg);
+}
+.phase-turn-tracker > .phase-turn-row:last-child .phase-turn-cell:not(.is-active) {
+    background: color-mix(in srgb, var(--border) 70%, var(--bg2));
+}
+
+/* The divider between the two rows, applied per-CELL (not on .phase-turn-row itself, which spans
+   the row's own full centered-flex width) so the line's own width matches exactly the centered
+   cell cluster's width, not the row's full-bleed width out to the card's own edges. */
+.phase-turn-row:last-child .phase-turn-cell { border-top: 1px solid var(--border); }
+
+/* Fixed width (rather than the generic .phase-turn-cell's own flex: 0 0 auto content-sizing) so the
+   five phase columns stay aligned between the My Turn / Their Turn rows regardless of the two row
+   labels' different text lengths. Right-aligned with its own trailing padding (rather than the
+   inherited centered text-align) so "My Turn"/"Their Turn" reads close to the phase columns that
+   follow it, not centered in a wide, mostly-empty cell - flush-right alone (no padding-right) was
+   tried first and read as glued to the divider line beside it. */
+.phase-turn-row-label {
+    width: 5.5rem;
+    text-align: right;
+    padding-right: 0.75rem;
+}
+
 /* Two columns (Army rules / Detachment rules) via the same <thead><th> convention the weapon
    tables already use, rather than a new visual pattern - the Army column's own <th>/<td> are
    simply omitted from the markup when no ArmyRule ability is present, so table-layout: auto sizes

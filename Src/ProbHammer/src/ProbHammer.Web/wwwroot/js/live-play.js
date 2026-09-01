@@ -28,9 +28,22 @@ const activeKeywordFilters = new Set();
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.unit-block').forEach(initUnitBlock);
+    initPhaseTurnTracker();
     refreshArmyKeywordFilters();
     void syncLivePlayState();
 });
+
+// Phase/turn tracker (live-play-phase-tracker) - one page-wide control (Army Header), not one per
+// unit block, so wired once here rather than from initUnitBlock. Each of the twelve cells (ten
+// Turn/Phase cells, two row labels) carries its own {turn, phase} directly as data-* attributes -
+// see _PhaseTurnTracker.cshtml.
+function initPhaseTurnTracker() {
+    document.querySelectorAll('.phase-turn-cell').forEach(cell => {
+        cell.addEventListener('click', () => {
+            void syncPhaseTurn(cell.dataset.turn, cell.dataset.phase ?? null);
+        });
+    });
+}
 
 // One consolidated per-unit-block init, covering everything that attaches listeners to a
 // unit-block's own DOM subtree - re-run on a swapped-in unit block after a casualty adjustment
@@ -252,10 +265,56 @@ async function syncLivePlayState() {
     }
     if (!response.ok) return false;
 
-    const fragments = await response.json();
-    Object.entries(fragments).forEach(([unitIndex, html]) => swapUnitBlock(unitIndex, html));
-    refreshArmyKeywordFilters();
+    const {fragments, forcedSections} = await response.json();
+    applySyncResponse(fragments, forcedSections);
     return true;
+}
+
+// Posts a phase/turn selection change (live-play-phase-tracker). Moves .is-active to the clicked
+// cell immediately - unambiguous, it's exactly what was clicked, no need to wait on the response for
+// this part (design.md Decision 5) - then applies the response's own fragment map using its reported
+// Forced set, same as syncLivePlayState.
+async function syncPhaseTurn(turn, phase) {
+    setActivePhaseTurnCell(turn, phase);
+
+    let response;
+    try {
+        response = await fetch('/api/live-play/casualties', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                casualtyAdjustments: [],
+                statusAdjustments: [],
+                phaseTurnAdjustment: {turn, phase}
+            })
+        });
+    } catch {
+        return false;
+    }
+    if (!response.ok) return false;
+
+    const {fragments, forcedSections} = await response.json();
+    applySyncResponse(fragments, forcedSections);
+    return true;
+}
+
+function setActivePhaseTurnCell(turn, phase) {
+    document.querySelectorAll('.phase-turn-cell').forEach(cell => {
+        const matches = cell.dataset.turn === turn && (cell.dataset.phase ?? null) === phase;
+        cell.classList.toggle('is-active', matches);
+        cell.setAttribute('aria-pressed', matches ? 'true' : 'false');
+    });
+}
+
+// Shared by syncLivePlayState and syncPhaseTurn - applies one sync response's fragment map,
+// generalizing swapUnitBlock's carry-forward to be scoped to the response's own reported Forced
+// section set (design.md Decision 2). forcedSectionNames is absent/empty for a casualty/status-only
+// sync, so that case's own carry-forward is unchanged (every section carries forward, as before this
+// change).
+function applySyncResponse(fragments, forcedSectionNames) {
+    const forcedSections = new Set(forcedSectionNames || []);
+    Object.entries(fragments).forEach(([unitIndex, html]) => swapUnitBlock(unitIndex, html, forcedSections));
+    refreshArmyKeywordFilters();
 }
 
 // Same trim + case-fold normalization design.md Decision 2 relies on for matching a header pill's
@@ -353,16 +412,22 @@ function refreshArmyKeywordFilters() {
 // Replaces one unit-block's markup with server-rendered HTML and re-initializes only that node -
 // every other unit-block's live listeners/selection state are untouched, and this unit's own
 // selection state (deselectedByUnit) survives the swap too - see initUnitSelection. Carries forward
-// which <details> sections (Statline/Ranged/Melee - each independently collapsible, closed by
-// default in fresh server-rendered markup) were open on the old node, so tapping a casualty control
-// doesn't visually snap an expanded section shut - caught via hands-on browser testing, not from
-// the spec discussion; a full markup swap has no other way to know a section was manually opened.
-function swapUnitBlock(unitIndex, html) {
+// which <details> sections (Statline/Ranged/Melee/Keywords - each independently collapsible) were
+// open on the old node, so tapping a casualty control doesn't visually snap an expanded section shut
+// - caught via hands-on browser testing, not from the spec discussion; a full markup swap has no
+// other way to know a section was manually opened. Since live-play-phase-tracker, this carry-forward
+// is SCOPED by forcedSections (design.md Decision 2): a section named there is excluded from the
+// carried-forward set, so the fresh server markup's own open/closed state (baked in from the current
+// phase/turn selection's Expanded set) wins for it instead - forcedSections defaults to empty, which
+// carries forward every section exactly as before this change (a casualty/status-only sync).
+function swapUnitBlock(unitIndex, html, forcedSections = new Set()) {
     const oldEl = document.querySelector(`.unit-block[data-unit-index="${unitIndex}"]`);
     if (!oldEl) return;
 
     const openSections = new Set(
-        [...oldEl.querySelectorAll('details.lp-section[open]')].map(details => details.dataset.section)
+        [...oldEl.querySelectorAll('details.lp-section[open]')]
+            .map(details => details.dataset.section)
+            .filter(section => !forcedSections.has(section))
     );
 
     const template = document.createElement('template');

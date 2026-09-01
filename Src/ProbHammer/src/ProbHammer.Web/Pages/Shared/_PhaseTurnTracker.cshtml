@@ -1,0 +1,35 @@
+@model ProbHammer.Core.Domain.Roster.PhaseTurnSelection
+@using ProbHammer.Core.Domain.Roster
+@{
+    // One page-wide control (never one per unit block - design.md Decision 5), model-driven from
+    // the current PhaseTurnSelection so the correct one of twelve cells is marked selected on first
+    // paint, with no flash-of-wrong-cell. Every cell is a plain <button> (not a popover trigger -
+    // this control asserts state, it doesn't explain a rule) POSTing its own {turn, phase} via
+    // live-play.js's syncPhaseTurn().
+    var selection = Model;
+    var turns = new[] { GameTurn.Mine, GameTurn.Theirs };
+    var phases = new[] { GamePhase.Command, GamePhase.Movement, GamePhase.Shooting, GamePhase.Charge, GamePhase.Fight };
+
+    bool IsSelected(GameTurn turn, GamePhase? phase) => selection.Turn == turn && selection.Phase == phase;
+    string TurnAttr(GameTurn turn) => turn == GameTurn.Mine ? "mine" : "theirs";
+    string TurnLabel(GameTurn turn) => turn == GameTurn.Mine ? "My Turn" : "Their Turn";
+    string PhaseAttr(GamePhase phase) => phase.ToString().ToLowerInvariant();
+}
+<div class="phase-turn-tracker" role="group" aria-label="Phase and turn tracker">
+    @foreach (var turn in turns)
+    {
+        <div class="phase-turn-row">
+            <button type="button"
+                    class="phase-turn-cell phase-turn-row-label @(IsSelected(turn, null) ? "is-active" : "")"
+                    data-turn="@TurnAttr(turn)"
+                    aria-pressed="@(IsSelected(turn, null) ? "true" : "false")">@TurnLabel(turn)</button>
+            @foreach (var phase in phases)
+            {
+                <button type="button"
+                        class="phase-turn-cell @(IsSelected(turn, phase) ? "is-active" : "")"
+                        data-turn="@TurnAttr(turn)" data-phase="@PhaseAttr(phase)"
+                        aria-pressed="@(IsSelected(turn, phase) ? "true" : "false")">@phase</button>
+            }
+        </div>
+    }
+</div>

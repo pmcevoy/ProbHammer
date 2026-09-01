@@ -8,6 +8,11 @@
     var i = Model.UnitIndex;
     var glossary = Model.Glossary;
 
+    // live-play-phase-tracker's own Expanded set for the current phase/turn selection - see
+    // LivePlayModel.ExpandedSections. Null (a pre-existing call site that predates this feature)
+    // defaults to "nothing expanded", matching this page's original unconditional-collapsed markup.
+    var expandedSections = Model.ExpandedSections ?? new HashSet<UnitBlockSection>();
+
     // Popover trigger/panel building (ability names, resolvable weapon-keyword chips, and nested
     // [BRACKET] references reached from either one's own text) is extracted into RulePopoverRenderer
     // (design.md's "extract, don't duplicate" decision) so the header partial can produce the
@@ -95,7 +100,7 @@
 
     @if (unit.Statlines.Any())
     {
-        <details class="lp-section" data-section="statline">
+        <details class="lp-section" data-section="statline" open="@(expandedSections.Contains(UnitBlockSection.Statline))">
             <summary>
                 <span class="section-title">Statline</span>
                 <span class="statline-flags">
@@ -426,7 +431,7 @@
 
     @if (unit.RangedWeapons.Any())
     {
-        <details class="lp-section" data-section="ranged">
+        <details class="lp-section" data-section="ranged" open="@(expandedSections.Contains(UnitBlockSection.Ranged))">
             <summary>
                 <span class="section-title">Ranged Weapons</span>
                 <span class="filter-flag filtered-badge" hidden aria-label="Filtered" title="Filtered">
@@ -526,7 +531,7 @@
 
     @if (unit.MeleeWeapons.Any())
     {
-        <details class="lp-section" data-section="melee">
+        <details class="lp-section" data-section="melee" open="@(expandedSections.Contains(UnitBlockSection.Melee))">
             <summary>
                 <span class="section-title">Melee Weapons</span>
                 <span class="filter-flag filtered-badge" hidden aria-label="Filtered" title="Filtered">
@@ -622,7 +627,7 @@
 
     @if (unit.Keywords.Any())
     {
-        <details class="lp-section" data-section="keywords">
+        <details class="lp-section" data-section="keywords" open="@(expandedSections.Contains(UnitBlockSection.Keywords))">
             <summary>
                 <span class="section-title">Keywords</span>
             </summary>

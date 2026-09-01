@@ -1,9 +1,11 @@
 @model ProbHammer.Web.Pages.ArmyHeaderRenderModel
 @using System.Net
+@using ProbHammer.Core.Domain.Roster
 @using ProbHammer.Web.Rendering
 @{
     var header = Model.Header;
     var glossary = Model.Glossary;
+    var phaseTurn = Model.PhaseTurn ?? PhaseTurnSelection.Default;
 
     // "hdr" scopes this instance's own popover ids - distinct from every _UnitBlock.cshtml
     // instance's own "u{i}" scope (see RulePopoverRenderer's own doc comment).
@@ -20,6 +22,8 @@
             <span class="army-header-meta-item">@header.ForceDisposition</span>
         }
     </div>
+
+    <partial name="_PhaseTurnTracker" model="phaseTurn"/>
 
     @if (header.ArmyRules.Any() || header.Detachments.Any())
     {

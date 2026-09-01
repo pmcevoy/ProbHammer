@@ -1,9 +1,18 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using ProbHammer.Core.Domain.Catalogue.Bsdata;
 using ProbHammer.Core.Domain.Import;
 using ProbHammer.Web.Pages;
 using ProbHammer.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// PhaseTurnAdjustment (live-play-phase-tracker) carries GameTurn/GamePhase enum fields over the
+// /api/live-play/casualties POST body - live-play.js sends/reads them as their lowercase names
+// ("mine", "command", ...), matching _PhaseTurnTracker.cshtml's own data-turn/data-phase attribute
+// values, rather than the numeric default System.Text.Json would otherwise use.
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
 
 var bsdataRoot = Path.Combine(
     builder.Environment.ContentRootPath,
@@ -15,6 +24,7 @@ builder.Services.AddSingleton(new BsdataCatalogueCache(bsdataSource));
 builder.Services.AddSingleton<IArmyListParser, ArmyListParser>();
 builder.Services.AddSingleton<IArmyRosterProvider, ArmyRosterProvider>();
 builder.Services.AddSingleton<ISessionArmyListStore, SessionArmyListStore>();
+builder.Services.AddSingleton<IPhaseTurnStore, PhaseTurnStore>();
 
 builder.Services.AddSingleton<IRazorPartialRenderer, RazorPartialRenderer>();
 builder.Services.AddScoped<ILivePlayCasualtyService, LivePlayCasualtyService>();

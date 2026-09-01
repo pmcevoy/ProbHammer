@@ -183,6 +183,51 @@ new section, not a new design decision:
 
 ---
 
+## Phase/Turn Tracker (`live-play-phase-turn-tracker`)
+
+`.phase-turn-tracker` sits between `.army-header-meta` and the Rules section, inside `.army-header`
+— see `.claude/domain-model-11e.md`'s "Phase/Turn Tracker" for the domain-model/wiring picture;
+this covers only the visual decisions.
+
+- **Selection, not a toggle**: each of the twelve `.phase-turn-cell` buttons reuses
+  `.army-keyword-chip.is-active`'s own filled `--bg3`/white "this is the current one" look
+  (a control gets active-state ink directly), not the `--amber`(-bright) icon convention the unit
+  toolbar uses — that one signals "toggled on" for a binary per-unit fact, a different kind of
+  control from a mutually-exclusive twelve-cell selection where exactly one cell is always active.
+- **Cell spacing and boundary** (revised post-ship via a live-editing session against a real running
+  page, `firefox-devtools-mcp`): cells carry no gap and no individual pill border/radius — they
+  touch, separated only by a `--border`-coloured `border-left` divider, the exact convention
+  `.unit-toolbar-item + .unit-toolbar-item` already uses. Each row's cell cluster is centered
+  (`justify-content: center` on `.phase-turn-row`, cells sized `flex: 0 0 auto` rather than
+  `flex: 1`) instead of stretched edge-to-edge, matching `.unit-toolbar`'s own "centered cluster of
+  controls within a full-width bar" look. `.phase-turn-row-label` stays fixed-width (`5.5rem`) so
+  the five phase columns still align between the two rows despite "My Turn"/"Their Turn"'s
+  different text lengths, and is right-aligned with its own `padding-right` (not the inherited
+  centered text-align, and not flush-right with none) so the label reads close to the phase columns
+  beside it without touching the divider line.
+- **Row vs. cell background — the split matters**: `.phase-turn-row` itself is always `--bg2`, the
+  same surface colour as `.army-header` — a deliberately "nothing in particular" colour so the empty
+  margin either side of a row's centered cell cluster reads as part of the card, not as a third,
+  distinct band. Each row's own zebra-style identity lives entirely on its CELLS instead: the "My
+  Turn" row's cells are plain `--bg` (the page's own background, distinct from the row/card's own
+  `--bg2`); the "Their Turn" row's cells reuse `.ability-name-line:nth-of-type(even)`'s exact zebra-
+  stripe mix (`color-mix(in srgb, var(--border) 70%, var(--bg2))`) — the same "plain colour vs. its
+  own named alternate" pairing that pattern already establishes elsewhere on this page, applied here
+  by row position instead of by list index. An early draft set these two colours on the ROW instead
+  of the cell, which painted the empty centering margin the same tint as the cell cluster, reading
+  as an odd full-width band; moving the colour to the cell fixed it.
+- **Inter-row divider**: a `1px solid var(--border)` line between the two rows, applied as a
+  `border-top` on every cell of the "Their Turn" row (not on `.phase-turn-row` itself) specifically
+  so the line's own width matches the centered cell cluster exactly, not the row's full-bleed width
+  out to the card's edges — an earlier attempt using `--bg` for this line was reverted for reading
+  too subtly against the row colours either side of it; `--border` is the same divider colour every
+  other separator on this control already uses.
+- **No popovers**: unlike every other button on this page, a `.phase-turn-cell` is not a
+  `popovertarget` trigger — it asserts player-set state, it doesn't explain a rule, so it has no
+  rule text to show.
+
+---
+
 ## Popovers (`rules-glossary-popovers`)
 
 Every ability name and resolvable weapon-keyword chip is a native `popover="auto"` trigger — see

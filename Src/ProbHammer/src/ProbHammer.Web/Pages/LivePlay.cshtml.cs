@@ -10,7 +10,9 @@ using ProbHammer.Web.Services;
 
 namespace ProbHammer.Web.Pages;
 
-public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvider rosterProvider) : PageModel
+public class LivePlayModel(
+    ISessionArmyListStore sessionStore, IArmyRosterProvider rosterProvider, IPhaseTurnStore phaseTurnStore)
+    : PageModel
 {
     public List<UnitBlockViewModel> Units { get; private set; } = [];
 
@@ -25,6 +27,12 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
     // Alias". Set alongside Units in OnGet so both come from the same ArmyRosterBuildResult.
     public RuleGlossary Glossary { get; private set; } = null!;
 
+    // The player-asserted current phase/turn selection (live-play-phase-tracker) - loaded via
+    // IPhaseTurnStore alongside the rest of OnGet's build, defaulting when the session has never
+    // recorded one. Consumed by _ArmyHeader.cshtml (to render _PhaseTurnTracker) and by
+    // LivePlay.cshtml (to compute each unit block's initial ExpandedSections).
+    public PhaseTurnSelection PhaseTurn { get; private set; } = PhaseTurnSelection.Default;
+
     // Per live-play-view's "Live Play Redirects Without An Active Import" requirement: a session
     // with no successfully imported army list has nothing to render, so it's sent to the import
     // page instead of rendering an empty/erroring page.
@@ -38,8 +46,59 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
         Units = BuildUnitBlocks(result.Roster);
         Header = BuildArmyHeader(result.Roster);
         Glossary = result.Glossary;
+        PhaseTurn = phaseTurnStore.Load(HttpContext.Session) ?? PhaseTurnSelection.Default;
         return Page();
     }
+
+    // live-play-phase-tracker's "Section Relevance By Turn And Phase" table - the sections that
+    // render OPEN for a given selection. A row-label selection (Phase null) expands nothing. Phase
+    // == Fight expands Melee (alongside Statline) regardless of Turn, since My Turn/Fight and Their
+    // Turn/Fight both name the identical Expanded set in the table; My Turn/Shooting is the one
+    // Turn-sensitive case (Their Turn/Shooting does not expand Ranged). Every other phase expands
+    // Statline alone.
+    internal static IReadOnlySet<UnitBlockSection> ExpandedSections(PhaseTurnSelection selection) =>
+        selection.Phase switch
+        {
+            null => new HashSet<UnitBlockSection>(),
+            GamePhase.Shooting when selection.Turn == GameTurn.Mine =>
+                new HashSet<UnitBlockSection> { UnitBlockSection.Statline, UnitBlockSection.Ranged },
+            GamePhase.Fight =>
+                new HashSet<UnitBlockSection> { UnitBlockSection.Statline, UnitBlockSection.Melee },
+            _ => new HashSet<UnitBlockSection> { UnitBlockSection.Statline }
+        };
+
+    // live-play-phase-tracker's "Section Relevance By Turn And Phase" table - the sections a given
+    // selection actually DICTATES the state of (a superset of ExpandedSections; a Forced-but-not-
+    // Expanded section is dictated closed). A row label or any Their Turn phase forces all four
+    // sections; My Turn/Shooting and My Turn/Fight force Statline+Ranged+Melee (Keywords untouched
+    // either way); every other My Turn phase forces Statline alone.
+    internal static IReadOnlySet<UnitBlockSection> ForcedSections(PhaseTurnSelection selection)
+    {
+        if (selection.Phase is null || selection.Turn == GameTurn.Theirs)
+            return AllUnitBlockSections;
+
+        if (selection.Phase is GamePhase.Shooting or GamePhase.Fight)
+            return new HashSet<UnitBlockSection>
+                { UnitBlockSection.Statline, UnitBlockSection.Ranged, UnitBlockSection.Melee };
+
+        return new HashSet<UnitBlockSection> { UnitBlockSection.Statline };
+    }
+
+    internal static readonly IReadOnlySet<UnitBlockSection> AllUnitBlockSections = new HashSet<UnitBlockSection>
+    {
+        UnitBlockSection.Statline, UnitBlockSection.Ranged, UnitBlockSection.Melee, UnitBlockSection.Keywords
+    };
+
+    // The lowercase token each section renders as in _UnitBlock.cshtml's own data-section attribute
+    // and live-play.js's forcedSections handling - the one place this mapping is defined.
+    internal static string SectionName(UnitBlockSection section) => section switch
+    {
+        UnitBlockSection.Statline => "statline",
+        UnitBlockSection.Ranged => "ranged",
+        UnitBlockSection.Melee => "melee",
+        UnitBlockSection.Keywords => "keywords",
+        _ => throw new ArgumentOutOfRangeException(nameof(section))
+    };
 
     // Factored out of OnGet() so its sort/aggregate/build-view-model pipeline is testable directly
     // against a hand-built ArmyRoster, without needing a real HttpContext.Session. Threads each
@@ -591,13 +650,34 @@ public sealed record CasualtyAdjustment(CasualtyCoordinate Coordinate, int Remai
 /// loadout.</summary>
 public sealed record UnitStatusAdjustment(int UnitIndex, bool IsHalfStrength, bool IsBattleShocked);
 
-/// <summary>The casualty-sync endpoint's full request body - bundles a casualty batch and a
-/// unit-status-toggle batch into one POST/one roster rebuild/one set of re-rendered fragments,
-/// rather than two independent requests that could race each other's fragment swap. Either list
-/// may be empty.</summary>
+/// <summary>One entry in a phase/turn-sync request: the new current selection - see
+/// live-play-phase-tracker's design.md Decision 3. <see cref="Phase"/> null represents a row-label
+/// selection (see <see cref="ProbHammer.Core.Domain.Roster.PhaseTurnSelection"/>).</summary>
+public sealed record PhaseTurnAdjustment(GameTurn Turn, GamePhase? Phase);
+
+/// <summary>The casualty-sync endpoint's full request body - bundles a casualty batch, a
+/// unit-status-toggle batch, and (live-play-phase-tracker) an optional phase/turn adjustment into
+/// one POST/one roster rebuild/one set of re-rendered fragments, rather than independent requests
+/// that could race each other's fragment swap. The two lists may be empty;
+/// <see cref="PhaseTurnAdjustment"/> is null when this sync carries no phase/turn change.</summary>
 public sealed record LivePlaySyncRequest(
     List<CasualtyAdjustment> CasualtyAdjustments,
-    List<UnitStatusAdjustment> StatusAdjustments);
+    List<UnitStatusAdjustment> StatusAdjustments,
+    PhaseTurnAdjustment? PhaseTurnAdjustment = null);
+
+/// <summary>Which of a unit block's four independently-collapsible sections
+/// (<c>_UnitBlock.cshtml</c>'s own <c>data-section</c> values - see
+/// <see cref="LivePlayModel.SectionName"/>) live-play-phase-tracker's relevance table governs. Never
+/// the Army Header's own Rules/All Keywords sections, which this capability does not touch.</summary>
+public enum UnitBlockSection { Statline, Ranged, Melee, Keywords }
+
+/// <summary>The casualty-sync endpoint's full JSON response: the existing per-unit-index fragment
+/// map, plus (live-play-phase-tracker) the current selection's own Forced-section set, once, page-
+/// wide - <see cref="LivePlayModel.SectionName"/>-encoded strings so live-play.js can match them
+/// directly against a <c>data-section</c> attribute with no further decoding. Empty whenever the
+/// request carried no <see cref="PhaseTurnAdjustment"/>, so a casualty/status-only sync's client
+/// behavior (full carry-forward) is unchanged.</summary>
+public sealed record LivePlaySyncResponse(Dictionary<int, string> Fragments, List<string> ForcedSections);
 
 /// <summary>A contiguous, same-component, value-identical run of statline entries sharing one
 /// rendered stat-tile. <see cref="Entries"/> is never empty - every group is seeded with at least
@@ -733,8 +813,15 @@ public sealed record UnitBlockViewModel(
 /// <see cref="LivePlayModel"/> directly) so the casualty-sync endpoint's own fragment re-render
 /// (<see cref="ProbHammer.Web.Services.LivePlayCasualtyService"/>, which renders
 /// <c>_UnitBlock.cshtml</c> directly rather than through a full page request) can supply it too.
+/// <see cref="ExpandedSections"/> (live-play-phase-tracker) is the current phase/turn selection's
+/// own Expanded set (<see cref="LivePlayModel.ExpandedSections"/>), used to bake each of the four
+/// <c>data-section</c> elements' initial <c>open</c> state - null defaults to "nothing expanded"
+/// (today's unconditional-collapsed behavior), so a pre-existing call site that predates this
+/// feature keeps compiling and rendering unchanged.
 /// </summary>
-public sealed record UnitBlockRenderModel(int UnitIndex, UnitBlockViewModel Unit, RuleGlossary Glossary);
+public sealed record UnitBlockRenderModel(
+    int UnitIndex, UnitBlockViewModel Unit, RuleGlossary Glossary,
+    IReadOnlySet<UnitBlockSection>? ExpandedSections = null);
 
 /// <summary>The `/LivePlay` header's own view model - the roster's army-level metadata plus the two
 /// roster-wide aggregations <see cref="LivePlayModel.BuildArmyHeader"/> computes: every
@@ -755,5 +842,11 @@ public sealed record ArmyHeaderViewModel(
 
 /// <summary>Wraps <see cref="ArmyHeaderViewModel"/> with the <see cref="RuleGlossary"/> the
 /// <c>_ArmyHeader</c> partial needs to build its own popover triggers - mirrors
-/// <see cref="UnitBlockRenderModel"/>'s own "view model + glossary" pairing exactly.</summary>
-public sealed record ArmyHeaderRenderModel(ArmyHeaderViewModel Header, RuleGlossary Glossary);
+/// <see cref="UnitBlockRenderModel"/>'s own "view model + glossary" pairing exactly.
+/// <see cref="PhaseTurn"/> (live-play-phase-tracker) is the one field on this record sourced from
+/// <see cref="ProbHammer.Web.Services.IPhaseTurnStore"/> instead of <c>ArmyRosterBuildResult</c> -
+/// null defaults to <see cref="PhaseTurnSelection.Default"/> in <c>_ArmyHeader.cshtml</c>, so a
+/// pre-existing call site that predates this feature keeps compiling and rendering unchanged.
+/// </summary>
+public sealed record ArmyHeaderRenderModel(
+    ArmyHeaderViewModel Header, RuleGlossary Glossary, PhaseTurnSelection? PhaseTurn = null);
