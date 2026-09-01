@@ -22,7 +22,7 @@ components.
 | `--text-dim` | `#6f6c62` | Labels, counts, dim info — including, since `consolidate-unit-toolbar`, a `.unit-toolbar-label` caption's own (always-static) color, identical to `.stat-label`'s |
 | `--amber` | `#a86a1d` | Draw-the-eye **controls** when active on this page's light (`--bg`/`--bg2`) surfaces (e.g. the filter badge, the caveated invulnerable-save box's border) — never a stat *value*'s own ink; see the "Battle-Shocked Objective Control Rendering" note below. Confirmed by `consolidate-unit-toolbar` to read poorly (~2.8:1 contrast) as icon ink directly on a solid `--bg3` fill — that context uses `--amber-bright` instead, below |
 | `--amber-bright` | `color-mix(in srgb, var(--amber) 55%, white)` | Foreground only — `--amber` lightened towards white specifically for icon-on-`--bg3` legibility (~4.9:1 contrast). Added by `consolidate-unit-toolbar` for `.unit-toolbar-icon-btn.is-active`'s icon color (Half Strength/Battle-shock/Reset Casualties), after bare `--amber` was confirmed, by direct user testing, not to "pop" against the toolbar buttons' solid `--bg3` background. Not a general `--amber` replacement — every other existing `--amber` use stays on `--amber` itself, since those all sit on light surfaces where it already reads fine |
-| `--amber-tint` | `color-mix(in srgb, var(--amber) 20%, white)` | Background only, for a flagged stat-tile (`.stat-tile-flagged` — originally the caveated invulnerable-save box alone, generalized by `half-strength-and-battleshock-indicators` to also cover a Battle-shocked unit's OC tile) — a separate token from `--amber` itself, not a reinterpretation of it; `--amber`'s other uses stay foreground-only |
+| `--amber-tint` | `color-mix(in srgb, var(--amber) 20%, white)` | Background only, for a flagged stat-tile (`.stat-tile-flagged` — originally the caveated invulnerable-save box alone, generalized by `half-strength-and-battleshock-indicators` to also cover a Battle-shocked unit's OC tile, and again by `resolve-known-ability-effects` to also cover any tile flagged by a matched `statline-flag-rules` rule, e.g. Vexilla's OC) — a separate token from `--amber` itself, not a reinterpretation of it; `--amber`'s other uses stay foreground-only |
 | `--border` | `#d9d5c9` | Borders and dividers |
 | `--bg3-tint` | `color-mix(in srgb, var(--bg3) 55%, white)` | Background only, for `.lp-section` summary bars (Statline/Ranged Weapons/Melee Weapons disclosure headers) — a lighter, flat step down in visual weight from the solid `--bg3` unit-name h2 above them, so the two don't read as the same priority. Same "derived tint, not an opacity fade" pattern as `--amber-tint`: a named, independently redefinable token rather than `--bg3` at reduced opacity, which would also fade the bar's own arrow/icon children and whose rendered color would depend on whatever sits behind it. |
 
@@ -49,17 +49,16 @@ selector, same mechanism as before, just no longer the default case.
   Ld/Oc row, aligned under Sv specifically — a distinct box + side label, not a value stacked
   inside a tile) reuses these same sizes: its value at `0.95rem` bold like a stat value, its label
   at `0.65rem` like a stat label. A caveated save's box gets an off-color (`--amber-tint`)
-  background instead of the normal `--bg`, plus its linked ability's full text rendered in italics
-  beneath the box at `0.7rem` — the one place on `/LivePlay` that shows an ability's text rather
-  than only its name, scoped narrowly to this one case (see `.claude/domain-model-11e.md`). Since
-  `rules-glossary-popovers`, a second place now shows full rule text: a popover's own body
-  (`.rule-popover-text`) at `0.8rem`, with `white-space: pre-line` so a real line break in the
-  source text (e.g. "Lethal Hits"' own Designer's Note, a separate paragraph from its main
-  description) renders as one, rather than the existing `insv-caveat-text` box's plain run-on text
-  — that box is deliberately left as-is (see `.claude/domain-model-11e.md`'s "Rules Glossary &
-  Popovers"), so the two full-text-rendering sites don't share identical wrapping behavior. A
-  popover's `^^small-caps^^` markup renders via `font-variant: small-caps` (`.rule-text-smallcaps`)
-  — the correct CSS tool for real small caps: it shrinks only the lowercase letters, leaving an
+  background instead of the normal `--bg`. Since `resolve-known-ability-effects`, the linked
+  ability's full text is no longer rendered inline beneath the box (the old `insv-caveat-text`
+  paragraph, always-visible italic run-on text) — a caveated InSv now uses the same general
+  marker-and-legend mechanism a `statline-flag-rules` match uses (below), so its source text is
+  reachable only on demand through a popover, the same as every other ability on the page. A
+  popover's own body (`.rule-popover-text`, `rules-glossary-popovers`) renders at `0.8rem`, with
+  `white-space: pre-line` so a real line break in the source text (e.g. "Lethal Hits"' own
+  Designer's Note, a separate paragraph from its main description) renders as one. A popover's
+  `^^small-caps^^` markup renders via `font-variant: small-caps` (`.rule-text-smallcaps`) — the
+  correct CSS tool for real small caps: it shrinks only the lowercase letters, leaving an
   already-uppercase letter at full size, matching how a proper name like `^^Fabius Bile^^` is
   meant to look.
 
@@ -87,21 +86,21 @@ selector, same mechanism as before, just no longer the default case.
 - **Zebra striping** (weapon tables): alternate rows tinted `var(--bg)` against the card's `--bg2`
   base — driven by each row's own list index server-side, not DOM child-position, so hidden
   breakdown rows can't shift the parity of rows after them
-- **Zebra striping** (Model/Unit ability lists, `.ability-name-line`): alternate rows tinted
-  `color-mix(in srgb, var(--border) 70%, var(--bg2))`, via `:nth-of-type(even)` — originally plain
-  `:nth-child(even)`, since no JS ever hides an individual ability line (only the whole ability
-  cell collapses as a unit) so there was no hidden-row/parity hazard at the time. `rules-glossary-
-  popovers` changed `.ability-name-line` from a `<div>` to a `<button popovertarget>` with its own
-  paired `.rule-popover` `<div>` rendered as an interleaved *sibling* (never nested inside the
-  button — a `<button>` can't validly contain flow content), which shifts `:nth-child` parity
-  exactly the way the weapon table's own breakdown rows already taught this codebase to avoid (see
-  below) — `:nth-of-type` sidesteps it by counting only same-tag (`<button>`) siblings, ignoring
-  the interleaved `<div>` popovers entirely. Can't reuse the weapon table's literal `var(--bg)`
-  fill: a `.spans-component` ability cell (one spanning several statline rows) already uses
-  `var(--bg)` as its own background, which would make the stripe invisible against it — see
-  `openspec/changes/restyle-ability-list-rows/design.md` for the full comparison trail (a flat
-  `var(--border)` was visible but read too dark; this mix lands between the two, distinct from both
-  a plain cell's `--bg2` and a `.spans-component` cell's `--bg`).
+- **Zebra striping** (Model/Unit ability lists, `.ability-name-line`): every ability button's own
+  unstriped background is `var(--bg)` (see "Ability button vs. container" below); an even-indexed
+  button overrides that to a visibly darker `color-mix(in srgb, var(--border) 70%, var(--bg2))`, via
+  `:nth-of-type(even)` — originally plain `:nth-child(even)`, since no JS ever hides an individual
+  ability line (only the whole ability cell collapses as a unit) so there was no hidden-row/parity
+  hazard at the time. `rules-glossary-popovers` changed `.ability-name-line` from a `<div>` to a
+  `<button popovertarget>` with its own paired `.rule-popover` `<div>` rendered as an interleaved
+  *sibling* (never nested inside the button — a `<button>` can't validly contain flow content),
+  which shifts `:nth-child` parity exactly the way the weapon table's own breakdown rows already
+  taught this codebase to avoid (see below) — `:nth-of-type` sidesteps it by counting only same-tag
+  (`<button>`) siblings, ignoring the interleaved `<div>` popovers entirely. Can't reuse the weapon
+  table's literal `var(--bg)` fill for the stripe itself, since that's already the *unstriped*
+  button's own color — see `openspec/changes/restyle-ability-list-rows/design.md` for the original
+  comparison trail (a flat `var(--border)` was visible but read too dark; this mix lands between the
+  two, distinct from both the container's `--bg2` and an unstriped button's `--bg`).
 - **Weapon-keyword chip, resolved vs. unresolved** (`rules-glossary-popovers`): a chip with a
   matching glossary entry (`.weapon-tag-resolved`, itself a popover-trigger `<button>`) renders at
   full opacity with the existing Hover convention above as its only "this is tappable" cue; a chip
@@ -219,3 +218,75 @@ picture; this section covers only the visual/positioning decisions.
   body scrolls — matching how the page's own section headers are always visible. Padding that used
   to sit on `.rule-popover` itself moved onto `.rule-popover-text` alone, so the title bar can span
   flush to the panel's own top edge and corners.
+
+---
+
+## Flagged Statline Legend (`resolve-known-ability-effects`)
+
+Replaces the old InSv-only always-visible `.insv-caveat-text` italic paragraph with one general
+mechanism covering both an unresolved invulnerable-save caveat and a `statline-flag-rules` match —
+see `.claude/domain-model-11e.md`'s "Statline-Flag Rules" for the domain-model/wiring picture; this
+section covers only the visual decisions.
+
+- **Marker**: a flagged tile's label gets a trailing footnote marker (`InSv*`, `OC**`, ...) appended
+  directly to the existing label text — no new typography, just more characters in the same
+  `.stat-label`. A flagged OC tile also picks up `.stat-tile-flagged` (the same `--amber-tint`
+  background/`--amber` border token already used for a caveated InSv box and a Battle-shocked OC
+  tile), generalizing that token's own "this tile's value isn't the plain catalogue value" role to
+  cover a rule-mutated value too, not only a caveat.
+- **Legend placement**: `.statline-flag-legend` is a sibling of `.statline-tiles`, not one of its
+  grid children (unlike the retired `.insv-caveat-text`, which lived inside the tiles grid) — it
+  now needs to hold more than one line (one InSv legend line, one OC legend line, in the same run),
+  so it's a plain flex column beneath the tiles row instead of a single grid cell. Still a child of
+  the same `.statline-cell.col-statline` container the tiles sit in, so the existing run-collapse
+  rule (`.statline-cell.col-statline.run-collapsed`) reaches both the tiles and the legend via one
+  shared CSS rule pair, hiding a collapsed run's flagged tile(s) and legend together exactly as
+  `.insv-caveat-text` used to.
+- **Legend line**: `.flag-legend-line` renders with the exact same `.ability-name-line` styling
+  every other ability name on the page already uses — full-row card look (padding, border-bottom,
+  bold weight, hover fade) and popover trigger mechanics alike, not a trimmed-down variant — with
+  the marker + source ability name as the trigger text (e.g. `"* Vexilla"`), never rendering the
+  source's full text inline, unlike the retired paragraph it replaces. When a run carries more than
+  one flag (e.g. both InSv and OC flagged by different sources), its legend lines pick up
+  `.ability-name-line:nth-of-type(even)`'s existing zebra striping the same way any other multi-row
+  ability list on the page does. `.statline-flag-legend` itself also picks up the same dashed-border
+  box treatment as `.statline-cell.col-model-abilities`/`.col-unit-abilities` (border/radius/
+  font-size), per the button/container rule directly below — a legend is the same kind of "ability
+  card" as those columns, not a visually distinct thing.
+
+### Ability button vs. container: the general rule (`resolve-known-ability-effects`)
+
+Every ability/rule name on the page — a Statline `.ability-name-line` button (row-bound or
+spanning), a flag-legend line, an Army Rules entry, a Detachment rule — is a `popovertarget`
+`<button>` feeding the same rule/ability popover. This section states the final, settled styling
+rule for that button and the container it sits in, after several rounds of direct user correction
+converged on it:
+
+- **The BUTTON always carries the fill.** `.ability-name-line`'s own `background` is `var(--bg)`
+  by default; `.ability-name-line:nth-of-type(even)` overrides it to a visibly darker
+  `color-mix(in srgb, var(--border) 70%, var(--bg2))` when more than one button stacks in the same
+  container (zebra striping, so adjacent rows stay distinguishable) — there is no dedicated token
+  for that darker shade, just the `color-mix` inline. Button *height* is always its own content
+  height (default `flex: 0 1 auto`) — never grown to fill extra space (`flex: 1 1 auto` was tried
+  and rejected; every button on the page measures the same ~28px, confirmed via
+  `getBoundingClientRect()`). Button *width* fills its container (`width: 100%`).
+- **The CONTAINER never carries the fill.** `.statline-cell.col-model-abilities`/
+  `.col-unit-abilities`, `.statline-flag-legend`, `.army-rules-cell`, and `.detachment-entry-rules`
+  all use `background: var(--bg2)` (the plain card background) unconditionally — spanning or not,
+  one button or several. A container can still be taller than its own button content: a plain,
+  row-bound cell is always exactly content-height (`align-self: start` opts it out of
+  `.statline-grid`'s default `align-items: stretch`), but a `.spans-component`/`.spans-whole-unit`
+  cell still stretches to match the full row-track height of every statline row it covers, so its
+  dashed border keeps visually marking that span — any leftover space below a short button list
+  inside it is now just neutral `--bg2`, not a second fill layer.
+
+  This is the inverse of an earlier, incorrect version of this same rule (container filled with
+  `--bg`, button transparent) — that version happened to look right only for a container that was
+  already exactly content-height, and visibly wrong (one solid grey blob, no distinction between
+  "button" and "empty space") for any taller spanning container. Confirmed via `evaluate_script`
+  across the real Templars corpus (Impulsor's 5-ability spanning cell, Army Rules/Detachment
+  boxes) and the synthetic verification roster: every container reads `rgb(251,250,247)` (`--bg2`),
+  every unstriped button `rgb(238,236,230)` (`--bg`), every striped button the darker mix.
+  True vertical striping across separate stacked containers (so three single-button containers in a
+  row don't all render the same unstriped `--bg`) is not attempted — each container is its own
+  independent `:nth-of-type` counting context, and collapsing that isn't worth pursuing for now.

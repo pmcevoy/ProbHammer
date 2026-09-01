@@ -175,6 +175,27 @@ public class DatasheetTests
     }
 
     [Fact]
+    public void LeaderSupportAndAttachedUnitAbilities_AreExcludedRegardlessOfOrigin()
+    {
+        var leader = new Ability
+            { Name = "Leader", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
+        var support = new Ability
+            { Name = "Support", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.CoreRule };
+        var attachedUnit = new Ability
+            { Name = "Attached Unit", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
+        var kept = new Ability
+            { Name = "Shock Assault", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
+        var datasheet = new Datasheet(
+            "Test Squad", factionKeywords: [], keywords: [],
+            abilities: [leader, support, attachedUnit, kept],
+            statlines: [], weaponProfiles: []);
+
+        datasheet.Abilities.Select(a => a.Name).Should()
+            .NotContain(["Leader", "Support", "Attached Unit"])
+            .And.Contain("Shock Assault");
+    }
+
+    [Fact]
     public void Datasheet_OmitsConstraintAndCostData()
     {
         // No public surface for wargear min/max, composition counts, or points - compile-time

@@ -212,7 +212,7 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
             .Select(w => new WeaponRowViewModel(w, BuildContributionBreakdown(w, loadoutLabels), showsBreakdownTrigger))
             .ToList();
 
-        var statlineBlocks = GroupStatlines(view.Statlines, view.Abilities);
+        var statlineBlocks = AssignFlagMarkers(GroupStatlines(view.Statlines, view.Abilities));
         var wholeUnitAbilitySpans = BuildWholeUnitAbilitySpans(statlineBlocks, view.Abilities);
         var (adjustedStatlineBlocks, componentAbilitySpans) =
             BuildComponentAbilitySpans(statlineBlocks, view.Abilities);
@@ -366,12 +366,56 @@ public class LivePlayModel(ISessionArmyListStore sessionStore, IArmyRosterProvid
             }
         }
 
-        return groups.Select(g => new StatlineBlockViewModel(
-                Entries: g,
-                LoadoutLabels: g.Select(entry => CompressLoadoutLabels(entry.Loadouts)).ToList(),
-                ModelAbilities: RowBoundAbilities(g, abilities, AbilityScope.Model),
-                UnitAbilities: RowBoundAbilities(g, abilities, AbilityScope.Unit)))
+        return groups.Select(g =>
+            {
+                var statline = g[0].Statline;
+                var ocSource = g.SelectMany(e => e.Flags)
+                    .FirstOrDefault(f => f.Characteristic == StatlineFlagCharacteristic.ObjectiveControl)
+                    ?.SourceAbility;
+                var insvSource = statline.InSv.Caveated
+                    ? statline.InSv.CaveatAbility
+                    : g.SelectMany(e => e.Flags)
+                        .FirstOrDefault(f => f.Characteristic == StatlineFlagCharacteristic.InvulnerableSave)
+                        ?.SourceAbility;
+
+                return new StatlineBlockViewModel(
+                    Entries: g,
+                    LoadoutLabels: g.Select(entry => CompressLoadoutLabels(entry.Loadouts)).ToList(),
+                    ModelAbilities: RowBoundAbilities(g, abilities, AbilityScope.Model),
+                    UnitAbilities: RowBoundAbilities(g, abilities, AbilityScope.Unit),
+                    ObjectiveControlFlagSource: ocSource,
+                    InvulnerableSaveFlagSource: insvSource);
+            })
             .ToList();
+    }
+
+    // Assigns a footnote marker (*, **, ...) to each distinct flag-producing source ability, in the
+    // order its runs are first encountered - the first distinct source seen gets "*", the next
+    // distinct source gets "**", and so on; every later run naming the same source (by exact Name +
+    // Text) reuses its already-assigned marker (live-play-view's "Flagged Statline Characteristic
+    // Rendering" - marker identity is assigned once per unit block, not per run). Runs through OC
+    // before InSv within a run, matching the tiles' own left-to-right visual order.
+    private static IReadOnlyList<StatlineBlockViewModel> AssignFlagMarkers(IReadOnlyList<StatlineBlockViewModel> blocks)
+    {
+        var markerBySource = new Dictionary<(string Name, string Text), string>();
+
+        string MarkerFor(Ability ability)
+        {
+            var key = (ability.Name, ability.Text);
+            if (!markerBySource.TryGetValue(key, out var marker))
+            {
+                marker = new string('*', markerBySource.Count + 1);
+                markerBySource[key] = marker;
+            }
+
+            return marker;
+        }
+
+        return blocks.Select(block => block with
+        {
+            ObjectiveControlMarker = block.ObjectiveControlFlagSource is { } oc ? MarkerFor(oc) : null,
+            InvulnerableSaveMarker = block.InvulnerableSaveFlagSource is { } insv ? MarkerFor(insv) : null
+        }).ToList();
     }
 
     // Multiset (bag) intersection across every loadout under one statline entry, then per-loadout
@@ -561,12 +605,22 @@ public sealed record LivePlaySyncRequest(
 /// element is that entry's own <c>Loadouts</c> compressed to their distinguishing weapons via
 /// <see cref="LivePlayModel.CompressLoadoutLabels"/>, in the same order. <see cref="ModelAbilities"/>/
 /// <see cref="UnitAbilities"/> are the row-bound (ModelLine-sourced) abilities matching this
-/// specific run.</summary>
+/// specific run. <see cref="ObjectiveControlFlagSource"/>/<see cref="InvulnerableSaveFlagSource"/>
+/// are that run's own flag-producing source (an unresolved InSv's <c>CaveatAbility</c>, or a
+/// matched statline-flag-rules source), set by <see cref="LivePlayModel.GroupStatlines"/>;
+/// <see cref="ObjectiveControlMarker"/>/<see cref="InvulnerableSaveMarker"/> are that source's own
+/// footnote marker, filled in afterwards by <see cref="LivePlayModel.AssignFlagMarkers"/> once every
+/// run's source is known (marker identity spans the whole unit block, not one run - live-play-view's
+/// "Flagged Statline Characteristic Rendering").</summary>
 public sealed record StatlineBlockViewModel(
     IReadOnlyList<AggregateStatlineEntry> Entries,
     IReadOnlyList<IReadOnlyList<string>> LoadoutLabels,
     IReadOnlyList<Ability> ModelAbilities,
-    IReadOnlyList<Ability> UnitAbilities)
+    IReadOnlyList<Ability> UnitAbilities,
+    Ability? ObjectiveControlFlagSource = null,
+    Ability? InvulnerableSaveFlagSource = null,
+    string? ObjectiveControlMarker = null,
+    string? InvulnerableSaveMarker = null)
 {
     public Statline Statline => Entries[0].Statline;
 
@@ -575,6 +629,20 @@ public sealed record StatlineBlockViewModel(
     /// one (see casualty-tracking's design.md - Decisions). Computed from <see cref="Entries"/>'
     /// own summed <c>RemainingCount</c>, never stored independently.</summary>
     public bool IsFullyDead => Entries.All(e => e.RemainingCount == 0);
+
+    /// <summary>One entry per distinct marker present on this run's own tiles, in tile order (OC
+    /// before InSv) - the source lines this run's own legend renders, per "Flagged Statline
+    /// Characteristic Rendering".</summary>
+    public IReadOnlyList<(string Marker, Ability Source)> FlagLegend
+    {
+        get
+        {
+            var legend = new List<(string, Ability)>();
+            if (ObjectiveControlFlagSource is { } oc && ObjectiveControlMarker is { } ocm) legend.Add((ocm, oc));
+            if (InvulnerableSaveFlagSource is { } insv && InvulnerableSaveMarker is { } im) legend.Add((im, insv));
+            return legend;
+        }
+    }
 }
 
 /// <summary>A Datasheet-sourced (component-wide) ability group, rendered once beside the first of

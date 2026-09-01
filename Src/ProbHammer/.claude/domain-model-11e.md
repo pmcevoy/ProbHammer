@@ -211,6 +211,19 @@ Enhancement vs. plain OptionalGrant by whether the nearest enclosing group's Nam
 eligible unit — see `ProcessAbilityProfile`'s own doc comment for the exact signal and the rejected
 alternative (primary-catalogue/detachment gating).
 
+**Attachment-Eligibility Ability Exclusion** (`resolve-known-ability-effects`): an ability named
+exactly "Leader", "Support", or "Attached Unit" never appears in `Datasheet.Abilities`, regardless
+of whether it was classified Intrinsic or Core Rule above — these three names only ever restate
+attachment eligibility a resolved army roster's own attachment relationships (Leader/Support +
+Bodyguard, see "Roster Context" below) already represent directly. Filtered once, centrally, in
+`Datasheet`'s own constructor (`ExcludedAttachmentAbilityNames`) rather than at each mapper's own
+call site — both this pipeline and the BattleScribe/NewRecruit pipeline (below) already funnel
+every Ability they build through this one constructor, so this is a genuine single injection point
+covering both, not per-pipeline duplication. A corpus-scan test
+(`LeaderSupportAttachedUnitNameScanTests`) confirms every real occurrence of these three exact
+names across the live BSData clone (849 on the first run) genuinely mentions attachment/"attach" in
+its own text — no same-named ability with different intent found.
+
 **Core Rule Ability Extraction** (`resolve-core-rule-abilities`): a fourth ability-sourcing shape —
 an `infoLink` with `"type": "rule"` (real: Impulsor's "Oath of Moment"/"Deadly Demise"/"Firing
 Deck"; every Black Templars datasheet's "Templar Vows"). GW's app shows these as "Core"/"Faction
@@ -267,12 +280,16 @@ InvulnerableSave(MeleeInSv, RangedInSv, Caveated, CaveatAbility)   // Domain/Cat
 
 BsdataDatasheetMapper.ResolveInvulnerableSave(text, ancestry, ctx) -> InvulnerableSave
                                        // Resolves a Unit profile's raw InSv text into plain,
-                                       // attack-type-restricted, or footnoted (always Caveated)
-                                       // shapes - never interprets the linked ability's own text,
-                                       // only which ability is linked (text interpretation is a
-                                       // permanently deferred capability, .claude/vnext-ideas.md).
-                                       // See the method's own doc comment for the exact shapes
-                                       // recognized and real examples.
+                                       // attack-type-restricted, footnoted-caveated, or - since
+                                       // resolve-known-ability-effects - footnoted-and-resolved
+                                       // shapes. A footnoted value's linked ability is still
+                                       // resolved by id only, never interpreted inline here; the
+                                       // resulting Ability's own Text is then handed to
+                                       // InvulnerableSaveCaveatClassifier (below), using its
+                                       // resolved melee/ranged split only when it returns a match -
+                                       // otherwise falling back to today's caveated result
+                                       // unchanged. See the method's own doc comment for the exact
+                                       // shapes recognized and real examples.
 
 BsdataDatasheetMapper.ResolveCaveatAbility(digit, ancestry, ctx, rawText) -> Ability
                                        // Resolves the specific Ability a footnoted InSv is linked
@@ -285,6 +302,34 @@ BsdataDatasheetMapper.ResolveCaveatAbility(digit, ancestry, ctx, rawText) -> Abi
                                        // doc comment) - Aeldari's Archon/Ynnari Archon is a confirmed
                                        // real BSData data anomaly with no ability anywhere in the
                                        // entry, allowlisted rather than special-cased.
+
+InvulnerableSaveCaveatClassifier.TryResolveBare(abilityText) -> (Melee, Ranged)?
+InvulnerableSaveCaveatClassifier.TryResolveSplit(abilityText, footnotedDigit, plainDigit) -> (Melee, Ranged)?
+                                       // Domain.Catalogue (not Bsdata - the BattleScribe pipeline,
+                                       // below, needs it too and must not depend on the Bsdata
+                                       // namespace). Matches abilityText as an exact, anchored,
+                                       // whole-string match against a fixed set of four known
+                                       // templates ("This model has a {N}+ invulnerable save
+                                       // against {ranged|melee} attacks." / "Models in this unit
+                                       // have a {N}+ invulnerable save against {ranged|melee}
+                                       // attacks.") - a real BSData authoring quirk (Space Marines'
+                                       // Judiciar) uses a U+00A0 no-break space in place of one
+                                       // plain space mid-template, normalized away before matching
+                                       // rather than left to silently miss resolution. TryResolveBare
+                                       // (a single footnoted value, e.g. "5+*") has no digit to
+                                       // compare against, so a template match always wins.
+                                       // TryResolveSplit (a melee/ranged pair with one footnoted
+                                       // side) additionally requires the template's own named value
+                                       // to equal footnotedDigit - a real mismatch (confirmed:
+                                       // Judiciar's own footnoted "4+*" side links to an ability
+                                       // naming a different digit) correctly stays caveated rather
+                                       // than trusting either value. Both called from the exact
+                                       // point each pipeline's own resolver already computes
+                                       // today's fallback, using the result only when non-null.
+                                       // Orks' Makari (a re-roll restriction, not an attack-type
+                                       // split) is the one confirmed real anomaly that correctly
+                                       // never matches any template - see
+                                       // InvulnerableSaveCaveatResolutionScanTests.
 
 WeaponKeywordParser.Apply(weapon, keywordsText) -> WeaponProfile
                                        // splits Keywords text (e.g. "Anti-infantry 4+, Devastating
@@ -863,7 +908,17 @@ uses. Plain-int/threshold/measurement parsing carries small, functionally-identi
 equivalents rather than reusing `BsdataDatasheetMapper`'s own private (inaccessible) helpers.
 Invulnerable-save caveat resolution is this format's own simpler resolution (no BSData-style
 entryLink ancestry chain to walk) — UNVERIFIED, since the one real sample analyzed has no caveated
-InSv at all.
+InSv at all. It calls the same shared `InvulnerableSaveCaveatClassifier` (`Domain.Catalogue`, above)
+at the exact point it computes today's caveated fallback, exactly mirroring the BSData pipeline's
+own wiring (invulnerable-save's "This resolution behavior SHALL be identical regardless of which
+import pipeline produced the Ability being matched").
+
+This pipeline's own ability extraction (Statline/Weapon/Ability Extraction above and Core Rule
+Extraction below) is subject to the same "Leader"/"Support"/"Attached Unit" exclusion as the BSData
+pipeline, via the same central `Datasheet` constructor filter (`resolve-known-ability-effects`) —
+`BuildUnit`'s `intrinsicAbilities`/`coreRuleAbilities` are concatenated and passed straight into
+`new Datasheet(...)`, the same single injection point the BSData pipeline funnels through, so no
+separate filter is needed here.
 
 ```
 BattleScribeRuleGlossaryBuilder.Build(BsRoster) -> RuleGlossary
@@ -1050,6 +1105,73 @@ is also what makes per-component merge scoping fall out for free. Unfiltered acc
 `ModelLine`s (so fully-dead loadout-variants and correct `InitialCount`s stay visible in
 `Statlines`) happens naturally since `BuildStatlines` reads `component.ModelLines` directly rather
 than through the `presentLines` filter.
+
+---
+
+## Statline-Flag Rules
+
+Full requirements: `openspec/changes/resolve-known-ability-effects/`. A small, closed-vocabulary
+mechanism that recognizes a specific ability (exact Name + exact Text, no partial/fuzzy match) and
+derives a flagged Statline-characteristic value for display on the *specific resolved unit* it's
+currently present on — never mutating the shared `Datasheet`/`Unit` themselves. The matched source
+ability always keeps rendering normally in the unit's Abilities/Enhancements listing alongside the
+derived value; this mechanism only ever adds a value, never removes or hides anything.
+
+```
+ProbHammer.Core.Domain.Roster.StatlineFlagRuleScope = Bearer | WholeUnit
+                                       // Bearer: the mutation applies only to the matched ability's
+                                       // own bearer row(s) - one specific model-line when the
+                                       // matched AggregateAbilityEntry.StatlineName is set, the
+                                       // whole owning component when it's null (a Datasheet-level or
+                                       // Enhancement-sourced ability). WholeUnit: applies to every
+                                       // row of the whole ICombatUnit regardless of which component
+                                       // granted it (Vexilla - "the bearer's unit" spans every
+                                       // component of an attached formation in real 11e rules, not
+                                       // just the bearer's own).
+
+StatlineFlagRule                      // abstract: AbilityName/AbilityText (the exact match key),
+                                       // Scope, Characteristic (InvulnerableSave | ObjectiveControl
+                                       // - StatlineFlagCharacteristic, Domain/Roster/
+                                       // AttachedUnitAggregateView.cs), Matches(Ability) (exact
+                                       // Name+Text), Apply(Statline) -> Statline (the mutation
+                                       // itself, e.g. `with { Oc = baseStatline.Oc + 1 }`)
+ShieldDomeStatlineFlagRule             // Impulsor's Shield Dome - Bearer scope, InvulnerableSave:
+                                       // "The bearer has a 5+ invulnerable save." -> InSv(5,5,false,null)
+VexillaStatlineFlagRule                // Custodian Guard's Vexilla - WholeUnit scope, ObjectiveControl:
+                                       // "Add 1 to the Objective Control characteristic of models in
+                                       // the bearer's unit." -> Oc + 1
+StatlineFlagRuleCatalogue.All          // the full closed vocabulary - a real third rule joins this
+                                       // list directly, no architecture change needed
+```
+
+**Wiring** (`AttachedUnitAggregator.Build`): runs as an additional step after `BuildStatlines`/
+`BuildAbilities` produce their live, casualty-filtered results (`ApplyStatlineFlagRules`) - matches
+every present `AggregateAbilityEntry` against `StatlineFlagRuleCatalogue.All`, then for each
+`AggregateStatlineEntry` whose (ComponentName, StatlineName) is that matched ability's own bearer
+(or, for a `WholeUnit`-scoped rule, unconditionally), applies the rule's `Apply` to produce a
+mutated `Statline` plus a `StatlineFlag` (Characteristic + source `Ability`) recorded on that
+entry's own `AggregateStatlineEntry.Flags`. Since `BuildAbilities`' own output is already filtered
+to only currently-present sources (the same liveness rule that governs whether the ability itself
+renders), a flagged value's liveness falls out for free with no separate tracking — marking the
+bearer a casualty removes the matching `AggregateAbilityEntry` on the next `Build`, so the rule
+pass simply has nothing to match against and the affected `Statline` reverts to its own Datasheet
+base value. Never mutates `Datasheet`/`Unit`; only the returned, decorated copy of the statline
+entries carries a rule's effect.
+
+**`/LivePlay` display** (`resolve-known-ability-effects`): replaces the old InSv-only always-visible
+`.insv-caveat-text` paragraph with a
+general per-run footnote-marker-and-legend mechanism, driven uniformly by an unresolved
+invulnerable-save caveat (`InvulnerableSave.Caveated`, above) and a `statline-flag-rules` match
+alike — see `.claude/design-tokens.md`'s "Flagged statline legend" for the visual mechanism, and
+`live-play-view`'s "Flagged Statline Characteristic Rendering" for the full requirement.
+`LivePlayModel.GroupStatlines` reads each run's own `AggregateStatlineEntry.Flags` (and its shared
+`Statline.InSv.Caveated`/`CaveatAbility`) to determine that run's own flag source per characteristic
+(`StatlineBlockViewModel.ObjectiveControlFlagSource`/`InvulnerableSaveFlagSource`);
+`LivePlayModel.AssignFlagMarkers` then walks every run in order, assigning the first distinct
+source seen `*`, the next `**`, and so on, reusing an already-assigned marker for the same source
+wherever it recurs — so a `WholeUnit`-scoped source affecting every run of a unit keeps one marker
+throughout and gets a legend line in every one of those runs, never consolidated into a single
+shared location.
 
 **`ArmyRoster`** (`Domain/Roster/ArmyRoster.cs`) wraps the per-unit roster (`Units`, an
 `IReadOnlyList<ICombatUnit>`) with army-level metadata: `Name`, `PointsSpent`, `Faction` (ordered —

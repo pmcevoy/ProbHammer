@@ -52,23 +52,18 @@ entry once it's been turned into a change (archived changes remain the historica
 - **Ability-text interpretation pass.** A distinct pass, run *after* `BsdataDatasheetMapper
   .BuildDatasheet` (not inside it), that classifies a specific ability's `Description` text
   against a small closed vocabulary of known fixed phrasings and folds the result back into the
-  domain model as a new, immutable `Datasheet`. Explicitly **not** general ability-text-to-
-  behavior parsing (that stays permanently out of scope per `domain-model-11e.md`'s Deliberate
-  Omissions) — this is pattern-matching known, previously-catalogued sentences, not NLU. First
-  concrete driver: the InSv-caveat representation change (mapper always marks a footnoted/
-  ability-linked invulnerable save `Caveated = true` and captures the resolved ability rather
-  than interpreting it inline; this pass is what would later resolve the known cases and flip
-  `Caveated` back to `false`) — deliberately deferred out of that change's scope, to be designed
-  as its own change once the shape needed here is clearer. Longer-term motivation is the
-  "Ability-driven attack modifiers" idea above (e.g. folding a "+1 Attack to melee weapons"
-  ability into weapon-aggregation totals) — same class of problem, not yet designed together.
-  **Revisit once the InSv-caveat change is implemented/archived — explicitly asked to be
-  reminded.** Should also resolve Model-vs-Unit scope for Enhancements specifically: today every
-  Enhancement is displayed at Unit scope unconditionally (`resolve-enhancement-abilities` shipped
-  Enhancement *resolution*, not scope classification), even though a real Enhancement's actual
-  scope depends on its rules text and can genuinely be Model — this pass is where that
-  distinction should get made instead of guessed at, per the same "no scope on
-  Enhancement" acknowledgment.
+  domain model. Explicitly **not** general ability-text-to-behavior parsing (that stays
+  permanently out of scope per `domain-model-11e.md`'s Deliberate Omissions) — this is
+  pattern-matching known, previously-catalogued sentences, not NLU. `resolve-known-ability-effects`
+  shipped two narrow slices of this idea directly: `InvulnerableSaveCaveatClassifier` (resolves a
+  footnoted InSv's linked ability text against four known templates) and `statline-flag-rules`
+  (Shield Dome/Vexilla, matching one specific ability by exact Name+Text to derive a flagged
+  Statline value for a resolved unit) — see `domain-model-11e.md`'s own sections for both. Should
+  still resolve Model-vs-Unit scope for Enhancements specifically: today every Enhancement is
+  displayed at Unit scope unconditionally (`resolve-enhancement-abilities` shipped Enhancement
+  *resolution*, not scope classification), even though a real Enhancement's actual scope depends
+  on its rules text and can genuinely be Model — this pass is where that distinction should get
+  made instead of guessed at, per the same "no scope on Enhancement" acknowledgment.
 
   Discussion during `resolve-core-rule-abilities`' follow-up (2026-08-24) sharpened the shape of
   this considerably — noting it here so it isn't relitigated from scratch when this gets picked
@@ -80,31 +75,36 @@ entry once it's been turned into a change (archived changes remain the historica
     reliably signals the split (confirmed against real Black Templars rule text: `Martial Honour`
     — *"add 5 to **this model's** Objective Control"* — is Model; `Crusade of Wrath` — *"...models
     in **that unit**"* — is Unit) but nothing reads it yet.
-  - **`Leader`/`Support`/`Attached Unit` should be dropped entirely, not scope-classified.** These
-    three are redundant with the export's own "Attached as: Role" line (already parsed and
-    rendered) — the app trusts the export's already-validated attachment, same reasoning as the
-    existing "no wargear constraint modeling" stance, so there's no live-play value in also
-    showing the attachment-eligibility rules text. Note `Attached Unit`'s own text is Unit-shaped
-    by the Model/Unit heuristic above (*"...attached to **this unit** instead"*) — this is a
-    deliberate override of that heuristic, not something the heuristic itself would derive, so
-    keep it a small exact-name drop-list (same pattern `WeaponKeywordParser`/`RuleGlossary` already
-    use for exact-name matching) rather than folding it into general scope classification.
-  - **Wargear-granted invulnerable saves should convert to a populated InSv box, not render as a
-    plain ability chip.** Concrete driver: Impulsor's `Shield Dome` (*"The bearer has a 5+
-    invulnerable save"*). Distinct from the InSv-caveat case above, though it renders the same
-    way in the end (a value in the InSv box, linked text beneath it) — the caveat case *caveats an
-    existing intrinsic value* (footnoted `"5+*"` on the Unit profile itself); Shield Dome *grants*
-    one where the Unit profile's own `InSv` is empty (Impulsor has no baseline invulnerable save
-    at all). Keep these two as distinct recognized shapes rather than forcing the wargear-grant
-    case through the existing `Caveated`/`CaveatAbility` pair unchanged.
-  - **Architecture: a composable, user-toggleable rule pipeline, not a single fixed pass.** Rather
-    than one hardcoded transformation, envisioned as a pipeline of named rules ("drop
-    Leader/Support/Attached Unit", "convert Shield Dome to a granted InSv", "resolve a known
-    InSv-caveat to non-caveated", ...) that mutate the resolved domain model after
-    `BuildDatasheet`, each independently enable/disable-able by the player, and potentially
-    re-evaluated as live state changes (e.g. a rule that only applies while its granting model is
-    not a casualty) — a materially bigger scope than "classify once at import time," worth
-    designing as its own change once picked up, not assumed.
+  - **Architecture: a composable, user-toggleable rule pipeline, not a single fixed pass.**
+    `statline-flag-rules` implements a small, fixed, closed-vocabulary version of this (a rule
+    matches one exact ability, mutates a flagged Statline value, re-evaluated live as casualty
+    state changes — see `domain-model-11e.md`). Still open beyond that seed: a genuinely
+    open-ended, **player-toggleable** rule set (so a player could disable a specific rule's
+    effect) covering a much wider vocabulary than InSv/OC — the "Ability-driven attack modifiers"
+    idea above (e.g. folding a "+1 Attack to melee weapons" ability into weapon-aggregation
+    totals) is the next natural driver for growing this vocabulary, not yet designed.
+
+- **`statline-flag-rules` modifier-stacking/ordering/cap remodeling.** Found during a code-review
+  walkthrough of `resolve-known-ability-effects` (2026-09-01, not yet explored/proposed): real 40k
+  rules let multiple abilities cumulatively modify one characteristic, with a defined application
+  order (absolute-set effects generally apply before relative/additive ones) and, for some
+  characteristics, a hard cap on how far they can be pushed — none of which the current mechanism
+  models. `AttachedUnitAggregator.ApplyStatlineFlagRules` applies every matching rule for a row in
+  whatever order `abilities` happens to enumerate them (no absolute-vs-relative ordering), and two
+  absolute-set rules on the same row/characteristic don't compose at all — the later one just
+  overwrites the earlier one's result outright. Separately, `LivePlay.cshtml.cs`'s `GroupStatlines`
+  only ever credits the *first* matching `StatlineFlag` per characteristic
+  (`.FirstOrDefault(f => f.Characteristic == ...)`), so even where mutations correctly do stack (two
+  relative/additive rules), only one contributing ability ever appears in the footnote/legend — the
+  others' effect on the number is real but silently uncredited. Today's catalogue (Shield Dome →
+  InSv, Vexilla → OC) can't exercise either gap, since there's exactly one rule per characteristic,
+  but a third rule targeting an already-covered characteristic would immediately hit both. Needs at
+  minimum: an explicit application order (absolute before relative, or some other defined
+  precedence) baked into `StatlineFlagRule` itself rather than left to incidental enumeration order,
+  a `Flags`/credit model that can list multiple contributing abilities per characteristic rather than
+  `FirstOrDefault`, and characteristic-specific caps (e.g. a save can't improve past some floor) —
+  worth an explore-mode pass before scoping a proposal, not assumed to need a full remodel until
+  that's confirmed.
 
 - **Detachment rule structural-modifier detection ("phase 2" of `display-army-header-and-
   detachment-rules`).** That change captures every Detachment's rule text verbatim and renders it

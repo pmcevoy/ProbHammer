@@ -57,33 +57,33 @@ public class InvulnerableSaveResolutionTests
     }
 
     [Fact]
-    public void Bare_footnote_resolves_via_an_infoLink_into_a_shared_profile()
+    public void Bare_footnote_resolves_via_an_infoLink_into_a_known_template()
     {
-        // Canis Rex's shape: a "profile"-type infoLink into a standalone shared profile.
+        // Canis Rex's shape: a "profile"-type infoLink into a standalone shared profile - here its
+        // text is an exact known-template match ("This model has a 5+ invulnerable save against
+        // ranged attacks."), so the InvulnerableSaveCaveatClassifier resolves it to a real,
+        // non-caveated ranged-only split rather than staying caveated.
         var save = Resolve("Linked Ability Save Model");
 
-        save.Caveated.Should().BeTrue();
-        save.MeleeInSv.Should().Be(5);
+        save.Caveated.Should().BeFalse();
+        save.MeleeInSv.Should().Be(0);
         save.RangedInSv.Should().Be(5);
-        save.CaveatAbility.Should().NotBeNull();
-        save.CaveatAbility!.Name.Should().Be("Invulnerable Save (5+*)");
-        save.CaveatAbility.Text.Should().Contain("ranged attacks");
+        save.CaveatAbility.Should().BeNull();
     }
 
     [Fact]
-    public void Split_with_one_footnoted_side_uses_the_unfootnoted_digit_as_the_placeholder()
+    public void Split_with_one_footnoted_side_resolves_via_a_known_template()
     {
-        // Howling Banshee's shape: "4+* / 5+" - the mapper never decides which side is melee vs
-        // ranged (that needs the ability's text), so both fields get the one value known without
-        // interpretation: the plain, unfootnoted 5.
+        // Howling Banshee's shape: "4+* / 5+" - the footnoted side's linked ability text is an
+        // exact known-template match ("Models in this unit have a 4+ invulnerable save against
+        // melee attacks."), consistent with the footnoted digit (4), so it resolves to a real
+        // melee=4/ranged=5 split rather than staying caveated.
         var save = Resolve("Split Save Model");
 
-        save.Caveated.Should().BeTrue();
-        save.MeleeInSv.Should().Be(5);
+        save.Caveated.Should().BeFalse();
+        save.MeleeInSv.Should().Be(4);
         save.RangedInSv.Should().Be(5);
-        save.CaveatAbility.Should().NotBeNull();
-        save.CaveatAbility!.Name.Should().Be("Invulnerable Save (4+*)");
-        save.CaveatAbility.Text.Should().Contain("melee attacks");
+        save.CaveatAbility.Should().BeNull();
     }
 
     [Fact]
@@ -94,12 +94,19 @@ public class InvulnerableSaveResolutionTests
         // two different entries, each with its own infoLink targeting a different id. A name-only
         // lookup against a flattened, name-deduped ability list would resolve both entries to
         // whichever profile happened to be seen first; resolving by the specific infoLink's own
-        // targetId must not.
+        // targetId must not. Both linked texts are exact known-template matches, so each entry
+        // resolves to a real, non-caveated, opposite-attack-type split - still demonstrating
+        // by-id disambiguation, now via the resolved values themselves rather than CaveatAbility.
         var saveA = Resolve("Collision Model A");
         var saveB = Resolve("Collision Model B");
 
-        saveA.CaveatAbility!.Text.Should().Contain("ranged attacks");
-        saveB.CaveatAbility!.Text.Should().Contain("melee attacks");
+        saveA.Caveated.Should().BeFalse();
+        saveA.RangedInSv.Should().Be(4);
+        saveA.MeleeInSv.Should().Be(0);
+
+        saveB.Caveated.Should().BeFalse();
+        saveB.MeleeInSv.Should().Be(4);
+        saveB.RangedInSv.Should().Be(0);
     }
 
     [Fact]

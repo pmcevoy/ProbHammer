@@ -21,6 +21,12 @@ public sealed class Datasheet
     private readonly IReadOnlyDictionary<string, Ability> _optionalAbilities;
     private readonly IReadOnlyDictionary<string, IReadOnlySet<string>> _modelKeywordsByName;
 
+    // These three names only ever restate attachment eligibility a resolved roster's own attachment
+    // relationships already represent directly - excluded regardless of source (Intrinsic or Core
+    // Rule), per datasheet-catalogue's "Attachment-Eligibility Abilities Are Excluded".
+    private static readonly HashSet<string> ExcludedAttachmentAbilityNames =
+        new(StringComparer.OrdinalIgnoreCase) { "Leader", "Support", "Attached Unit" };
+
     /// <summary><paramref name="weaponProfiles"/>/<paramref name="optionalAbilities"/> are plain
     /// enumerables, not pre-built dictionaries - the internal lookups are built from each item's
     /// own <c>Name</c> here, so a dictionary key can never disagree with its own Name (a real bug
@@ -42,7 +48,7 @@ public sealed class Datasheet
         Name = name;
         FactionKeywords = new HashSet<string>(factionKeywords, StringComparer.OrdinalIgnoreCase);
         Keywords = new HashSet<string>(keywords, StringComparer.OrdinalIgnoreCase);
-        Abilities = abilities.ToList();
+        Abilities = abilities.Where(a => !ExcludedAttachmentAbilityNames.Contains(a.Name)).ToList();
         Statlines = statlines;
         _statlinesByName = statlines.ToDictionary(x => x.Name, x => x.Statline, StringComparer.OrdinalIgnoreCase);
         _weaponProfiles = weaponProfiles.ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);

@@ -44,8 +44,12 @@ public class BsdataDatasheetMapperTests
         fistOfDorn.DevastatingWounds.Should().BeTrue();
         fistOfDorn.KeywordsText.Should().Equal("Devastating Wounds");
 
+        // "Leader" is excluded (datasheet-catalogue's "Attachment-Eligibility Abilities Are
+        // Excluded") - it only restates attachment eligibility the resolved roster's own attachment
+        // relationships already represent directly.
         sheet.Abilities.Select(a => a.Name).Should()
-            .Contain(["Icon of Obstinacy", "Rampart", "Leader", "Inspiring Commander"]);
+            .Contain(["Icon of Obstinacy", "Rampart", "Inspiring Commander"])
+            .And.NotContain("Leader");
     }
 
     [Fact]

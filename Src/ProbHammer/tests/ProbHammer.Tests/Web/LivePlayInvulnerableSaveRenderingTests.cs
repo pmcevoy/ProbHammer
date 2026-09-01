@@ -66,7 +66,8 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
     {
         var html = await RenderAsync(new InvulnerableSave(4, 4, caveated: false, caveatAbility: null));
 
-        html.Should().Contain(">InSv<").And.Contain(">4+<").And.NotContain("insv-icon").And.NotContain("stat-tile-flagged");
+        html.Should().Contain(">InSv<").And.Contain(">4+<").And.NotContain("insv-icon").And
+            .NotContain("stat-tile-flagged");
     }
 
     [Fact]
@@ -98,7 +99,7 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
     }
 
     [Fact]
-    public async Task Caveated_RendersOffColorTileBareLabelAndTheAbilityText()
+    public async Task Caveated_RendersOffColorTileBareLabelAndALegendTriggerForTheAbility()
     {
         var ability = new Ability
         {
@@ -109,9 +110,16 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
         };
         var html = await RenderAsync(new InvulnerableSave(5, 5, caveated: true, caveatAbility: ability));
 
+        // The old always-visible <p class="insv-caveat-text"> paragraph is gone - the ability's
+        // text is now reachable only through a popover trigger, per live-play-view's "Flagged
+        // Statline Characteristic Rendering" (resolve-known-ability-effects).
         html.Should().Contain("stat-tile-flagged")
             .And.Contain(">InSv*<")
+            .And.Contain("statline-flag-legend")
+            .And.Contain("flag-legend-line")
+            .And.Contain("* Test Ability")
             .And.Contain("This model has a test invulnerable save condition.")
+            .And.NotContain("insv-caveat-text")
             .And.NotContain("insv-icon");
     }
 }

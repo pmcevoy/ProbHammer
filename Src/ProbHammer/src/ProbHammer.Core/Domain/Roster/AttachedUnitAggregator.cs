@@ -16,13 +16,65 @@ public static class AttachedUnitAggregator
             .Where(x => x.ModelLine.RemainingCount > 0)
             .ToList();
 
+        var abilities = BuildAbilities(combatUnit);
+
         return new AttachedUnitAggregateView(
             Name: combatUnit.Name,
             IsAttachedUnit: combatUnit is AttachedUnit,
-            Statlines: BuildStatlines(combatUnit),
+            Statlines: ApplyStatlineFlagRules(BuildStatlines(combatUnit), abilities),
             Weapons: BuildWeapons(presentLines),
-            Abilities: BuildAbilities(combatUnit),
+            Abilities: abilities,
             Keywords: KeywordResolution.EffectiveKeywords(combatUnit));
+    }
+
+    // Runs after BuildStatlines/BuildAbilities produce their live, casualty-filtered results (design
+    // D3) - abilities is already filtered to only currently-present sources, so a matched rule's
+    // liveness falls out for free with no separate tracking (statline-flag-rules' "Mutation Liveness
+    // Follows Ability Presence"). Never mutates Datasheet/Unit; only the returned decorated copy of
+    // the statline entries carries a rule's effect.
+    private static IReadOnlyList<AggregateStatlineEntry> ApplyStatlineFlagRules(
+        IReadOnlyList<AggregateStatlineEntry> statlines, IReadOnlyList<AggregateAbilityEntry> abilities)
+    {
+        var matches = abilities
+            .Select(a => (Entry: a, Rule: StatlineFlagRuleCatalogue.All.FirstOrDefault(r => r.Matches(a.Ability))))
+            .Where(x => x.Rule is not null)
+            .ToList();
+
+        if (matches.Count == 0)
+            return statlines;
+
+        return statlines.Select(entry =>
+        {
+            var applicable = matches.Where(m => IsBearer(m.Entry, m.Rule!, entry)).ToList();
+            if (applicable.Count == 0)
+                return entry;
+
+            var mutated = entry.Statline;
+            var flags = new List<StatlineFlag>(entry.Flags);
+            foreach (var (abilityEntry, rule) in applicable)
+            {
+                mutated = rule!.Apply(mutated);
+                flags.Add(new StatlineFlag(rule.Characteristic, abilityEntry.Ability));
+            }
+
+            return entry with { Statline = mutated, Flags = flags };
+        }).ToList();
+    }
+
+    // A bearer-only rule's bearer is the matched ability's own (ComponentName, StatlineName) - one
+    // specific model-line when StatlineName is set, the whole component when it's null (a
+    // Datasheet-level or Enhancement-sourced ability, per D4). A whole-unit rule applies to every
+    // row regardless, since the matched ability is already confirmed present on this ICombatUnit.
+    private static bool IsBearer(AggregateAbilityEntry abilityEntry, StatlineFlagRule rule,
+        AggregateStatlineEntry statlineEntry)
+    {
+        if (rule.Scope == StatlineFlagRuleScope.WholeUnit)
+            return true;
+
+        return abilityEntry.StatlineName is not null
+            ? abilityEntry.ComponentName == statlineEntry.ComponentName &&
+              abilityEntry.StatlineName == statlineEntry.StatlineName
+            : abilityEntry.ComponentName == statlineEntry.ComponentName;
     }
 
     // Component display order: an AttachedUnit's Attached units first, in their list order, then
@@ -205,7 +257,8 @@ public static class AttachedUnitAggregator
                 result.Add(entry with
                 {
                     ComponentName = null,
-                    ContributingComponentNames = armyRuleGroups[entry.Ability.Name].Select(e => e.ComponentName!).ToList()
+                    ContributingComponentNames =
+                    armyRuleGroups[entry.Ability.Name].Select(e => e.ComponentName!).ToList()
                 });
             }
             // else: the promoted entry for this name was already added by an earlier contributor.

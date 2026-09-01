@@ -1,0 +1,282 @@
+{
+  "roster": {
+    "xmlns": "http://www.battlescribe.net/schema/rosterSchema",
+    "name": "Ability Effects Verification Roster",
+    "costs": [
+      { "name": "pts", "value": 970 }
+    ],
+    "costLimits": [
+      { "name": "pts", "value": 2000 }
+    ],
+    "forces": [
+      {
+        "catalogueName": "Imperium - Adeptus Custodes",
+        "rules": [],
+        "selections": [
+          {
+            "id": "detachment", "name": "Detachment", "type": "upgrade", "number": 1,
+            "selections": [
+              { "id": "detachment-choice", "name": "Shield Host", "type": "upgrade", "number": 1 }
+            ]
+          },
+          {
+            "id": "force-disposition", "name": "Force Disposition", "type": "upgrade", "number": 1,
+            "selections": [
+              { "id": "force-disposition-choice", "name": "Take and Hold", "type": "upgrade", "number": 1 }
+            ]
+          },
+          {
+            "id": "battle-size", "name": "Battle Size", "type": "upgrade", "number": 1,
+            "selections": [
+              { "id": "battle-size-choice", "name": "Incursion (1000 Point limit)", "type": "upgrade", "number": 1 }
+            ]
+          },
+
+          {
+            "id": "warhound-titan",
+            "name": "Warhound Titan",
+            "type": "unit",
+            "number": 1,
+            "profiles": [
+              {
+                "id": "warhound-titan-unit",
+                "name": "Warhound Titan",
+                "typeName": "Unit",
+                "characteristics": [
+                  { "name": "M", "$text": "14\"" },
+                  { "name": "T", "$text": "13" },
+                  { "name": "Sv", "$text": "2+" },
+                  { "name": "W", "$text": "40" },
+                  { "name": "LD", "$text": "6+" },
+                  { "name": "OC", "$text": "16" },
+                  { "name": "InSv", "$text": "5+ (Ranged)" }
+                ]
+              }
+            ],
+            "selections": [
+              {
+                "id": "warhound-feet", "name": "Warhound feet", "type": "upgrade", "number": 1,
+                "profiles": [
+                  {
+                    "id": "warhound-feet-profile",
+                    "name": "Warhound feet",
+                    "typeName": "Melee Weapons",
+                    "characteristics": [
+                      { "name": "A", "$text": "8" },
+                      { "name": "WS", "$text": "4+" },
+                      { "name": "S", "$text": "10" },
+                      { "name": "AP", "$text": "-1" },
+                      { "name": "D", "$text": "2" },
+                      { "name": "Keywords", "$text": "-" }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "warhound-mega-bolters", "name": "2 Warhound vulcan mega-bolters", "type": "upgrade", "number": 1,
+                "selections": [
+                  {
+                    "id": "warhound-mega-bolter", "name": "Warhound vulcan mega-bolter", "type": "upgrade", "number": 2,
+                    "profiles": [
+                      {
+                        "id": "warhound-mega-bolter-profile",
+                        "name": "Warhound vulcan mega-bolter",
+                        "typeName": "Ranged Weapons",
+                        "characteristics": [
+                          { "name": "Range", "$text": "48\"" },
+                          { "name": "A", "$text": "20" },
+                          { "name": "BS", "$text": "3+" },
+                          { "name": "S", "$text": "6" },
+                          { "name": "AP", "$text": "-1" },
+                          { "name": "D", "$text": "2" },
+                          { "name": "Keywords", "$text": "Sustained Hits 1" }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+
+          {
+            "id": "custodian-guard-squad",
+            "name": "Custodian Guard",
+            "type": "unit",
+            "number": 5,
+            "profiles": [
+              {
+                "id": "custodian-guard-unit",
+                "name": "Custodian Guard",
+                "typeName": "Unit",
+                "characteristics": [
+                  { "name": "M", "$text": "6\"" },
+                  { "name": "T", "$text": "6" },
+                  { "name": "Sv", "$text": "2+" },
+                  { "name": "W", "$text": "3" },
+                  { "name": "LD", "$text": "6+" },
+                  { "name": "OC", "$text": "2" },
+                  { "name": "InSv", "$text": "4+" }
+                ]
+              }
+            ],
+            "selections": [
+              {
+                "id": "custodian-guard-plain", "name": "Custodian Guard", "type": "model", "number": 4,
+                "selections": [
+                  {
+                    "id": "cg-spear", "name": "4 Guardian spears", "type": "upgrade", "number": 4,
+                    "profiles": [
+                      {
+                        "id": "cg-spear-profile", "name": "Guardian spear", "typeName": "Ranged Weapons",
+                        "characteristics": [
+                          { "name": "Range", "$text": "24\"" }, { "name": "A", "$text": "2" },
+                          { "name": "BS", "$text": "2+" }, { "name": "S", "$text": "4" },
+                          { "name": "AP", "$text": "-1" }, { "name": "D", "$text": "2" },
+                          { "name": "Keywords", "$text": "Assault" }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "custodian-guard-vexilla",
+                "name": "Custodian Guard (Vexilla)",
+                "type": "model",
+                "number": 1,
+                "profiles": [
+                  {
+                    "id": "custodian-guard-vexilla-unit",
+                    "name": "Custodian Guard (Vexilla)",
+                    "typeName": "Unit",
+                    "characteristics": [
+                      { "name": "M", "$text": "6\"" },
+                      { "name": "T", "$text": "6" },
+                      { "name": "Sv", "$text": "2+" },
+                      { "name": "W", "$text": "4" },
+                      { "name": "LD", "$text": "6+" },
+                      { "name": "OC", "$text": "2" },
+                      { "name": "InSv", "$text": "4+" }
+                    ]
+                  }
+                ],
+                "selections": [
+                  {
+                    "id": "cgv-spear", "name": "Guardian spear", "type": "upgrade", "number": 1,
+                    "profiles": [
+                      {
+                        "id": "cgv-spear-profile", "name": "Guardian spear", "typeName": "Ranged Weapons",
+                        "characteristics": [
+                          { "name": "Range", "$text": "24\"" }, { "name": "A", "$text": "2" },
+                          { "name": "BS", "$text": "2+" }, { "name": "S", "$text": "4" },
+                          { "name": "AP", "$text": "-1" }, { "name": "D", "$text": "2" },
+                          { "name": "Keywords", "$text": "Assault" }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "cgv-vexilla", "name": "Vexilla", "type": "upgrade", "number": 1,
+                    "profiles": [
+                      {
+                        "id": "cgv-vexilla-profile",
+                        "name": "Vexilla",
+                        "typeName": "Abilities",
+                        "characteristics": [
+                          {
+                            "name": "Description",
+                            "$text": "Add 1 to the Objective Control characteristic of models in the bearer's unit."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+
+          {
+            "id": "test-split-insv",
+            "name": "[TEST] Split InSv (Unresolved)",
+            "type": "unit",
+            "number": 1,
+            "profiles": [
+              {
+                "id": "test-split-insv-unit",
+                "name": "[TEST] Split InSv (Unresolved)",
+                "typeName": "Unit",
+                "characteristics": [
+                  { "name": "M", "$text": "6\"" },
+                  { "name": "T", "$text": "5" },
+                  { "name": "Sv", "$text": "3+" },
+                  { "name": "W", "$text": "6" },
+                  { "name": "LD", "$text": "6+" },
+                  { "name": "OC", "$text": "2" },
+                  { "name": "InSv", "$text": "4+* / 5+" }
+                ]
+              },
+              {
+                "id": "test-split-insv-ability",
+                "name": "Invulnerable Save (4+*)",
+                "typeName": "Abilities",
+                "characteristics": [
+                  {
+                    "name": "Description",
+                    "$text": "While this model remains stationary, it has a 4+ invulnerable save against psychic attacks."
+                  }
+                ]
+              }
+            ]
+          },
+
+          {
+            "id": "test-bare-insv",
+            "name": "[TEST] Bare InSv (Unresolved)",
+            "type": "unit",
+            "number": 1,
+            "profiles": [
+              {
+                "id": "test-bare-insv-unit",
+                "name": "[TEST] Bare InSv (Unresolved)",
+                "typeName": "Unit",
+                "characteristics": [
+                  { "name": "M", "$text": "6\"" },
+                  { "name": "T", "$text": "5" },
+                  { "name": "Sv", "$text": "3+" },
+                  { "name": "W", "$text": "6" },
+                  { "name": "LD", "$text": "6+" },
+                  { "name": "OC", "$text": "2" },
+                  { "name": "InSv", "$text": "3+*" }
+                ]
+              },
+              {
+                "id": "test-bare-insv-ability",
+                "name": "*Invulnerable Save",
+                "typeName": "Abilities",
+                "characteristics": [
+                  {
+                    "name": "Description",
+                    "$text": "While a friendly [TEST] Bare InSv (Unresolved) model is on the battlefield, you cannot re-roll save rolls for this unit."
+                  }
+                ]
+              },
+              {
+                "id": "test-bare-insv-vexilla",
+                "name": "Vexilla",
+                "typeName": "Abilities",
+                "characteristics": [
+                  {
+                    "name": "Description",
+                    "$text": "Add 1 to the Objective Control characteristic of models in the bearer's unit."
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

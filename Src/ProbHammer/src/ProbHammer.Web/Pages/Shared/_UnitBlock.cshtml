@@ -250,6 +250,12 @@
                                 <div class="stat-tile stat-tile-flagged"><span class="stat-label">OC</span><span
                                         class="stat-value">@Html.Raw(BoltSvgIcon("oc-battleshock-icon"))</span></div>
                             }
+                            else if (block.ObjectiveControlMarker is { } ocMarker)
+                            {
+                                <div class="stat-tile stat-tile-flagged"><span
+                                        class="stat-label">OC@(ocMarker)</span><span
+                                        class="stat-value">@(block.Statline.Oc)</span></div>
+                            }
                             else
                             {
                                 <div class="stat-tile"><span class="stat-label">OC</span><span
@@ -282,15 +288,18 @@
                                one bordered box), not a separate box+label pair beside each other - matches the
                                other Statline attributes' own layout exactly, per direct user feedback. Any
                                attack-type icon rides inside the value line itself (next to the number it
-                               qualifies), not the label, so the label is always just "InSv" (or "InSv*" when
-                               caveated) across every shape. *@
+                               qualifies), not the label - the label is always just "InSv", plus
+                               block.InvulnerableSaveMarker when this run's save is flagged (still-caveated, or
+                               resolved by a matched statline-flag-rules rule) across every shape. *@
+                            @{
+                                var insvLabel = "InSv" + block.InvulnerableSaveMarker;
+                            }
                             @if (inv.Caveated)
                             {
                                 <div class="stat-tile insv-tile stat-tile-flagged">
-                                    <span class="stat-label">InSv*</span>
+                                    <span class="stat-label">@insvLabel</span>
                                     <span class="stat-value">@(inv.MeleeInSv)+</span>
                                 </div>
-                                <p class="insv-caveat-text">@inv.CaveatAbility!.Text</p>
                             }
                             else if (inv.MeleeInSv == 0 && inv.RangedInSv == 0)
                             {
@@ -299,22 +308,25 @@
                             else if (inv.MeleeInSv == inv.RangedInSv)
                             {
                                 @* Uniform - applies equally to both attack types, so no attack-type icon needed. *@
-                                <div class="stat-tile insv-tile">
-                                    <span class="stat-label">InSv</span>
+                                <div
+                                    class="stat-tile insv-tile @(block.InvulnerableSaveMarker != null ? "stat-tile-flagged" : "")">
+                                    <span class="stat-label">@insvLabel</span>
                                     <span class="stat-value">@(inv.MeleeInSv)+</span>
                                 </div>
                             }
                             else if (inv.RangedInSv == 0)
                             {
-                                <div class="stat-tile insv-tile">
-                                    <span class="stat-label">InSv</span>
+                                <div
+                                    class="stat-tile insv-tile @(block.InvulnerableSaveMarker != null ? "stat-tile-flagged" : "")">
+                                    <span class="stat-label">@insvLabel</span>
                                     <span class="stat-value">⚔ @(inv.MeleeInSv)+</span>
                                 </div>
                             }
                             else if (inv.MeleeInSv == 0)
                             {
-                                <div class="stat-tile insv-tile">
-                                    <span class="stat-label">InSv</span>
+                                <div
+                                    class="stat-tile insv-tile @(block.InvulnerableSaveMarker != null ? "stat-tile-flagged" : "")">
+                                    <span class="stat-label">@insvLabel</span>
                                     <span class="stat-value">@Html.Raw(rangedIcon) @(inv.RangedInSv)+</span>
                                 </div>
                             }
@@ -323,8 +335,9 @@
                                 @* Two stacked rows (ranged above melee), not one line with a "/" separator - each
                                    row reads as a complete, self-contained fact ("ranged: 5+", "melee: 4+") rather
                                    than needing the eye to track a column pairing across a divider. *@
-                                <div class="stat-tile insv-tile">
-                                    <span class="stat-label">InSv</span>
+                                <div
+                                    class="stat-tile insv-tile @(block.InvulnerableSaveMarker != null ? "stat-tile-flagged" : "")">
+                                    <span class="stat-label">@insvLabel</span>
                                     <span class="stat-value stat-value-compact">
                                         <span>@Html.Raw(rangedIcon) @(inv.RangedInSv)+</span>
                                         <span>⚔ @(inv.MeleeInSv)+</span>
@@ -332,6 +345,18 @@
                                 </div>
                             }
                         </div>
+                        @if (block.FlagLegend.Count > 0)
+                        {
+                            <div class="statline-flag-legend">
+                                @foreach (var flag in block.FlagLegend)
+                                {
+                                    var legendTriggerHtml = WebUtility.HtmlEncode($"{flag.Marker} {AbilityDisplayName(flag.Source)}");
+                                    var (legendTrigger, legendTrailer) = BuildRulePopover(legendTriggerHtml, "ability-name-line flag-legend-line", flag.Source.Text, new HashSet<string>());
+                                    @Html.Raw(legendTrigger)
+                                    @Html.Raw(legendTrailer)
+                                }
+                            </div>
+                        }
                     </div>
 
                     @if (block.ModelAbilities.Any())

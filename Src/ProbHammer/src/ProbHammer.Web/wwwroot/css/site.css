@@ -576,18 +576,20 @@ button[type="submit"]:hover { opacity: 0.85; }
    caught by direct user testing: both cells rendered as stacked block boxes spanning the table's
    full width instead of sitting side by side as columns). The <td> stays a plain, unstyled table
    cell; only its own content wrapper is a flex column.
-   .army-rules-cell (no per-entry name label to keep separate from) is itself the one fill/border
-   box, mirroring .statline-cell.spans-component/.spans-whole-unit's own uniform --bg fill and
-   dashed 3px-radius box directly. .detachment-rules-cell is a plain, unstyled list of
-   .detachment-entry blocks instead - see .detachment-entry-rules below for where that same
-   fill/border/striping actually lives on the Detachment side, scoped per Detachment rather than to
-   the whole column (a real fix from direct user testing: the Detachment name label itself was
-   getting pulled into the fill, and striping was alternating continuously across Detachment
-   boundaries instead of resetting at each one). */
+   .army-rules-cell (no per-entry name label to keep separate from) is itself the one border box,
+   mirroring .statline-cell.col-model-abilities/.col-unit-abilities' own dashed 3px-radius
+   container directly. .detachment-rules-cell is a plain, unstyled list of .detachment-entry
+   blocks instead - see .detachment-entry-rules below for where that same border/striping actually
+   lives on the Detachment side, scoped per Detachment rather than to the whole column (a real fix
+   from direct user testing: the Detachment name label itself was getting pulled into the fill,
+   and striping was alternating continuously across Detachment boundaries instead of resetting at
+   each one). background: var(--bg2) (plain/neutral, not --bg) - a container never carries the
+   "filled ability card" look itself, only its .ability-name-line buttons do (resolve-known-
+   ability-effects' direct user-stated principle, applied here too for the same reason). */
 .army-rules-cell {
     display: flex;
     flex-direction: column;
-    background: var(--bg);
+    background: var(--bg2);
     border: 1px dashed var(--border);
     border-radius: 3px;
     overflow: hidden;
@@ -611,21 +613,23 @@ button[type="submit"]:hover { opacity: 0.85; }
     color: var(--text);
 }
 
-/* One box per Detachment's own resolved rules - mirrors .statline-cell.spans-component/
-   .spans-whole-unit's fill/border exactly (same reasoning as .army-rules-cell above), but scoped to
+/* One box per Detachment's own resolved rules - mirrors .statline-cell.col-model-abilities/
+   .col-unit-abilities' border exactly (same reasoning as .army-rules-cell above), but scoped to
    THIS Detachment's own <button> children only: each .detachment-entry is its own sibling-counting
    context, so .ability-name-line:nth-of-type(even) naturally resets at every Detachment instead of
    alternating continuously through the whole column - "zebra striping only matters within one
    Detachment, never across Detachments" falls out of the DOM grouping alone, no extra CSS needed.
    Indented (margin-left) relative to .detachment-name above it, rather than via padding on the
-   buttons themselves, so the whole box - fill, border, and all - reads as nested under its own
-   name. Omitted entirely (via @if in _ArmyHeader.cshtml) for a Detachment with no resolved rules,
-   matching a zero-rule Detachment showing its name with no box at all. */
+   buttons themselves, so the whole box - border and all - reads as nested under its own name.
+   background: var(--bg2), not --bg - see .army-rules-cell's own comment above; the buttons inside
+   carry the filled look, not this container. Omitted entirely (via @if in _ArmyHeader.cshtml) for
+   a Detachment with no resolved rules, matching a zero-rule Detachment showing its name with no
+   box at all. */
 .detachment-entry-rules {
     display: flex;
     flex-direction: column;
     margin-left: 1.2rem;
-    background: var(--bg);
+    background: var(--bg2);
     border: 1px dashed var(--border);
     border-radius: 3px;
     overflow: hidden;
@@ -904,6 +908,10 @@ button.filter-flag:hover { opacity: 0.8; }
     margin-top: 0;
 }
 
+.statline-cell.col-statline.run-collapsed .statline-flag-legend {
+    display: none;
+}
+
 .stat-tile {
     display: flex;
     flex-direction: column;
@@ -922,20 +930,20 @@ button.filter-flag:hover { opacity: 0.8; }
    specifically - see redesign-invulnerable-save-display's design.md. Reuses .stat-tile itself
    (label-on-top, value-below, one bordered box) rather than a separate box+label pair beside each
    other, so it matches the other Statline attributes' own layout exactly - direct user feedback.
-   Both this and .insv-caveat-text are direct children of .statline-tiles (a grid) so they fall
-   inside the same run-collapse mechanism that already hides/shows that container - no separate
-   collapse CSS. grid-column: 3 (Sv's own column, single-column not spanning) so only that column's
-   auto-width grows to fit a wider value/icon combination, leaving the other five tiles' widths
-   alone - a spanning row previously let a long value bleed its width into every column it crossed. */
+   grid-column: 3 (Sv's own column, single-column not spanning) so only that column's auto-width
+   grows to fit a wider value/icon combination, leaving the other five tiles' widths alone - a
+   spanning row previously let a long value bleed its width into every column it crossed. */
 .insv-tile { grid-column: 3; }
 /* Shared "this stat-tile's value isn't the plain catalogue value" background treatment - originally
    InSv-only (.insv-tile-caveated), generalized by half-strength-and-battleshock-indicators once the
-   Battle-shocked OC tile needed the identical visual family. A separate background token
-   (--amber-tint) rather than the page's existing --amber accent itself, kept black-on-light like
-   every other stat value on this page (not GW's inverted dark-shield/white-text treatment) -
-   explicit user call, see redesign-invulnerable-save-display's design.md "Caveated box color". The
-   glyph/value inside stays in the tile's ordinary .stat-value color regardless of which tile this
-   is on - only the background carries the "flagged" signal, never the value's own ink. */
+   Battle-shocked OC tile needed the identical visual family, and again by resolve-known-ability-
+   effects to also cover any tile flagged by a matched statline-flag-rules rule (e.g. Vexilla's OC).
+   A separate background token (--amber-tint) rather than the page's existing --amber accent itself,
+   kept black-on-light like every other stat value on this page (not GW's inverted dark-shield/
+   white-text treatment) - explicit user call, see redesign-invulnerable-save-display's design.md
+   "Caveated box color". The glyph/value inside stays in the tile's ordinary .stat-value color
+   regardless of which tile this is on - only the background carries the "flagged" signal, never the
+   value's own ink. */
 .stat-tile-flagged { background: var(--amber-tint); border-color: var(--amber); }
 /* The differing-both-known case stacks its two icon+value pairs as two rows (ranged above melee)
    rather than one line with a "/" separator - each row reads as a complete, self-contained fact,
@@ -950,15 +958,33 @@ button.filter-flag:hover { opacity: 0.8; }
     font-size: 0.72rem;
 }
 .insv-icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
-/* The only place on this page rendering an Ability's Text rather than only its Name - see the
-   render-site comment in _UnitBlock.cshtml and design.md's "Caveated ability text". Full card
-   width, not constrained to .insv-tile's own column, since real caveat text runs a full sentence. */
-.insv-caveat-text {
-    grid-column: 1 / -1;
-    margin: 0.25rem 0 0;
-    font-size: 0.7rem;
-    font-style: italic;
-    color: var(--text-dim);
+
+/* Flagged-statline legend (resolve-known-ability-effects) - a sibling of .statline-tiles, not one
+   of its grid children (unlike the retired .insv-caveat-text paragraph it replaces), since it now
+   covers any flagged tile in the run (InSv or OC), not only InSv. One line per distinct marker
+   active in this run, each naming its source ability via the exact same .ability-name-line popover
+   trigger/styling every other ability name on the page already uses - full card look (dashed-border
+   box, padding, border-bottom, bold weight, 0.78rem sizing) plus its own :nth-of-type(even) zebra
+   striping when a run carries more than one flag, not a trimmed-down variant - never rendering the
+   source's full text inline. Mirrors .statline-cell.col-model-abilities/.col-unit-abilities' own box
+   treatment exactly (border/radius/padding/font-size), rather than leaving the row(s) floating with
+   no container the way a bare flex column did - a legend is the same kind of "ability card" as those
+   columns, just positioned beneath a run's own tiles instead of beside them. No max-height/opacity
+   collapse transition copied from that box, since the whole legend already hides in one step via the
+   run-collapsed rule below, not a per-cell fade. */
+.statline-flag-legend {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.25rem;
+    border: 1px dashed var(--border);
+    border-radius: 3px;
+    font-size: 0.78rem;
+    overflow: hidden;
+    /* Matches .statline-cell.col-model-abilities/.col-unit-abilities' own container background
+       exactly: always var(--bg2) (plain/neutral), never var(--bg) - a container never carries the
+       "filled ability card" look itself, only its .ability-name-line buttons do (direct
+       user-stated principle, resolve-known-ability-effects) - see design-tokens.md. */
+    background: var(--bg2);
 }
 
 .loadout-breakdown {
@@ -1190,10 +1216,20 @@ button.filter-flag:hover { opacity: 0.8; }
    .ability-name-line's own padding uniformly, regardless of row parity or position - see
    restyle-ability-list-rows/design.md for why a separate container-level padding band
    reintroduced a visible gap under an odd/unstriped last row. display: flex + flex-direction:
-   column, paired with flex: 1 1 auto on each .ability-name-line, lets a short ability list's rows
-   grow to fill the cell's full height instead of leaving blank space below the last row - needed
-   because a .spans-component cell's height is driven by the statline rows it spans, not by its
-   own ability count. */
+   column.
+
+   background: var(--bg2) (plain default, same as the card behind it) always, spanning or not -
+   the CONTAINER never carries the "filled ability card" look; that belongs to the buttons inside
+   it (below). An earlier pass of this same change had this backwards - the container carried
+   var(--bg) and a button's own background was `none` (transparent), so a compact, content-height
+   cell (e.g. Custodian Guard's Vexilla) looked correctly filled purely by accident, since its
+   border already hugged its one button almost exactly; a taller spanning cell (e.g. a
+   component-wide "Invulnerable Save" card) showed that same fill bleeding through the blank space
+   below its button too, which read as one solid grey blob rather than a button sitting in neutral
+   space. Direct user-stated principle: containers are always neutral; only a button (or its zebra
+   stripe) ever carries a background. overflow: hidden + border-radius here clips a flush-fitting
+   button's own corners to match the container's rounding, so a filled first/last button still
+   looks correctly rounded with no separate radius rule needed on the button itself. */
 .statline-cell.col-model-abilities,
 .statline-cell.col-unit-abilities {
     border: 1px dashed var(--border);
@@ -1205,16 +1241,33 @@ button.filter-flag:hover { opacity: 0.8; }
     max-height: 10rem;
     overflow: hidden;
     opacity: 1;
+    background: var(--bg2);
     transition: max-height 0.15s, opacity 0.15s, padding 0.15s, border-color 0.15s;
 }
 
-/* Component-wide (Datasheet-sourced) abilities spanning multiple statline rows get a subtle fill
-   so the taller cell visibly reads as "covering" its span, not just an odd empty gap. A
-   deduplicated Core Rule ability belonging to no single component (its own dedicated row above
-   every component's rows, see gate-and-dedupe-core-rule-abilities) gets the same fill for the
-   same reason - it reads as a distinct kind of cell from a plain row-bound one. */
-.statline-cell.spans-component,
-.statline-cell.spans-whole-unit { background: var(--bg); }
+/* .ability-name-line always sizes to its own content (default flex: 0 1 auto), never grown to fill
+   its container - direct user-stated principle: a button's height should always be just a little
+   bigger than the text inside it, uniformly, whether its container happens to be exactly
+   content-height (a plain, non-spanning cell) or taller (a .spans-component/.spans-whole-unit
+   cell, which still needs to stretch across the full row-track height it covers - see below - so
+   its border keeps visually marking the rows/span it belongs to; only the button inside stays
+   compact, leaving blank neutral space beneath it). */
+
+/* .statline-grid's default grid `align-items: stretch` still stretches a plain, non-spanning
+   ability CELL itself to match its row's height (a separate mechanism from the flex-grow rule
+   above, which only governs the BUTTON inside an already-stretched cell) - so even with that fix, a
+   short one-line ability box next to a taller sibling .col-statline cell (e.g. a flagged/caveated
+   run with its own boxed legend) still rendered as an oversized dashed box with a compact button
+   and a large empty gap beneath it, found via direct user testing to look just as wrong as the
+   stretched-button version it replaced. align-self: start opts a plain cell out of that stretch
+   entirely, sizing its box to its own content and leaving any leftover row height as plain page
+   background instead of empty space inside its own border - matching how the exact same box looks
+   in a shorter, isolated row today. A spanning cell is deliberately excluded (:not(...)) - it still
+   needs to stretch across its own multi-row span, per the rule above. */
+.statline-cell.col-model-abilities:not(.spans-component):not(.spans-whole-unit),
+.statline-cell.col-unit-abilities:not(.spans-component):not(.spans-whole-unit) {
+    align-self: start;
+}
 
 /* Unlike .col-statline (which keeps its header lines visible and only hides the stat-tile beneath
    them), an ability cell has no header content of its own - it collapses in full, per
@@ -1237,11 +1290,10 @@ button.filter-flag:hover { opacity: 0.8; }
     padding: 0.3rem 0.6rem;
     border: none;
     border-bottom: 1px solid var(--border);
-    flex: 1 1 auto;
     display: flex;
     align-items: center;
     width: 100%;
-    background: none;
+    background: var(--bg);
     font: inherit;
     /* font-weight MUST come after the `font: inherit` shorthand above - `font` resets font-weight
        (among other font-* longhands) to its own value, so a `font-weight: 700` declared before it
@@ -1263,15 +1315,16 @@ button.filter-flag:hover { opacity: 0.8; }
    server-assigned row striping (site.css's "Striping is driven by..." note below) already avoids
    for a different reason. :nth-of-type instead counts only same-tag (<button>) siblings, so the
    interleaved <div> popovers - always display:none while closed, and promoted out of normal flow
-   into the top layer once open either way - never affect it. Fill color can't reuse the weapon
-   table's literal var(--bg): a .spans-component ability cell already uses var(--bg) as its own
-   background (above), which would make the stripe invisible against it. color-mix(border 70%,
-   bg2) stays visible against both a plain cell (--bg2) and a .spans-component cell (--bg) - see
-   restyle-ability-list-rows/design.md for the full comparison trail. */
+   into the top layer once open either way - never affect it. The zebra fill overrides every
+   even-indexed button's own plain var(--bg) (above) to a visibly darker shade - color-mix(border
+   70%, bg2) reads distinctly against both var(--bg) (the odd/unstriped button) and var(--bg2) (the
+   always-neutral container behind both) - see restyle-ability-list-rows/design.md for the original
+   comparison trail that picked this exact mix. */
 .ability-name-line:nth-of-type(even) {
     background: color-mix(in srgb, var(--border) 70%, var(--bg2));
 }
 
+/* Trims the shared .ability-name-line trigger look down to plain small text for a
 /* ── Rule/ability text popover (rules-glossary-popovers) ── */
 
 /* Base panel, unpositioned: the browser's own UA stylesheet already centers a [popover] roughly

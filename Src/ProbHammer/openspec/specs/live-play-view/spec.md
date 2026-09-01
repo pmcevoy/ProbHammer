@@ -123,10 +123,8 @@ alongside the value itself, inside the tile:
   than a single merged value or a single line joined by a separator.
 - A caveated save renders its single kept value with no attack-type indicator — since which attack
   type it applies to is not known at this layer — in a tile background visually distinct from the
-  non-caveated tile's background. The associated `CaveatAbility`'s full descriptive text SHALL
-  render beneath the tile, at the unit block's normal reading width. This is the first place in the
-  unit block that renders an ability's descriptive text rather than only its name; it is scoped to
-  this one rendering and does not extend to any other ability shown elsewhere in the block.
+  non-caveated tile's background, per "Flagged Statline Characteristic Rendering" below, which
+  governs how the save's source is shown to the player.
 - A save whose melee and ranged values are both 0 (the default) renders no box at all.
 
 Each entry's header line, and each of its nested loadout lines when rendered, SHALL act as an
@@ -147,8 +145,9 @@ regardless of its selection state (see the Aggregate Weapon Count View requireme
 
 A run's shared stat-tile SHALL collapse to a header-only presentation — every entry's header line
 (and nested loadout breakdown, when rendered) still shown, but the M/T/Sv/W/Ld/Oc stat-tile itself,
-and the invulnerable save box and its caveat ability text when the run has one, hidden — whenever
-either of two independent conditions holds for every entry belonging to that run:
+the invulnerable save box, any other flagged Statline tile the run has, and their shared legend (per
+"Flagged Statline Characteristic Rendering" below), hidden — whenever either of two independent
+conditions holds for every entry belonging to that run:
 every entry is in the fully-deselected state, or every entry has a remaining count of 0 (i.e. is
 fully dead — for a multi-loadout entry, every one of its loadouts is at 0 remaining). The stat-tile
 SHALL expand back to its full presentation the moment any one entry in the run no longer meets
@@ -256,9 +255,10 @@ requirement already govern.
 
 #### Scenario: Caveated invulnerable save's ability text renders beneath the box
 - **WHEN** a run's shared Statline value has a caveated invulnerable save
-- **THEN** the associated `CaveatAbility`'s full descriptive text renders beneath the invulnerable
-  save tile — the only place in the unit block where an ability's text, rather than only its name,
-  is shown
+- **THEN** per "Flagged Statline Characteristic Rendering" below, that run renders a legend entry
+  naming the associated `CaveatAbility` via an interactive popover trigger, beneath the invulnerable
+  save tile — its full descriptive text is available on demand through that trigger, not rendered
+  inline by default
 
 #### Scenario: Deselecting one loadout leaves its statline in a partial state
 - **WHEN** a statline entry has two loadouts, both currently selected, and the player deselects one
@@ -329,6 +329,57 @@ requirement already govern.
   having models remaining and being selected
 - **THEN** the run's stat-tile remains fully visible, since not every entry in the run meets the
   fully-deselected or fully-dead condition
+
+### Requirement: Flagged Statline Characteristic Rendering
+A Statline tile whose displayed value has been flagged — either an invulnerable save left caveated
+per "Footnoted Caveat Text Resolution" (`invulnerable-save`), or a characteristic mutated by a
+matched rule per `statline-flag-rules` — SHALL render a footnote marker appended to its label (e.g.
+"InSv*", "OC**"), and that run SHALL render a legend directly beneath its tile row, one line per
+distinct marker active within that run, naming the source ability responsible. Each legend line's
+ability name SHALL be an interactive trigger using the same popover mechanism as any other ability
+name in the unit block (per "Ability And Rule Text Popover") — the source ability's descriptive text
+is available on demand, not rendered inline by default.
+
+Marker identity SHALL be assigned once per unit block and reused for the same source ability
+wherever it recurs within that block, so a single source referenced by more than one flagged tile,
+or by tiles in more than one run, keeps the same marker throughout. The legend line for a given
+marker SHALL render within every run that has a tile carrying that marker, even when this means the
+same legend line appears in more than one run of the same unit block — it SHALL NOT be consolidated
+into a single shared location for the whole unit block, so a run's own flagged tile is never left
+without a visible local explanation.
+
+#### Scenario: A flagged tile's label carries a marker
+- **WHEN** a run's Statline tile has a flagged value
+- **THEN** its label renders with a footnote marker appended, distinguishing it from an unflagged
+  tile of the same characteristic
+
+#### Scenario: A run's legend names the flagged tile's source
+- **WHEN** a run has one flagged tile
+- **THEN** a legend line renders beneath that run's tiles, pairing the tile's marker with the source
+  ability's name, rendered as a popover trigger rather than inline prose
+
+#### Scenario: Tapping a legend entry opens the source ability's text
+- **WHEN** a player taps a legend entry's ability name
+- **THEN** a popover opens showing that ability's full descriptive text, per "Ability And Rule Text
+  Popover"
+
+#### Scenario: One source ability keeps the same marker across the whole unit block
+- **WHEN** a source ability's flagged value affects tiles in more than one run within the same unit
+  block
+- **THEN** every affected tile carries the same marker, and each affected run's own legend names
+  that same source
+
+#### Scenario: A unit-wide-scoped source's legend repeats in every affected run
+- **WHEN** a source ability grants a flagged value that applies to every run of a unit (e.g. a
+  bearer's-unit-wide characteristic change), and that unit renders more than one statline run
+- **THEN** the legend line naming that source renders within every one of those runs, not only the
+  run containing the bearer
+
+#### Scenario: A caveated invulnerable save uses the same marker-and-legend mechanism
+- **WHEN** a run's invulnerable save is left caveated (its linked ability text did not match a known
+  template, per "Footnoted Caveat Text Resolution")
+- **THEN** that run's legend names the linked `CaveatAbility` the same way it would name any other
+  flagged tile's source, rather than rendering that ability's text inline
 
 ### Requirement: Statline Ability Column Rendering
 Each unit block's Statline area SHALL render two additional columns alongside the statline column:

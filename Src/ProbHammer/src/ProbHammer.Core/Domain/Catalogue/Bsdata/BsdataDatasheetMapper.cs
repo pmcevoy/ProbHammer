@@ -525,7 +525,11 @@ public static partial class BsdataDatasheetMapper
             var footnotedDigit = int.Parse((leftFootnoted ? left : right).Groups[1].Value);
             var plainDigit = int.Parse((leftFootnoted ? right : left).Groups[1].Value);
             var splitAbility = ResolveCaveatAbility(footnotedDigit, ancestry, ctx, text);
-            return new InvulnerableSave(plainDigit, plainDigit, caveated: true, caveatAbility: splitAbility);
+            var resolved =
+                InvulnerableSaveCaveatClassifier.TryResolveSplit(splitAbility.Text, footnotedDigit, plainDigit);
+            return resolved is { } r
+                ? new InvulnerableSave(r.Melee, r.Ranged, caveated: false, caveatAbility: null)
+                : new InvulnerableSave(plainDigit, plainDigit, caveated: true, caveatAbility: splitAbility);
         }
 
         var bareMatch = InSvBareValueRegex().Match(text);
@@ -537,7 +541,10 @@ public static partial class BsdataDatasheetMapper
             return new InvulnerableSave(bareDigit, bareDigit, caveated: false, caveatAbility: null);
 
         var bareAbility = ResolveCaveatAbility(bareDigit, ancestry, ctx, text);
-        return new InvulnerableSave(bareDigit, bareDigit, caveated: true, caveatAbility: bareAbility);
+        var bareResolved = InvulnerableSaveCaveatClassifier.TryResolveBare(bareAbility.Text);
+        return bareResolved is { } br
+            ? new InvulnerableSave(br.Melee, br.Ranged, caveated: false, caveatAbility: null)
+            : new InvulnerableSave(bareDigit, bareDigit, caveated: true, caveatAbility: bareAbility);
     }
 
     /// <summary>Resolves the specific Ability a footnoted InSv value of the given digit is linked

@@ -3,7 +3,24 @@ using ProbHammer.Core.Domain.Catalogue;
 namespace ProbHammer.Core.Domain.Roster;
 
 public sealed record ModelLineLoadout(
-    string WeaponsLabel, IReadOnlyList<string> Weapons, int RemainingCount, int InitialCount);
+    string WeaponsLabel,
+    IReadOnlyList<string> Weapons,
+    int RemainingCount,
+    int InitialCount);
+
+/// <summary>Which Statline characteristic a <see cref="StatlineFlagRule"/> targets - see
+/// statline-flag-rules.</summary>
+public enum StatlineFlagCharacteristic
+{
+    InvulnerableSave,
+    ObjectiveControl
+}
+
+/// <summary>One characteristic on one <see cref="AggregateStatlineEntry"/> that a matched
+/// <see cref="StatlineFlagRule"/> mutated, carrying a reference back to the specific
+/// <see cref="Ability"/> responsible - see live-play-view's "Flagged Statline Characteristic
+/// Rendering" for how this drives the marker/legend display.</summary>
+public sealed record StatlineFlag(StatlineFlagCharacteristic Characteristic, Ability SourceAbility);
 
 public sealed record AggregateStatlineEntry(
     string ComponentName,
@@ -11,7 +28,16 @@ public sealed record AggregateStatlineEntry(
     Statline Statline,
     int RemainingCount,
     int InitialCount,
-    IReadOnlyList<ModelLineLoadout> Loadouts);
+    IReadOnlyList<ModelLineLoadout> Loadouts,
+    IReadOnlyList<StatlineFlag> Flags)
+{
+    public AggregateStatlineEntry(
+        string ComponentName, string StatlineName, Statline Statline, int RemainingCount, int InitialCount,
+        IReadOnlyList<ModelLineLoadout> Loadouts)
+        : this(ComponentName, StatlineName, Statline, RemainingCount, InitialCount, Loadouts, [])
+    {
+    }
+}
 
 /// <summary>
 /// <see cref="LoadoutIndex"/> is the contributing <c>ModelLine</c>'s position within its
@@ -63,7 +89,10 @@ public sealed record AggregateWeaponEntry(
 /// single-component collapse rule every other entry uses.
 /// </summary>
 public sealed record AggregateAbilityEntry(
-    string? ComponentName, string? StatlineName, Ability Ability, IReadOnlyList<string> ContributingComponentNames)
+    string? ComponentName,
+    string? StatlineName,
+    Ability Ability,
+    IReadOnlyList<string> ContributingComponentNames)
 {
     public AggregateAbilityEntry(string ComponentName, string? StatlineName, Ability Ability)
         : this(ComponentName, StatlineName, Ability, [])

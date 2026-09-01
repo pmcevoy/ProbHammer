@@ -198,6 +198,24 @@ public class BattleScribeRosterMapperTests
     }
 
     [Fact]
+    public void WargearGrantedShieldDome_FlagsTheImpulsorsInvulnerableSave()
+    {
+        // Real end-to-end confirmation (statline-flag-rules) against this fixture's own real
+        // "Shield Dome" text ("The bearer has a 5+ invulnerable save.") - not just a hand-built
+        // rule-engine fixture, per this project's "verify against a real captured export" habit.
+        var army = BuildRoster();
+        var impulsor = army.Units.OfType<Unit>().Single(u => u.Name == "Impulsor");
+
+        var view = AttachedUnitAggregator.Build(impulsor);
+
+        var entry = view.Statlines.Should().ContainSingle().Subject;
+        entry.Statline.InSv.Caveated.Should().BeFalse();
+        entry.Statline.InSv.MeleeInSv.Should().Be(5);
+        entry.Statline.InSv.RangedInSv.Should().Be(5);
+        view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Shield Dome"); // still visible normally
+    }
+
+    [Fact]
     public void TopLevelSelectionsOwnCategories_PopulateTheSynthesizedDatasheetsKeywords()
     {
         // Trimmed real excerpt of data/nr-app-export-masters-of-the-maelstrom.json - see
@@ -222,6 +240,20 @@ public class BattleScribeRosterMapperTests
         garlon.Keywords.Should().Contain("Psyker");
         garreon.Keywords.Should().BeEmpty();
         unit.Datasheet.Keywords.Should().NotContain("Psyker");
+    }
+
+    [Fact]
+    public void LeaderSupportAndAttachedUnit_AreExcludedFromBothExtractionPaths()
+    {
+        // Real fixture shape: "Lieutenant" carries BOTH a rules[]-sourced "Support" entry (Core
+        // Rule Extraction) and a profiles[]-sourced "Support" Abilities entry (Statline/Weapon/
+        // Ability Extraction) - both restate attachment eligibility the roster's own Attachment
+        // Relationship Resolution already represents directly (battlescribe-roster-import's
+        // "Attachment-Eligibility Abilities Are Excluded").
+        var army = BuildRoster();
+        var lieutenant = FindUnit(army, "Lieutenant");
+
+        lieutenant.Datasheet.Abilities.Select(a => a.Name).Should().NotContain(["Leader", "Support", "Attached Unit"]);
     }
 
     private static Unit FindUnit(ArmyRoster army, string name) =>

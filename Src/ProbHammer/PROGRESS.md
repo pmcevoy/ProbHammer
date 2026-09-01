@@ -17,6 +17,62 @@ NewRecruit JSON re-export) uses that Detachment, so a new export would be needed
 
 ## Recently Completed
 
+- OpenSpec change `resolve-known-ability-effects` implemented (26/26 tasks): resolves a small,
+  closed set of previously-catalogued ability phrasings into real stat values, and drops three
+  purely-redundant attachment-eligibility abilities. Three pieces:
+  1. **`InvulnerableSaveCaveatClassifier`** (`Domain.Catalogue`, shared by both import pipelines —
+     `BattleScribeRosterMapper` must not depend on `Domain.Catalogue.Bsdata`): when a footnoted
+     InSv's linked ability text is an exact, whole-string match against one of four known templates
+     ("This model has a {N}+ invulnerable save against {ranged|melee} attacks." / "Models in this
+     unit have a {N}+ invulnerable save against {ranged|melee} attacks."), it resolves to a real,
+     non-caveated melee/ranged split instead of today's caveated fallback; a melee/ranged pair's
+     matched side is also checked for digit consistency against the raw footnoted digit. Wired into
+     both `BsdataDatasheetMapper.ResolveInvulnerableSave` and `BattleScribeRosterMapper`'s own copy
+     at the exact point each already computed its fallback. **Real corpus findings**: this
+     immediately resolved several existing test fixtures whose ability text happened to already be
+     exact real-BSData template text (`InvulnerableSaveResolutionTests`' Linked/Split/Collision
+     cases all updated to their new correctly-resolved values); a full-corpus scan
+     (`InvulnerableSaveCaveatResolutionScanTests`, new) first found two still-caveated real
+     occurrences — Space Marines' Judiciar, whose linked ability text uses a U+00A0 no-break space
+     in place of one plain space mid-template (fixed generally by normalizing that character before
+     matching, not allowlisted, since it's the same template just differently encoded) and Orks'
+     Makari (a re-roll restriction, not an attack-type split — the confirmed real anomaly
+     proposal.md itself named, correctly allowlisted as unresolvable).
+  2. **Attachment-eligibility ability exclusion**: `Datasheet`'s own constructor now drops any
+     ability named exactly "Leader", "Support", or "Attached Unit" regardless of source — a single
+     injection point both the BSData and BattleScribe pipelines already funnel every Ability
+     through, so no per-pipeline duplication was needed. A full-corpus scan
+     (`LeaderSupportAttachedUnitNameScanTests`, new) walks the raw closure tree directly (bypassing
+     `BuildDatasheet`, which would filter these away before the scan ever saw them) and confirms
+     every one of 849 real occurrences across the live clone genuinely mentions attachment
+     eligibility — far too many to allowlist individually like this project's other corpus scans,
+     so this one asserts a single shared semantic signal ("attach", case-insensitive) instead of the
+     usual per-item `AllowlistEntry`/`AllowlistCheck` pattern.
+  3. **`statline-flag-rules`** (new `Domain.Roster` mechanism, `StatlineFlagRule`/
+     `StatlineFlagRuleCatalogue`/`AttachedUnitAggregator.ApplyStatlineFlagRules`): a closed-vocabulary
+     rule matches one specific ability by exact Name+Text and derives a flagged
+     `AggregateStatlineEntry.Statline` value plus a `StatlineFlag` record for a *specific resolved
+     unit*, re-evaluated live on every `AttachedUnitAggregator.Build` call from that unit's own
+     currently-present abilities (no independent caching) — the source ability is never removed
+     from its normal Abilities/Enhancements listing. Two seed rules: Shield Dome (bearer-only scope,
+     grants a flat 5+ invulnerable save) and Vexilla (whole-unit scope — applies to every row of the
+     `ICombatUnit`, not just the bearer's own, matching the real 11e rule). `/LivePlay`'s old
+     InSv-only always-visible `.insv-caveat-text` italic paragraph is retired entirely, replaced by
+     a general per-run footnote-marker-and-legend mechanism (`LivePlayModel.AssignFlagMarkers`
+     assigns `*`/`**`/... once per unit block, reused for the same source wherever it recurs) driven
+     uniformly by an unresolved InSv caveat and a `statline-flag-rules` match alike — a legend line
+     reuses the exact same `ability-name-line` popover-trigger mechanism every other ability name on
+     the page already uses, never rendering the source's full text inline.
+
+  Verified end-to-end via `dotnet run` + `firefox-devtools-mcp` against a small hand-built
+  BattleScribe-shaped roster JSON (real Shield Dome text on an Impulsor, real Leader/Support/
+  Attached Unit abilities on a Lieutenant) — confirmed the flagged InSv tile (amber background,
+  "InSv*" label, "5+"), its "* Shield Dome" legend trigger opening a popover with the ability's
+  full text, "Shield Dome" still rendering normally in the Abilities column, and the Lieutenant's
+  Abilities column showing only "Zealot" (Leader/Support/Attached Unit all correctly absent). Full
+  suite green (472 total, 459 run + 13 explicit-only, including the two new corpus scans run
+  manually against the live clone).
+
 - OpenSpec change `classify-known-army-rules` implemented (19/19 tasks): replaces the structural
   `HasPrimaryCatalogueScope` check as the signal for `AbilityOrigin.ArmyRule` classification with a
   curated, per-faction name table (`ArmyRuleNameLookup`, `Domain.Catalogue` — deliberately decoupled
