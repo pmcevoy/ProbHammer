@@ -1,8 +1,10 @@
 # Visual Design Specification
 
-GW-datasheet-inspired light theme, shared by every current live page (`/LivePlay`, `/Import`). No
-web fonts — system font throughout. No monospace outside `/Import`'s paste textarea — stat/weapon
-numbers render in the regular body weight.
+GW-datasheet-inspired light theme, shared by every current live page (`/LivePlay`, `/Import`). One
+bundled, self-hosted variable font (Inter, Latin subset, SIL OFL — `wwwroot/fonts/Inter-
+Variable.woff2`, ~47KB) throughout, not a system font — see "Typography" below for why. No
+monospace outside `/Import`'s paste textarea — stat/weapon numbers render in the regular body
+weight.
 
 ---
 
@@ -42,7 +44,26 @@ selector, same mechanism as before, just no longer the default case.
 
 ## Typography
 
-- **Font:** `system-ui, sans-serif`
+- **Font:** `'Inter', system-ui, sans-serif` — bundled self-hosted variable font, not the OS's own
+  UI font. Originally `system-ui` alone ("native feel, zero load"); switched because a system font
+  resolves to a genuinely different typeface per platform (Segoe UI on the Windows dev machine,
+  San Francisco on an iPhone), so identical CSS viewport dimensions still wrapped text differently
+  between a desktop testing browser and a real phone — confirmed directly: the same sentence on
+  `/Import` wrapped one line on Windows/Chrome and two lines on an actual iPhone at the same 375px
+  width. On a page this real-estate-constrained (a live-game companion meant to fit on a phone
+  screen with Safari's own chrome eating into it), that gap made emulator-based mobile layout work
+  untrustworthy - a fix that looked right in the emulator could still be wrong on the actual device,
+  forcing a round-trip to a real phone to confirm every layout change. A bundled font file's glyph
+  metrics are identical on every engine that loads it (standard OpenType/WOFF2 behavior, confirmed
+  across Chrome/Windows and iOS WebKit alike), closing that gap outright rather than approximating
+  it. `system-ui` stays as a fallback only (the font failing to load/parse). Self-hosted rather than
+  a Google Fonts CDN link - keeps the zero-network-dependency property `system-ui` already had,
+  which matters for a tool used at the table with no guaranteed venue wifi. One variable-font file
+  (weight axis 100–900) rather than four static per-weight files - Google's own CSS2 API serves the
+  identical file for every discrete weight requested once a client is known to support variable
+  fonts, relying on each browser's standard `fvar`-table instance selection per declared
+  `font-weight`, so bundling that one file is both correct and simplest. Latin-only subset - every
+  string this app renders is English.
 - **Scale:** compact — section headers `0.82rem` bold uppercase, stat labels `0.65rem` uppercase,
   stat values `0.95rem` bold, most secondary text in the `0.6–0.78rem` range. No more than a
   handful of distinct sizes on any one screen. The invulnerable-save box (below the main M/T/Sv/W/

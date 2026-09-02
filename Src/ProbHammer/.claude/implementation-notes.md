@@ -41,3 +41,60 @@ T@(Model.Toughness) &nbsp;Sv@(Model.Save)+&nbsp;W@(Model.Wounds)
 ### Razor and WH40K game notation
 
 `@Model.SomeValue++` and `@Model.FeelNoPain+++` are parsed as C# postfix increment expressions. Use `@(Model.SomeValue)++` and `@(Model.FeelNoPain)+++` to get the `++`/`+++` as literal HTML text. `/LivePlay`'s `_UnitBlock.cshtml` applies this to `@(inv.MeleeInSv)++` (`inv` being `block.Statline.InSv`) for the same reason.
+
+---
+
+## Mobile Viewport Emulation (Testing on a Windows Dev Machine)
+
+This app's real audience is a phone browser at the table (see root `CLAUDE.md`'s Project
+Purpose), so mobile layout work needs a trustworthy emulator on the Windows dev machine —
+round-tripping every CSS tweak to a real iPhone for a screenshot is too slow to iterate with.
+Established during mobile layout debugging on `ftr/11th-edition-view`.
+
+**Confirmed real-device viewport dimensions** (the user's iPhone, cross-checked against
+`mybrowsersize.com`, which reports the actual CSS viewport a page receives — already net of the
+browser's own top/bottom chrome, not the device's full screen resolution):
+- **Portrait: 375×539**
+- **Landscape: 667×315**
+
+Use these two exact sizes for any mobile layout check on this project, not a generic "iPhone"
+preset — a preset's assumed chrome height won't match the real figures above.
+
+**Use `chrome-devtools-mcp`, not `firefox-devtools-mcp`, for viewport emulation.**
+`chrome-devtools-mcp`'s `emulate` tool does a true CDP device-metrics override, decoupled from
+the actual browser window — confirmed to hit all three sizes above (and 375×667) exactly, via
+`evaluate_script` reading `window.innerWidth`/`innerHeight` back. Viewport string format:
+`"375x539x2,mobile,touch"` (portrait), `"667x315x2,mobile,touch,landscape"` (landscape) — the
+`x2` is device pixel ratio, `mobile`/`touch` matter for `@media` queries and touch-target
+behavior. Registered at user scope via `claude mcp add --scope user --transport stdio
+chrome-devtools -- npx chrome-devtools-mcp --isolated` (`--isolated` gives a temp, auto-cleaned
+Chrome profile — no separate profile setup needed). A newly-added MCP server's tools only appear
+after a full Claude Code session restart.
+
+`firefox-devtools-mcp` was tried first and rejected for this purpose: `set_viewport_size` resizes
+the actual OS window rather than overriding device metrics, Firefox enforces a hard ~500–516px
+minimum window width that's above both target widths, and browser-chrome overhead (~16px
+width/~94px height) eats into the resulting content viewport unpredictably. Firefox's own
+Responsive Design Mode (accurate device-metrics override, reachable manually via the hamburger
+menu → More Tools) is not reachable through the MCP server at all — `take_snapshot`/`click_by_uid`
+only ever see page content, never browser chrome UI, regardless of which Firefox window is
+involved.
+
+**Font fidelity is required for the emulator to be trustworthy, not just viewport size.** Even
+with an exact viewport match, `font-family: system-ui` resolves to a genuinely different typeface
+per platform — Segoe UI on this Windows dev machine, San Francisco on a real iPhone (every iOS
+browser, including Firefox and Chrome, is required to render via Apple's WebKit engine, not its
+own native engine — still true as of Sept 2026 despite EU DMA/UK CMA pressure toward alternative
+engines). Different typefaces have different glyph metrics, so identical CSS at an identical
+viewport width can genuinely wrap text differently between the Windows/Chrome emulator and a real
+iPhone — confirmed directly on `/Import`: one sentence wrapped to one line on Windows/Chrome and
+two lines on a real iPhone at the same 375px width. This is why the project now bundles a single
+self-hosted variable font (Inter — see `.claude/design-tokens.md`'s "Typography" section) instead
+of depending on `system-ui`: it closes this gap outright (identical glyph metrics on every engine
+that loads the file), rather than leaving mobile layout checks in the emulator unreliable and
+forcing a real-device screenshot to confirm every change.
+
+Even with viewport size and font both matched, this is still Chrome/Blink emulating a
+WebKit-driven device, not a perfect substitute for one — treat the emulator as the fast iteration
+loop, and a real-device screenshot as the final confirmation before calling a mobile layout change
+done, not as something no longer needed at all.

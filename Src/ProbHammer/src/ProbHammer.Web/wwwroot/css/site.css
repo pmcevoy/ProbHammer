@@ -30,10 +30,26 @@
     --bg3-tint: color-mix(in srgb, var(--bg3) 55%, white);
 }
 
+/* Bundled, self-hosted (no CDN/network dependency - matters for table-side use with no venue
+   wifi) so every browser renders byte-identical glyph metrics - the whole point being that a
+   desktop testing browser (e.g. Chrome/Windows emulating a phone viewport) wraps text exactly
+   the same as a real phone's browser, which a system font (Segoe UI vs San Francisco, etc.)
+   can never guarantee. Latin-only subset (Inter v20, SIL OFL) - this app's content is English-
+   only. One variable-font file covering the whole weight axis; the browser selects the exact
+   instance per declared font-weight via the file's own fvar table (standard OpenType behavior,
+   supported uniformly by every evergreen engine including iOS WebKit). */
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('/fonts/Inter-Variable.woff2') format('woff2');
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    font-family: system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     background: var(--bg);
     color: var(--text);
     font-size: 14px;
@@ -493,7 +509,7 @@ button[type="submit"]:hover { opacity: 0.85; }
     margin: 0 auto;
     background: var(--bg);
     color: var(--text);
-    font-family: system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
 }
 
 .live-play-page h1 { color: var(--text); }
