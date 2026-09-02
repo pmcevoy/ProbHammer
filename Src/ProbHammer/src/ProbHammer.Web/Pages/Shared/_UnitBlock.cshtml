@@ -23,17 +23,27 @@
     (string Trigger, string Trailer) BuildRulePopover(string triggerHtml, string triggerClass, string ruleText, IReadOnlySet<string> shownRuleNames) =>
         popovers.BuildRulePopover(triggerHtml, triggerClass, ruleText, shownRuleNames);
 }
-<section class="unit-block" data-unit-index="@i">
-    <h2 class="unit-name">
+@* Whole-unit-block collapse (live-play-landscape-only): the block itself is now a <details>, and
+   its name bar is the <summary> - the same full-bar-is-the-trigger affordance every .lp-section
+   summary already uses, reused here rather than a small dedicated icon-button (icon-buttons on
+   this page are reserved for binary per-unit facts - Half Strength, Battle-shock - not broad
+   disclosure, per the unit-toolbar's own convention). Independent of, and nests around, the four
+   inner .lp-section <details> below - nested <details> is valid HTML with independent `open`
+   state per level, so collapsing this one hides the toolbar and every section without touching
+   their own state. Defaults `open` (expanded) on every initial render - see live-play.js's
+   swapUnitBlock for how a casualty/status/phase-turn re-render carries a player's own collapse
+   choice forward instead of resetting to this default. *@
+<details class="unit-block" data-unit-index="@i" open>
+    <summary class="unit-name">
         <span class="unit-name-text">@unit.Name</span>
-    </h2>
+    </summary>
 
     @* Unit status toolbar (consolidate-unit-toolbar): its own row between the unit-name header and
        the Statline section, immune to the header wrapping onto multiple lines for a long unit name
        (the reason the two status glyphs and the casualty-reset button used to live split across the
        header and the Statline summary bar). All three controls always render - no more
        hide-when-irrelevant per control. Each is a small square icon-button (.unit-toolbar-icon-btn,
-       sized like .mod-step-btn/.casualty-btn's existing inc/dec controls) - the ONLY clickable
+       sized like .casualty-btn's existing inc/dec controls) - the ONLY clickable
        area - with its plain-text caption (.unit-toolbar-label, styled like .stat-label) sitting
        beside it, outside the button, never part of the click target. Two independent states,
        purely via color: "actionable" (--bg3 background, clickable) vs. "inert" (--text-dim
@@ -100,7 +110,8 @@
 
     @if (unit.Statlines.Any())
     {
-        <details class="lp-section" data-section="statline" open="@(expandedSections.Contains(UnitBlockSection.Statline))">
+        <details class="lp-section" data-section="statline"
+                 open="@(expandedSections.Contains(UnitBlockSection.Statline))">
             <summary>
                 <span class="section-title">Statline</span>
                 <span class="statline-flags">
@@ -124,24 +135,11 @@
                 {
                     var wholeUnitCollapsedClass = wholeUnitSpan.IsFullyDead ? "run-collapsed" : "";
                     var wholeUnitDeadAttr = wholeUnitSpan.IsFullyDead ? "true" : "false";
-                    @if (wholeUnitSpan.ModelAbilities.Any())
+                    @if (wholeUnitSpan.ModelAbilities.Any() || wholeUnitSpan.UnitAbilities.Any())
                     {
-                        <div class="statline-cell col-model-abilities spans-whole-unit @wholeUnitCollapsedClass"
+                        <div class="statline-cell col-abilities spans-whole-unit @wholeUnitCollapsedClass"
                              data-dead="@wholeUnitDeadAttr" style="grid-row: 1; grid-column: 2;">
-                            @foreach (var ability in wholeUnitSpan.ModelAbilities)
-                            {
-                                var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
-                                @Html.Raw(abilityTrigger)
-                                @Html.Raw(abilityTrailer)
-                            }
-                        </div>
-                    }
-
-                    @if (wholeUnitSpan.UnitAbilities.Any())
-                    {
-                        <div class="statline-cell col-unit-abilities spans-whole-unit @wholeUnitCollapsedClass"
-                             data-dead="@wholeUnitDeadAttr" style="grid-row: 1; grid-column: 3;">
-                            @foreach (var ability in wholeUnitSpan.UnitAbilities)
+                            @foreach (var ability in wholeUnitSpan.ModelAbilities.Concat(wholeUnitSpan.UnitAbilities))
                             {
                                 var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
                                 @Html.Raw(abilityTrigger)
@@ -184,13 +182,13 @@
                                                 <span class="loadout-label">@loadoutLabels[loadoutIndex]</span>
                                                 (@(loadout.RemainingCount)/@(loadout.InitialCount))
                                                 <span class="casualty-controls">
-                                                    <button type="button" class="casualty-btn mod-step-btn casualty-dec"
+                                                    <button type="button" class="casualty-btn casualty-dec"
                                                             data-casualty-key="@loadoutCasualtyKey"
                                                             data-remaining="@loadout.RemainingCount"
                                                             data-initial="@loadout.InitialCount"
                                                             aria-label="Mark casualty"
                                                             disabled="@(loadout.RemainingCount == 0)">&minus;</button>
-                                                    <button type="button" class="casualty-btn mod-step-btn casualty-inc"
+                                                    <button type="button" class="casualty-btn casualty-inc"
                                                             data-casualty-key="@loadoutCasualtyKey"
                                                             data-remaining="@loadout.RemainingCount"
                                                             data-initial="@loadout.InitialCount"
@@ -212,12 +210,12 @@
                                         <span
                                             class="statline-count">(@(entry.RemainingCount)/@(entry.InitialCount))</span>
                                         <span class="casualty-controls">
-                                            <button type="button" class="casualty-btn mod-step-btn casualty-dec"
+                                            <button type="button" class="casualty-btn casualty-dec"
                                                     data-casualty-key="@entryCasualtyKey"
                                                     data-remaining="@entry.RemainingCount"
                                                     data-initial="@entry.InitialCount" aria-label="Mark casualty"
                                                     disabled="@(entry.RemainingCount == 0)">&minus;</button>
-                                            <button type="button" class="casualty-btn mod-step-btn casualty-inc"
+                                            <button type="button" class="casualty-btn casualty-inc"
                                                     data-casualty-key="@entryCasualtyKey"
                                                     data-remaining="@entry.RemainingCount"
                                                     data-initial="@entry.InitialCount" aria-label="Restore model"
@@ -364,24 +362,11 @@
                         }
                     </div>
 
-                    @if (block.ModelAbilities.Any())
+                    @if (block.ModelAbilities.Any() || block.UnitAbilities.Any())
                     {
-                        <div class="statline-cell col-model-abilities @runCollapsedClass" data-run-index="@runIndex"
+                        <div class="statline-cell col-abilities @runCollapsedClass" data-run-index="@runIndex"
                              data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1 + rowOffset); grid-column: 2;">
-                            @foreach (var ability in block.ModelAbilities)
-                            {
-                                var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
-                                @Html.Raw(abilityTrigger)
-                                @Html.Raw(abilityTrailer)
-                            }
-                        </div>
-                    }
-
-                    @if (block.UnitAbilities.Any())
-                    {
-                        <div class="statline-cell col-unit-abilities @runCollapsedClass" data-run-index="@runIndex"
-                             data-dead="@runDeadAttr" style="grid-row: @(runIndex + 1 + rowOffset); grid-column: 3;">
-                            @foreach (var ability in block.UnitAbilities)
+                            @foreach (var ability in block.ModelAbilities.Concat(block.UnitAbilities))
                             {
                                 var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
                                 @Html.Raw(abilityTrigger)
@@ -395,28 +380,13 @@
                 {
                     var spanCollapsedClass = span.IsFullyDead ? "run-collapsed" : "";
                     var spanDeadAttr = span.IsFullyDead ? "true" : "false";
-                    @if (span.ModelAbilities.Any())
+                    @if (span.ModelAbilities.Any() || span.UnitAbilities.Any())
                     {
-                        <div class="statline-cell col-model-abilities spans-component @spanCollapsedClass"
+                        <div class="statline-cell col-abilities spans-component @spanCollapsedClass"
                              data-first-run-index="@(span.FirstRunIndex)" data-last-run-index="@(span.LastRunIndex)"
                              data-dead="@spanDeadAttr"
                              style="grid-row: @(span.FirstRunIndex + 1 + rowOffset) / @(span.LastRunIndex + 2 + rowOffset); grid-column: 2;">
-                            @foreach (var ability in span.ModelAbilities)
-                            {
-                                var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
-                                @Html.Raw(abilityTrigger)
-                                @Html.Raw(abilityTrailer)
-                            }
-                        </div>
-                    }
-
-                    @if (span.UnitAbilities.Any())
-                    {
-                        <div class="statline-cell col-unit-abilities spans-component @spanCollapsedClass"
-                             data-first-run-index="@(span.FirstRunIndex)" data-last-run-index="@(span.LastRunIndex)"
-                             data-dead="@spanDeadAttr"
-                             style="grid-row: @(span.FirstRunIndex + 1 + rowOffset) / @(span.LastRunIndex + 2 + rowOffset); grid-column: 3;">
-                            @foreach (var ability in span.UnitAbilities)
+                            @foreach (var ability in span.ModelAbilities.Concat(span.UnitAbilities))
                             {
                                 var (abilityTrigger, abilityTrailer) = BuildRulePopover(WebUtility.HtmlEncode(AbilityDisplayName(ability)), "ability-name-line", ability.Text, new HashSet<string>());
                                 @Html.Raw(abilityTrigger)
@@ -627,7 +597,8 @@
 
     @if (unit.Keywords.Any())
     {
-        <details class="lp-section" data-section="keywords" open="@(expandedSections.Contains(UnitBlockSection.Keywords))">
+        <details class="lp-section" data-section="keywords"
+                 open="@(expandedSections.Contains(UnitBlockSection.Keywords))">
             <summary>
                 <span class="section-title">Keywords</span>
             </summary>
@@ -639,7 +610,7 @@
             </div>
         </details>
     }
-</section>
+</details>
 
 @functions {
 

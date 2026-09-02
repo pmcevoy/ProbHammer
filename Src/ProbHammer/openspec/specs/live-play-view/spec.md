@@ -57,6 +57,36 @@ requirement) rather than rendering an empty or erroring page.
 - **WHEN** a user with no prior successful import navigates to `/LivePlay`
 - **THEN** they are redirected to the import page instead of seeing a roster
 
+### Requirement: Narrow-Viewport Orientation Gate
+When `/LivePlay` is viewed on a narrow viewport (phone-class, at or below a width threshold at
+which the page's layout is known to lose or garble information — max-width ~600px) in portrait
+orientation, the system SHALL render a rotate-device prompt in place of the roster, rather than
+the roster itself. A viewport wider than that threshold (tablet-class) SHALL render the roster
+normally regardless of orientation. The system SHALL detect the viewport's current width and
+orientation and update which of the two (prompt or roster) is shown automatically as the device is
+rotated or resized, without requiring a page reload or losing any in-progress casualty/status
+state.
+
+#### Scenario: A narrow viewport in portrait shows the rotate prompt
+- **WHEN** a session with a phone-class viewport (at or below the width threshold) navigates to
+  `/LivePlay` while held in portrait orientation
+- **THEN** the page shows a rotate-device prompt and does not render the roster
+
+#### Scenario: A narrow viewport in landscape shows the roster
+- **WHEN** a session with a phone-class viewport is in landscape orientation
+- **THEN** the page renders the roster normally, with no rotate prompt
+
+#### Scenario: A wide viewport in portrait is exempt
+- **WHEN** a session with a tablet-class viewport (above the width threshold) is in portrait
+  orientation
+- **THEN** the page renders the roster normally, with no rotate prompt
+
+#### Scenario: Rotating the device reveals the roster without a reload
+- **WHEN** a phone-class session is showing the rotate prompt and the player physically rotates
+  the device to landscape
+- **THEN** the roster becomes visible in place of the prompt without a page reload, and any
+  casualty/status state already recorded for the session is unaffected
+
 ### Requirement: Selection-Scoped Weapon Filtering
 Each unit block SHALL maintain one shared statline/loadout selection state, driving both its
 Statline section's selection indicators (see "Statline Section Rendering") and its Ranged/Melee
@@ -382,32 +412,33 @@ without a visible local explanation.
   flagged tile's source, rather than rendering that ability's text inline
 
 ### Requirement: Statline Ability Column Rendering
-Each unit block's Statline area SHALL render two additional columns alongside the statline column:
-a Model Abilities column for entries whose Ability has Scope Model, and a Unit Abilities column for
-entries whose Ability has Scope Unit. Within each column, an ability entry bound to a specific
-statline row SHALL render beside that row only; an ability entry with no statline-row binding but
-belonging to one component (a component-wide ability) SHALL render beside the first rendered
-statline row belonging to its component, and SHALL visually span every row belonging to that
-component; an ability entry belonging to no single component (an Army Rule-origin ability, always
-promoted regardless of contributor count) SHALL render as its own row, above every component's
-statline rows, aligned to none of them. Each ability SHALL render by Name only; ability descriptive
-Text is not rendered inline by this requirement, but is available on demand via the "Ability And
-Rule Text Popover" requirement below.
+Each unit block's Statline area SHALL render one additional Abilities column alongside the
+statline column, holding both Model-scoped and Unit-scoped ability entries stacked together in one
+list — never as two separate side-by-side columns. Within this column, an ability entry bound to a
+specific statline row SHALL render beside that row only; an ability entry with no statline-row
+binding but belonging to one component (a component-wide ability) SHALL render beside the first
+rendered statline row belonging to its component, and SHALL visually span every row belonging to
+that component; an ability entry belonging to no single component (an Army Rule-origin ability,
+always promoted regardless of contributor count) SHALL render as its own row, above every
+component's statline rows, aligned to none of them. Within a single cell holding both scopes,
+Model-scoped entries SHALL render before Unit-scoped entries. Each ability SHALL render by Name
+only; ability descriptive Text is not rendered inline by this requirement, but is available on
+demand via the "Ability And Rule Text Popover" requirement below.
 
 A row-bound ability cell SHALL collapse (hide its ability names) whenever its own row's run is
 collapsed, per "Statline Section Rendering" — i.e. whenever every entry in that run is either
 fully deselected or fully dead. A component-wide, row-spanning ability cell SHALL collapse whenever
 every run within its visual span is collapsed by that same rule. It SHALL remain fully expanded as
 long as at least one entry in at least one row within its span is neither fully deselected nor
-fully dead. This applies identically to the Model Abilities and Unit Abilities columns. An ability
-entry belonging to no single component SHALL collapse only once every component that contributes
-to it has every one of its model-lines reach a remaining count of 0 — not per this-entry's-own-span
-like the component-wide case, since the fact it represents remains true as long as any part of the
+fully dead. This applies regardless of the scope(s) of ability held in the cell. An ability entry
+belonging to no single component SHALL collapse only once every component that contributes to it
+has every one of its model-lines reach a remaining count of 0 — not per this-entry's-own-span like
+the component-wide case, since the fact it represents remains true as long as any part of the
 attached formation still lives.
 
 #### Scenario: A row-bound ability renders beside its own statline row
 - **WHEN** an ability entry carries the name of a specific statline
-- **THEN** it renders in its Scope's column beside that specific statline row, not beside any
+- **THEN** it renders in the Abilities column beside that specific statline row, not beside any
   other row of the same component
 
 #### Scenario: A component-wide ability spans every row of its component
@@ -424,13 +455,14 @@ attached formation still lives.
   or spanning any one component's rows specifically
 
 #### Scenario: Column placement is determined by Ability Scope
-- **WHEN** a component contributes both a Model-scoped and a Unit-scoped ability
-- **THEN** the Model-scoped ability renders in the Model Abilities column and the Unit-scoped
-  ability renders in the Unit Abilities column, regardless of whether either is row-bound,
-  component-wide, or belongs to no single component
+- **WHEN** a component contributes both a Model-scoped and a Unit-scoped ability at the same
+  position (row-bound, component-wide, or component-less)
+- **THEN** both render together as one stacked list in the same single Abilities column, with the
+  Model-scoped entry appearing before the Unit-scoped entry — Ability Scope determines each entry's
+  position within the shared list, not which of two columns it renders in
 
 #### Scenario: Only the ability name renders
-- **WHEN** an ability entry renders in either column
+- **WHEN** an ability entry renders in the Abilities column
 - **THEN** only its Name is shown inline; its descriptive Text is not rendered inline (see
   "Ability And Rule Text Popover" for on-demand access to it)
 
@@ -768,14 +800,14 @@ affects the other weapon section of the same unit block.
   Weapons section's disclosure summary does not
 
 ### Requirement: Ability And Rule Text Popover
-Tapping an ability name (in either the Model Abilities or Unit Abilities column) or a weapon
-keyword chip that has a matching entry in the glossary (per `rules-glossary`) SHALL open a popover
-showing that entry's full descriptive text, without navigating away from or reloading the page. A
-weapon keyword chip with no matching glossary entry is not an interactive trigger and opens no
-popover (see "Weapon Section Rendering").
+Tapping an ability name (in the Abilities column) or a weapon keyword chip that has a matching
+entry in the glossary (per `rules-glossary`) SHALL open a popover showing that entry's full
+descriptive text, without navigating away from or reloading the page. A weapon keyword chip with
+no matching glossary entry is not an interactive trigger and opens no popover (see "Weapon Section
+Rendering").
 
 #### Scenario: Tapping an ability name opens its rule text
-- **WHEN** a player taps an ability name rendered in the Model Abilities or Unit Abilities column
+- **WHEN** a player taps an ability name rendered in the Abilities column
 - **THEN** a popover opens showing that ability's full descriptive text
 
 #### Scenario: Tapping a resolvable weapon keyword chip opens its rule text
@@ -922,7 +954,7 @@ empty section or column.
 #### Scenario: Unit with no unit-scoped abilities
 - **WHEN** a unit's aggregate view has no Unit-scoped ability entries for any of its components
 - **THEN** the page renders that unit's block successfully, with no exception and no blank/broken
-  markup in the Unit Abilities column
+  markup in the Abilities column
 
 ### Requirement: Per-Section Disclosure Defaults to Collapsed
 Each unit block's statline (including its two ability columns), ranged-weapons, melee-weapons, and
@@ -954,18 +986,18 @@ to every place an ability name is displayed, including a rule-text popover's tit
 title reuses the same rendered name as the trigger that opened it.
 
 #### Scenario: An Enhancement-classified ability renders with the indicator
-- **WHEN** an ability entry with Origin Enhancement renders in the Model or Unit Abilities column
+- **WHEN** an ability entry with Origin Enhancement renders in the Abilities column
 - **THEN** its rendered name is prefixed with `✦ ` (the symbol, then a space, then the name)
 
 #### Scenario: A non-Enhancement ability renders with no indicator
 - **WHEN** an ability entry whose Origin is not Enhancement (Intrinsic, Optional Grant, or Core
-  Rule) renders in the Model or Unit Abilities column
+  Rule) renders in the Abilities column
 - **THEN** its rendered name has no leading symbol
 
 #### Scenario: A Core Rule ability renders alongside Datasheet abilities with no dedicated section
 - **WHEN** a unit's Datasheet carries one or more Core Rule-origin abilities (e.g. a Chapter's own
   Vows, or Oath of Moment)
-- **THEN** each renders as its own entry in the Unit Abilities column, in the same list as the
+- **THEN** each renders as its own entry in the Abilities column, in the same list as the
   unit's Intrinsic abilities, with no separate "Core Abilities" or "Faction Abilities" section
 
 #### Scenario: The indicator carries through to the ability's popover title
@@ -1157,16 +1189,47 @@ to.
 - **THEN** its toolbar and all three controls remain visible and, for actionable controls,
   functional
 
+### Requirement: Unit Block Full Collapse
+Each unit block SHALL support collapsing to show only its own name bar, independent of and in
+addition to its existing per-section (Statline/Ranged/Melee/Keywords) disclosures — collapsing a
+unit block hides its status toolbar and every section together, in one action. Each unit block's
+collapsed/expanded state SHALL be independent of every other unit block's. On initial page render,
+every unit block SHALL render expanded (not collapsed) by default. Collapsing a unit block SHALL
+NOT alter its casualty or status state — it is a presentation-only change, fully reversible by
+expanding the block again. A subsequent re-render of a unit block not itself acted upon (a
+casualty/status/phase-turn sync affecting other units) SHALL preserve that block's own prior
+collapsed/expanded state.
+
+#### Scenario: Collapsing a unit block hides everything but its name bar
+- **WHEN** a player collapses a unit block
+- **THEN** that block's status toolbar and every section (Statline, Ranged Weapons, Melee Weapons,
+  Keywords) are hidden, leaving only its name bar visible
+
+#### Scenario: Collapsing one unit block does not affect others
+- **WHEN** a player collapses one unit block
+- **THEN** every other unit block's own collapsed/expanded state is unchanged
+
+#### Scenario: Unit blocks load expanded by default
+- **WHEN** a player navigates to `/LivePlay`
+- **THEN** every unit block renders expanded (not collapsed)
+
+#### Scenario: An unrelated sync does not reset a collapsed unit block
+- **WHEN** a unit block is collapsed and the player then adjusts a casualty or phase/turn selection
+  affecting a different unit block
+- **THEN** the collapsed unit block remains collapsed after the resulting re-render
+
 ### Requirement: Army Header Rendering
 The `/LivePlay` page SHALL render a header, above every unit block, showing the ArmyRoster's Name,
 Faction (in declared order), BattleSize together with PointsSpent and PointsLimit, and
 ForceDisposition. Below this, the page SHALL render every distinctly-named `ArmyRule`-origin
 ability present on any unit in the roster together with every selected Detachment's own resolved
 rule(s), grouped into two columns — one for army-wide rules, one for Detachment rules — under a
-section heading of its own. Each individual rule SHALL render as its own named, popover-capable
-trigger (per the existing Ability And Rule Text Popover mechanism), showing that rule's full text
-when tapped, rather than rendering its text inline by default. A Detachment SHALL render its own
-name once, as a plain (non-interactive) label, with one popover trigger beneath it per rule it
+section heading of its own. This Rules section SHALL follow the same collapsible `lp-section`
+disclosure convention used elsewhere on the page (matching the existing All Keywords section),
+collapsed by default. Each individual rule SHALL render as its own named, popover-capable trigger
+(per the existing Ability And Rule Text Popover mechanism), showing that rule's full text when
+tapped, rather than rendering its text inline by default. A Detachment SHALL render its own name
+once, as a plain (non-interactive) label, with one popover trigger beneath it per rule it
 resolved — including zero triggers when it resolved no rule at all. Neither a Detachment's own DP
 cost nor any unit's own points cost SHALL be shown anywhere on the page, even though the roster's
 own total PointsSpent/PointsLimit renders in the header.
@@ -1175,6 +1238,11 @@ own total PointsSpent/PointsLimit renders in the header.
 - **WHEN** `/LivePlay` renders a roster
 - **THEN** the page shows the roster's Name, Faction, BattleSize, PointsSpent/PointsLimit, and
   ForceDisposition above every unit block
+
+#### Scenario: Rules section collapses by default
+- **WHEN** a player navigates to `/LivePlay`
+- **THEN** the Rules section renders in a collapsed state, showing no Army/Detachment rule
+  triggers until expanded
 
 #### Scenario: A Detachment with one rule shows one popover trigger under its name
 - **WHEN** a selected Detachment resolved exactly one rule

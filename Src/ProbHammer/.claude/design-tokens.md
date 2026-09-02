@@ -316,9 +316,9 @@ section covers only the visual decisions.
   one flag (e.g. both InSv and OC flagged by different sources), its legend lines pick up
   `.ability-name-line:nth-of-type(even)`'s existing zebra striping the same way any other multi-row
   ability list on the page does. `.statline-flag-legend` itself also picks up the same dashed-border
-  box treatment as `.statline-cell.col-model-abilities`/`.col-unit-abilities` (border/radius/
-  font-size), per the button/container rule directly below — a legend is the same kind of "ability
-  card" as those columns, not a visually distinct thing.
+  box treatment as `.statline-cell.col-abilities` (border/radius/font-size), per the
+  button/container rule directly below — a legend is the same kind of "ability card" as that
+  column, not a visually distinct thing.
 
 ### Ability button vs. container: the general rule (`resolve-known-ability-effects`)
 
@@ -336,8 +336,8 @@ converged on it:
   height (default `flex: 0 1 auto`) — never grown to fill extra space (`flex: 1 1 auto` was tried
   and rejected; every button on the page measures the same ~28px, confirmed via
   `getBoundingClientRect()`). Button *width* fills its container (`width: 100%`).
-- **The CONTAINER never carries the fill.** `.statline-cell.col-model-abilities`/
-  `.col-unit-abilities`, `.statline-flag-legend`, `.army-rules-cell`, and `.detachment-entry-rules`
+- **The CONTAINER never carries the fill.** `.statline-cell.col-abilities`,
+  `.statline-flag-legend`, `.army-rules-cell`, and `.detachment-entry-rules`
   all use `background: var(--bg2)` (the plain card background) unconditionally — spanning or not,
   one button or several. A container can still be taller than its own button content: a plain,
   row-bound cell is always exactly content-height (`align-self: start` opts it out of

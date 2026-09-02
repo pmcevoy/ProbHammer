@@ -80,9 +80,12 @@ public class LivePlayAbilityRenderingTests : IClassFixture<WebApplicationFactory
         // gate-and-dedupe-core-rule-abilities: a deduplicated Core Rule ability (ComponentName
         // null) renders as its own grid row (row 1), not aligned to or spanning any component's
         // own rows.
-        var vow = new Ability { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.CoreRule };
-        var html = await RenderAsync([new AggregateAbilityEntry(
-            ComponentName: null, StatlineName: null, Ability: vow, ContributingComponentNames: ["Test Unit"])]);
+        var vow = new Ability
+            { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.CoreRule };
+        var html = await RenderAsync([
+            new AggregateAbilityEntry(
+                ComponentName: null, StatlineName: null, Ability: vow, ContributingComponentNames: ["Test Unit"])
+        ]);
 
         html.Should().Contain("spans-whole-unit");
         html.Should().Contain("Templar Vows");
@@ -92,9 +95,12 @@ public class LivePlayAbilityRenderingTests : IClassFixture<WebApplicationFactory
     [Fact]
     public async Task AComponentLessAbility_ShiftsEveryOtherRowDownByOne()
     {
-        var vow = new Ability { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.CoreRule };
-        var html = await RenderAsync([new AggregateAbilityEntry(
-            ComponentName: null, StatlineName: null, Ability: vow, ContributingComponentNames: ["Test Unit"])]);
+        var vow = new Ability
+            { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.CoreRule };
+        var html = await RenderAsync([
+            new AggregateAbilityEntry(
+                ComponentName: null, StatlineName: null, Ability: vow, ContributingComponentNames: ["Test Unit"])
+        ]);
 
         // The single statline row would normally render at grid-row: 1 with no whole-unit span
         // present; with one present, it must shift to grid-row: 2 to make room for it.
@@ -108,8 +114,10 @@ public class LivePlayAbilityRenderingTests : IClassFixture<WebApplicationFactory
         // invisible behind its own component-wide "Transport"/"Assault Vehicle" cell - both cells
         // occupied the identical grid coordinates, the later one in DOM order painting over the
         // first. Both must now render, and neither cell should render twice.
-        var shieldDome = new Ability { Name = "Shield Dome", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.OptionalGrant };
-        var transport = new Ability { Name = "Transport", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
+        var shieldDome = new Ability
+            { Name = "Shield Dome", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.OptionalGrant };
+        var transport = new Ability
+            { Name = "Transport", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
         var html = await RenderAsync(
         [
             new AggregateAbilityEntry("Test Unit", StatlineName: "Test Unit", shieldDome),
@@ -119,14 +127,15 @@ public class LivePlayAbilityRenderingTests : IClassFixture<WebApplicationFactory
         html.Should().Contain("Shield Dome");
         html.Should().Contain("Transport");
         // Both abilities end up in the one merged span cell, not a separate row-bound cell too.
-        var unitAbilityCellCount = System.Text.RegularExpressions.Regex.Matches(html, "col-unit-abilities").Count;
-        unitAbilityCellCount.Should().Be(1);
+        var abilityCellCount = System.Text.RegularExpressions.Regex.Matches(html, "col-abilities").Count;
+        abilityCellCount.Should().Be(1);
     }
 
     [Fact]
     public async Task WithNoComponentLessAbility_RowsAreNotShifted()
     {
-        var intrinsic = new Ability { Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
+        var intrinsic = new Ability
+            { Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
         var html = await RenderAsync([new AggregateAbilityEntry("Test Unit", StatlineName: null, intrinsic)]);
 
         html.Should().NotContain("spans-whole-unit");

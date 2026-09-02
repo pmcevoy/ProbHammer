@@ -420,9 +420,15 @@ function refreshArmyKeywordFilters() {
 // carried-forward set, so the fresh server markup's own open/closed state (baked in from the current
 // phase/turn selection's Expanded set) wins for it instead - forcedSections defaults to empty, which
 // carries forward every section exactly as before this change (a casualty/status-only sync).
+// Since live-play-landscape-only, `.unit-block` is itself a <details> (its own whole-block collapse,
+// independent of the four inner sections above) - carried forward unconditionally, the simplest case
+// of this same pattern, since (unlike the inner sections) it has no server-computed forced state
+// anywhere in the spec: it's presentation-only and entirely player-controlled.
 function swapUnitBlock(unitIndex, html, forcedSections = new Set()) {
     const oldEl = document.querySelector(`.unit-block[data-unit-index="${unitIndex}"]`);
     if (!oldEl) return;
+
+    const wasOpen = oldEl.open;
 
     const openSections = new Set(
         [...oldEl.querySelectorAll('details.lp-section[open]')]
@@ -434,6 +440,8 @@ function swapUnitBlock(unitIndex, html, forcedSections = new Set()) {
     template.innerHTML = html.trim();
     const newEl = template.content.firstElementChild;
     if (!newEl) return;
+
+    newEl.open = wasOpen;
 
     newEl.querySelectorAll('details.lp-section').forEach(details => {
         if (openSections.has(details.dataset.section)) details.open = true;

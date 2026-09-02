@@ -11,7 +11,9 @@ using ProbHammer.Web.Services;
 namespace ProbHammer.Web.Pages;
 
 public class LivePlayModel(
-    ISessionArmyListStore sessionStore, IArmyRosterProvider rosterProvider, IPhaseTurnStore phaseTurnStore)
+    ISessionArmyListStore sessionStore,
+    IArmyRosterProvider rosterProvider,
+    IPhaseTurnStore phaseTurnStore)
     : PageModel
 {
     public List<UnitBlockViewModel> Units { get; private set; } = [];
@@ -669,7 +671,13 @@ public sealed record LivePlaySyncRequest(
 /// (<c>_UnitBlock.cshtml</c>'s own <c>data-section</c> values - see
 /// <see cref="LivePlayModel.SectionName"/>) live-play-phase-tracker's relevance table governs. Never
 /// the Army Header's own Rules/All Keywords sections, which this capability does not touch.</summary>
-public enum UnitBlockSection { Statline, Ranged, Melee, Keywords }
+public enum UnitBlockSection
+{
+    Statline,
+    Ranged,
+    Melee,
+    Keywords
+}
 
 /// <summary>The casualty-sync endpoint's full JSON response: the existing per-unit-index fragment
 /// map, plus (live-play-phase-tracker) the current selection's own Forced-section set, once, page-
@@ -820,7 +828,9 @@ public sealed record UnitBlockViewModel(
 /// feature keeps compiling and rendering unchanged.
 /// </summary>
 public sealed record UnitBlockRenderModel(
-    int UnitIndex, UnitBlockViewModel Unit, RuleGlossary Glossary,
+    int UnitIndex,
+    UnitBlockViewModel Unit,
+    RuleGlossary Glossary,
     IReadOnlySet<UnitBlockSection>? ExpandedSections = null);
 
 /// <summary>The `/LivePlay` header's own view model - the roster's army-level metadata plus the two
@@ -849,4 +859,6 @@ public sealed record ArmyHeaderViewModel(
 /// pre-existing call site that predates this feature keeps compiling and rendering unchanged.
 /// </summary>
 public sealed record ArmyHeaderRenderModel(
-    ArmyHeaderViewModel Header, RuleGlossary Glossary, PhaseTurnSelection? PhaseTurn = null);
+    ArmyHeaderViewModel Header,
+    RuleGlossary Glossary,
+    PhaseTurnSelection? PhaseTurn = null);

@@ -9,6 +9,15 @@ entry once it's been turned into a change (archived changes remain the historica
 
 ## `/LivePlay` — Attached Unit view
 
+- **Per-ability Model/Unit scope marker.** `live-play-landscape-only` merged the Statline grid's
+  separate Model Abilities and Unit Abilities columns into one stacked-list column, at the user's
+  own explicit request — recalling that the two-column split existed only to distinguish
+  model-scoped from unit-scoped abilities, and deciding that distinction doesn't need its own
+  column. The user floated a future prefix/symbol on the ability name itself (mirroring the
+  Enhancement `✦` prefix, `AbilityDisplayName` in `_UnitBlock.cshtml`) as the way to surface the
+  distinction again if wanted. `Ability.Scope` and the view models' `ModelAbilities`/
+  `UnitAbilities` split were deliberately left untouched by that change specifically so this stays
+  easy to build later with no domain rework.
 - **Phase-level section toggling across all units at once** — collapse/expand every unit's
   statline/ranged/melee/abilities section together, reusing the same disclosure unit each
   section already uses individually. Raised again during `half-strength-and-battleshock-

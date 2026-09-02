@@ -1091,8 +1091,8 @@ AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ab
   `RemainingCount` reaches 0. `/LivePlay` renders an Enhancement-classified entry
   (`Ability.Origin == Enhancement`) with a leading `✦ ` wherever an ability name renders (including
   a popover's title bar) — see `_UnitBlock.cshtml`'s `AbilityDisplayName` helper. Renders in the
-  Unit Abilities column unconditionally today since `Ability.Scope` is always `Unit` for every
-  BSData-resolved ability; a genuine per-Enhancement Model/Unit scope is deferred
+  merged abilities column (`live-play-landscape-only`) since `Ability.Scope` is always `Unit` for
+  every BSData-resolved ability; a genuine per-Enhancement Model/Unit scope is deferred
   (`.claude/vnext-ideas.md`).
 - `Keywords` — wired directly to `KeywordResolution.EffectiveKeywords`.
 

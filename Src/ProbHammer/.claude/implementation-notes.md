@@ -98,3 +98,22 @@ Even with viewport size and font both matched, this is still Chrome/Blink emulat
 WebKit-driven device, not a perfect substitute for one — treat the emulator as the fast iteration
 loop, and a real-device screenshot as the final confirmation before calling a mobile layout change
 done, not as something no longer needed at all.
+
+**WebKit's automatic text-size-adjust ("font boosting") is invisible in the Chrome emulator too,
+and can make sibling elements sharing one `font-size` rule render at visibly different sizes on a
+real iPhone.** Found via `live-play-landscape-only`'s real-device round-trip: `.unit-name` summary
+bars all share one `font-size: 0.88rem` rule, but a real iPhone screenshot showed the one unit name
+long enough to wrap onto two lines rendering noticeably larger than every single-line name beside
+it. Root cause: with a `width=device-width` viewport meta tag (`_Layout.cshtml`) and no explicit
+override, mobile Safari (and other WebKit/Blink-on-iOS browsers, per the engine constraint above)
+applies a content-dependent heuristic that inflates a text block's *rendered* size above its
+declared CSS `font-size` when it judges the text "too small to read" relative to its container —
+the boost amount varies with the specific text's own line count/width, so two elements with
+byte-identical CSS can genuinely render at different sizes. `chrome-devtools-mcp`'s viewport
+emulation never reproduces this (it's a WebKit/Blink-mobile-only heuristic, not something CDP
+device-metrics override triggers), so it was invisible through this project's entire emulator
+verification pass and only surfaced on the real-device screenshot. Fixed globally via `html {
+-webkit-text-size-adjust: 100%; text-size-adjust: 100%; }` in `site.css`, which disables the
+heuristic outright so every declared `font-size` renders literally everywhere — the correct fix
+for an app whose own compact, hand-tuned type scale (design-tokens.md's "Scale") already accounts
+for readability at the target viewport sizes and doesn't want the browser second-guessing it.

@@ -70,9 +70,12 @@ public class LivePlayModelTests
     {
         var statlineA = new Statline(6, 4, 3, 2, 6, 2);
         var statlineB = new Statline(6, 4, 4, 2, 6, 2); // differs from A by Sv, so Neophyte gets its own run
-        var rowBoundModelAbility = new Ability { Name = "Iron Halo", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
-        var componentWideUnitAbilityA = new Ability { Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
-        var componentWideModelAbilityB = new Ability { Name = "SUPPORT", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
+        var rowBoundModelAbility = new Ability
+            { Name = "Iron Halo", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
+        var componentWideUnitAbilityA = new Ability
+            { Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
+        var componentWideModelAbilityB = new Ability
+            { Name = "SUPPORT", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
 
         var view = new AttachedUnitAggregateView(
             Name: "Test Unit",
@@ -139,7 +142,8 @@ public class LivePlayModelTests
                 "Crusader Squad::Initiate", null),
             new WeaponContributionRow("Initiate w/ Power fist", 2, DiceExpression.Fixed(1), DiceExpression.Fixed(2),
                 "Crusader Squad::Initiate", "Crusader Squad::Initiate::0"),
-            new WeaponContributionRow("Initiate w/ Astartes chainsword", 3, DiceExpression.Fixed(1), DiceExpression.Fixed(3),
+            new WeaponContributionRow("Initiate w/ Astartes chainsword", 3, DiceExpression.Fixed(1),
+                DiceExpression.Fixed(3),
                 "Crusader Squad::Initiate", "Crusader Squad::Initiate::1"),
             new WeaponContributionRow("Crusade Ancient", 1, DiceExpression.Fixed(1), DiceExpression.Fixed(1),
                 "Crusade Ancient::Crusade Ancient", "Crusade Ancient::Crusade Ancient")
@@ -212,7 +216,8 @@ public class LivePlayModelTests
                 "Crusader Squad::Initiate", null),
             new WeaponContributionRow("Initiate w/ Power fist", 2, DiceExpression.Fixed(1), DiceExpression.Fixed(2),
                 "Crusader Squad::Initiate", "Crusader Squad::Initiate::0"),
-            new WeaponContributionRow("Initiate w/ Astartes chainsword", 3, DiceExpression.Fixed(1), DiceExpression.Fixed(3),
+            new WeaponContributionRow("Initiate w/ Astartes chainsword", 3, DiceExpression.Fixed(1),
+                DiceExpression.Fixed(3),
                 "Crusader Squad::Initiate", "Crusader Squad::Initiate::1"),
             new WeaponContributionRow("Crusade Ancient", 1, DiceExpression.Fixed(1), DiceExpression.Fixed(1),
                 "Crusade Ancient::Crusade Ancient", "Crusade Ancient::Crusade Ancient")
@@ -329,7 +334,7 @@ public class LivePlayModelTests
     {
         var pristine = LivePlayModel.SortRoster(View.MyArmyRoster()).Select(AttachedUnitAggregator.Build).ToList();
 
-        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(),[]);
+        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), []);
 
         rebuilt.Select(v => v.Name).Should().Equal(pristine.Select(v => v.Name));
     }
@@ -340,9 +345,10 @@ public class LivePlayModelTests
         // Index 0 in the sorted roster is "Crusader Squad with High Marshal Helbrecht and Crusade
         // Ancient" (see OnGet_OrdersAttachedUnitsBeforePlainUnits...); Neophyte is a single-ModelLine
         // statline (count 4) on the Crusader Squad bodyguard, so LoadoutIndex is the -1 sentinel.
-        var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1), RemainingCount: 2);
+        var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1),
+            RemainingCount: 2);
 
-        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(),[adjustment]);
+        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment]);
 
         var unit = rebuilt[0];
         unit.Name.Should().Be("Crusader Squad with High Marshal Helbrecht and Crusade Ancient");
@@ -354,9 +360,10 @@ public class LivePlayModelTests
     {
         // Initiate has two loadouts on the Crusader Squad bodyguard (Power fist at index 0,
         // Astartes chainsword at index 1 - see AttachedUnitAggregatorTests' LoadoutIndex tests).
-        var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Initiate", 0), RemainingCount: 0);
+        var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Initiate", 0),
+            RemainingCount: 0);
 
-        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(),[adjustment]);
+        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment]);
 
         var initiate = rebuilt[0].Statlines.Single(s => s.StatlineName == "Initiate");
         initiate.Loadouts[0].RemainingCount.Should().Be(0); // Power fist loadout, fully removed
@@ -367,11 +374,13 @@ public class LivePlayModelTests
     [Fact]
     public void RebuildRoster_ClampsAnOutOfRangeRemainingCount_RatherThanThrowing()
     {
-        var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1), RemainingCount: 99);
+        var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1),
+            RemainingCount: 99);
 
-        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(),[adjustment]);
+        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment]);
 
-        rebuilt[0].Statlines.Single(s => s.StatlineName == "Neophyte").RemainingCount.Should().Be(4); // clamped at Count
+        rebuilt[0].Statlines.Single(s => s.StatlineName == "Neophyte").RemainingCount.Should()
+            .Be(4); // clamped at Count
     }
 
     [Theory]
@@ -385,7 +394,7 @@ public class LivePlayModelTests
         var adjustment = new CasualtyAdjustment(
             new CasualtyCoordinate(unitIndex, componentName, statlineName, loadoutIndex), RemainingCount: 0);
 
-        var act = () => LivePlayModel.RebuildRoster(View.MyArmyRoster(),[adjustment]);
+        var act = () => LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment]);
 
         act.Should().NotThrow();
         var pristine = LivePlayModel.SortRoster(View.MyArmyRoster()).Select(AttachedUnitAggregator.Build).ToList();
@@ -443,10 +452,12 @@ public class LivePlayModelTests
     [Fact]
     public void RebuildRosterWithStatus_ABatchOfBothKinds_AppliesBothIndependently()
     {
-        var casualtyAdjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1), RemainingCount: 2);
+        var casualtyAdjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1),
+            RemainingCount: 2);
         var statusAdjustment = new UnitStatusAdjustment(0, IsHalfStrength: false, IsBattleShocked: true);
 
-        var rebuilt = LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [casualtyAdjustment], [statusAdjustment]);
+        var rebuilt =
+            LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [casualtyAdjustment], [statusAdjustment]);
 
         rebuilt[0].View.Statlines.Single(s => s.StatlineName == "Neophyte").RemainingCount.Should().Be(2);
         rebuilt[0].Unit.IsBattleShocked.Should().BeTrue();
