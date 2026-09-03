@@ -274,8 +274,21 @@ async function syncLivePlayState() {
 // cell immediately - unambiguous, it's exactly what was clicked, no need to wait on the response for
 // this part (design.md Decision 5) - then applies the response's own fragment map using its reported
 // Forced set, same as syncLivePlayState.
+//
+// live-play-touch-target-improvements: every phase/turn selection also fully overrides every unit
+// block's own collapsed/expanded state (see swapUnitBlock's unitBlocksOpen parameter) - a row-label
+// cell (no Phase) collapses every block to its name bar (a compact roster list); a specific phase
+// column instead expands every block, since otherwise that phase's own Forced/Expanded inner
+// sections (Statline/Ranged/etc.) would be forced open server-side but stay invisible inside a
+// still-collapsed block - confirmed against real usage: a player collapses everything via a row
+// label, then expects e.g. Shooting to actually show Ranged Weapons on every unit, not leave them
+// hidden. This is a full override on every click, not a one-time transition - even reselecting the
+// same phase re-applies it. `phase` is already `null` at this exact call site whenever a row label -
+// not one of its five phase columns - was clicked (a row-label cell has no data-phase attribute), so
+// this needs no new server signal - see design.md Decision 2.
 async function syncPhaseTurn(turn, phase) {
     setActivePhaseTurnCell(turn, phase);
+    const unitBlocksOpen = phase !== null;
 
     let response;
     try {
@@ -294,7 +307,7 @@ async function syncPhaseTurn(turn, phase) {
     if (!response.ok) return false;
 
     const {fragments, forcedSections} = await response.json();
-    applySyncResponse(fragments, forcedSections);
+    applySyncResponse(fragments, forcedSections, unitBlocksOpen);
     return true;
 }
 
@@ -310,10 +323,13 @@ function setActivePhaseTurnCell(turn, phase) {
 // generalizing swapUnitBlock's carry-forward to be scoped to the response's own reported Forced
 // section set (design.md Decision 2). forcedSectionNames is absent/empty for a casualty/status-only
 // sync, so that case's own carry-forward is unchanged (every section carries forward, as before this
-// change).
-function applySyncResponse(fragments, forcedSectionNames) {
+// change). unitBlocksOpen (live-play-touch-target-improvements) is a tri-state override: `null` (the
+// default, used by the same casualty/status-only path) means "no override, carry forward each
+// block's own prior open/closed state" exactly as before this change; `true`/`false` (used by
+// syncPhaseTurn) forces every unit block open/closed outright, overriding whatever it was.
+function applySyncResponse(fragments, forcedSectionNames, unitBlocksOpen = null) {
     const forcedSections = new Set(forcedSectionNames || []);
-    Object.entries(fragments).forEach(([unitIndex, html]) => swapUnitBlock(unitIndex, html, forcedSections));
+    Object.entries(fragments).forEach(([unitIndex, html]) => swapUnitBlock(unitIndex, html, forcedSections, unitBlocksOpen));
     refreshArmyKeywordFilters();
 }
 
@@ -363,12 +379,20 @@ function renderArmyKeywordChips(keywordMap) {
             button.className = 'weapon-tag army-keyword-chip' + (activeKeywordFilters.has(key) ? ' is-active' : '');
             button.textContent = text;
             button.addEventListener('click', () => {
-                if (activeKeywordFilters.has(key)) activeKeywordFilters.delete(key);
-                else activeKeywordFilters.add(key);
+                const activating = !activeKeywordFilters.has(key);
+                if (activating) activeKeywordFilters.add(key);
+                else activeKeywordFilters.delete(key);
                 // A pure click never changes which keywords exist, only which are active - no need
                 // to rescan, just re-render the pill list and re-apply cross-unit highlighting.
                 renderArmyKeywordChips(keywordMap);
                 applyKeywordHighlighting();
+                // live-play-touch-target-improvements: jump to the first matching unit block on
+                // activation only, never on deactivation - speeds up the "collapse everything via
+                // My Turn, then pick a keyword" navigation flow. Scoped to the specific keyword just
+                // clicked (not just any active filter), and only fires from this click handler, never
+                // from applyKeywordHighlighting's own unrelated-re-render call sites, so this can
+                // never surprise-scroll the page outside the moment of the click.
+                if (activating) scrollToFirstKeywordMatch(key);
             });
             container.appendChild(button);
         });
@@ -378,6 +402,13 @@ function renderArmyKeywordChips(keywordMap) {
 // the flagged style based on activeKeywordFilters membership; force a matching unit's Keywords
 // section open. A one-way ratchet - never forces a section closed (design.md Decision 5), so no
 // "opened by filter" bookkeeping is needed at all.
+//
+// live-play-touch-target-improvements: also force the unit block itself open on a match - the same
+// class of bug the phase/turn work fixed elsewhere on this page. Forcing only the inner Keywords
+// section open (as this did before) is invisible when the containing unit block is collapsed (e.g.
+// via the phase/turn tracker's row-label bulk-collapse, or a plain manual collapse) - the section
+// was genuinely open, just hidden inside a closed ancestor. Same one-way-ratchet rule applies: a
+// non-matching unit's block is never forced open OR closed by this pass.
 function applyKeywordHighlighting() {
     document.querySelectorAll('.unit-block').forEach(unitEl => {
         const section = unitEl.querySelector('[data-section="keywords"]');
@@ -390,8 +421,26 @@ function applyKeywordHighlighting() {
             if (flagged) anyFlagged = true;
         });
 
-        if (anyFlagged) section.open = true;
+        if (anyFlagged) {
+            section.open = true;
+            unitEl.open = true;
+        }
     });
+}
+
+// Scrolls the first unit block (in page order) carrying `key` in its own Keywords section into
+// view - called only from a keyword chip's own click handler, right after that keyword's filter
+// was activated (never on deactivation, and never from applyKeywordHighlighting's other,
+// re-render-triggered call sites). Runs after applyKeywordHighlighting has already forced that
+// unit's block open, so the target is already expanded and lands correctly - `<details>`'s `open`
+// flips synchronously, and `scrollIntoView` forces the layout it needs to position against.
+function scrollToFirstKeywordMatch(key) {
+    const match = [...document.querySelectorAll('.unit-block')].find(unitEl => {
+        const section = unitEl.querySelector('[data-section="keywords"]');
+        if (!section) return false;
+        return [...section.querySelectorAll('.weapon-tag')].some(chip => normalizeKeyword(chip.textContent) === key);
+    });
+    if (match) match.scrollIntoView({block: 'start', behavior: 'smooth'});
 }
 
 // One orchestrating pass: scan -> prune -> render header pills -> apply cross-unit highlighting.
@@ -421,10 +470,15 @@ function refreshArmyKeywordFilters() {
 // phase/turn selection's Expanded set) wins for it instead - forcedSections defaults to empty, which
 // carries forward every section exactly as before this change (a casualty/status-only sync).
 // Since live-play-landscape-only, `.unit-block` is itself a <details> (its own whole-block collapse,
-// independent of the four inner sections above) - carried forward unconditionally, the simplest case
-// of this same pattern, since (unlike the inner sections) it has no server-computed forced state
-// anywhere in the spec: it's presentation-only and entirely player-controlled.
-function swapUnitBlock(unitIndex, html, forcedSections = new Set()) {
+// independent of the four inner sections above) - carried forward unconditionally by default, the
+// simplest case of this same pattern, since (unlike the inner sections) it has no server-computed
+// forced state anywhere in the spec: it's presentation-only and entirely player-controlled.
+//
+// live-play-touch-target-improvements: unitBlocksOpen is the one exception - null (the default)
+// preserves the carry-forward above; true/false (every phase/turn selection - see syncPhaseTurn)
+// fully overrides every unit block's open state instead of carrying it forward, the unit-block-level
+// counterpart to forcedSections' per-section forcing above.
+function swapUnitBlock(unitIndex, html, forcedSections = new Set(), unitBlocksOpen = null) {
     const oldEl = document.querySelector(`.unit-block[data-unit-index="${unitIndex}"]`);
     if (!oldEl) return;
 
@@ -441,7 +495,7 @@ function swapUnitBlock(unitIndex, html, forcedSections = new Set()) {
     const newEl = template.content.firstElementChild;
     if (!newEl) return;
 
-    newEl.open = wasOpen;
+    newEl.open = unitBlocksOpen === null ? wasOpen : unitBlocksOpen;
 
     newEl.querySelectorAll('details.lp-section').forEach(details => {
         if (openSections.has(details.dataset.section)) details.open = true;

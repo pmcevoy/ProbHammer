@@ -134,15 +134,21 @@ selector, same mechanism as before, just no longer the default case.
   summary bar) now render in their own row, between the unit-name header and the Statline section —
   moved out of the header specifically because a long unit name wrapping onto multiple lines could
   push the old header-cornered glyphs out of view, with no amount of header-width tuning fixing it
-  for an arbitrarily long name. Each is a `.unit-toolbar-item`: a small square `.unit-toolbar-
-  icon-btn` (sized exactly like `.mod-step-btn`/`.casualty-btn`'s existing inc/dec controls) as the
-  *only* clickable area, with a plain `.unit-toolbar-label` caption beside it, outside the button —
-  never part of the click target, and never itself a status indicator (styled identically to
+  for an arbitrarily long name. Each is a `.unit-toolbar-item` containing one `.unit-toolbar-
+  icon-btn` `<button>` that wraps both a small square glyph (`.unit-toolbar-glyph`, sized exactly
+  like `.mod-step-btn`/`.casualty-btn`'s existing inc/dec controls) and its plain
+  `.unit-toolbar-label` caption — never itself a status indicator (styled identically to
   `.stat-label`: `--text-dim`, `0.65rem`, uppercase, unchanging regardless of the button's state).
-  Adjacent items are separated by a `border-left` rule rather than a literal "|" character — a
-  bordered cell, not a punctuation mark. All three controls always render now (no more
-  hide-when-irrelevant per control), and the icon button alone communicates two independent states,
-  both built from existing tokens only:
+  Since `live-play-touch-target-improvements`, the **entire item — glyph and label together — is
+  the clickable area**, not the glyph alone: the label used to sit outside the button as inert
+  text, which meant the visible affordance (a labeled control) was bigger than its actual hit area
+  — an easy mis-tap on a phone. Moving the label inside the button fixed the hit area with no
+  visual change (the glyph's own filled-square look, previously the button's own background, now
+  lives on the inner `.unit-toolbar-glyph` span so the outer button itself can be a plain,
+  unstyled flex row spanning the full item). Adjacent items are separated by a `border-left` rule
+  rather than a literal "|" character — a bordered cell, not a punctuation mark. All three controls
+  always render now (no more hide-when-irrelevant per control), and the glyph alone communicates
+  two independent states, both built from existing tokens only:
   - **Actionable** (can this be clicked right now) via **opacity**: full while clickable, `0.4`
     once `disabled` — reusing `.casualty-btn:disabled`'s own exact treatment, so an inert toolbar
     control looks like every other disabled control on this page instead of inventing a second
@@ -185,7 +191,20 @@ new section, not a new design decision:
 
 - `.army-header`/`.army-header-name` reuse `.unit-block`/`.unit-block .unit-name`'s own card shape
   and `--bg3` name bar exactly — the header reads as a peer of the unit blocks below it, not a
-  distinct page-chrome element.
+  distinct page-chrome element. Since `live-play-touch-target-improvements`, `.army-header` is
+  itself a `<details>` and `.army-header-name` sits inside its `<summary>`, so the whole header
+  collapses to its name bar in one action — the exact same whole-block-collapse mechanism
+  `.unit-block` already uses, not a new one. The `<summary>` itself is given `display: contents` so
+  it contributes no box (its native click-to-toggle behavior is unaffected — confirmed live,
+  including the accessibility tree reporting a proper disclosure-triangle role), letting
+  `.army-header-name` — a real `<h1>`, preserving its own heading semantics — be the thing that
+  actually renders the bar and its disclosure arrow, mirroring `.unit-block .unit-name`'s own arrow
+  treatment exactly. An earlier draft instead nested a second, inner `<details>` around just the
+  meta line and Rules section, keeping the header itself always-expanded; reverted after direct
+  user review found the two stacked "▼ Details" / "▼ Rules" bars read as redundant chrome rather
+  than solving the actual want (collapsing the whole thing to get to the unit list). The phase/turn
+  tracker (below) is no longer rendered inside this partial at all, specifically so it can never be
+  hidden by this collapse.
 - `.army-header-meta`'s bordered-cell dividers (`border-left` between adjacent items, no literal
   "|" character) reuse `.unit-toolbar-item`'s own convention.
 - `.army-rules-title` duplicates `.lp-section summary`'s own section-title bar styling directly
@@ -206,9 +225,15 @@ new section, not a new design decision:
 
 ## Phase/Turn Tracker (`live-play-phase-turn-tracker`)
 
-`.phase-turn-tracker` sits between `.army-header-meta` and the Rules section, inside `.army-header`
-— see `.claude/domain-model-11e.md`'s "Phase/Turn Tracker" for the domain-model/wiring picture;
-this covers only the visual decisions.
+`.phase-turn-tracker` sat between `.army-header-meta` and the Rules section, inside `.army-header`,
+until `live-play-touch-target-improvements` moved it out to be its own element between the Army
+Header and the first unit block — structurally outside the header entirely, so it's never affected
+by the header becoming collapsible (see "Army Header" above). Now that it's a peer of `.army-header`
+rather than nested inside it, it carries its own card treatment (`background: var(--bg2)`, `border`,
+`border-radius` — matching `.army-header`/`.unit-block` exactly) instead of relying on the header's
+own surface for the "row vs. cell background" logic below to read as "part of a card." See
+`.claude/domain-model-11e.md`'s "Phase/Turn Tracker" for the domain-model/wiring picture; this
+covers only the visual decisions.
 
 - **Selection, not a toggle**: each of the twelve `.phase-turn-cell` buttons reuses
   `.army-keyword-chip.is-active`'s own filled `--bg3`/white "this is the current one" look

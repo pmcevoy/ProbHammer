@@ -852,13 +852,11 @@ public sealed record ArmyHeaderViewModel(
 
 /// <summary>Wraps <see cref="ArmyHeaderViewModel"/> with the <see cref="RuleGlossary"/> the
 /// <c>_ArmyHeader</c> partial needs to build its own popover triggers - mirrors
-/// <see cref="UnitBlockRenderModel"/>'s own "view model + glossary" pairing exactly.
-/// <see cref="PhaseTurn"/> (live-play-phase-tracker) is the one field on this record sourced from
-/// <see cref="ProbHammer.Web.Services.IPhaseTurnStore"/> instead of <c>ArmyRosterBuildResult</c> -
-/// null defaults to <see cref="PhaseTurnSelection.Default"/> in <c>_ArmyHeader.cshtml</c>, so a
-/// pre-existing call site that predates this feature keeps compiling and rendering unchanged.
-/// </summary>
+/// <see cref="UnitBlockRenderModel"/>'s own "view model + glossary" pairing exactly. No longer
+/// carries a <c>PhaseTurn</c> field (live-play-touch-target-improvements) - the phase/turn tracker
+/// moved out of <c>_ArmyHeader.cshtml</c> entirely, now rendered directly by <c>LivePlay.cshtml</c>
+/// from <see cref="LivePlayModel.PhaseTurn"/> so it stays visible regardless of the army header's
+/// own (now whole-header) collapse state.</summary>
 public sealed record ArmyHeaderRenderModel(
     ArmyHeaderViewModel Header,
-    RuleGlossary Glossary,
-    PhaseTurnSelection? PhaseTurn = null);
+    RuleGlossary Glossary);

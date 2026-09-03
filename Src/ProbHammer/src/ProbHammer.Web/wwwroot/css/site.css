@@ -132,7 +132,11 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
 
 /* ── Army header (display-army-header-and-detachment-rules) ──
    Same card shape as .unit-block (bg2 surface, --border outline, 4px radius) - the header reads as
-   a peer of the unit blocks below it, not a page-chrome element. */
+   a peer of the unit blocks below it, not a page-chrome element. Since
+   live-play-touch-target-improvements, .army-header is itself a <details> - the whole card can
+   collapse to just its name bar, the exact same whole-block-collapse pattern .unit-block already
+   uses, so a player can get straight to the unit list below without the header's own meta/Rules
+   detail in the way. */
 .army-header {
     margin-bottom: 1.25rem;
     background: var(--bg2);
@@ -141,13 +145,28 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
     overflow: hidden;
 }
 
-/* Same bg3 name-bar treatment as .unit-block .unit-name - the army's own Name is this page's
-   actual h1 now (LivePlay.cshtml no longer renders a bare "Live Play" heading above it). Selector
-   deliberately two classes deep (matching .live-play-page .weapon-table's own precedent) so its
-   specificity (0,2,0) beats the page-wide ".live-play-page h1 { color: var(--text) }" rule (0,1,1) -
-   a plain ".army-header-name" alone (0,1,0) lost that fight, rendering the name in --text (near-
-   black) instead of white against the --bg3 fill, a real contrast bug caught by direct user
-   testing. */
+/* .army-header's own <summary> wrapper: display: contents so it contributes no box of its own
+   (its native click-to-toggle behavior survives regardless - the toggle is bound to the <summary>
+   element itself, not to whatever box it renders), letting .army-header-name (the h1 inside)
+   become the effective, directly-flexed bar child - same visual result as .unit-block .unit-name
+   being the <summary> itself, but keeping the army name as a real <h1> for its own heading
+   semantics (LivePlay.cshtml no longer renders a bare "Live Play" heading above it), which a bare
+   <summary> element can't itself carry. */
+.army-header > summary {
+    display: contents;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+.army-header > summary::-webkit-details-marker { display: none; }
+
+/* Same bg3 name-bar treatment as .unit-block .unit-name, plus that same summary's own disclosure
+   arrow (identical '▶' glyph, rotate-on-[open] transition) now rendered directly on this element
+   since its <summary> parent contributes no box of its own (see above). Selector deliberately two
+   classes deep (matching .live-play-page .weapon-table's own precedent) so its specificity (0,2,0)
+   beats the page-wide ".live-play-page h1 { color: var(--text) }" rule (0,1,1) - a plain
+   ".army-header-name" alone (0,1,0) lost that fight, rendering the name in --text (near-black)
+   instead of white against the --bg3 fill, a real contrast bug caught by direct user testing. */
 .live-play-page .army-header-name {
     margin: 0;
     padding: 0.6rem 0.85rem;
@@ -157,7 +176,19 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
 }
+.army-header-name::before {
+    content: '▶';
+    display: inline-block;
+    font-size: 0.6rem;
+    margin-right: 0.4rem;
+    transition: transform 0.15s;
+}
+.army-header[open] > summary .army-header-name::before { transform: rotate(90deg); }
 
 /* Faction / Battle Size / Points / Force Disposition, one line, bordered-cell dividers rather than
    a literal separator character - same convention as .unit-toolbar-item's own left-border split. */
@@ -179,12 +210,16 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
 .army-header > .lp-section { margin: 0.6rem 0.85rem; }
 
 /* Phase/turn selector (live-play-phase-tracker) - one page-wide 2-row x 5-phase-column grid, plus
-   each row's own selectable label, sitting between the Army Header's metadata line and its Rules
-   section (design.md Decision 5). Selection semantics, not a momentary toggle - reuses
-   .army-keyword-chip.is-active's own filled --bg3/white "this is the current one" look
-   (design-tokens.md: a control gets active-state ink directly) rather than the --amber(-bright)
-   icon convention, which signals "toggled on" for a binary per-unit fact - a different kind of
-   control from a mutually-exclusive twelve-cell selection.
+   each row's own selectable label. Rendered directly by LivePlay.cshtml, between the Army Header
+   and the first unit block (live-play-touch-target-improvements moved it out of _ArmyHeader.cshtml
+   entirely so it stays visible regardless of the header's own, now whole-header, collapse state) -
+   so it's its own peer card now, matching .army-header/.unit-block's own bg2/border/radius shape
+   rather than relying on an enclosing card's surface the way it used to when nested inside
+   .army-header. Selection semantics, not a momentary toggle - reuses .army-keyword-chip.is-active's
+   own filled --bg3/white "this is the current one" look (design-tokens.md: a control gets
+   active-state ink directly) rather than the --amber(-bright) icon convention, which signals
+   "toggled on" for a binary per-unit fact - a different kind of control from a mutually-exclusive
+   twelve-cell selection.
 
    Cell layout reworked (post-ship, live-edited via firefox-devtools-mcp against a real running
    page, then landed here) to match .unit-toolbar's own convention: cells touch with no gap between
@@ -195,7 +230,11 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
     display: flex;
     flex-direction: column;
     gap: 0;
-    margin: 0.6rem 0.85rem;
+    margin-bottom: 1.25rem;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 /* background: var(--bg2) is the row's own "nothing in particular" colour - the same surface colour
@@ -436,22 +475,38 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
 
 .unit-toolbar-item {
     display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.4rem 0.85rem;
 }
 .unit-toolbar-item + .unit-toolbar-item { border-left: 1px solid var(--border); }
 
-/* The icon button is the ONLY clickable area - small and square, exactly like .mod-step-btn/
-   .casualty-btn's existing inc/dec controls (same size, same shape), not a wide pill. Its caption
-   (.unit-toolbar-label below) sits beside it as plain, non-interactive text - never part of the
-   button. Two independent states, both built from existing tokens only - no new colors:
-   - ACTIONABLE (can this be clicked right now) via OPACITY: full while clickable, faded once
-     `disabled` - reusing .casualty-btn:disabled's own exact treatment (`opacity: 0.4`) rather than
-     a background swap, so an inert toolbar control looks like every other disabled control on this
-     page (the casualty inc/dec buttons) instead of introducing a second "this is inert" visual
-     vocabulary.
-   - ACTIVE (is the fact this control represents currently true) via the ICON color: white
+/* live-play-touch-target-improvements: the whole item (glyph + label) is now the clickable area,
+   not just the glyph - matching the "whole bar is the trigger" convention .lp-section summary/
+   .phase-turn-cell already use. .unit-toolbar-icon-btn is now a plain, unstyled flex-row button
+   (transparent background, no border) that carries .unit-toolbar-item's former padding/gap; the
+   filled-square glyph look that used to live directly on this button now lives on its child
+   .unit-toolbar-glyph span instead, so the visible layout is unchanged even though the hit area
+   grew - see design.md Decision 1. */
+.unit-toolbar-icon-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.85rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+.unit-toolbar-icon-btn:disabled { cursor: default; }
+
+/* The filled-square glyph box - same size/shape/colors this element carried directly before this
+   change, just relocated onto a child span so the button itself can also wrap the caption label.
+   Two independent states, both built from existing tokens only - no new colors:
+   - ACTIONABLE (can this be clicked right now) via OPACITY on the glyph alone: full while
+     clickable, faded once the button is `disabled` - reusing .casualty-btn:disabled's own exact
+     treatment (`opacity: 0.4`). Scoped to the glyph, not the whole button, so the caption label
+     (see .unit-toolbar-label below) stays fully legible even on an inert control, matching this
+     page's pre-existing look exactly.
+   - ACTIVE (is the fact this control represents currently true) via the GLYPH color: white
      (matching .casualty-btn's own icon-color override, needed since .mod-step-btn's own default
      near-black text is unreadable against --bg3 here) when inactive, --amber-bright via
      .is-active - plain --amber, tried first, was confirmed too low-contrast (~2.8:1) against a
@@ -459,31 +514,31 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
      --amber-bright's own definition above. Independent of the actionable dimension on purpose -
      and independent of the caption's own color, which never changes (see .unit-toolbar-label
      below). Note: an inert-but-active control (the multi-model Half Strength case, at or below
-     half-strength) renders its amber icon at the same faded opacity as the button's disabled
+     half-strength) renders its amber glyph at the same faded opacity as the button's disabled
      state - a real trade-off of matching the inc/dec buttons' own disabled look exactly, flagged
      here rather than silently accepted. */
-.unit-toolbar-icon-btn {
+.unit-toolbar-glyph {
     width: 1.4rem;
     height: 1.4rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
+    flex-shrink: 0;
     background: var(--bg3);
     color: #fff;
-    border: none;
     border-radius: 2px;
-    cursor: pointer;
     font-size: 1rem;
     line-height: 1;
 }
-.unit-toolbar-icon-btn:hover:not(:disabled) { opacity: 0.85; }
-.unit-toolbar-icon-btn:disabled { opacity: 0.4; cursor: default; }
-.unit-toolbar-icon-btn.is-active { color: var(--amber-bright); }
+.unit-toolbar-icon-btn:hover:not(:disabled) .unit-toolbar-glyph { opacity: 0.85; }
+.unit-toolbar-icon-btn:disabled .unit-toolbar-glyph { opacity: 0.4; }
+.unit-toolbar-icon-btn.is-active .unit-toolbar-glyph { color: var(--amber-bright); }
 
 /* Caption text, styled identically to .stat-label (below) per direct user feedback - a plain,
-   static label, not a second status indicator: its color never changes with the button's own
-   actionable/active state. */
+   static label. Now a child of .unit-toolbar-icon-btn (live-play-touch-target-improvements) rather
+   than a sibling span outside it, so tapping the label activates the same button as tapping the
+   glyph; its own color still never changes with the button's actionable/active state, matching the
+   glyph-scoped opacity/color rules above. */
 .unit-toolbar-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; }
 
 /* Shared by the Battle-shock bolt and the Reset Casualties skull (both inline SVG, fill:
@@ -803,11 +858,13 @@ button.filter-flag:hover { opacity: 0.8; }
    locally redeclares the same --bg3/--text/--border custom properties .mod-step-btn reads, so it
    renders in this page's light theme automatically, not ArmyView's dark one. A casualty control's
    click handler calls stopPropagation() before anything else (live-play.js), since it sits inside
-   its row's own selection-toggle click target. */
+   its row's own selection-toggle click target. Gap widened (live-play-touch-target-improvements)
+   beyond the original 0.25rem so the two adjacent +/- buttons are harder to fat-finger the wrong
+   direction on a phone. */
 .casualty-controls {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.5rem;
     margin-left: auto;
 }
 /* Sizing/shape folded forward from the removed legacy .mod-step-btn rule (ArmyView's own
@@ -816,10 +873,11 @@ button.filter-flag:hover { opacity: 0.8; }
    dead-CSS sweep: .mod-step-btn's own base selector turned out not to be fully dead like the rest
    of its section, so its declarations moved here rather than being deleted outright. `color:
    var(--text)` (near-black, correct on ArmyView's dark --bg3) is overridden to white, the inverse
-   of the light statline-header background these buttons sit on here. */
+   of the light statline-header background these buttons sit on here. Grown from the original
+   1.4rem (live-play-touch-target-improvements) for the same fat-finger reason as the gap above. */
 .casualty-btn {
-    width: 1.4rem;
-    height: 1.4rem;
+    width: 1.8rem;
+    height: 1.8rem;
     font-size: 1rem;
     line-height: 1;
     background: var(--bg3);
@@ -846,10 +904,13 @@ button.filter-flag:hover { opacity: 0.8; }
 
 /* Fixed, shared column widths so Ranged and Melee weapon tables (two independent <table>
    elements) don't drift apart under content-driven auto-layout - a Melee row with no ability
-   tag and a Ranged row with one otherwise compute different Weapon-column widths per table. */
-.live-play-page .weapon-table col.col-weapon { width: 34%; }
-.live-play-page .weapon-table col.col-weapon-melee { width: 45%; }
-.live-play-page .weapon-table col.col-slot { width: 11%; }
+   tag and a Ranged row with one otherwise compute different Weapon-column widths per table.
+   col-slot's share was tightened, and the difference handed to col-weapon/col-weapon-melee
+   (live-play-touch-target-improvements), to give the weapon name/tags column more room - the
+   `<thead>` row and its labels are otherwise unchanged; see design.md Decision 4. */
+.live-play-page .weapon-table col.col-weapon { width: 46%; }
+.live-play-page .weapon-table col.col-weapon-melee { width: 55%; }
+.live-play-page .weapon-table col.col-slot { width: 9%; }
 
 .live-play-page .weapon-table th {
     text-align: left;
@@ -857,13 +918,13 @@ button.filter-flag:hover { opacity: 0.8; }
     font-weight: 600;
     font-size: 0.7rem;
     text-transform: uppercase;
-    padding: 0.15rem 0.4rem;
+    padding: 0.15rem 0.3rem;
     border-bottom: 1px solid var(--border);
     white-space: nowrap;
 }
 
 .live-play-page .weapon-table td {
-    padding: 0.3rem 0.4rem;
+    padding: 0.3rem 0.3rem;
     border-bottom: 1px solid var(--border);
     white-space: nowrap;
 }

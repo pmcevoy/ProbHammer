@@ -1,18 +1,24 @@
 @model ProbHammer.Web.Pages.ArmyHeaderRenderModel
 @using System.Net
-@using ProbHammer.Core.Domain.Roster
 @using ProbHammer.Web.Rendering
 @{
     var header = Model.Header;
     var glossary = Model.Glossary;
-    var phaseTurn = Model.PhaseTurn ?? PhaseTurnSelection.Default;
 
     // "hdr" scopes this instance's own popover ids - distinct from every _UnitBlock.cshtml
     // instance's own "u{i}" scope (see RulePopoverRenderer's own doc comment).
     var popovers = new RulePopoverRenderer(glossary, "hdr");
 }
-<section class="army-header">
-    <h1 class="army-header-name">@header.Name</h1>
+@* live-play-touch-target-improvements: the whole header is now a <details>, its name bar the
+   <summary> - the exact same whole-block-collapse pattern _UnitBlock.cshtml's own outer <details>
+   already uses, so a player can collapse the header entirely to get straight to the unit list
+   below. The phase/turn tracker moved out of this partial entirely (now rendered by LivePlay.cshtml
+   directly, between this partial and the unit-block loop) so it stays visible regardless of this
+   collapse state - no in-partial wrapper needed to protect it. Defaults open. *@
+<details class="army-header" open>
+    <summary>
+        <h1 class="army-header-name">@header.Name</h1>
+    </summary>
     <div class="army-header-meta">
         <span class="army-header-meta-item">@string.Join(" - ", header.Faction)</span>
         <span class="army-header-meta-item">@header.BattleSize</span>
@@ -22,8 +28,6 @@
             <span class="army-header-meta-item">@header.ForceDisposition</span>
         }
     </div>
-
-    <partial name="_PhaseTurnTracker" model="phaseTurn"/>
 
     @if (header.ArmyRules.Any() || header.Detachments.Any())
     {
@@ -101,4 +105,4 @@
         </summary>
         <div class="army-keyword-chips"></div>
     </details>
-</section>
+</details>

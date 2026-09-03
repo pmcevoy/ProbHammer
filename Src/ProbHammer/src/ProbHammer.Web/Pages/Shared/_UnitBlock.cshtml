@@ -65,9 +65,10 @@
                 <button type="button"
                         class="unit-toolbar-icon-btn status-glyph-halfstrength @(unit.IsAtOrBelowHalfStrength ? "is-active" : "")"
                         data-unit-index="@i" aria-pressed="@(unit.IsAtOrBelowHalfStrength ? "true" : "false")"
-                        aria-label="Toggle at-or-below half strength" title="At or below half strength (tap to set)">½
+                        aria-label="Toggle at-or-below half strength" title="At or below half strength (tap to set)">
+                    <span class="unit-toolbar-glyph">½</span>
+                    <span class="unit-toolbar-label">Half Strength</span>
                 </button>
-                <span class="unit-toolbar-label">Half Strength</span>
             </div>
         }
         else
@@ -76,9 +77,10 @@
                 <button type="button"
                         class="unit-toolbar-icon-btn status-glyph-halfstrength @(unit.IsAtOrBelowHalfStrength ? "is-active" : "")"
                         disabled
-                        aria-label="At or below half strength (computed)" title="At or below half strength (computed)">½
+                        aria-label="At or below half strength (computed)" title="At or below half strength (computed)">
+                    <span class="unit-toolbar-glyph">½</span>
+                    <span class="unit-toolbar-label">Half Strength</span>
                 </button>
-                <span class="unit-toolbar-label">Half Strength</span>
             </div>
         }
         @* Battle-shock: always present, always actionable - the app never simulates the
@@ -90,9 +92,9 @@
                     class="unit-toolbar-icon-btn status-glyph-battleshock @(unit.IsBattleShocked ? "is-active" : "")"
                     data-unit-index="@i" aria-pressed="@(unit.IsBattleShocked ? "true" : "false")"
                     aria-label="Toggle Battle-shocked" title="Battle-shocked (tap to set)">
-                @Html.Raw(BoltSvgIcon("unit-toolbar-svg-icon"))
+                <span class="unit-toolbar-glyph">@Html.Raw(BoltSvgIcon("unit-toolbar-svg-icon"))</span>
+                <span class="unit-toolbar-label">Battle-shock</span>
             </button>
-            <span class="unit-toolbar-label">Battle-shock</span>
         </div>
         @* Reset Casualties: actionable only once there's something to reset - unlike the other two,
            it has no independent "active" fact, so its icon is amber exactly when actionable (see
@@ -103,8 +105,10 @@
                     disabled="@(!unit.HasCasualties)"
                     data-unit-index="@i"
                     aria-label="Reset casualties for this unit"
-                    title="Reset casualties for this unit">@Html.Raw(SkullSvgIcon("unit-toolbar-svg-icon"))</button>
-            <span class="unit-toolbar-label">Reset Casualties</span>
+                    title="Reset casualties for this unit">
+                <span class="unit-toolbar-glyph">@Html.Raw(SkullSvgIcon("unit-toolbar-svg-icon"))</span>
+                <span class="unit-toolbar-label">Reset Casualties</span>
+            </button>
         </div>
     </div>
 

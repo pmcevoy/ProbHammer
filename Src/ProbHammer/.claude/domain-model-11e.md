@@ -538,6 +538,19 @@ the per-unit box keeps rendering alongside the new header. The rules section lay
 its own name once as plain text with one `RulePopoverRenderer`-built trigger per resolved rule
 beneath it. No DP/points cost rendered anywhere on the page.
 
+Since `live-play-touch-target-improvements`, `_ArmyHeader.cshtml`'s own outer element is itself a
+`<details class="army-header" open>` whose `<summary>` wraps `<h1 class="army-header-name">` —
+the same whole-block-collapse pattern `_UnitBlock.cshtml`'s own outer `<details>` already uses
+(collapsing hides the metadata line and every nested section together, in one action; each nested
+`<details>` — Rules, All Keywords — keeps its own independent open/closed state across the parent
+collapsing and re-expanding). The phase/turn tracker moved out of this partial entirely (see
+"Phase/Turn Tracker" above) specifically so it's structurally unaffected by this collapse. An
+earlier draft nested a second `<details>` inside the header wrapping only the meta line and Rules,
+keeping the tracker inside the header but outside that inner wrapper — reverted after direct user
+review found the two stacked, near-identical disclosure bars ("Details" over "Rules") read as
+redundant chrome rather than solving the actual want (collapsing the whole thing to see the unit
+list).
+
 ### Full-Corpus Bracket-Token-Resolution Scan
 
 `tests/ProbHammer.Tests/Domain/Catalogue/Bsdata/CorpusScan/BracketTokenResolutionScanTests.cs` —
@@ -1277,13 +1290,28 @@ per-section toggle has never been persisted anywhere on this page). So:
 5-phase-column grid plus each row's own selectable label (twelve plain `<button>`s total, not
 popover triggers — this control asserts state, it doesn't explain a rule), model-driven from
 `PhaseTurnSelection` so the correct cell is marked `.is-active` server-side on first paint with no
-flash-of-wrong-cell. Rendered via `_ArmyHeader.cshtml` (`ArmyHeaderRenderModel` gained a nullable
-`PhaseTurn` field, defaulting to `PhaseTurnSelection.Default` in the partial for the same
-backward-compat reason as `UnitBlockRenderModel.ExpandedSections` above) between the existing
-`.army-header-meta` div and the Rules section — one control for the whole page, never one per unit
-block, unlike the per-unit status toolbar. Each phase cell carries `data-turn="mine|theirs"` +
+flash-of-wrong-cell. Each phase cell carries `data-turn="mine|theirs"` +
 `data-phase="command|movement|shooting|charge|fight"`; each row-label cell carries `data-turn`
-only.
+only. Since `live-play-touch-target-improvements`, rendered directly by `LivePlay.cshtml` (model
+`Model.PhaseTurn`) between the `_ArmyHeader` partial and the unit-block loop — no longer inside
+`_ArmyHeader.cshtml` at all (`ArmyHeaderRenderModel` no longer carries a `PhaseTurn` field), so the
+tracker is structurally outside the Army Header and unaffected by it becoming collapsible (see
+"Army Header" below). Still one control for the whole page, never one per unit block, unlike the
+per-unit status toolbar.
+
+**Unit-block collapse override** (`live-play-touch-target-improvements`): every phase/turn
+selection also fully overrides every unit block's own collapsed/expanded state, client-side only
+(`live-play.js`, no server involvement) — a row-label selection collapses every unit block to its
+name bar (a compact roster list); a specific phase-column selection instead expands every unit
+block, so that phase's own Forced/Expanded inner sections are actually visible rather than forced
+open server-side yet hidden inside a still-collapsed block. `syncPhaseTurn(turn, phase)` computes
+`unitBlocksOpen = phase !== null` (already known before the fetch is sent, since a row-label cell
+carries no `data-phase`) and threads it through `applySyncResponse` into `swapUnitBlock`'s
+`unitBlocksOpen` parameter — a tri-state override (`null` default preserves `swapUnitBlock`'s
+original per-block open/closed carry-forward, used by the unrelated casualty/status-only sync
+path; `true`/`false` forces every block open/closed outright). Applied on every phase/turn
+selection, not just a one-time transition — reselecting the same cell re-applies it, so a
+manually-toggled block doesn't survive the next click either direction.
 
 **Sync endpoint**: `LivePlaySyncRequest` gained an optional `PhaseTurnAdjustment(GameTurn Turn,
 GamePhase? Phase)` field, handled by the existing `/api/live-play/casualties` endpoint rather than

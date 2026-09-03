@@ -11,20 +11,28 @@
        .live-play-content both render unconditionally here; the @@media rule in site.css shows
        exactly one of the two and re-evaluates live as the device rotates, no JS/reload needed. *@
     <div class="rotate-prompt" role="status">
-        <svg class="rotate-prompt-icon" viewBox="0 0 24 24" aria-hidden="true"><path
-                d="M15.55 5.55L11 1v3.07C7.06 4.56 4 7.92 4 12s3.05 7.44 7 7.93v-2.02c-2.84-.48-5-2.94-5-5.91s2.16-5.43 5-5.91V10l4.55-4.45zM19.93 11c-.17-1.39-.72-2.73-1.62-3.89l-1.42 1.42c.54.75.88 1.6 1.02 2.47h2.02zm-7.93 7.93v2.02c1.39-.17 2.74-.71 3.9-1.61l-1.44-1.44c-.75.54-1.59.89-2.46 1.03zm3.88-2.35l1.42 1.41c.9-1.16 1.45-2.5 1.62-3.89h-2.02c-.14.87-.48 1.72-1.02 2.48z"/></svg>
+        <svg class="rotate-prompt-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+                d="M15.55 5.55L11 1v3.07C7.06 4.56 4 7.92 4 12s3.05 7.44 7 7.93v-2.02c-2.84-.48-5-2.94-5-5.91s2.16-5.43 5-5.91V10l4.55-4.45zM19.93 11c-.17-1.39-.72-2.73-1.62-3.89l-1.42 1.42c.54.75.88 1.6 1.02 2.47h2.02zm-7.93 7.93v2.02c1.39-.17 2.74-.71 3.9-1.61l-1.44-1.44c-.75.54-1.59.89-2.46 1.03zm3.88-2.35l1.42 1.41c.9-1.16 1.45-2.5 1.62-3.89h-2.02c-.14.87-.48 1.72-1.02 2.48z"/>
+        </svg>
         <p class="rotate-prompt-text">Rotate your device to landscape to use Live Play.</p>
     </div>
 
     <div class="live-play-content">
-        <partial name="_ArmyHeader" model="new ArmyHeaderRenderModel(Model.Header, Model.Glossary, Model.PhaseTurn)"/>
+        <partial name="_ArmyHeader" model="new ArmyHeaderRenderModel(Model.Header, Model.Glossary)"/>
+
+        @* live-play-touch-target-improvements: rendered here, outside _ArmyHeader.cshtml entirely,
+           so it stays visible regardless of the army header's own (now whole-header) collapse
+           state - see that partial's own comment. *@
+        <partial name="_PhaseTurnTracker" model="Model.PhaseTurn"/>
 
         @{
             var expandedSections = LivePlayModel.ExpandedSections(Model.PhaseTurn);
         }
         @for (var i = 0; i < Model.Units.Count; i++)
         {
-            <partial name="_UnitBlock" model="new UnitBlockRenderModel(i, Model.Units[i], Model.Glossary, expandedSections)"/>
+            <partial name="_UnitBlock"
+                     model="new UnitBlockRenderModel(i, Model.Units[i], Model.Glossary, expandedSections)"/>
         }
     </div>
 </main>
