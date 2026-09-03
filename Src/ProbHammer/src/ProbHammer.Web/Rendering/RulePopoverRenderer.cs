@@ -27,14 +27,27 @@ public sealed class RulePopoverRenderer(RuleGlossary glossary, string idScopePre
     /// <paramref name="shownRuleNames"/> is every RuleDefinition.Name already displayed somewhere
     /// in this popover's own ancestor chain, threaded down so a nested reference can refuse to
     /// re-enter one already open (real BSData rules self-reference their own name, e.g. "Sustained
-    /// Hits", "Anti", "Cleave" - an unguarded recursion here previously stack-overflowed).</summary>
+    /// Hits", "Anti", "Cleave" - an unguarded recursion here previously stack-overflowed).
+    /// <paramref name="depth"/> is this popover's own visual nesting depth (0 for every top-level
+    /// ability-name/weapon-chip trigger, N for a reference reached N levels deep) - a separate
+    /// count from <paramref name="shownRuleNames"/>.Count on purpose: a top-level weapon-keyword
+    /// chip's own call pre-seeds <paramref name="shownRuleNames"/> with that chip's own rule name
+    /// (self-reference guard), which would otherwise make it indistinguishable from a genuinely
+    /// nested popover if depth were derived from the set's size instead of tracked explicitly.
+    /// Rendered as the panel's own `data-depth` attribute, which CSS uses to offset a nested
+    /// popover from its parent's shared centered position (recenter-rule-popovers).</summary>
     public (string Trigger, string Trailer) BuildRulePopover(
-        string triggerHtml, string triggerClass, string ruleText, IReadOnlySet<string> shownRuleNames)
+        string triggerHtml, string triggerClass, string ruleText, IReadOnlySet<string> shownRuleNames, int depth = 0)
     {
         var popoverId = NextPopoverId();
-        var (bodyInline, bodyPopovers) = RuleTextEmphasisRenderer.Render(ruleText, raw => RenderNestedReference(raw, shownRuleNames));
-        var trigger = $"<button type=\"button\" id=\"t-{popoverId}\" class=\"{triggerClass}\" popovertarget=\"p-{popoverId}\" style=\"anchor-name: --a{popoverId}\">{triggerHtml}</button>";
-        var panel = $"<div id=\"p-{popoverId}\" class=\"rule-popover\" popover=\"auto\" style=\"position-anchor: --a{popoverId}\"><div class=\"rule-popover-title\">{triggerHtml}</div><div class=\"rule-popover-text\">{bodyInline}</div></div>";
+        var (bodyInline, bodyPopovers) =
+            RuleTextEmphasisRenderer.Render(ruleText, raw => RenderNestedReference(raw, shownRuleNames, depth));
+        var trigger =
+            $"<button type=\"button\" id=\"t-{popoverId}\" class=\"{triggerClass}\" popovertarget=\"p-{popoverId}\">{triggerHtml}</button>";
+        var closeButton =
+            $"<button type=\"button\" class=\"rule-popover-close\" popovertarget=\"p-{popoverId}\" popovertargetaction=\"hide\" aria-label=\"Close\">&times;</button>";
+        var panel =
+            $"<div id=\"p-{popoverId}\" class=\"rule-popover\" popover=\"auto\" data-depth=\"{depth}\"><div class=\"rule-popover-title\">{triggerHtml}{closeButton}</div><div class=\"rule-popover-text\">{bodyInline}</div></div>";
         return (trigger, panel + bodyPopovers);
     }
 
@@ -44,16 +57,19 @@ public sealed class RulePopoverRenderer(RuleGlossary glossary, string idScopePre
     // resolving back to a rule already in shownRuleNames, degrades to plain (emphasis-rendered)
     // text with no trigger - never causing the surrounding text's own resolution to fail, and never
     // recursing into an already-open popover.
-    private (string Inline, string Popovers) RenderNestedReference(string rawInner, IReadOnlySet<string> shownRuleNames)
+    private (string Inline, string Popovers) RenderNestedReference(string rawInner, IReadOnlySet<string> shownRuleNames,
+        int depth)
     {
         var normalized = RuleTextTokenizer.Normalize(rawInner);
         var rule = glossary.TryResolve(normalized);
-        var (labelInline, labelPopovers) = RuleTextEmphasisRenderer.Render(rawInner, raw => RenderNestedReference(raw, shownRuleNames));
+        var (labelInline, labelPopovers) =
+            RuleTextEmphasisRenderer.Render(rawInner, raw => RenderNestedReference(raw, shownRuleNames, depth));
         if (rule == null || shownRuleNames.Contains(rule.Name))
             return (labelInline, labelPopovers);
 
         var nextShownRuleNames = new HashSet<string>(shownRuleNames) { rule.Name };
-        var (trigger, trailer) = BuildRulePopover(labelInline, "rule-reference", rule.Text, nextShownRuleNames);
+        var (trigger, trailer) =
+            BuildRulePopover(labelInline, "rule-reference", rule.Text, nextShownRuleNames, depth + 1);
         return (trigger, labelPopovers + trailer);
     }
 }

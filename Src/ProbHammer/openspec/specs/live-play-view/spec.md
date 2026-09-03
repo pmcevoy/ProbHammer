@@ -820,33 +820,40 @@ Rendering").
 - **THEN** the page's existing state (casualty marks, current statline/loadout selection, expanded
   disclosure sections) is unchanged and no full page navigation occurs
 
-### Requirement: Popover Is Anchored Locally To Its Trigger
-A popover SHALL be positioned adjacent to the specific element that was tapped to open it, rather
-than centered on the screen or otherwise placed independent of what was tapped, so the player does
-not lose their place in the surrounding statline, ability column, or weapon table.
+### Requirement: Popover Is Centered In The Viewport
+A popover SHALL be positioned centered in the viewport, at a consistent size and position
+regardless of which element was tapped to open it, rather than positioned adjacent to its trigger.
 
-#### Scenario: A popover appears next to what was tapped
+#### Scenario: A popover appears centered regardless of what was tapped
 - **WHEN** a player taps an ability name or weapon keyword chip anywhere within a unit block
-- **THEN** the resulting popover renders positioned adjacent to that specific element, not centered
-  on the screen
+- **THEN** the resulting popover renders centered in the viewport, not positioned adjacent to that
+  element
 
-### Requirement: Popover Remains Functional Without Anchor-Positioning Support
-On a browser that does not support local anchor positioning, a popover SHALL still open and remain
-fully dismissable exactly as elsewhere in this requirement set — only its placement relative to its
-trigger is affected, never whether it appears or can be closed.
+### Requirement: Popover Dims The Page Behind It
+While a popover is open, the page content behind it SHALL render visibly dimmed, so the player's
+attention stays on the popover rather than the surrounding page.
 
-#### Scenario: A popover still opens and closes on an unsupporting browser
-- **WHEN** a player taps an ability name or a resolvable weapon keyword chip on a browser without
-  local anchor-positioning support
-- **THEN** a popover still opens showing the expected text and can still be dismissed, even though
-  it is not positioned adjacent to its trigger
+#### Scenario: Opening a popover dims the page behind it
+- **WHEN** a player opens a popover
+- **THEN** the page content behind the popover renders visibly darker than it does with no popover
+  open
+
+#### Scenario: A nested popover's own dimming does not hide its still-open parent
+- **WHEN** a nested reference popover is open on top of its parent (per "Nested Reference
+  Popover")
+- **THEN** the parent popover's own visible portion remains legibly distinguishable from the
+  dimmed page behind both, even though a nested popover's own dimming layers on top of it
 
 ### Requirement: Popover Dismissal
-A popover SHALL be dismissable by tapping anywhere outside it, without requiring a dedicated close
-control.
+A popover SHALL be dismissable either by tapping anywhere outside it, or by tapping its own
+explicit close control - the two are independent dismissal paths, neither required over the other.
 
 #### Scenario: Tapping outside a popover closes it
 - **WHEN** a popover is open and the player taps anywhere outside it
+- **THEN** the popover closes
+
+#### Scenario: Tapping the close control closes the popover
+- **WHEN** a popover is open and the player taps its own explicit close control
 - **THEN** the popover closes
 
 ### Requirement: Nested Reference Popover
@@ -854,17 +861,19 @@ Within an open popover's own text, a resolved `[BRACKET]` cross-reference (per `
 "Glossary Lookup By Normalized Name Or Alias" requirement) SHALL be an interactive trigger, unless
 it resolves back to a rule already shown somewhere in that popover's own ancestor chain (a direct
 self-reference or a longer cycle), in which case it SHALL be treated the same as an unresolved
-token. Tapping a resolved, non-cyclic reference SHALL open a second popover, anchored to that
-specific reference, showing the referenced rule's text, without closing the popover it was opened
-from. Tapping outside the second popover but still inside the first SHALL close only the second
-popover, leaving the first open. Tapping outside both SHALL close both in one action. An unresolved
-bracket token (no matching glossary entry) is not an interactive trigger.
+token. Tapping a resolved, non-cyclic reference SHALL open a second popover, centered in the
+viewport like its parent but visually offset from it so the parent's own title bar remains visible
+alongside the new popover, showing the referenced rule's text, without closing the popover it was
+opened from. Tapping outside the second popover but still inside the first (including on the
+parent's own visible title bar) SHALL close only the second popover, leaving the first open.
+Tapping outside both SHALL close both in one action, as SHALL tapping either popover's own close
+control for itself.
 
 #### Scenario: Opening a nested popover keeps the parent open
 - **WHEN** a player taps a resolved cross-reference inside an open popover (e.g. tapping
   `[PRECISION]` while reading a detachment rule's own text)
-- **THEN** a second popover opens showing the "Precision" rule's text, and the first popover
-  remains open and visible
+- **THEN** a second popover opens showing the "Precision" rule's text, visually offset from the
+  first so the first popover's own title bar remains visible, and the first popover remains open
 
 #### Scenario: Dismissing between the two closes only the nested popover
 - **WHEN** both a parent and a nested popover are open, and the player taps a location inside the

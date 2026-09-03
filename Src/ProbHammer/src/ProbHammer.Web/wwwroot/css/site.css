@@ -1088,11 +1088,16 @@ button.filter-flag:hover { opacity: 0.8; }
 /* Trims the shared .ability-name-line trigger look down to plain small text for a
 /* ── Rule/ability text popover (rules-glossary-popovers) ── */
 
-/* Base panel, unpositioned: the browser's own UA stylesheet already centers a [popover] roughly
-   on screen via `inset: 0; margin: auto` when nothing else positions it, so this alone already
-   satisfies "Popover Remains Functional Without Anchor-Positioning Support" - the @supports block
-   below only ever adds better placement on top, never something functionality depends on. */
+/* Explicit centered placement (recenter-rule-popovers), not a reused implicit UA default - the
+   old fallback relied on the browser's own `[popover]` UA stylesheet already centering via
+   `inset: 0; margin: auto` when nothing else positioned it; that assumption is now stated
+   directly instead of left implicit, since implicit browser defaults are exactly what made local
+   anchor-positioning (removed below) unreliable in the first place. A nested popover overrides
+   this with a small cascading offset - see `[data-depth]` below. */
 .rule-popover {
+    position: fixed;
+    inset: 0;
+    margin: auto;
     max-width: min(22rem, 90vw);
     max-height: 70vh;
     overflow-y: auto;
@@ -1101,14 +1106,44 @@ button.filter-flag:hover { opacity: 0.8; }
     border-radius: 4px;
 }
 
+/* Dims the page behind an open popover so the player's attention stays on the popover's own
+   content - every `popover="auto"` element gets this pseudo-element automatically in the top
+   layer, so no extra markup/JS is needed. Derived from --text via color-mix (this codebase's
+   existing "named, derived token rather than a bare rgba()" convention - see --amber-tint/
+   --bg3-tint) rather than a flat black, so it tints toward the page's own ink color instead of an
+   unrelated hue. A nested popover's own backdrop stacks above its parent in the top layer, adding
+   a second, compounding dim over the parent's peeking title bar - confirmed still legible at this
+   opacity during manual verification, not just assumed. */
+.rule-popover::backdrop {
+    background: color-mix(in srgb, var(--text) 45%, transparent);
+}
+
+/* A nested [BRACKET] reference popover (recenter-rule-popovers' "Nested Reference Popover")
+   offsets from the shared centered position by a small, increasing amount per nesting depth
+   (rendered as `data-depth` by RulePopoverRenderer, derived from its own ancestor-chain count) -
+   so a parent popover's own sticky title bar below still peeks out from behind each deeper panel,
+   giving the player a visible "this is still open" cue and something to tap to close only the
+   nested one. Confirmed real max nesting depth is 3 (domain-model-11e.md); deeper is unobserved
+   and reuses the depth-3 offset rather than growing without bound. */
+.rule-popover[data-depth="1"] { transform: translate(0.75rem, 0.75rem); }
+.rule-popover[data-depth="2"] { transform: translate(1.5rem, 1.5rem); }
+.rule-popover[data-depth="3"],
+.rule-popover[data-depth="4"],
+.rule-popover[data-depth="5"] { transform: translate(2.25rem, 2.25rem); }
+
 /* Same visual style as .lp-section summary's own section-title bar (background/color/weight/size/
    case/letter-spacing) - reused here rather than shared via one selector, since the two sit on
    structurally different elements (an interactive, toggling <summary> vs. a plain <div>). Sticky
    within .rule-popover's own scroll container so a long rule's title stays visible while its body
-   scrolls, matching how the page's own section headers are always visible. */
+   scrolls, matching how the page's own section headers are always visible. Flex row so the close
+   button (recenter-rule-popovers) can sit flush at the trailing edge without its own margin hack. */
 .rule-popover-title {
     position: sticky;
     top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
     background: var(--bg3-tint);
     color: #fff;
     font-weight: 600;
@@ -1118,6 +1153,29 @@ button.filter-flag:hover { opacity: 0.8; }
     padding: 0.35rem 0.6rem;
     border-radius: 4px 4px 0 0;
 }
+
+/* Explicit close control (recenter-rule-popovers), a second dismissal path alongside tap-outside -
+   `popovertargetaction="hide"` on the trigger itself, so no JS is involved. Small and square like
+   the page's other icon-only controls (.unit-toolbar-icon-btn/.casualty-btn), but transparent
+   against the title bar's own --bg3-tint fill rather than a solid --bg3 square, since it already
+   sits on a colored bar and doesn't need its own background to read as a button. */
+.rule-popover-close {
+    flex: 0 0 auto;
+    width: 1.4rem;
+    height: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 2px;
+    color: #fff;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+.rule-popover-close:hover { opacity: 0.8; }
 
 .rule-popover-text {
     padding: 0.6rem 0.75rem;
@@ -1155,28 +1213,6 @@ button.filter-flag:hover { opacity: 0.8; }
 }
 .rule-reference:hover {
     opacity: 0.8;
-}
-
-/* Anchored placement: opens adjacent to whichever trigger opened it (an ability name, a
-   resolvable weapon-keyword chip, or a nested `.rule-reference`), never centered - per
-   live-play-view's "Popover Is Anchored Locally To Its Trigger". Each trigger carries a unique
-   inline `anchor-name: --a{id}`, and its paired popover carries the matching
-   `position-anchor: --a{id}` (see _UnitBlock.cshtml) - the CSS custom-property pair, not the
-   newer HTML `anchor="..."` IDREF attribute design.md also named as an option: real testing
-   (task 5.5) found the actual target browser supports `anchor-name`/`position-anchor` but not yet
-   the HTML `anchor` attribute, so this is the one that actually positions anything today. The
-   trigger/popover *ancestor* relationship nested popovers need for their own light-dismiss
-   stacking doesn't depend on this at all - it already comes from `popovertarget` establishing the
-   trigger as the popover's declarative invoker, independent of how (or whether) positioning
-   resolves. Feature-detected on `anchor-name` (the foundational property the whole
-   anchor-positioning feature turns on) rather than on `position-area` specifically, matching
-   design.md's own stated `@supports` target. */
-@supports (anchor-name: --a) {
-    .rule-popover {
-        position-area: block-end span-inline-start;
-        position-try-fallbacks: flip-block, flip-inline;
-        margin: 0.3rem 0 0 0;
-    }
 }
 
 /* ── Import page ── */
