@@ -18,21 +18,6 @@ entry once it's been turned into a change (archived changes remain the historica
   distinction again if wanted. `Ability.Scope` and the view models' `ModelAbilities`/
   `UnitAbilities` split were deliberately left untouched by that change specifically so this stays
   easy to build later with no domain rework.
-- **Phase-level section toggling across all units at once** — collapse/expand every unit's
-  statline/ranged/melee/abilities section together, reusing the same disclosure unit each
-  section already uses individually. Raised again during `half-strength-and-battleshock-
-  indicators`' exploration, as the motivation for putting that change's half-strength/Battle-
-  shock status glyphs directly on the unit-name header (the one thing that stays visible
-  regardless of section collapse state) rather than in a separate row — deliberately kept out of
-  that change's own scope, still a candidate for its own change. Raised again post-`highlight-
-  units-by-army-keyword`: that change's Decision 5 (deselecting a keyword filter never
-  auto-collapses a Keywords section it had force-expanded — a one-way ratchet, no "opened by
-  filter" bookkeeping) trades correctness for simplicity by leaving a section open with no way to
-  tell whether it's open because of an old filter or because the player expanded it deliberately
-  for an unrelated reason. An explicit "collapse all sections" control on the Army Header would
-  resolve that ambiguity directly (the player just closes everything when it's no longer needed)
-  without adding the bookkeeping that tracking "opened by filter" specifically would require —
-  same underlying mechanism as this bullet's original ask, new motivating use case.
 - **Core/Faction/Psychic ability source tagging** — distinguish where an ability comes from,
   not just its name/scope.
 - **Per-`ModelLine` keywords.** Needed so a leader's personal keyword leaves the unit's effective
@@ -153,14 +138,16 @@ entry once it's been turned into a change (archived changes remain the historica
 
 ## Bigger picture
 
-- **A full "Gameplay" bounded context** for live/mutable game state beyond casualty counts — turn
-  tracking, and other conditions that rules text sometimes references ("while this model is on
-  the battlefield...", "gets Lethal Hits while within range of an objective marker"). Some ability
-  text is permanently out of scope for auto-parsing because it needs state (positioning) the
-  domain has no way to represent even with this context built — see `.claude/domain-model-11e.md`'s
-  Deliberate Omissions. Battle-shock and per-unit Objective-control-goes-nothing display are no
-  longer part of this deferred item — `half-strength-and-battleshock-indicators` implemented a
-  narrow, player-reported (never simulated) slice of both. What's still missing here is the
-  broader picture this bullet originally meant: turn/Command-phase tracking (so Battle-shock could
-  in principle even be prompted rather than purely player-toggled) and any other condition-tracking
-  beyond that one narrow slice.
+- **A full "Gameplay" bounded context** for live/mutable game state beyond casualty counts — other
+  conditions that rules text sometimes references ("while this model is on the battlefield...",
+  "gets Lethal Hits while within range of an objective marker"). Some ability text is permanently
+  out of scope for auto-parsing because it needs state (positioning) the domain has no way to
+  represent even with this context built — see `.claude/domain-model-11e.md`'s Deliberate
+  Omissions. Battle-shock, per-unit Objective-control-goes-nothing display, and player-asserted
+  turn/Command-phase tracking are no longer part of this deferred item —
+  `half-strength-and-battleshock-indicators` and `live-play-phase-turn-tracker` implemented narrow,
+  player-reported (never simulated) slices of all three, the latter persisted via `IPhaseTurnStore`
+  in session. What's still missing here is the broader picture this bullet originally meant: the
+  tracker only ever reflects what the player asserts (no prompting/simulation of the 2D6-vs-
+  Leadership Battle-shock test or automatic phase advancement), and any positional/objective-state
+  condition-tracking remains entirely absent.

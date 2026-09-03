@@ -4,14 +4,18 @@
 
 (none currently)
 
-**Next up (not started)**: the `infoGroup` ability-granting gap follow-up is now unblocked -
-`display-army-header-and-detachment-rules` (below) landed the "which Detachment(s) did this roster
-select" plumbing it needs. See auto-memory `project_infogroup_ability_followup` for the full
-DTO/evaluator shape (`BsInfoGroup`, `BsProfile.Modifiers`, `BsSelectionEntry.CategoryLinks`, a new
-"ancestor scope" condition kind) - Adeptus Custodes' `Talons` infoGroup is gated on both "is the
-Detachment specifically Talons of the Emperor" and "does the unit carry the Anathema Psykana BSData
-category"; neither existing captured Custodes export (`data/gw-android-export-custodes.txt` or its
-NewRecruit JSON re-export) uses that Detachment, so a new export would be needed to verify against.
+**Shelved (not started)**: the `infoGroup` ability-granting gap follow-up. `data/nr-custodes-talons.json`
+(added 2026-08-26) turned out NOT to unblock this - it's a NewRecruit/BattleScribe JSON export, and
+that pipeline (`BattleScribeRosterMapper`) bypasses BSData/`BsdataDatasheetMapper` entirely, so it
+can't verify a BSData-side `infoGroup` fix even in principle (confirmed live: both Custodes auras
+already render correctly through that pipeline's own unrelated `profiles[typeName=Abilities]` path).
+Still blocked on two things: (1) a real native GW-app **text** export using the "Talons of the
+Emperor" Detachment, and (2) the existing Custodian Guard weapon-partition ambiguity
+(`harden-army-list-parsing-for-android-exports`) that blocks any native Android Custodes text export
+from importing at all today, regardless of Detachment. User decision 2026-08-26: shelve this
+follow-up until the base Android import bug is fixed first. No code for this has been written -
+`InfoGroup`/`infoGroup` appears nowhere in `ProbHammer.Core`. See auto-memory
+`project_infogroup_ability_followup` for the full DTO/evaluator shape and sequencing.
 
 ---
 
