@@ -408,8 +408,9 @@ without a visible local explanation.
 #### Scenario: A caveated invulnerable save uses the same marker-and-legend mechanism
 - **WHEN** a run's invulnerable save is left caveated (its linked ability text did not match a known
   template, per "Footnoted Caveat Text Resolution")
-- **THEN** that run's legend names the linked `CaveatAbility` the same way it would name any other
-  flagged tile's source, rather than rendering that ability's text inline
+- **THEN** that run's legend names the invulnerable save view's own contributing ability the same
+  way it would name any other flagged tile's source, rather than rendering that ability's text
+  inline
 
 ### Requirement: Statline Ability Column Rendering
 Each unit block's Statline area SHALL render one additional Abilities column alongside the

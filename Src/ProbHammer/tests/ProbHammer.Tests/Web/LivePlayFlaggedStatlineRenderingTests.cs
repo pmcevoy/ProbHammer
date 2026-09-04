@@ -113,15 +113,15 @@ public class LivePlayFlaggedStatlineRenderingTests : IClassFixture<WebApplicatio
             Name = "Shield Dome", Text = "The bearer has a 5+ invulnerable save.",
             Scope = AbilityScope.Model, Origin = AbilityOrigin.OptionalGrant
         };
+        var shieldDomeValue = new InvulnerableSave(5, 5);
         var entry = new AggregateStatlineEntry(
             ComponentName: "Test Unit", StatlineName: "Test Unit",
-            Statline: new Statline(12, 9, 3, 11, 6, 3) { InSv = new InvulnerableSave(5, 5, false, null) },
+            Statline: new Statline(12, 9, 3, 11, 6, 3)
+            {
+                InSv = InvulnerableSaveCharacteristicView.Resolved(shieldDomeValue, [shieldDome])
+            },
             RemainingCount: 1, InitialCount: 1, Loadouts: [],
-            Flags:
-            [
-                new StatlineFlag(StatlineFlagCharacteristic.ObjectiveControl, Vexilla),
-                new StatlineFlag(StatlineFlagCharacteristic.InvulnerableSave, shieldDome)
-            ]);
+            Flags: [new StatlineFlag(StatlineFlagCharacteristic.ObjectiveControl, Vexilla)]);
         var view = new AttachedUnitAggregateView(
             Name: "Test Unit", IsAttachedUnit: false, Statlines: [entry], Weapons: [], Abilities: [],
             Keywords: new HashSet<string>());

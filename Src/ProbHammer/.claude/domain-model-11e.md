@@ -47,8 +47,11 @@ Datasheet
                                          // .Name; optionalAbilities defaults to empty
 
 Statline(M, T, Sv, W, Ld, Oc)           // value object — field names match official shorthand
-  InSv: InvulnerableSave                // init-only, defaults to absent; see "Invulnerable Save
-                                         // Resolution" below
+  InSv: InvulnerableSaveCharacteristicView   // init-only, defaults to absent/non-caveated/no
+                                         // contributing abilities (unify-invulnerable-save-
+                                         // characteristic-view); see "Invulnerable Save Resolution"
+                                         // below and "Characteristic Value Domain Model"'s own
+                                         // InvulnerableSaveCharacteristicView entry
 
 DiceExpression(Count, Sides, Modifier)  // value object — fixed int (Count=0) or dice roll
                                          // ("D6", "2D3+1")
@@ -132,10 +135,12 @@ Classification" below. Enhancement and OptionalGrant abilities are resolvable on
 
 ## Characteristic Value Domain Model
 
-Full requirements: `openspec/changes/introduce-characteristic-domain-model/`. **Unconsumed as of
-this writing** — new types only, added in isolation for review; `Statline`, `WeaponProfile`,
-`StatlineFlagRule`, `AttachedUnitAggregator`, and every render path are unchanged and reference
-nothing below. A follow-up change is expected to wire these in.
+Full requirements: `openspec/changes/introduce-characteristic-domain-model/` (shape, added
+unconsumed) and `unify-invulnerable-save-characteristic-view/` (first real consumer — wires
+`InvulnerableSaveCharacteristicView` into `Statline.InSv`, see "Invulnerable Save Resolution" and
+"Statline-Flag Rules" below). `CharacteristicValue`/`ScalarCharacteristicView` remain unconsumed —
+`WeaponProfile.S`/`Ap` and `Statline`'s other five fields are still plain `int`; wiring those in is
+a deliberately separate, not-yet-scoped follow-up.
 
 ```
 CharacteristicValue                   // Domain/Catalogue/CharacteristicValue.cs - abstract, sealed
@@ -172,6 +177,15 @@ CharacteristicView                    // Domain/Catalogue/CharacteristicView.cs 
                                        // earlier draft stored it separately; dropped once its
                                        // redundancy with DerivedValue's own nullability was
                                        // noticed, so the two can never disagree).
+  Value                                // per subtype, not on the abstract base (same reason
+                                       // OriginalValue/DerivedValue aren't) - `IsCaveated ?
+                                       // OriginalValue : DerivedValue!`, the value a caller should
+                                       // actually use/display. Added post-implementation
+                                       // (unify-invulnerable-save-characteristic-view) after this
+                                       // selection was first written inline at its one call site -
+                                       // not a reprise of the rejected ComputeDerivedValue (below):
+                                       // needs no external classification input, computes nothing
+                                       // new, same complexity class as IsCaveated itself.
 ```
 
 **Pure data - computes nothing.** `DerivedValue` is always supplied directly at construction, by
@@ -338,25 +352,77 @@ at every level, collecting each distinct `Type` value, and asserts that set agai
 `InfoLinkTypeAllowlist.cs` (`"profile"`, `"rule"` handled; `"infoGroup"` a confirmed, tracked gap).
 
 ```
-InvulnerableSave(MeleeInSv, RangedInSv, Caveated, CaveatAbility)   // Domain/Catalogue/
-                                       // InvulnerableSave.cs; sealed record, non-nullable on
-                                       // Statline (0/0/false/null = absent). CaveatAbility is null
-                                       // except when Caveated == true, in which case it's always
-                                       // set - enforced by the 4-arg constructor (an object
-                                       // initializer or `with` can still bypass this).
-  implicit operator InvulnerableSave(int)   // uniform (melee==ranged, non-caveated) is the common
-                                       // case, mirrors DiceExpression's own implicit conversion
+InvulnerableSave(MeleeInSv, RangedInSv)   // Domain/Catalogue/InvulnerableSave.cs; sealed record,
+                                       // pure value, no caveat concept of its own (since
+                                       // unify-invulnerable-save-characteristic-view) - carried on
+                                       // Statline.InSv wrapped in an InvulnerableSaveCharacteristicView
+                                       // (None, below = absent).
+  None                                  // static readonly (0, 0) - mirrors DiceExpression.D3/D6's
+                                       // own preset convention for a specific, named, frequently-
+                                       // constructed value (added post-implementation after this
+                                       // exact value was found recurring at real call sites - both
+                                       // mappers' "no InSv text"/"explicitly N/A" branches,
+                                       // Statline.InSv's own default)
+  implicit operator InvulnerableSave(int)   // uniform (melee==ranged) is the common case, mirrors
+                                       // DiceExpression's own implicit conversion
 
-BsdataDatasheetMapper.ResolveInvulnerableSave(text, ancestry, ctx) -> InvulnerableSave
+InvulnerableSaveCharacteristicView(OriginalValue, DerivedValue, ContributingAbilities)
+                                       // Domain/Catalogue/CharacteristicView.cs (see "Characteristic
+                                       // Value Domain Model" above) - what Statline.InSv is actually
+                                       // typed as. ContributingAbilities holds a resolved footnote's
+                                       // linked Ability (parse-time source, below) or a matched
+                                       // statline-flag-rules Ability (live source, below) uniformly -
+                                       // no distinguishing shape between the two. IsCaveated is
+                                       // `DerivedValue is null`.
+  Value -> InvulnerableSave            // `IsCaveated ? OriginalValue : DerivedValue!` - the value a
+                                       // caller should actually use/display; the render layer reads
+                                       // this rather than re-deriving the same selection itself
+                                       // (added post-implementation, same pattern
+                                       // ScalarCharacteristicView.Value uses)
+  implicit operator InvulnerableSaveCharacteristicView(int)   // uniform, non-caveated, no
+                                       // contributing abilities - preserves the `InSv = 4` ergonomics
+                                       // fixtures/tests had before InSv became a view; forwards to
+                                       // Resolved (below)
+  Resolved(InvulnerableSave) -> InvulnerableSaveCharacteristicView
+  Resolved(InvulnerableSave, IReadOnlyList<Ability>) -> InvulnerableSaveCharacteristicView
+                                       // static factories for the fully-known ("not caveated") shape
+                                       // - named rather than positional ctor overloads so the call
+                                       // site states its own semantics (matches DiceExpression.Fixed's
+                                       // convention). 1-arg forwards to 2-arg with []. Added post-
+                                       // implementation after this exact shape was found duplicated
+                                       // verbatim as a private helper in both BsdataDatasheetMapper
+                                       // and BattleScribeRosterMapper, plus hand-rolled a third time
+                                       // in an Examples/ fixture - real production duplication, not
+                                       // just test-file repetition. Both mappers' own private
+                                       // ResolvedInSv helpers now delegate to the 1-arg form. The
+                                       // 2-arg form was added in a second pass, generalizing what was
+                                       // first (incorrectly) treated as a third, unpromoted shape -
+                                       // "resolved" (IsCaveated false) and "has contributing
+                                       // abilities" are independent facts, and a matched, fully-
+                                       // understood StatlineFlagRule (e.g. Shield Dome) is resolved
+                                       // by definition, just with its own ability recorded; used
+                                       // directly by ShieldDomeStatlineFlagRule.Apply.
+  Caveated(InvulnerableSave, Ability) -> InvulnerableSaveCharacteristicView
+                                       // static factory for the one-unresolved-contributor shape -
+                                       // same promotion rationale as Resolved; both mappers' own
+                                       // private CaveatedInSv helpers now delegate here.
+  None                                  // static readonly, built from InvulnerableSave.None via
+                                       // Resolved - same promotion/preset rationale as
+                                       // InvulnerableSave.None above. Every real (0, 0)/absent call
+                                       // site (both mappers, Statline.InSv's own default) uses this.
+
+BsdataDatasheetMapper.ResolveInvulnerableSave(text, ancestry, ctx) -> InvulnerableSaveCharacteristicView
                                        // Resolves a Unit profile's raw InSv text into plain,
                                        // attack-type-restricted, footnoted-caveated, or - since
                                        // resolve-known-ability-effects - footnoted-and-resolved
-                                       // shapes. A footnoted value's linked ability is still
-                                       // resolved by id only, never interpreted inline here; the
-                                       // resulting Ability's own Text is then handed to
-                                       // InvulnerableSaveCaveatClassifier (below), using its
-                                       // resolved melee/ranged split only when it returns a match -
-                                       // otherwise falling back to today's caveated result
+                                       // shapes, packaged as a view at the method's return point
+                                       // only (unify-invulnerable-save-characteristic-view) - no
+                                       // change to the resolution logic itself. A footnoted value's
+                                       // linked ability is still resolved by id only, never
+                                       // interpreted inline here; the resulting Ability's own Text is
+                                       // then handed to InvulnerableSaveCaveatClassifier (below),
+                                       // using its resolved melee/ranged split only when it returns a
+                                       // match - otherwise falling back to today's caveated result
                                        // unchanged. See the method's own doc comment for the exact
                                        // shapes recognized and real examples.
 
@@ -1212,16 +1278,26 @@ ProbHammer.Core.Domain.Roster.StatlineFlagRuleScope = Bearer | WholeUnit
                                        // just the bearer's own).
 
 StatlineFlagRule                      // abstract: AbilityName/AbilityText (the exact match key),
-                                       // Scope, Characteristic (InvulnerableSave | ObjectiveControl
-                                       // - StatlineFlagCharacteristic, Domain/Roster/
+                                       // Scope, Characteristic: StatlineFlagCharacteristic? (null
+                                       // means the target characteristic already self-describes via
+                                       // its own CharacteristicView - see below; non-null names an
+                                       // enum value for a rule still targeting a plain-value
+                                       // characteristic - today only ObjectiveControl, Domain/Roster/
                                        // AttachedUnitAggregateView.cs), Matches(Ability) (exact
-                                       // Name+Text), Apply(Statline) -> Statline (the mutation
-                                       // itself, e.g. `with { Oc = baseStatline.Oc + 1 }`)
-ShieldDomeStatlineFlagRule             // Impulsor's Shield Dome - Bearer scope, InvulnerableSave:
-                                       // "The bearer has a 5+ invulnerable save." -> InSv(5,5,false,null)
-VexillaStatlineFlagRule                // Custodian Guard's Vexilla - WholeUnit scope, ObjectiveControl:
-                                       // "Add 1 to the Objective Control characteristic of models in
-                                       // the bearer's unit." -> Oc + 1
+                                       // Name+Text), Apply(Statline, matchedAbility) -> Statline (the
+                                       // mutation itself - matchedAbility added by
+                                       // unify-invulnerable-save-characteristic-view so a rule
+                                       // targeting a CharacteristicView characteristic can include
+                                       // itself in that view's own ContributingAbilities)
+ShieldDomeStatlineFlagRule             // Impulsor's Shield Dome - Bearer scope, Characteristic: null
+                                       // (targets InSv, a CharacteristicView characteristic):
+                                       // "The bearer has a 5+ invulnerable save." -> InSv =
+                                       // InvulnerableSaveCharacteristicView.Resolved(5,5, [matchedAbility])
+VexillaStatlineFlagRule                // Custodian Guard's Vexilla - WholeUnit scope, Characteristic:
+                                       // ObjectiveControl (still a plain int): "Add 1 to the
+                                       // Objective Control characteristic of models in the bearer's
+                                       // unit." -> Oc + 1 (matchedAbility unused - OC isn't wrapped
+                                       // in a view yet)
 StatlineFlagRuleCatalogue.All          // the full closed vocabulary - a real third rule joins this
                                        // list directly, no architecture change needed
 ```
@@ -1231,23 +1307,31 @@ StatlineFlagRuleCatalogue.All          // the full closed vocabulary - a real th
 every present `AggregateAbilityEntry` against `StatlineFlagRuleCatalogue.All`, then for each
 `AggregateStatlineEntry` whose (ComponentName, StatlineName) is that matched ability's own bearer
 (or, for a `WholeUnit`-scoped rule, unconditionally), applies the rule's `Apply` to produce a
-mutated `Statline` plus a `StatlineFlag` (Characteristic + source `Ability`) recorded on that
-entry's own `AggregateStatlineEntry.Flags`. Since `BuildAbilities`' own output is already filtered
-to only currently-present sources (the same liveness rule that governs whether the ability itself
-renders), a flagged value's liveness falls out for free with no separate tracking — marking the
-bearer a casualty removes the matching `AggregateAbilityEntry` on the next `Build`, so the rule
+mutated `Statline`. When the matched rule's `Characteristic` is non-null (targets a plain-value
+characteristic, e.g. Vexilla/`ObjectiveControl`), a `StatlineFlag` (Characteristic + source
+`Ability`) is additionally recorded on that entry's own `AggregateStatlineEntry.Flags` - a rule
+whose `Characteristic` is null (targets a `CharacteristicView` characteristic, e.g. Shield
+Dome/InSv) records nothing there, since its own returned `Statline.InSv` view already carries the
+matched ability directly in `ContributingAbilities` (unify-invulnerable-save-characteristic-view -
+avoids two competing places recording the same fact). Since `BuildAbilities`' own output is already
+filtered to only currently-present sources (the same liveness rule that governs whether the ability
+itself renders), a flagged value's liveness falls out for free with no separate tracking — marking
+the bearer a casualty removes the matching `AggregateAbilityEntry` on the next `Build`, so the rule
 pass simply has nothing to match against and the affected `Statline` reverts to its own Datasheet
 base value. Never mutates `Datasheet`/`Unit`; only the returned, decorated copy of the statline
 entries carries a rule's effect.
 
-**`/LivePlay` display** (`resolve-known-ability-effects`): replaces the old InSv-only always-visible
+**`/LivePlay` display** (`resolve-known-ability-effects`; InSv's own data source updated by
+`unify-invulnerable-save-characteristic-view`): replaces the old InSv-only always-visible
 `.insv-caveat-text` paragraph with a
 general per-run footnote-marker-and-legend mechanism, driven uniformly by an unresolved
-invulnerable-save caveat (`InvulnerableSave.Caveated`, above) and a `statline-flag-rules` match
-alike — see `.claude/design-tokens.md`'s "Flagged statline legend" for the visual mechanism, and
-`live-play-view`'s "Flagged Statline Characteristic Rendering" for the full requirement.
-`LivePlayModel.GroupStatlines` reads each run's own `AggregateStatlineEntry.Flags` (and its shared
-`Statline.InSv.Caveated`/`CaveatAbility`) to determine that run's own flag source per characteristic
+invulnerable-save caveat and a `statline-flag-rules` match alike — see `.claude/design-tokens.md`'s
+"Flagged statline legend" for the visual mechanism, and `live-play-view`'s "Flagged Statline
+Characteristic Rendering" for the full requirement.
+`LivePlayModel.GroupStatlines` reads each run's own `AggregateStatlineEntry.Flags` for
+Objective Control, and `Statline.InSv.ContributingAbilities` directly for InSv (both parse-time-
+caveat and live-rule-match sources land there uniformly, so no separate branch is needed) to
+determine that run's own flag source per characteristic
 (`StatlineBlockViewModel.ObjectiveControlFlagSource`/`InvulnerableSaveFlagSource`);
 `LivePlayModel.AssignFlagMarkers` then walks every run in order, assigning the first distinct
 source seen `*`, the next `**`, and so on, reusing an already-assigned marker for the same source

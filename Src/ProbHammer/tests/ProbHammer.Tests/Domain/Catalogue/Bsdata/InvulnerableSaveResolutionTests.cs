@@ -8,7 +8,7 @@ public class InvulnerableSaveResolutionTests
 {
     private const string FixtureFile = "invulnerable-save-scenarios.json";
 
-    private static InvulnerableSave Resolve(string entryName)
+    private static InvulnerableSaveCharacteristicView Resolve(string entryName)
     {
         var closure = BsdataClosureResolver.Resolve(BsdataFixtures.Source(), FixtureFile);
         var entry = BsdataNameResolver.Resolve(closure, entryName)!;
@@ -24,10 +24,12 @@ public class InvulnerableSaveResolutionTests
     {
         var save = Resolve("Plain Save Model");
 
-        save.MeleeInSv.Should().Be(4);
-        save.RangedInSv.Should().Be(4);
-        save.Caveated.Should().BeFalse();
-        save.CaveatAbility.Should().BeNull();
+        save.OriginalValue.MeleeInSv.Should().Be(4);
+        save.OriginalValue.RangedInSv.Should().Be(4);
+        save.Value.MeleeInSv.Should().Be(4);
+        save.Value.RangedInSv.Should().Be(4);
+        save.IsCaveated.Should().BeFalse();
+        save.ContributingAbilities.Should().BeEmpty();
     }
 
     [Fact]
@@ -35,10 +37,12 @@ public class InvulnerableSaveResolutionTests
     {
         var save = Resolve("Parenthetical Ranged Save Model");
 
-        save.RangedInSv.Should().Be(5);
-        save.MeleeInSv.Should().Be(0);
-        save.Caveated.Should().BeFalse();
-        save.CaveatAbility.Should().BeNull();
+        save.OriginalValue.RangedInSv.Should().Be(5);
+        save.OriginalValue.MeleeInSv.Should().Be(0);
+        save.Value.RangedInSv.Should().Be(5);
+        save.Value.MeleeInSv.Should().Be(0);
+        save.IsCaveated.Should().BeFalse();
+        save.ContributingAbilities.Should().BeEmpty();
     }
 
     [Fact]
@@ -48,12 +52,12 @@ public class InvulnerableSaveResolutionTests
         // not behind any link.
         var save = Resolve("Local Ability Save Model");
 
-        save.Caveated.Should().BeTrue();
-        save.MeleeInSv.Should().Be(2);
-        save.RangedInSv.Should().Be(2);
-        save.CaveatAbility.Should().NotBeNull();
-        save.CaveatAbility!.Name.Should().Be("Invulnerable Save (2+*)");
-        save.CaveatAbility.Text.Should().Contain("re-roll");
+        save.IsCaveated.Should().BeTrue();
+        save.OriginalValue.MeleeInSv.Should().Be(2);
+        save.OriginalValue.RangedInSv.Should().Be(2);
+        save.ContributingAbilities.Should().ContainSingle();
+        save.ContributingAbilities[0].Name.Should().Be("Invulnerable Save (2+*)");
+        save.ContributingAbilities[0].Text.Should().Contain("re-roll");
     }
 
     [Fact]
@@ -65,10 +69,12 @@ public class InvulnerableSaveResolutionTests
         // non-caveated ranged-only split rather than staying caveated.
         var save = Resolve("Linked Ability Save Model");
 
-        save.Caveated.Should().BeFalse();
-        save.MeleeInSv.Should().Be(0);
-        save.RangedInSv.Should().Be(5);
-        save.CaveatAbility.Should().BeNull();
+        save.IsCaveated.Should().BeFalse();
+        save.OriginalValue.MeleeInSv.Should().Be(0);
+        save.OriginalValue.RangedInSv.Should().Be(5);
+        save.Value.MeleeInSv.Should().Be(0);
+        save.Value.RangedInSv.Should().Be(5);
+        save.ContributingAbilities.Should().BeEmpty();
     }
 
     [Fact]
@@ -80,10 +86,12 @@ public class InvulnerableSaveResolutionTests
         // melee=4/ranged=5 split rather than staying caveated.
         var save = Resolve("Split Save Model");
 
-        save.Caveated.Should().BeFalse();
-        save.MeleeInSv.Should().Be(4);
-        save.RangedInSv.Should().Be(5);
-        save.CaveatAbility.Should().BeNull();
+        save.IsCaveated.Should().BeFalse();
+        save.OriginalValue.MeleeInSv.Should().Be(4);
+        save.OriginalValue.RangedInSv.Should().Be(5);
+        save.Value.MeleeInSv.Should().Be(4);
+        save.Value.RangedInSv.Should().Be(5);
+        save.ContributingAbilities.Should().BeEmpty();
     }
 
     [Fact]
@@ -96,17 +104,22 @@ public class InvulnerableSaveResolutionTests
         // whichever profile happened to be seen first; resolving by the specific infoLink's own
         // targetId must not. Both linked texts are exact known-template matches, so each entry
         // resolves to a real, non-caveated, opposite-attack-type split - still demonstrating
-        // by-id disambiguation, now via the resolved values themselves rather than CaveatAbility.
+        // by-id disambiguation, now via the resolved values themselves rather than a contributing
+        // ability.
         var saveA = Resolve("Collision Model A");
         var saveB = Resolve("Collision Model B");
 
-        saveA.Caveated.Should().BeFalse();
-        saveA.RangedInSv.Should().Be(4);
-        saveA.MeleeInSv.Should().Be(0);
+        saveA.IsCaveated.Should().BeFalse();
+        saveA.OriginalValue.RangedInSv.Should().Be(4);
+        saveA.OriginalValue.MeleeInSv.Should().Be(0);
+        saveA.Value.RangedInSv.Should().Be(4);
+        saveA.Value.MeleeInSv.Should().Be(0);
 
-        saveB.Caveated.Should().BeFalse();
-        saveB.MeleeInSv.Should().Be(4);
-        saveB.RangedInSv.Should().Be(0);
+        saveB.IsCaveated.Should().BeFalse();
+        saveB.OriginalValue.MeleeInSv.Should().Be(4);
+        saveB.OriginalValue.RangedInSv.Should().Be(0);
+        saveB.Value.MeleeInSv.Should().Be(4);
+        saveB.Value.RangedInSv.Should().Be(0);
     }
 
     [Fact]

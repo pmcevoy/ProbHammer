@@ -16,7 +16,11 @@ namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 /// </summary>
 public class InvulnerableSaveCaveatResolutionScanTests
 {
-    public sealed record StillCaveatedResult(string FileName, string EntryName, string StatlineName, string AbilityText);
+    public sealed record StillCaveatedResult(
+        string FileName,
+        string EntryName,
+        string StatlineName,
+        string AbilityText);
 
     [Fact(Explicit = true)]
     public void Full_corpus_invulnerable_save_caveat_resolution_scan()
@@ -47,9 +51,9 @@ public class InvulnerableSaveCaveatResolutionScanTests
 
                 foreach (var (statlineName, statline) in datasheet.Statlines)
                 {
-                    if (statline.InSv.Caveated)
+                    if (statline.InSv.IsCaveated)
                         results.Add(new StillCaveatedResult(
-                            fileName, entry.Name, statlineName, statline.InSv.CaveatAbility!.Text));
+                            fileName, entry.Name, statlineName, statline.InSv.ContributingAbilities[0].Text));
                 }
             }
         }

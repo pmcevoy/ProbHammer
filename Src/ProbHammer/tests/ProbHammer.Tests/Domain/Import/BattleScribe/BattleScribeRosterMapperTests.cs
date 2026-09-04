@@ -209,9 +209,9 @@ public class BattleScribeRosterMapperTests
         var view = AttachedUnitAggregator.Build(impulsor);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
-        entry.Statline.InSv.Caveated.Should().BeFalse();
-        entry.Statline.InSv.MeleeInSv.Should().Be(5);
-        entry.Statline.InSv.RangedInSv.Should().Be(5);
+        entry.Statline.InSv.IsCaveated.Should().BeFalse();
+        entry.Statline.InSv.DerivedValue!.MeleeInSv.Should().Be(5);
+        entry.Statline.InSv.DerivedValue.RangedInSv.Should().Be(5);
         view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Shield Dome"); // still visible normally
     }
 

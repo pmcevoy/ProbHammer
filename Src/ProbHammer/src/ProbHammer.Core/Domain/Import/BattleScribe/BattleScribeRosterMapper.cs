@@ -308,11 +308,12 @@ public static partial class BattleScribeRosterMapper
     /// the top-level selection, under the same two BSData naming conventions
     /// ("Invulnerable Save ({digit}+*)" / "*Invulnerable Save") - unverified against a real
     /// caveated-InSv sample (none exists in the one roster analyzed so far; see PROGRESS.md).</summary>
-    private static InvulnerableSave ResolveInvulnerableSave(string? text, BsRosterSelection node, BsRosterSelection top)
+    private static InvulnerableSaveCharacteristicView ResolveInvulnerableSave(string? text, BsRosterSelection node,
+        BsRosterSelection top)
     {
-        if (string.IsNullOrWhiteSpace(text)) return new InvulnerableSave();
+        if (string.IsNullOrWhiteSpace(text)) return InvulnerableSaveCharacteristicView.None;
         text = text.Trim();
-        if (IsNotApplicable(text)) return new InvulnerableSave();
+        if (IsNotApplicable(text)) return InvulnerableSaveCharacteristicView.None;
 
         var parenMatch = InSvParentheticalRegex().Match(text);
         if (parenMatch.Success)
@@ -320,8 +321,8 @@ public static partial class BattleScribeRosterMapper
             var value = int.Parse(parenMatch.Groups[1].Value);
             var isRanged = parenMatch.Groups[2].Value.Equals("Ranged", StringComparison.OrdinalIgnoreCase);
             return isRanged
-                ? new InvulnerableSave(meleeInSv: 0, rangedInSv: value, caveated: false, caveatAbility: null)
-                : new InvulnerableSave(meleeInSv: value, rangedInSv: 0, caveated: false, caveatAbility: null);
+                ? InvulnerableSaveCharacteristicView.Resolved(0, value)
+                : InvulnerableSaveCharacteristicView.Resolved(value, 0);
         }
 
         if (text.Contains('/'))
@@ -345,8 +346,8 @@ public static partial class BattleScribeRosterMapper
             var ability = ResolveCaveatAbility(footnotedDigit, node, top, text);
             var resolved = InvulnerableSaveCaveatClassifier.TryResolveSplit(ability.Text, footnotedDigit, plainDigit);
             return resolved is { } r
-                ? new InvulnerableSave(r.Melee, r.Ranged, caveated: false, caveatAbility: null)
-                : new InvulnerableSave(plainDigit, plainDigit, caveated: true, caveatAbility: ability);
+                ? InvulnerableSaveCharacteristicView.Resolved(r.Melee, r.Ranged)
+                : InvulnerableSaveCharacteristicView.Caveated(plainDigit, plainDigit, ability);
         }
 
         var bareMatch = InSvBareValueRegex().Match(text);
@@ -355,13 +356,13 @@ public static partial class BattleScribeRosterMapper
 
         var digit = int.Parse(bareMatch.Groups[1].Value);
         if (!bareMatch.Groups[2].Success)
-            return new InvulnerableSave(digit, digit, caveated: false, caveatAbility: null);
+            return InvulnerableSaveCharacteristicView.Resolved(digit, digit);
 
         var caveatAbility = ResolveCaveatAbility(digit, node, top, text);
         var bareResolved = InvulnerableSaveCaveatClassifier.TryResolveBare(caveatAbility.Text);
         return bareResolved is { } br
-            ? new InvulnerableSave(br.Melee, br.Ranged, caveated: false, caveatAbility: null)
-            : new InvulnerableSave(digit, digit, caveated: true, caveatAbility: caveatAbility);
+            ? InvulnerableSaveCharacteristicView.Resolved(br.Melee, br.Ranged)
+            : InvulnerableSaveCharacteristicView.Caveated(digit, digit, caveatAbility);
     }
 
     private static Ability ResolveCaveatAbility(int digit, BsRosterSelection node, BsRosterSelection top,

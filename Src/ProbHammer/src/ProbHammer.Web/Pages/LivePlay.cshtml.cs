@@ -433,11 +433,7 @@ public class LivePlayModel(
                 var ocSource = g.SelectMany(e => e.Flags)
                     .FirstOrDefault(f => f.Characteristic == StatlineFlagCharacteristic.ObjectiveControl)
                     ?.SourceAbility;
-                var insvSource = statline.InSv.Caveated
-                    ? statline.InSv.CaveatAbility
-                    : g.SelectMany(e => e.Flags)
-                        .FirstOrDefault(f => f.Characteristic == StatlineFlagCharacteristic.InvulnerableSave)
-                        ?.SourceAbility;
+                var insvSource = statline.InSv.ContributingAbilities.FirstOrDefault();
 
                 return new StatlineBlockViewModel(
                     Entries: g,

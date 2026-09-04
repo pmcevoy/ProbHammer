@@ -41,9 +41,10 @@ public class StatlineFlagRuleTests
         var view = AttachedUnitAggregator.Build(unit);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
-        entry.Statline.InSv.Caveated.Should().BeFalse();
-        entry.Statline.InSv.MeleeInSv.Should().Be(5);
-        entry.Statline.InSv.RangedInSv.Should().Be(5);
+        entry.Statline.InSv.IsCaveated.Should().BeFalse();
+        entry.Statline.InSv.DerivedValue!.MeleeInSv.Should().Be(5);
+        entry.Statline.InSv.DerivedValue.RangedInSv.Should().Be(5);
+        entry.Statline.InSv.ContributingAbilities.Should().ContainSingle(a => a.Name == "Shield Dome");
     }
 
     [Fact]
@@ -65,9 +66,10 @@ public class StatlineFlagRuleTests
         var view = AttachedUnitAggregator.Build(unit);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
-        entry.Statline.InSv.Caveated.Should().BeFalse();
-        entry.Statline.InSv.MeleeInSv.Should().Be(0);
-        entry.Statline.InSv.RangedInSv.Should().Be(0);
+        entry.Statline.InSv.IsCaveated.Should().BeFalse();
+        entry.Statline.InSv.DerivedValue!.MeleeInSv.Should().Be(0);
+        entry.Statline.InSv.DerivedValue.RangedInSv.Should().Be(0);
+        entry.Statline.InSv.ContributingAbilities.Should().BeEmpty();
     }
 
     [Fact]
@@ -82,7 +84,9 @@ public class StatlineFlagRuleTests
         var view = AttachedUnitAggregator.Build(unit);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
-        entry.Statline.InSv.Should().Be(new InvulnerableSave());
+        entry.Statline.InSv.IsCaveated.Should().BeFalse();
+        entry.Statline.InSv.OriginalValue.Should().Be(InvulnerableSave.None);
+        entry.Statline.InSv.ContributingAbilities.Should().BeEmpty();
         entry.Flags.Should().BeEmpty();
     }
 

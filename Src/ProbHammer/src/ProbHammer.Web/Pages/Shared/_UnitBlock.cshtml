@@ -270,6 +270,7 @@
                             }
                             @{
                                 var inv = block.Statline.InSv;
+                                var invDisplay = inv.Value;
                             }
                             @* The invulnerable save renders as its own labeled box below the row, GW/Wahapedia-card
                                style, rather than a value stacked inside the Sv tile. The caveated branch is the only
@@ -301,40 +302,40 @@
                             @{
                                 var insvLabel = "InSv" + block.InvulnerableSaveMarker;
                             }
-                            @if (inv.Caveated)
+                            @if (inv.IsCaveated)
                             {
                                 <div class="stat-tile insv-tile stat-tile-flagged">
                                     <span class="stat-label">@insvLabel</span>
-                                    <span class="stat-value">@(inv.MeleeInSv)+</span>
+                                    <span class="stat-value">@(invDisplay.MeleeInSv)+</span>
                                 </div>
                             }
-                            else if (inv.MeleeInSv == 0 && inv.RangedInSv == 0)
+                            else if (invDisplay.MeleeInSv == 0 && invDisplay.RangedInSv == 0)
                             {
                                 @* Absent - no invulnerable save box at all. *@
                             }
-                            else if (inv.MeleeInSv == inv.RangedInSv)
+                            else if (invDisplay.MeleeInSv == invDisplay.RangedInSv)
                             {
                                 @* Uniform - applies equally to both attack types, so no attack-type icon needed. *@
                                 <div
                                     class="stat-tile insv-tile @(block.InvulnerableSaveMarker != null ? "stat-tile-flagged" : "")">
                                     <span class="stat-label">@insvLabel</span>
-                                    <span class="stat-value">@(inv.MeleeInSv)+</span>
+                                    <span class="stat-value">@(invDisplay.MeleeInSv)+</span>
                                 </div>
                             }
-                            else if (inv.RangedInSv == 0)
+                            else if (invDisplay.RangedInSv == 0)
                             {
                                 <div
                                     class="stat-tile insv-tile @(block.InvulnerableSaveMarker != null ? "stat-tile-flagged" : "")">
                                     <span class="stat-label">@insvLabel</span>
-                                    <span class="stat-value">⚔ @(inv.MeleeInSv)+</span>
+                                    <span class="stat-value">⚔ @(invDisplay.MeleeInSv)+</span>
                                 </div>
                             }
-                            else if (inv.MeleeInSv == 0)
+                            else if (invDisplay.MeleeInSv == 0)
                             {
                                 <div
                                     class="stat-tile insv-tile @(block.InvulnerableSaveMarker != null ? "stat-tile-flagged" : "")">
                                     <span class="stat-label">@insvLabel</span>
-                                    <span class="stat-value">@Html.Raw(rangedIcon) @(inv.RangedInSv)+</span>
+                                    <span class="stat-value">@Html.Raw(rangedIcon) @(invDisplay.RangedInSv)+</span>
                                 </div>
                             }
                             else
@@ -346,8 +347,8 @@
                                     class="stat-tile insv-tile @(block.InvulnerableSaveMarker != null ? "stat-tile-flagged" : "")">
                                     <span class="stat-label">@insvLabel</span>
                                     <span class="stat-value stat-value-compact">
-                                        <span>@Html.Raw(rangedIcon) @(inv.RangedInSv)+</span>
-                                        <span>⚔ @(inv.MeleeInSv)+</span>
+                                        <span>@Html.Raw(rangedIcon) @(invDisplay.RangedInSv)+</span>
+                                        <span>⚔ @(invDisplay.MeleeInSv)+</span>
                                     </span>
                                 </div>
                             }

@@ -6,43 +6,35 @@ namespace ProbHammer.Tests.Domain.Catalogue;
 public class InvulnerableSaveTests
 {
     [Fact]
-    public void Default_IsAbsent()
+    public void Absent_HasZeroMeleeAndRangedValues()
     {
-        var save = new InvulnerableSave();
+        var save = new InvulnerableSave(0, 0);
 
         save.MeleeInSv.Should().Be(0);
         save.RangedInSv.Should().Be(0);
-        save.Caveated.Should().BeFalse();
-        save.CaveatAbility.Should().BeNull();
     }
 
     [Fact]
     public void Uniform_HasEqualMeleeAndRangedValues()
     {
-        var save = new InvulnerableSave(4, 4, caveated: false, caveatAbility: null);
+        var save = new InvulnerableSave(4, 4);
 
         save.MeleeInSv.Should().Be(4);
         save.RangedInSv.Should().Be(4);
-        save.Caveated.Should().BeFalse();
-        save.CaveatAbility.Should().BeNull();
     }
 
     [Fact]
-    public void Caveated_WithAbility_IsAllowed()
+    public void ImplicitIntConversion_ProducesUniformValue()
     {
-        var ability = new Ability { Name = "Invulnerable Save (5+*)", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
+        InvulnerableSave save = 5;
 
-        var save = new InvulnerableSave(5, 5, caveated: true, caveatAbility: ability);
-
-        save.Caveated.Should().BeTrue();
-        save.CaveatAbility.Should().BeSameAs(ability);
+        save.MeleeInSv.Should().Be(5);
+        save.RangedInSv.Should().Be(5);
     }
 
     [Fact]
-    public void Caveated_WithoutAbility_Throws()
+    public void None_IsTheAbsentValue()
     {
-        var act = () => new InvulnerableSave(5, 5, caveated: true, caveatAbility: null);
-
-        act.Should().Throw<ArgumentException>();
+        InvulnerableSave.None.Should().Be(new InvulnerableSave(0, 0));
     }
 }

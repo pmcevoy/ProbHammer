@@ -8,5 +8,5 @@ public sealed record Statline(
     int Ld,
     int Oc)
 {
-    public InvulnerableSave InSv { get; init; } = new();
+    public InvulnerableSaveCharacteristicView InSv { get; init; } = InvulnerableSaveCharacteristicView.None;
 }

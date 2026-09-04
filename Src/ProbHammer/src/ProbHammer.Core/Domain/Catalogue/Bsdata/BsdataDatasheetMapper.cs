@@ -478,7 +478,7 @@ public static partial class BsdataDatasheetMapper
         };
 
     /// <summary>Resolves a Unit profile's raw InSv characteristic text into an
-    /// <see cref="InvulnerableSave"/>. Three shapes are structurally recognized: a plain value
+    /// <see cref="InvulnerableSaveCharacteristicView"/>. Three shapes are structurally recognized: a plain value
     /// (no marker); a parenthetical attack-type restriction (e.g. "5+ (Ranged)", confirmed on the
     /// four Titans and the Sokar-pattern Stormbird) which is fully self-contained - resolved
     /// straight from the characteristic text, no ability involved; and a footnoted value - a bare
@@ -489,12 +489,12 @@ public static partial class BsdataDatasheetMapper
     /// ability's Description text says (see ResolveCaveatAbility) - only which specific ability is
     /// linked, by id. Throws <see cref="AmbiguousCharacteristicException"/> for any text matching
     /// none of these shapes.</summary>
-    private static InvulnerableSave ResolveInvulnerableSave(string? text, IReadOnlyList<BsSelectionEntry> ancestry,
-        WalkContext ctx)
+    private static InvulnerableSaveCharacteristicView ResolveInvulnerableSave(string? text,
+        IReadOnlyList<BsSelectionEntry> ancestry, WalkContext ctx)
     {
-        if (string.IsNullOrWhiteSpace(text)) return new InvulnerableSave();
+        if (string.IsNullOrWhiteSpace(text)) return InvulnerableSaveCharacteristicView.None;
         text = text.Trim();
-        if (IsNotApplicable(text) || IsNA(text)) return new InvulnerableSave();
+        if (IsNotApplicable(text) || IsNA(text)) return InvulnerableSaveCharacteristicView.None;
 
         var parenMatch = InSvParentheticalRegex().Match(text);
         if (parenMatch.Success)
@@ -502,8 +502,8 @@ public static partial class BsdataDatasheetMapper
             var value = int.Parse(parenMatch.Groups[1].Value);
             var isRanged = parenMatch.Groups[2].Value.Equals("Ranged", StringComparison.OrdinalIgnoreCase);
             return isRanged
-                ? new InvulnerableSave(meleeInSv: 0, rangedInSv: value, caveated: false, caveatAbility: null)
-                : new InvulnerableSave(meleeInSv: value, rangedInSv: 0, caveated: false, caveatAbility: null);
+                ? InvulnerableSaveCharacteristicView.Resolved(0, value)
+                : InvulnerableSaveCharacteristicView.Resolved(value, 0);
         }
 
         if (text.Contains('/'))
@@ -528,8 +528,8 @@ public static partial class BsdataDatasheetMapper
             var resolved =
                 InvulnerableSaveCaveatClassifier.TryResolveSplit(splitAbility.Text, footnotedDigit, plainDigit);
             return resolved is { } r
-                ? new InvulnerableSave(r.Melee, r.Ranged, caveated: false, caveatAbility: null)
-                : new InvulnerableSave(plainDigit, plainDigit, caveated: true, caveatAbility: splitAbility);
+                ? InvulnerableSaveCharacteristicView.Resolved(r.Melee, r.Ranged)
+                : InvulnerableSaveCharacteristicView.Caveated(plainDigit, plainDigit, splitAbility);
         }
 
         var bareMatch = InSvBareValueRegex().Match(text);
@@ -538,13 +538,13 @@ public static partial class BsdataDatasheetMapper
 
         var bareDigit = int.Parse(bareMatch.Groups[1].Value);
         if (!bareMatch.Groups[2].Success)
-            return new InvulnerableSave(bareDigit, bareDigit, caveated: false, caveatAbility: null);
+            return InvulnerableSaveCharacteristicView.Resolved(bareDigit, bareDigit);
 
         var bareAbility = ResolveCaveatAbility(bareDigit, ancestry, ctx, text);
         var bareResolved = InvulnerableSaveCaveatClassifier.TryResolveBare(bareAbility.Text);
         return bareResolved is { } br
-            ? new InvulnerableSave(br.Melee, br.Ranged, caveated: false, caveatAbility: null)
-            : new InvulnerableSave(bareDigit, bareDigit, caveated: true, caveatAbility: bareAbility);
+            ? InvulnerableSaveCharacteristicView.Resolved(br.Melee, br.Ranged)
+            : InvulnerableSaveCharacteristicView.Caveated(bareDigit, bareDigit, bareAbility);
     }
 
     /// <summary>Resolves the specific Ability a footnoted InSv value of the given digit is linked

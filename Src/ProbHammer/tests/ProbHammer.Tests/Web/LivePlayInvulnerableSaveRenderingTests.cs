@@ -24,7 +24,7 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
 
     public LivePlayInvulnerableSaveRenderingTests(WebApplicationFactory<Program> factory) => _factory = factory;
 
-    private async Task<string> RenderAsync(InvulnerableSave insv)
+    private async Task<string> RenderAsync(InvulnerableSaveCharacteristicView insv)
     {
         using var scope = _factory.Services.CreateScope();
         var httpContext = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
@@ -56,7 +56,7 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
     [Fact]
     public async Task Absent_RendersNoInvulnerableSaveTile()
     {
-        var html = await RenderAsync(new InvulnerableSave());
+        var html = await RenderAsync(InvulnerableSaveCharacteristicView.None);
 
         html.Should().NotContain("insv-tile");
     }
@@ -64,7 +64,7 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
     [Fact]
     public async Task Uniform_RendersBareLabelWithNoAttackTypeIndicator()
     {
-        var html = await RenderAsync(new InvulnerableSave(4, 4, caveated: false, caveatAbility: null));
+        var html = await RenderAsync(4);
 
         html.Should().Contain(">InSv<").And.Contain(">4+<").And.NotContain("insv-icon").And
             .NotContain("stat-tile-flagged");
@@ -73,7 +73,7 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
     [Fact]
     public async Task MeleeOnly_RendersTheMeleeIconOnlyAndNoRangedIcon()
     {
-        var html = await RenderAsync(new InvulnerableSave(4, 0, caveated: false, caveatAbility: null));
+        var html = await RenderAsync(InvulnerableSaveCharacteristicView.Resolved(new InvulnerableSave(4, 0)));
 
         html.Should().Contain(">InSv<").And.Contain("⚔ 4+").And.NotContain("insv-icon");
     }
@@ -81,7 +81,7 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
     [Fact]
     public async Task RangedOnly_RendersTheRangedIconOnlyAndNoMeleeIcon()
     {
-        var html = await RenderAsync(new InvulnerableSave(0, 5, caveated: false, caveatAbility: null));
+        var html = await RenderAsync(InvulnerableSaveCharacteristicView.Resolved(new InvulnerableSave(0, 5)));
 
         html.Should().Contain(">InSv<").And.Contain("insv-icon").And.Contain("5+").And.NotContain("⚔");
     }
@@ -89,7 +89,7 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
     [Fact]
     public async Task DifferingBothKnown_RendersBothValuesAndBothIcons()
     {
-        var html = await RenderAsync(new InvulnerableSave(4, 5, caveated: false, caveatAbility: null));
+        var html = await RenderAsync(InvulnerableSaveCharacteristicView.Resolved(new InvulnerableSave(4, 5)));
 
         html.Should().Contain("stat-value-compact")
             .And.Contain("⚔ 4+")
@@ -108,7 +108,8 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
             Scope = AbilityScope.Unit,
             Origin = AbilityOrigin.Intrinsic
         };
-        var html = await RenderAsync(new InvulnerableSave(5, 5, caveated: true, caveatAbility: ability));
+        var html = await RenderAsync(
+            InvulnerableSaveCharacteristicView.Caveated(new InvulnerableSave(5, 5), ability));
 
         // The old always-visible <p class="insv-caveat-text"> paragraph is gone - the ability's
         // text is now reachable only through a popover trigger, per live-play-view's "Flagged

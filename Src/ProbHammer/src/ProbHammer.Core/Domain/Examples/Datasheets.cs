@@ -314,11 +314,8 @@ public static class Datasheets
             [
                 ("Canis Rex", new Statline(8, 11, 3, 26, 6, 10)
                 {
-                    InSv = new InvulnerableSave(
-                        meleeInSv: 5,
-                        rangedInSv: 5,
-                        caveated: true,
-                        caveatAbility: invulnerableSaveAbility)
+                    InSv = InvulnerableSaveCharacteristicView.Caveated(
+                        new InvulnerableSave(5, 5), invulnerableSaveAbility)
                 })
             ],
             weaponProfiles:
@@ -356,11 +353,8 @@ public static class Datasheets
             [
                 ("Howling Banshee", new Statline(8, 3, 4, 1, 6, 1)
                 {
-                    InSv = new InvulnerableSave(
-                        meleeInSv: 5,
-                        rangedInSv: 5,
-                        caveated: true,
-                        caveatAbility: invulnerableSaveAbility)
+                    InSv = InvulnerableSaveCharacteristicView.Caveated(
+                        new InvulnerableSave(5, 5), invulnerableSaveAbility)
                 })
             ],
             weaponProfiles:
@@ -391,11 +385,7 @@ public static class Datasheets
             [
                 ("Twin-Ward Sentinel", new Statline(6, 5, 3, 6, 7, 2)
                 {
-                    InSv = new InvulnerableSave(
-                        meleeInSv: 4,
-                        rangedInSv: 5,
-                        caveated: false,
-                        caveatAbility: null)
+                    InSv = InvulnerableSaveCharacteristicView.Resolved(new InvulnerableSave(4, 5))
                 })
             ],
             weaponProfiles:
