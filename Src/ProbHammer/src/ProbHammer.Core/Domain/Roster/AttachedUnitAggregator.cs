@@ -50,15 +50,10 @@ public static class AttachedUnitAggregator
                 return entry;
 
             var mutated = entry.Statline;
-            var flags = new List<StatlineFlag>(entry.Flags);
             foreach (var (abilityEntry, rule) in applicable)
-            {
                 mutated = rule!.Apply(mutated, abilityEntry.Ability);
-                if (rule.Characteristic is { } characteristic)
-                    flags.Add(new StatlineFlag(characteristic, abilityEntry.Ability));
-            }
 
-            return entry with { Statline = mutated, Flags = flags };
+            return entry with { Statline = mutated };
         }).ToList();
     }
 

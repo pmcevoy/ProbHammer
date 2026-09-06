@@ -430,9 +430,7 @@ public class LivePlayModel(
         return groups.Select(g =>
             {
                 var statline = g[0].Statline;
-                var ocSource = g.SelectMany(e => e.Flags)
-                    .FirstOrDefault(f => f.Characteristic == StatlineFlagCharacteristic.ObjectiveControl)
-                    ?.SourceAbility;
+                var ocSource = statline.Oc.ContributingAbilities.FirstOrDefault();
                 var insvSource = statline.InSv.ContributingAbilities.FirstOrDefault();
 
                 return new StatlineBlockViewModel(

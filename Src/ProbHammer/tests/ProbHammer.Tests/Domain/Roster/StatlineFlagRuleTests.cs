@@ -45,6 +45,8 @@ public class StatlineFlagRuleTests
         entry.Statline.InSv.DerivedValue!.MeleeInSv.Should().Be(5);
         entry.Statline.InSv.DerivedValue.RangedInSv.Should().Be(5);
         entry.Statline.InSv.ContributingAbilities.Should().ContainSingle(a => a.Name == "Shield Dome");
+        // the Datasheet had no base InSv at all - Shield Dome's own mutation must not overwrite that fact
+        entry.Statline.InSv.OriginalValue.Should().Be(InvulnerableSave.None);
     }
 
     [Fact]
@@ -87,7 +89,6 @@ public class StatlineFlagRuleTests
         entry.Statline.InSv.IsCaveated.Should().BeFalse();
         entry.Statline.InSv.OriginalValue.Should().Be(InvulnerableSave.None);
         entry.Statline.InSv.ContributingAbilities.Should().BeEmpty();
-        entry.Flags.Should().BeEmpty();
     }
 
     private static AttachedUnit CustodianGuardWithVexilla()
@@ -114,8 +115,11 @@ public class StatlineFlagRuleTests
         var view = AttachedUnitAggregator.Build(attachedUnit);
 
         view.Statlines.Should().HaveCount(2);
-        view.Statlines.Should().ContainSingle(s => s.StatlineName == "Custodian Guard" && s.Statline.Oc == 3);
-        view.Statlines.Should().ContainSingle(s => s.StatlineName == "Custodian Warden" && s.Statline.Oc == 3);
+        var bodyguardEntry = view.Statlines.Should().ContainSingle(s => s.StatlineName == "Custodian Guard").Subject;
+        bodyguardEntry.Statline.Oc.Value.Should().Be((CharacteristicValue)3);
+        // the catalogue's own base OC (2) must survive Vexilla's mutation, not be overwritten by the +1 result
+        bodyguardEntry.Statline.Oc.OriginalValue.Should().Be((CharacteristicValue)2);
+        view.Statlines.Should().ContainSingle(s => s.StatlineName == "Custodian Warden" && s.Statline.Oc.Value == 3);
     }
 
     [Fact]
@@ -126,7 +130,7 @@ public class StatlineFlagRuleTests
 
         var view = AttachedUnitAggregator.Build(attachedUnit);
 
-        view.Statlines.Should().ContainSingle(s => s.StatlineName == "Custodian Guard" && s.Statline.Oc == 3);
+        view.Statlines.Should().ContainSingle(s => s.StatlineName == "Custodian Guard" && s.Statline.Oc.Value == 3);
     }
 
     [Fact]
@@ -137,6 +141,6 @@ public class StatlineFlagRuleTests
 
         var view = AttachedUnitAggregator.Build(attachedUnit);
 
-        view.Statlines.Should().OnlyContain(s => s.Statline.Oc == 2);
+        view.Statlines.Should().OnlyContain(s => s.Statline.Oc.Value == 2);
     }
 }

@@ -22,15 +22,6 @@ public abstract class StatlineFlagRule
     public abstract string AbilityText { get; }
     public abstract StatlineFlagRuleScope Scope { get; }
 
-    /// <summary>Non-null only for a rule targeting a characteristic still represented as a plain
-    /// value (e.g. Objective Control) - <see cref="AttachedUnitAggregator.ApplyStatlineFlagRules"/>
-    /// uses it to record a <see cref="StatlineFlag"/> for such a rule. Null for a rule targeting a
-    /// characteristic represented by its own <see cref="Catalogue.CharacteristicView"/> (e.g.
-    /// invulnerable save) - that characteristic's own <c>ContributingAbilities</c> already records
-    /// the matched ability directly, so a separate <see cref="StatlineFlag"/> would just be a second,
-    /// unread copy of the same fact (see unify-invulnerable-save-characteristic-view).</summary>
-    public abstract StatlineFlagCharacteristic? Characteristic { get; }
-
     public bool Matches(Ability ability) => ability.Name == AbilityName && ability.Text == AbilityText;
 
     public abstract Statline Apply(Statline baseStatline, Ability matchedAbility);
@@ -43,12 +34,12 @@ public sealed class ShieldDomeStatlineFlagRule : StatlineFlagRule
     public override string AbilityName => "Shield Dome";
     public override string AbilityText => "The bearer has a 5+ invulnerable save.";
     public override StatlineFlagRuleScope Scope => StatlineFlagRuleScope.Bearer;
-    public override StatlineFlagCharacteristic? Characteristic => null;
 
     public override Statline Apply(Statline baseStatline, Ability matchedAbility) =>
         baseStatline with
         {
-            InSv = InvulnerableSaveCharacteristicView.Resolved(new InvulnerableSave(5, 5), [matchedAbility])
+            InSv = InvulnerableSaveCharacteristicView.Resolved(
+                baseStatline.InSv.OriginalValue, new InvulnerableSave(5, 5), [matchedAbility])
         };
 }
 
@@ -62,10 +53,15 @@ public sealed class VexillaStatlineFlagRule : StatlineFlagRule
         "Add 1 to the Objective Control characteristic of models in the bearer's unit.";
 
     public override StatlineFlagRuleScope Scope => StatlineFlagRuleScope.WholeUnit;
-    public override StatlineFlagCharacteristic? Characteristic => StatlineFlagCharacteristic.ObjectiveControl;
 
-    public override Statline Apply(Statline baseStatline, Ability matchedAbility) =>
-        baseStatline with { Oc = baseStatline.Oc + 1 };
+    public override Statline Apply(Statline baseStatline, Ability matchedAbility)
+    {
+        var current = ((NumericCharacteristicValue)baseStatline.Oc.Value).Value;
+        return baseStatline with
+        {
+            Oc = ScalarCharacteristicView.Resolved(baseStatline.Oc.OriginalValue, current + 1, [matchedAbility])
+        };
+    }
 }
 
 /// <summary>The closed vocabulary's full rule set - a real third rule joins this list directly, per

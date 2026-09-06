@@ -8,38 +8,13 @@ public sealed record ModelLineLoadout(
     int RemainingCount,
     int InitialCount);
 
-/// <summary>Which Statline characteristic a <see cref="StatlineFlagRule"/> targets, for a rule whose
-/// target is still a plain value rather than its own <see cref="Catalogue.CharacteristicView"/> - see
-/// statline-flag-rules and <see cref="StatlineFlagRule.Characteristic"/>. Invulnerable save is not a
-/// case here: it's represented by <see cref="Catalogue.InvulnerableSaveCharacteristicView"/>, which
-/// records a matched rule's ability directly rather than through a <see cref="StatlineFlag"/>.</summary>
-public enum StatlineFlagCharacteristic
-{
-    ObjectiveControl
-}
-
-/// <summary>One characteristic on one <see cref="AggregateStatlineEntry"/> that a matched
-/// <see cref="StatlineFlagRule"/> mutated, carrying a reference back to the specific
-/// <see cref="Ability"/> responsible - see live-play-view's "Flagged Statline Characteristic
-/// Rendering" for how this drives the marker/legend display.</summary>
-public sealed record StatlineFlag(StatlineFlagCharacteristic Characteristic, Ability SourceAbility);
-
 public sealed record AggregateStatlineEntry(
     string ComponentName,
     string StatlineName,
     Statline Statline,
     int RemainingCount,
     int InitialCount,
-    IReadOnlyList<ModelLineLoadout> Loadouts,
-    IReadOnlyList<StatlineFlag> Flags)
-{
-    public AggregateStatlineEntry(
-        string ComponentName, string StatlineName, Statline Statline, int RemainingCount, int InitialCount,
-        IReadOnlyList<ModelLineLoadout> Loadouts)
-        : this(ComponentName, StatlineName, Statline, RemainingCount, InitialCount, Loadouts, [])
-    {
-    }
-}
+    IReadOnlyList<ModelLineLoadout> Loadouts);
 
 /// <summary>
 /// <see cref="LoadoutIndex"/> is the contributing <c>ModelLine</c>'s position within its

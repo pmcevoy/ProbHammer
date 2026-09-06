@@ -6,7 +6,7 @@ public sealed record Statline(
     int Sv,
     int W,
     int Ld,
-    int Oc)
+    ScalarCharacteristicView Oc)
 {
     public InvulnerableSaveCharacteristicView InSv { get; init; } = InvulnerableSaveCharacteristicView.None;
 }

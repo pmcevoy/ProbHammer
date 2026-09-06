@@ -149,13 +149,14 @@ public class CharacteristicViewTests
     [Fact]
     public void InvulnerableSave_ResolvedWithContributingAbilities_IsNotCaveated()
     {
-        InvulnerableSave value = 5;
+        InvulnerableSave original = InvulnerableSave.None;
+        InvulnerableSave derived = 5;
         var ability = MakeAbility("Shield Dome");
 
-        var view = InvulnerableSaveCharacteristicView.Resolved(value, [ability]);
+        var view = InvulnerableSaveCharacteristicView.Resolved(original, derived, [ability]);
 
-        view.OriginalValue.Should().Be(value);
-        view.DerivedValue.Should().Be(value);
+        view.OriginalValue.Should().Be(original);
+        view.DerivedValue.Should().Be(derived);
         view.ContributingAbilities.Should().Equal(ability);
         view.IsCaveated.Should().BeFalse();
     }

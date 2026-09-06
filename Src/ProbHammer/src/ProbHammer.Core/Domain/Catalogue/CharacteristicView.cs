@@ -51,6 +51,32 @@ public sealed record ScalarCharacteristicView(
 
     /// <summary>The value a caller should actually use/display.</summary>
     public CharacteristicValue Value => SelectValue(IsCaveated, OriginalValue, DerivedValue);
+
+    /// <summary>Mirrors InvulnerableSaveCharacteristicView's own implicit int conversion - a
+    /// uniform, non-caveated, no-contributing-abilities value is the common case at a construction
+    /// call site. Calls the 3-arg Resolved below directly rather than through a 1-arg convenience
+    /// overload - unlike InvulnerableSaveCharacteristicView's own 1-arg Resolved(value), nothing
+    /// else in the codebase constructs a ScalarCharacteristicView from a single already-known value,
+    /// so a dedicated overload would exist solely for this one call site.</summary>
+    public static implicit operator ScalarCharacteristicView(int uniformValue) =>
+        Resolved(uniformValue, uniformValue, []);
+
+    /// <summary>A matched, fully-understood StatlineFlagRule mutating an existing value uses this
+    /// overload - <paramref name="originalValue"/> is the value's own pre-mutation
+    /// <c>OriginalValue</c> (never its effective <c>Value</c>, which may already reflect an earlier
+    /// rule in a chain), so the true catalogue value keeps surviving every mutation applied on top
+    /// of it, letting the UI show the player what the value was before any ability changed it.
+    /// <paramref name="derivedValue"/> is the newly computed result. "Resolved" means not caveated
+    /// (DerivedValue is set) - independent of whether any abilities are recorded as contributing to
+    /// it.</summary>
+    public static ScalarCharacteristicView Resolved(
+        CharacteristicValue originalValue, CharacteristicValue derivedValue,
+        IReadOnlyList<Ability> contributingAbilities) =>
+        new(originalValue, derivedValue, contributingAbilities);
+
+    /// <summary>A value left caveated by one or more unresolved contributing abilities.</summary>
+    public static ScalarCharacteristicView Caveated(CharacteristicValue value, Ability caveatAbility) =>
+        new(value, null, [caveatAbility]);
 }
 
 public sealed record InvulnerableSaveCharacteristicView(
@@ -81,19 +107,29 @@ public sealed record InvulnerableSaveCharacteristicView(
 
     /// <summary>A fully-known value with no contributing abilities - the common case (e.g. a plain,
     /// non-footnoted catalogue value). Named rather than a positional constructor overload so the
-    /// call site states its own semantics, matching DiceExpression.Fixed's convention.</summary>
-    public static InvulnerableSaveCharacteristicView Resolved(InvulnerableSave value) => Resolved(value, []);
+    /// call site states its own semantics, matching DiceExpression.Fixed's convention. Forwards to
+    /// the 3-arg overload below with no separate 2-arg (value, abilities) form - a construction site
+    /// that has a real contributing ability always has a real pre-mutation original to state
+    /// alongside it, so there is no legitimate case for "resolved, with an ability, but original and
+    /// derived are silently the same value."</summary>
+    public static InvulnerableSaveCharacteristicView Resolved(InvulnerableSave value) =>
+        Resolved(value, value, []);
 
     public static InvulnerableSaveCharacteristicView Resolved(int melee, int ranged) =>
         Resolved(new InvulnerableSave(melee, ranged));
 
-    /// <summary>"Resolved" means not caveated (DerivedValue is set) - independent of whether any
-    /// abilities are recorded as contributing to it. A matched, fully-understood StatlineFlagRule
-    /// (e.g. Shield Dome) is exactly this case: resolved, but with its own matched ability recorded
-    /// in ContributingAbilities.</summary>
+    /// <summary>A matched, fully-understood StatlineFlagRule mutating an existing value (e.g.
+    /// Shield Dome replacing whatever the Datasheet's own base InSv was) uses this overload -
+    /// <paramref name="originalValue"/> is the value's own pre-mutation <c>OriginalValue</c> (never
+    /// its effective <c>Value</c>, which may already reflect an earlier rule in a chain), so the
+    /// true catalogue value keeps surviving every mutation applied on top of it, letting the UI show
+    /// the player what the value was before any ability changed it. <paramref name="derivedValue"/>
+    /// is the newly computed result. "Resolved" means not caveated (DerivedValue is set) -
+    /// independent of whether any abilities are recorded as contributing to it.</summary>
     public static InvulnerableSaveCharacteristicView Resolved(
-        InvulnerableSave value, IReadOnlyList<Ability> contributingAbilities) =>
-        new(value, value, contributingAbilities);
+        InvulnerableSave originalValue, InvulnerableSave derivedValue,
+        IReadOnlyList<Ability> contributingAbilities) =>
+        new(originalValue, derivedValue, contributingAbilities);
 
     /// <summary>A value left caveated by exactly one unresolved contributing ability - see
     /// invulnerable-save's "Caveated Values Always Carry Their Source Ability".</summary>

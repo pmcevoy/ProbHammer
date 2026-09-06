@@ -46,9 +46,9 @@ public class LivePlayFlaggedStatlineRenderingTests : IClassFixture<WebApplicatio
     {
         var entry = new AggregateStatlineEntry(
             ComponentName: "Test Unit", StatlineName: "Test Unit",
-            Statline: new Statline(6, 4, 3, 4, 7, 3), // base OC 2 + Vexilla's 1 = 3
-            RemainingCount: 1, InitialCount: 1, Loadouts: [],
-            Flags: [new StatlineFlag(StatlineFlagCharacteristic.ObjectiveControl, Vexilla)]);
+            // base OC 2 + Vexilla's 1 = 3
+            Statline: new Statline(6, 4, 3, 4, 7, ScalarCharacteristicView.Resolved(2, 3, [Vexilla])),
+            RemainingCount: 1, InitialCount: 1, Loadouts: []);
         var view = new AttachedUnitAggregateView(
             Name: "Test Unit", IsAttachedUnit: false, Statlines: [entry], Weapons: [], Abilities: [],
             Keywords: new HashSet<string>());
@@ -87,12 +87,12 @@ public class LivePlayFlaggedStatlineRenderingTests : IClassFixture<WebApplicatio
         // affected run".
         var entryA = new AggregateStatlineEntry(
             ComponentName: "Test Unit", StatlineName: "Model A",
-            Statline: new Statline(6, 4, 3, 4, 7, 3), RemainingCount: 1, InitialCount: 1, Loadouts: [],
-            Flags: [new StatlineFlag(StatlineFlagCharacteristic.ObjectiveControl, Vexilla)]);
+            Statline: new Statline(6, 4, 3, 4, 7, ScalarCharacteristicView.Resolved(2, 3, [Vexilla])),
+            RemainingCount: 1, InitialCount: 1, Loadouts: []);
         var entryB = new AggregateStatlineEntry(
             ComponentName: "Test Unit", StatlineName: "Model B",
-            Statline: new Statline(6, 5, 3, 4, 7, 3), RemainingCount: 1, InitialCount: 1, Loadouts: [],
-            Flags: [new StatlineFlag(StatlineFlagCharacteristic.ObjectiveControl, Vexilla)]);
+            Statline: new Statline(6, 5, 3, 4, 7, ScalarCharacteristicView.Resolved(2, 3, [Vexilla])),
+            RemainingCount: 1, InitialCount: 1, Loadouts: []);
         var view = new AttachedUnitAggregateView(
             Name: "Test Unit", IsAttachedUnit: false, Statlines: [entryA, entryB], Weapons: [], Abilities: [],
             Keywords: new HashSet<string>());
@@ -116,12 +116,12 @@ public class LivePlayFlaggedStatlineRenderingTests : IClassFixture<WebApplicatio
         var shieldDomeValue = new InvulnerableSave(5, 5);
         var entry = new AggregateStatlineEntry(
             ComponentName: "Test Unit", StatlineName: "Test Unit",
-            Statline: new Statline(12, 9, 3, 11, 6, 3)
+            // base OC 2 + Vexilla's 1 = 3; Impulsor has no base InSv before Shield Dome grants one
+            Statline: new Statline(12, 9, 3, 11, 6, ScalarCharacteristicView.Resolved(2, 3, [Vexilla]))
             {
-                InSv = InvulnerableSaveCharacteristicView.Resolved(shieldDomeValue, [shieldDome])
+                InSv = InvulnerableSaveCharacteristicView.Resolved(InvulnerableSave.None, shieldDomeValue, [shieldDome])
             },
-            RemainingCount: 1, InitialCount: 1, Loadouts: [],
-            Flags: [new StatlineFlag(StatlineFlagCharacteristic.ObjectiveControl, Vexilla)]);
+            RemainingCount: 1, InitialCount: 1, Loadouts: []);
         var view = new AttachedUnitAggregateView(
             Name: "Test Unit", IsAttachedUnit: false, Statlines: [entry], Weapons: [], Abilities: [],
             Keywords: new HashSet<string>());
@@ -141,9 +141,8 @@ public class LivePlayFlaggedStatlineRenderingTests : IClassFixture<WebApplicatio
         // reach it at all.
         var entry = new AggregateStatlineEntry(
             ComponentName: "Test Unit", StatlineName: "Test Unit",
-            Statline: new Statline(6, 4, 3, 4, 7, 3),
-            RemainingCount: 0, InitialCount: 1, Loadouts: [],
-            Flags: [new StatlineFlag(StatlineFlagCharacteristic.ObjectiveControl, Vexilla)]);
+            Statline: new Statline(6, 4, 3, 4, 7, ScalarCharacteristicView.Resolved(2, 3, [Vexilla])),
+            RemainingCount: 0, InitialCount: 1, Loadouts: []);
         var view = new AttachedUnitAggregateView(
             Name: "Test Unit", IsAttachedUnit: false, Statlines: [entry], Weapons: [], Abilities: [],
             Keywords: new HashSet<string>());

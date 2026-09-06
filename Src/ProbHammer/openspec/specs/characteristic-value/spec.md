@@ -49,6 +49,13 @@ when computable, and whether it is caveated.
 - **THEN** the view SHALL expose its original catalogue value as the derived value
 - **AND** the view SHALL NOT be marked caveated
 
+#### Scenario: Objective Control formalized as a plain scalar view
+- **WHEN** an Objective Control characteristic is represented via the characteristic modification
+  view
+- **THEN** it SHALL use a bare scalar characteristic value as its value type, with no compound
+  per-kind shape — proving the view covers a plain scalar characteristic exactly as readily as the
+  compound invulnerable-save case, with no dedicated case needed for either
+
 ### Requirement: Compound Characteristic Value Shapes
 The system SHALL allow a characteristic's view to wrap a compound, per-kind shape rather than a
 bare scalar, for a characteristic whose real value is not a single number — recognizing the
