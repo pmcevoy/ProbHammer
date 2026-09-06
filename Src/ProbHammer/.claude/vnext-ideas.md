@@ -78,85 +78,49 @@ entry once it's been turned into a change (archived changes remain the historica
     idea above (e.g. folding a "+1 Attack to melee weapons" ability into weapon-aggregation
     totals) is the next natural driver for growing this vocabulary, not yet designed.
 
-- **Characteristic-modification domain hardening, and `statline-flag-rules` generalization.**
-  Supersedes/absorbs an earlier, narrower note here on `statline-flag-rules` modifier-stacking
-  found during a `resolve-known-ability-effects` code-review walkthrough (2026-09-01) — a same-day
-  explore-mode session broadened it into the fuller picture below. Not yet proposed.
+- **Characteristic-modification domain hardening: the general engine (still not built).**
+  `introduce-characteristic-domain-model`, `unify-invulnerable-save-characteristic-view`, and
+  `unify-objective-control-characteristic-view` (all archived) wired `CharacteristicValue`/
+  `CharacteristicView` into both of today's actual consumers — `Statline.InSv` and `Statline.Oc`
+  both now carry `OriginalValue`/`DerivedValue`/`ContributingAbilities` uniformly, and the old
+  `StatlineFlag`/`StatlineFlagCharacteristic` side-channel is gone. What's described below is what's
+  still missing: a real modification/legality *engine*, needed only once a 3rd `StatlineFlagRule`
+  or any rule-stacking (two abilities touching the same characteristic) shows up — today's two
+  rules (Shield Dome → InSv, Vexilla → Oc) never overlap, so nothing here has a real caller yet.
 
-  **The stacking/ordering/cap bug that started this**: real 40k rules let multiple abilities
-  cumulatively modify one characteristic, with a defined application order and, for some
-  characteristics, a hard cap — none of which the current mechanism models.
-  `AttachedUnitAggregator.ApplyStatlineFlagRules` applies every matching rule for a row in whatever
-  order `abilities` happens to enumerate them (no absolute-vs-relative ordering), and two
-  absolute-set rules on the same row/characteristic don't compose — the later one just overwrites
-  the earlier one's result outright. Separately, `LivePlay.cshtml.cs`'s `GroupStatlines` only ever
-  credits the *first* matching `StatlineFlag` per characteristic (`.FirstOrDefault(f =>
-  f.Characteristic == ...)`), so even where mutations correctly do stack, only one contributing
-  ability ever appears in the footnote/legend. Today's catalogue (Shield Dome → InSv, Vexilla → OC)
-  can't exercise either gap — exactly one rule per characteristic today — but a third rule targeting
-  an already-covered characteristic would hit both immediately.
+  **The gap**: real 40k rules let multiple abilities cumulatively modify one characteristic, in a
+  defined order, with a hard cap for some characteristics — none of which
+  `StatlineFlagRule.Apply`'s raw arithmetic models. Two confirmed blockers:
+  1. `Statline`/`WeaponProfile.S`/`Ap` still have plain `int` fields for anything other than InSv/Oc
+     — no `DiceExpression`, no non-numeric (`-`/`*`/`N/A`) representation.
+     `CharacteristicResolutionAllowlist.cs` already documents a real, unfixed instance (Ork
+     Battlewagon "D6+6" `S` text skipped rather than parsed).
+  2. No legality/clamping layer exists — the rulebook's own 6-step order is **(1)** set/replace
+     (untouchable by 2–5 once set to `0`/`-`/`*`) → **(2)** multiply → **(3)** add → **(4)** divide →
+     **(5)** subtract → **(6)** round fractions up, plus a real cap table (below).
 
-  **Two confirmed domain gaps block any of this growing past 2 hand-written rules**:
-  1. `Statline` (M/T/Sv/W/Ld/Oc) and `WeaponProfile.S`/`Ap` are plain `int` throughout — no
-     `DiceExpression`, no representation for a non-numeric (`-`/`*`/`N/A`) characteristic. Already a
-     confirmed, real, allowlisted-not-fixed gap: `CharacteristicResolutionAllowlist.cs` skips
-     dice-notation `S` text (Ork Battlewagon "D6+6", Big Gunz) rather than parsing it, because
-     nothing needed it fixed yet.
-  2. No characteristic-modification **legality/clamping layer** exists at all —
-     `StatlineFlagRule.Apply` does raw arithmetic with zero bounds-checking, but real 11e Core Rules
-     impose caps this app encodes nowhere (M can't go below 1", Ld can't be better than 4+, a
-     `-`/`*`/`N/A` characteristic can never be modified, a WS/BS-modifying rule targets a model's
-     *weapons* not its own stat) plus a defined 6-step application order: **(1)** set/replace to an
-     exact value first — anything set to `0`/`-`/`*` here is untouchable by steps 2–5 — **(2)**
-     multiply, **(3)** add, **(4)** divide, **(5)** subtract, **(6)** round fractions up.
-
-  **A structural discovery de-risks half of this.** BSData already ships fully-deserialized,
-  structured `BsModifier` (`Type`/`Field`/`Value`/`Conditions`) data for *build-time* characteristic
-  changes — a corpus scan found 717 real instances (list-construction-option-driven, e.g. "select
-  this wargear and Sv improves to 2+"), parsed today but read only for hidden-gating
-  (`IsGameModeGated`), never for literal effect. A purely structural resolver over `Field`/`Value`
-  against the known characteristic-id table could deterministically resolve most of these
-  (~83% are plain `set`/`increment`/`decrement`; `floor`/`ceil` pairs need sibling-entry correlation
-  for the real WS/BS-capped-at-2+ core rule; `replace` looks like safely-ignorable BattleScribe
-  display bookkeeping, not a 6th real operation) with zero AI involvement. But this only ever covers
-  build-time facts — it has no concept of phase/turn/positional triggers, so a genuine live-trigger
-  ability (Vexilla; a Marshal's per-combat weapon buff) has **zero** structured signal and stays a
-  prose problem regardless.
+  **A structural discovery de-risks half of this for build-time modifiers.** BSData already ships
+  structured `BsModifier` (`Type`/`Field`/`Value`/`Conditions`) data — a corpus scan found 717 real
+  build-time instances (e.g. "select this wargear and Sv improves to 2+"), parsed today only for
+  hidden-gating (`IsGameModeGated`), never for literal effect. A purely structural resolver could
+  deterministically resolve most of these with zero AI involvement — but it only ever covers
+  build-time facts; a live-trigger ability (Vexilla; a per-combat weapon buff) has zero structured
+  signal and stays a prose problem regardless.
 
   **The prose half has a drafted, paused classification approach**: a confidence-tiered schema
   (Tier 0 no signal → Tier 1 "something's modified" → Tier 2 "this specific characteristic" → Tier 3
-  a real hand-written `StatlineFlagRuleCatalogue` entry, promoted only by a person) plus a 15-ability
-  stress-test sample set covering weapon-scoped/unnamed targets, multi-modification abilities,
-  enemy-debuffs, and several confirmed `never`-bucket flavors (positional range, an incoming attack's
-  transient Damage, cross-referencing another rule's default behavior). An LLM pass (Haiku or
-  smaller, batch job on BSData updates, never a live runtime call) was proposed as a Tier 1/2
-  *discovery accelerant* feeding a human-reviewed checked-in table — deliberately paused before
-  writing any prompt or making any call, per the explicit "hold enthusiasm until we know what
-  questions we're asking." **Ties into phase tracking**: `live-play-phase-turn-tracker` shipping
-  means an ability's extracted `Phase`+`TurnOwnership` is now automatically "evaluable" against real
-  page state the moment classification can extract it, rather than landing in an unclassifiable
-  bucket for want of anywhere to check it against.
+  a real hand-written `StatlineFlagRuleCatalogue` entry, promoted only by a person), an LLM pass
+  proposed only as a Tier 1/2 discovery accelerant feeding a human-reviewed table — deliberately
+  paused before writing any prompt. Ties into `live-play-phase-turn-tracker`: an ability's extracted
+  Phase/TurnOwnership becomes automatically evaluable against real page state once classification
+  can extract it.
 
-  **One unresolved complication, no answer yet**: the rulebook's own "Ignore Modifiers" rule lets a
-  player selectively discard some applied modifiers while keeping others (e.g. keep a beneficial
-  one, ignore a detrimental one) — correct resolution isn't a pure function of a final delta, it
-  needs each applied modifier tracked as a discrete, toggleable item, a materially bigger feature
-  than a clamp layer and not scoped anywhere yet.
+  **One unresolved complication, no answer yet**: the rulebook's "Ignore Modifiers" rule lets a
+  player selectively discard some applied modifiers while keeping others — correct resolution isn't
+  a pure function of a final delta, it needs each applied modifier tracked as a discrete, toggleable
+  item, materially bigger than a clamp layer and not scoped anywhere.
 
-  **Sequencing**: land the legality/clamp layer plus `DiceExpression` support for `WeaponProfile.S`
-  before a 3rd `StatlineFlagRuleCatalogue` entry lands, hand-written or corpus-discovered — the
-  structural-modifier and prose-classification tracks above are independent discovery work and
-  don't block this, since neither computes a final mutated value on its own.
-
-  **Update 2026-09-04**: `introduce-characteristic-domain-model` landed the shape half of this —
-  `CharacteristicValue` (numeric/dice/symbolic, generalizing the `Statline`/`WeaponProfile` int/
-  `DiceExpression` inconsistency this note's gap #1 describes) and `CharacteristicView`
-  (`OriginalValue`/`DerivedValue`/`ContributingAbilities`/`IsCaveated`, generalizing
-  `InvulnerableSave.Caveated`/`CaveatAbility` to N abilities). Both are unconsumed - new types only,
-  not wired into `Statline`/`WeaponProfile` yet.
-
-  A same-day follow-on discussion chased the *other* half - the official Improve/Worsen rule text
-  itself:
+  **The rulebook's own Improve/Worsen text** (verbatim):
 
   > Improving WS, BS, Sv and Ld: subtract the amount from the number before the `+` (WS 3+ improved
   > by 1 → 2+). Worsening WS, BS, Sv and Ld: add to it (WS 3+ worsened by 1 → 4+). Improving AP:
@@ -164,43 +128,86 @@ entry once it's been turned into a change (archived changes remain the historica
   > worsened by 1 → 0; AP 0 worsened by 1 → 0, stays 0). Improving/worsening any other characteristic
   > (no `+`/`-` symbol): plain add/subtract (S improved by 1 → +1).
 
-  That's exactly 3 distinct arithmetic behaviors (Threshold: WS/BS/Sv/Ld: Worsen; ArmourPenetration:
-  AP, worsen capped at 0; Plain: everything else) - not one behavior per named characteristic
-  (WS/BS/Sv/Ld would share byte-identical logic if split that way). Clamp bounds (gap #2's `M ≥ 1"`,
-  `Ld ∈ [4,9]`, `WS/BS ∈ [2,7]`) turned out to be an *orthogonal* axis to this - WS and BS share a
-  clamp bound while sharing Threshold's arithmetic with Ld, which has its own different bound - so
-  clamps are per-named-characteristic data (a lookup), not per-arithmetic-behavior code, and don't
-  belong on the same 3-case type as the arithmetic itself.
+  That's 3 distinct arithmetic behaviors — `RollThreshold` (WS/BS/Sv/Ld: inverted, since a lower
+  number is an easier die-roll bar), `ArmourPenetration` (AP: inverted, worsen capped at 0), `Plain`
+  (everything else) — not one behavior per named characteristic. Clamp bounds are an *orthogonal*
+  axis (WS/BS share a bound while sharing `RollThreshold`'s arithmetic with Ld, which has its own
+  bound), so they're per-characteristic lookup data, not part of the arithmetic type.
 
-  A concrete sketch was drafted (`CharacteristicKind` - 3 sealed private subtypes behind static
-  `Threshold`/`ArmourPenetration`/`Plain` instances, mirroring `DiceExpression.D3`/`D6`'s
-  static-preset convention, each with `Improve(int, int) -> int`/`Worsen(int, int) -> int`) but
-  **deliberately not committed** - caught by direct user review on two grounds: (1) it never touches
-  `CharacteristicValue` at all, taking and returning a bare `int` - exactly the "ad hoc int"
-  representation `introduce-characteristic-domain-model`'s own `proposal.md` was written to get away
-  from, reintroduced as a second, competing currency right next to `NumericCharacteristicValue`; and
-  (2) more generally, the whole engine/kind/clamp thread had sprawled well past this project's
-  established rhythm of building only against a real, present consumer - nothing in `/LivePlay`
-  needs any of it today. If revived, `Improve`/`Worsen` should take and return `CharacteristicValue`
-  (mirroring `DiceExpression.Add`/`.Scale`'s own take-and-return-self shape), never drop to a bare
-  `int` mid-pipeline, and should stay unattempted until wiring `CharacteristicValue` into a real
-  consumer (see next paragraph) surfaces an actual need for it.
+  **Authoritative clamp table** (user-supplied verbatim — "or better"/"or worse" are exclusive of
+  the named threshold):
 
-  **The suggested next real step, once someone picks this back up**: wire `CharacteristicValue`
-  into an actual consumer as a stress test, rather than continuing to design further in the
-  abstract. `WeaponProfile.S` is the smallest bounded starting point - unlike `Statline`'s six
-  fields, it has one already-confirmed, already-documented real bug driving it
-  (`CharacteristicResolutionAllowlist.cs` skips dice-notation `S` text - Ork Battlewagon "D6+6" -
-  rather than parsing it), so wiring it in has a concrete payoff, not just validation-for-its-own-
-  sake. Expect real friction, not a trivial swap: `CharacteristicValue` has no comparison/ordering
-  operator yet (needed if any consumer ever compares `S` values, though none does today), and every
-  site currently doing raw int arithmetic against these fields would need to unwrap/repack rather
-  than operate directly - `Statline`'s six fields are a bigger version of the same problem
-  (`ToughnessResolution`'s "highest T among present models" comparison has no home on
-  `CharacteristicValue` as it stands, and `StatlineFlagRule.Apply`'s raw arithmetic would need to
-  unwrap/repack too) and would surface it worse. The int→`CharacteristicValue` implicit conversion
-  already added means most *construction* call sites (tests included) shouldn't need to change;
-  it's *reading* sites doing arithmetic/comparison that carry the real cost.
+  > Characteristics of '-', '\*' and 'N/A' can never be modified. Rules that modify a model's WS
+  > and/or BS characteristic modify the WS and/or BS characteristic of every weapon equipped by that
+  > model. After all modifiers have been applied: M cannot be less than 1". T cannot be less than 1.
+  > Sv cannot be 1+ or better. InSv cannot be 1+ or better. Ld cannot be 4+ (or better) or 9+ (or
+  > worse). OC cannot be less than 0 or '-'. Range characteristics cannot be less than 1". A cannot
+  > be less than 1. WS cannot be 1+ (or better) or 7+ (or worse). BS cannot be 1+ (or better) or 7+
+  > (or worse). S cannot be less than 1. AP cannot be worse than 0. D cannot be less than 1.
+
+  Worked out: `Sv`/`InSv` floor at 2, no ceiling; `Ld` ∈ `[5,8]`; `WS`/`BS` ∈ `[2,6]`; `Oc` floors at
+  0, no ceiling (can never produce `-` — moot, since a symbolic value can never be modified at all);
+  `AP` ceilings at 0 (worsening stops there), no floor; `M`/`T`/`A`/`S`/`D`/Range all floor at 1 (1"
+  for the length-valued ones), no ceiling.
+
+  **Where `Improve`/`Worsen` belongs**: NOT on `CharacteristicValue` itself (would make the value
+  type responsible for computing its own mutation — the same mistake `ComputeDerivedValue` was
+  reverted for on `CharacteristicView`, see
+  [[feedback_avoid_premature_behavior_on_unconsumed_domain_types]]) and not on a mutator rule
+  directly, but on the `RollThreshold`/`ArmourPenetration`/`Plain` "Kind" concept as pure
+  sign-resolution: `Kind.ResolveDelta(Improve, amount) -> signed int`. A mutator rule states intent
+  in ability-vocabulary terms ("Vexilla improves Oc by 1"); that resolves to a signed `Add` step
+  before reaching the engine, which never sees "Improve"/"Worsen" at all. Proposed layering, not
+  built:
+
+  ```
+  CharacteristicView          pure data - Value/IsCaveated/ContributingAbilities/OriginalValue,
+                               computes nothing (unchanged from today)
+        ▲ built by
+  Modification Engine         groups modifiers by step-type, applies Set→Multiply→Add→Divide→
+                               Subtract→round-up (the 6-step algorithm), clamps to the
+                               characteristic's bound (the table above)
+        ▲ consumes
+  CharacteristicModifier      one per (ability, target characteristic) pair - an ability
+                               touching 2 stats emits 2 of these; StepType + signed Amount +
+                               SourceAbility
+        ▲ produced by matching
+  Mutator rule                StatlineFlagRule's successor - recognizes an ability by
+                               name+text, emits its Modifier(s)
+  ```
+
+  **Ordering is simpler than feared**: the rulebook's algorithm only requires *grouping by
+  step-type* and applying step-types in the fixed sequence — same-step-type contributors just
+  combine (sum for Add/Subtract, product for Multiply/Divide; both commutative, no rule-vs-rule
+  priority needed within one step-type). `Set` is the exception — a replace, not a combine, that
+  short-circuits every later step for that characteristic.
+
+  **Two design questions have real, worked answers, ready whenever a real caller needs them**:
+  - *Set-vs-Set conflicts*: given two abilities both `Set`-type on the same characteristic (e.g.
+    "Set InSv 4+" and "Set InSv 5+"), keep the *better* value and discard the other, then apply any
+    remaining `Improve`/`Worsen` on top — this is the real invulnerable-save FAQ rule ("only the
+    best applies") generalized to any characteristic. Needs a `Kind.Better(a, b)` comparison
+    alongside `ResolveDelta`.
+  - *Multi-characteristic abilities* (e.g. "Add 1 to Attacks of all melee weapons and 1 to
+    Strength"): don't invent a generic `CharacteristicModifier.Target` spanning
+    Statline/WeaponProfile — feed both `Statline` and the relevant `WeaponProfile`s in as *context*
+    to whichever hand-written rule recognizes the ability, and let that rule mutate directly, the
+    same self-contained way `StatlineFlagRule.Apply` already works. Keeps
+    `StatlineFlagRuleCatalogue`'s "no general ability-text parsing engine" non-goal intact.
+    `Apply`'s signature eventually widens to also carry `WeaponProfile`s when a real rule needs it.
+
+  **Also still open**: a ranged-aura ability ("Improve OC for all units within 6\" of this model")
+  can't be safely auto-resolved — no positional/board-state data exists in this domain (root
+  `CLAUDE.md`'s Deliberate Omissions) — so a matching rule should emit a `Caveated` view, not
+  attempt a `Resolved` computation. No concrete real BSData instance has been pinned down yet; find
+  one before scoping this into a change, per
+  [[feedback_verify_bsdata_mapper_changes_against_real_export]].
+
+  **Next real step**: wire `CharacteristicValue` into `WeaponProfile.S` (smallest bounded starting
+  point — already has a confirmed real bug driving it, the Ork Battlewagon dice-notation skip
+  above) as a stress test before designing the engine further in the abstract. Expect friction:
+  `CharacteristicValue` has no comparison/ordering operator yet, and every site doing raw int
+  arithmetic against these fields needs to unwrap/repack rather than operate directly.
 
 - **Detachment rule structural-modifier detection ("phase 2" of `display-army-header-and-
   detachment-rules`).** That change captures every Detachment's rule text verbatim and renders it
