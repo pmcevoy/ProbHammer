@@ -69,8 +69,10 @@ selector, same mechanism as before, just no longer the default case.
   handful of distinct sizes on any one screen. The invulnerable-save box (below the main M/T/Sv/W/
   Ld/Oc row, aligned under Sv specifically — a distinct box + side label, not a value stacked
   inside a tile) reuses these same sizes: its value at `0.95rem` bold like a stat value, its label
-  at `0.65rem` like a stat label. A caveated save's box gets an off-color (`--amber-tint`)
-  background instead of the normal `--bg`. Since `resolve-known-ability-effects`, the linked
+  at `0.65rem` like a stat label. A caveated save's box stays the normal `--bg` background, not
+  the off-color `--amber-tint` (see "Flagged Statline Legend" below, `classify-characteristic-modifier-caveats`'
+  correction — `--amber-tint` is reserved for a *resolved* value, never a still-caveated one showing
+  the plain catalogue value). Since `resolve-known-ability-effects`, the linked
   ability's full text is no longer rendered inline beneath the box (the old `insv-caveat-text`
   paragraph, always-visible italic run-on text) — a caveated InSv now uses the same general
   marker-and-legend mechanism a `statline-flag-rules` match uses (below), so its source text is
@@ -321,10 +323,17 @@ section covers only the visual decisions.
 
 - **Marker**: a flagged tile's label gets a trailing footnote marker (`InSv*`, `OC**`, ...) appended
   directly to the existing label text — no new typography, just more characters in the same
-  `.stat-label`. A flagged OC tile also picks up `.stat-tile-flagged` (the same `--amber-tint`
-  background/`--amber` border token already used for a caveated InSv box and a Battle-shocked OC
-  tile), generalizing that token's own "this tile's value isn't the plain catalogue value" role to
-  cover a rule-mutated value too, not only a caveat.
+  `.stat-label`. The marker itself renders on every flagged tile, caveated or resolved alike; the
+  `.stat-tile-flagged` amber background (the `--amber-tint` background/`--amber` border token, also
+  used for a Battle-shocked OC tile) is reserved for a **resolved** run only — one whose displayed
+  value is an actual computed result (e.g. `statline-flag-rules`' Vexilla, always resolved), never a
+  still-caveated one (`characteristic-modifier-caveats`' own candidates, and a caveated InSv) whose
+  shown number is still the plain, unmutated catalogue value. Corrected by
+  `classify-characteristic-modifier-caveats` after direct user review of a live caveated tile:
+  painting a still-caveated value amber falsely reads as "already adjusted for you," when the marker
+  + legend are asking the reader to do that adjustment themselves. An earlier draft of this rule
+  (superseded) painted every flagged tile amber regardless of caveated/resolved status — that
+  wording is what this section replaces.
 - **Legend placement**: `.statline-flag-legend` is a sibling of `.statline-tiles`, not one of its
   grid children (unlike the retired `.insv-caveat-text`, which lived inside the tiles grid) — it
   now needs to hold more than one line (one InSv legend line, one OC legend line, in the same run),

@@ -1366,6 +1366,151 @@ source wherever it recurs — so a `WholeUnit`-scoped source affecting every run
 marker throughout and gets a legend line in every one of those runs, never consolidated into a
 single shared location.
 
+---
+
+## Characteristic-Modifier Caveats
+
+Full requirements: `openspec/changes/classify-characteristic-modifier-caveats/`. The data-derived
+counterpart to Statline-Flag Rules above: recognizes when BSData's own structured `BsModifier` data
+(`Type`/`Field`/`Value`/`Conditions`, already read for `IsGameModeGated` hidden-gating — see "BSData
+JSON Ingestion") deterministically modifies a specific `Statline` characteristic, and surfaces that
+fact as a caveated `CharacteristicView` (`IsCaveated: true`, `ContributingAbilities` populated,
+`DerivedValue` absent) on a specific resolved unit — reusing the exact `IsCaveated`/
+`ContributingAbilities` vocabulary Statline-Flag Rules and InSv resolution already established, with
+**no computed resulting value** (a deliberately separate, not-yet-built "resolve" step — see
+`.claude/vnext-ideas.md`).
+
+**Supersedes a reverted first attempt** (`resolve-structured-characteristic-modifiers`, built then
+reverted 2026-09-07 — see `project_resolve_structured_characteristic_modifiers_change` memory) that
+tried to reach a fully-resolved displayed value in one pass and shipped two real classification bugs
+found only by a manual NewRecruit cross-check, not by 515+ automated tests or full-corpus scans: a
+condition-tree check that silently treated an unrecognized condition shape as "safe to bake in
+unconditionally," and an "is this optional" heuristic (`entry.Type == "upgrade"`) defeated by a real,
+capped, player-chosen squad slot typed `"model"` (Adeptus Custodes' "Allarus Custodian (Vexilla &
+Misericordia)"). This change structurally excludes both: there is no "provably unconditional"
+bake-in path of any kind — every candidate, regardless of its own granting entry's structural type,
+goes through the same presence check before it can ever apply.
+
+```
+CharacteristicModifierCandidate(EntryName, Characteristic, RawValue)   // Domain/Catalogue - a
+                                       // classified, data-derived candidate: "EntryName, if actually
+                                       // selected on a resolved unit, structurally modifies
+                                       // Characteristic." Characteristic is one of "M"/"T"/"Sv"/"W"/
+                                       // "Ld"/"Oc" (Statline's own scalar property names) - the only
+                                       // fields the classifier's closed Field allowlist recognizes
+                                       // (see below for what's deliberately excluded and why).
+                                       // RawValue is the source BsModifier's own unparsed Value text,
+                                       // carried for a future DerivedValue-computing step - unused by
+                                       // this change's own caveat-only application. Never applied to
+                                       // a Datasheet's own Statline fields - selection-blind catalog
+                                       // data, identical for every roster resolving that Datasheet.
+
+Datasheet.CharacteristicModifierCandidates: IReadOnlyList<CharacteristicModifierCandidate>
+                                       // on-demand exposure, mirroring OptionalAbilityNames/
+                                       // WeaponNames' existing on-demand-list pattern - never part of
+                                       // the always-enumerated Statlines/Abilities.
+
+BsdataDatasheetMapper.ClassifyCharacteristicModifierCandidates(entry) -> IEnumerable<...>
+                                       // entry-scoped only (never a BsSelectionEntryGroup's own
+                                       // Modifiers - a full-corpus check found every real group-level
+                                       // characteristic modifier is either itself tier 3+ or belongs
+                                       // to a group with no own Profiles/SelectionEntries to ever
+                                       // resolve a matching name against, so classifying one would
+                                       // only ever produce an unreachable candidate). Reads
+                                       // entry.Modifiers alongside IsGameModeGated's existing read of
+                                       // the same data, keyed by a closed Field id -> characteristic
+                                       // allowlist (CharacteristicFieldIds) built from a full-corpus
+                                       // scan of the live clone, not guessed.
+BsdataDatasheetMapper.IsTier1OrTier2(modifier, entryId) -> bool
+                                       // closed-world condition-tier classifier: tier 1 (no
+                                       // Conditions/ConditionGroups at all) or tier 2 (every
+                                       // condition is a "selections" count of this same entry, by
+                                       // id, evaluated from a "self" or "parent" scope) classify;
+                                       // any other condition shape - a sibling entry's id, an
+                                       // "associations" (live attachment) check, a self-reference
+                                       // scoped broader than "self"/"parent" (e.g. "roster") - is
+                                       // left unclassified, never guessed as safe.
+```
+
+**Closed Field allowlist covers only the six Statline scalars (M/T/Sv/W/Ld/Oc)** — built from a
+full-corpus scan of the live BSData clone's real `BsModifier.Field` values (resolved against the
+game system's own `profileTypes["Unit"].characteristicTypes` id table), not guessed. Two exclusions,
+both deliberate and confirmed by that same scan:
+- **InSv** (`55a7-5b54-c60d-11dc`) is excluded despite real corpus evidence a modifier targets it
+  (e.g. Black Templars' "Consecrating Aura" Enhancement, tier 1, no condition) — InSv already has its
+  own dedicated, more precise `ResolveInvulnerableSave`/`ShieldDomeStatlineFlagRule`-based
+  resolution, a different `CharacteristicView` shape entirely (melee/ranged pair, not a plain
+  scalar). Covering it is a real, confirmed-real, tracked follow-up (`.claude/vnext-ideas.md`), not
+  attempted here.
+- **Every `WeaponProfile` characteristic** (Ranged/Melee Weapons' own A/S/AP/D/BS/WS/Range/Keywords
+  ids) is excluded — the scan confirmed zero real `entry.Modifiers`/`group.Modifiers` anywhere in the
+  corpus target a `WeaponProfile` field; every real occurrence of those ids lives inside a
+  Crusade-only `modifierGroups` block this loader doesn't read at all (unmapped, per
+  `BsCatalogueFile.cs`'s own doc comment), never in the directly-modeled `modifiers` array. Building
+  an untested, unreachable WeaponProfile-targeting classification/application path would be exactly
+  the kind of premature behavior on an unconsumed shape this codebase avoids elsewhere.
+
+**Tier 2 is empty in the real corpus** — implemented per spec regardless (an empty bucket is an
+honest, acceptable outcome, not a design failure). The one self-referencing-condition example found
+at all (Astra Militarum's "Deficiency" Battle Scar) uses `scope: "roster"` with a roster-wide
+`affects` path and is Crusade-mode-only content, correctly excluded by requiring a recognized tier-2
+condition's own `scope` be "self" or "parent" only.
+
+**Application** (`AttachedUnitAggregator.Build`, a step run after `ApplyStatlineFlagRules`, not
+folded into it — the two operate on different candidate sources with different match keys): for each
+present component, every classified candidate's `EntryName` is looked up against that component's
+own present `AggregateAbilityEntry` names (the same resolved-Ability-name presence
+`StatlineFlagRule.Matches` already relies on, generalized from exact-text to exact-name matching) —
+**no new "is this candidate present" concept**, and deliberately no weapon-name presence branch,
+since every real Statline-field candidate that resolves to anything resolves to an Ability, never a
+bare weapon name with no ability (confirmed by the corpus scan; would otherwise be an untested,
+unreachable path). A present match mutates the targeted field's `ScalarCharacteristicView` to
+`Caveated(currentValue, sourceAbility)` — **unless that field already carries a
+`ContributingAbilities` entry from an earlier step** (a hand-authored `StatlineFlagRule` match, or an
+earlier candidate this same pass), in which case it's left untouched. This guard is not speculative:
+a real corpus overlap exists (Adeptus Custodes' "Vexilla," whose own wargear entry carries both a
+tier-1 structural Oc-increment modifier *and* is matched by the existing hand-authored
+`VexillaStatlineFlagRule`, which already fully resolves Oc to a real derived value) — applying this
+coarser, caveat-only mechanism on top would otherwise regress a correct, resolved value back to
+merely caveated. Targeting scope mirrors `StatlineFlagRuleScope.Bearer` exactly (one specific
+model-line when the matched ability's own `StatlineName` is set, the whole owning component when
+it's a component-wide ability) — no candidate has an observed `WholeUnit`-scope need, unlike
+Vexilla's own hand-authored text.
+
+**`/LivePlay` rendering needed one small correction, caught live** — confirmed by running a real
+export through `dotnet run` (not just assumed from the prior scalar-retyping work's own test
+coverage): the footnote marker, legend line, popover, and normal ability-listing rendering all
+already generalized to this mechanism's own candidates with no change. The tile's own amber
+`.stat-tile-flagged` background did not — before this change, nothing had ever produced a
+**caveated** Scalar characteristic (only `StatlineFlagRule`'s always-*resolved* matches), so
+`_UnitBlock.cshtml`'s existing `marker is null ? plain : amber` rule had never been exercised against
+a caveated run and silently assumed "has a marker" always meant "shows a computed value." Direct user
+review of the live "Auric Mantle" W tile caught this: painting a still-caveated tile (showing the
+plain, unmutated catalogue `Value`) amber falsely read as "already adjusted for you." Fixed by
+switching the amber condition to `marker is not null && !view.IsCaveated` in `RenderScalarTile`, the
+OC bespoke branch, and — for the identical latent reason — the pre-existing caveated-InSv branch
+(which had the same bug, just never noticed since design-tokens.md's own prior wording had
+documented the wrong behavior deliberately). See `.claude/design-tokens.md`'s "Flagged Statline
+Legend" for the corrected visual rule.
+
+**Full-Corpus Scan** (`CharacteristicModifierClassificationScanTests.cs`, same permanent
+`[Fact(Explicit = true)]` pattern as the other CorpusScan tests): reuses the real, public
+`BuildDatasheet` as its own classification oracle (each interesting entry re-rooted as its own
+Datasheet's starting entry) rather than re-deriving a second copy of the classifier's own predicate,
+so the scan can never share an undetected bug with the classifier it checks. Only unclassified
+occurrences are collected into the allowlist-checked results (`CharacteristicModifierClassificationAllowlist.cs`
+— the InSv exclusion and the "condition present" tier-3+ bucket, matching the two exclusions
+above); a separate sanity assertion confirms real tier-1 classifications are still found (never
+silently zero).
+
+**Explicitly deferred, not part of this change** (tracked in `.claude/vnext-ideas.md`): computing an
+actual `DerivedValue` for any caveat this surfaces; tier 3+ conditions (a sibling selection, live
+attachment state, or a different unit entirely); prose-only classification (an ability whose text
+describes a characteristic change with no backing `BsModifier` at all, e.g. Darnath Lysander's
+"Inspiring Commander").
+
+---
+
 **`ArmyRoster`** (`Domain/Roster/ArmyRoster.cs`) wraps the per-unit roster (`Units`, an
 `IReadOnlyList<ICombatUnit>`) with army-level metadata: `Name`, `PointsSpent`, `Faction` (ordered —
 parent codex before sub-faction, e.g. `["Space Marines", "Black Templars"]`), `Detachments`

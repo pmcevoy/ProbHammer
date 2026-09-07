@@ -220,6 +220,13 @@ public sealed class BsCondition
     public string Type { get; set; } = "";
     public string ChildId { get; set; } = "";
     public string Scope { get; set; } = "";
+
+    /// <summary>The condition's own target field (e.g. "selections", "associations", "forces") -
+    /// distinct from a BsModifier's own Field (the characteristic/property being SET). Read by
+    /// characteristic-modifier-caveats' tier-2 classifier to recognize a "selections" (quantity)
+    /// condition specifically, as opposed to an "associations" (live attachment state) or "forces"
+    /// (roster composition) one - see BsdataDatasheetMapper.IsTier1OrTier2.</summary>
+    public string Field { get; set; } = "";
 }
 
 public sealed class BsConditionGroup

@@ -207,4 +207,38 @@ public class LivePlayFlaggedStatlineRenderingTests : IClassFixture<WebApplicatio
         var cellEnd = html.IndexOf("</details>", cellStart, StringComparison.Ordinal);
         legendStart.Should().BeInRange(cellStart, cellEnd);
     }
+
+    private static readonly Ability AuricMantle = new()
+    {
+        Name = "Auric Mantle",
+        Text = "Shield-Captain or Blade Champion model only. Add 2 to the bearer's Wounds characteristic.",
+        Scope = AbilityScope.Model,
+        Origin = AbilityOrigin.Enhancement
+    };
+
+    [Fact]
+    public async Task CaveatedScalarTile_RendersMarkedLabelAndLegendButNoAmberBackground()
+    {
+        // characteristic-modifier-caveats: a still-caveated Scalar tile shows the plain catalogue
+        // Value (IsCaveated selects OriginalValue), never a computed result - painting it amber
+        // would wrongly suggest the shown number already accounts for the linked ability. Amber
+        // (stat-tile-flagged) is reserved for a RESOLVED run (see the Vexilla/Sigil of Corruption
+        // tests above, both ScalarCharacteristicView.Resolved). Per direct user feedback reviewing a
+        // real caveated "Auric Mantle" W tile live.
+        var entry = new AggregateStatlineEntry(
+            ComponentName: "Test Unit", StatlineName: "Test Unit",
+            Statline: new Statline(6, 6, 2, ScalarCharacteristicView.Caveated(6, AuricMantle), 7, 2),
+            RemainingCount: 1, InitialCount: 1, Loadouts: []);
+        var view = new AttachedUnitAggregateView(
+            Name: "Test Unit", IsAttachedUnit: false, Statlines: [entry], Weapons: [], Abilities: [],
+            Keywords: new HashSet<string>());
+
+        var html = await RenderAsync(view);
+
+        html.Should().Contain(">W*<")
+            .And.Contain(">6<")
+            .And.NotContain("stat-tile-flagged")
+            .And.Contain("statline-flag-legend")
+            .And.Contain("* ✦ Auric Mantle");
+    }
 }

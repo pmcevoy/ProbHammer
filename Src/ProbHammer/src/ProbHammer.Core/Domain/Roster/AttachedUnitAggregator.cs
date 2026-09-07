@@ -17,15 +17,112 @@ public static class AttachedUnitAggregator
             .ToList();
 
         var abilities = BuildAbilities(combatUnit);
+        var statlines = ApplyStatlineFlagRules(BuildStatlines(combatUnit), abilities);
+        statlines = ApplyCharacteristicModifierCandidates(combatUnit, statlines, abilities);
 
         return new AttachedUnitAggregateView(
             Name: combatUnit.Name,
             IsAttachedUnit: combatUnit is AttachedUnit,
-            Statlines: ApplyStatlineFlagRules(BuildStatlines(combatUnit), abilities),
+            Statlines: statlines,
             Weapons: BuildWeapons(presentLines),
             Abilities: abilities,
             Keywords: KeywordResolution.EffectiveKeywords(combatUnit));
     }
+
+    // A separate step from ApplyStatlineFlagRules (design.md's Decision), run after it - the two
+    // operate on different candidate sources (hand-authored StatlineFlagRuleCatalogue vs.
+    // data-derived Datasheet.CharacteristicModifierCandidates) with different match keys (ability
+    // Name+Text vs. entry Name). Presence-check reuses the *existing* resolved-Ability name
+    // presence (AggregateAbilityEntry, already built by BuildAbilities) rather than any new match-
+    // key concept - a candidate's EntryName is looked up against the SAME component's present
+    // ability names (design.md's Decision: "no new is this candidate present concept"). Running
+    // AFTER ApplyStatlineFlagRules, and skipping a field ApplyStatlineFlagRules already touched
+    // (ContributingAbilities.Count > 0), is not incidental ordering - a real corpus overlap exists
+    // (Adeptus Custodes' "Vexilla": both a hand-authored StatlineFlagRule match on its own Ability
+    // text AND a classified structural Oc-increment candidate on the same wargear entry) where the
+    // hand-authored rule already fully resolves Oc (a real derived value, not caveated) - applying
+    // this coarser, caveat-only mechanism on top would regress a correct, resolved value back to
+    // merely caveated.
+    private static IReadOnlyList<AggregateStatlineEntry> ApplyCharacteristicModifierCandidates(
+        ICombatUnit combatUnit, IReadOnlyList<AggregateStatlineEntry> statlines,
+        IReadOnlyList<AggregateAbilityEntry> abilities)
+    {
+        var matches = new List<(AggregateAbilityEntry AbilityEntry, CharacteristicModifierCandidate Candidate)>();
+        foreach (var component in ComponentDisplayOrder(combatUnit))
+        {
+            if (!component.IsPresent)
+                continue;
+
+            foreach (var candidate in component.Datasheet.CharacteristicModifierCandidates)
+            {
+                var match = abilities.FirstOrDefault(a =>
+                    a.ComponentName == component.Datasheet.Name &&
+                    string.Equals(a.Ability.Name, candidate.EntryName, StringComparison.OrdinalIgnoreCase));
+                if (match is not null)
+                    matches.Add((match, candidate));
+            }
+        }
+
+        if (matches.Count == 0)
+            return statlines;
+
+        return statlines.Select(entry =>
+        {
+            var applicable = matches.Where(m => IsBearerOfCandidate(m.AbilityEntry, entry)).ToList();
+            if (applicable.Count == 0)
+                return entry;
+
+            var mutated = entry.Statline;
+            foreach (var (abilityEntry, candidate) in applicable)
+                mutated = ApplyCandidate(mutated, candidate, abilityEntry.Ability);
+
+            return entry with { Statline = mutated };
+        }).ToList();
+    }
+
+    // Same Bearer-scope targeting IsBearer already uses for a StatlineFlagRuleScope.Bearer rule - a
+    // data-derived candidate has no WholeUnit-scoped equivalent (no real corpus candidate's own
+    // text spans "the bearer's whole unit" the way Vexilla's hand-authored text explicitly does).
+    private static bool IsBearerOfCandidate(AggregateAbilityEntry abilityEntry, AggregateStatlineEntry statlineEntry) =>
+        abilityEntry.StatlineName is not null
+            ? abilityEntry.ComponentName == statlineEntry.ComponentName &&
+              abilityEntry.StatlineName == statlineEntry.StatlineName
+            : abilityEntry.ComponentName == statlineEntry.ComponentName;
+
+    private static Statline ApplyCandidate(Statline statline, CharacteristicModifierCandidate candidate,
+        Ability sourceAbility)
+    {
+        var current = GetScalarField(statline, candidate.Characteristic);
+        if (current.ContributingAbilities.Count > 0)
+            return statline;
+
+        var caveated = ScalarCharacteristicView.Caveated(current.Value, sourceAbility);
+        return SetScalarField(statline, candidate.Characteristic, caveated);
+    }
+
+    private static ScalarCharacteristicView GetScalarField(Statline statline, string characteristic) =>
+        characteristic switch
+        {
+            "M" => statline.M,
+            "T" => statline.T,
+            "Sv" => statline.Sv,
+            "W" => statline.W,
+            "Ld" => statline.Ld,
+            "Oc" => statline.Oc,
+            _ => throw new InvalidOperationException($"Unrecognized characteristic '{characteristic}'.")
+        };
+
+    private static Statline SetScalarField(Statline statline, string characteristic, ScalarCharacteristicView value) =>
+        characteristic switch
+        {
+            "M" => statline with { M = value },
+            "T" => statline with { T = value },
+            "Sv" => statline with { Sv = value },
+            "W" => statline with { W = value },
+            "Ld" => statline with { Ld = value },
+            "Oc" => statline with { Oc = value },
+            _ => throw new InvalidOperationException($"Unrecognized characteristic '{characteristic}'.")
+        };
 
     // Runs after BuildStatlines/BuildAbilities produce their live, casualty-filtered results (design
     // D3) - abilities is already filtered to only currently-present sources, so a matched rule's

@@ -99,7 +99,7 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
     }
 
     [Fact]
-    public async Task Caveated_RendersOffColorTileBareLabelAndALegendTriggerForTheAbility()
+    public async Task Caveated_RendersPlainTileBareLabelAndALegendTriggerForTheAbility()
     {
         var ability = new Ability
         {
@@ -113,8 +113,12 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
 
         // The old always-visible <p class="insv-caveat-text"> paragraph is gone - the ability's
         // text is now reachable only through a popover trigger, per live-play-view's "Flagged
-        // Statline Characteristic Rendering" (resolve-known-ability-effects).
-        html.Should().Contain("stat-tile-flagged")
+        // Statline Characteristic Rendering" (resolve-known-ability-effects). The tile itself stays
+        // plain (no stat-tile-flagged/amber) - a still-caveated value shows the plain catalogue
+        // value, not a computed result, so amber (reserved for "this has already been adjusted for
+        // you") would be misleading; see classify-characteristic-modifier-caveats' own corrected
+        // rendering rationale on RenderScalarTile.
+        html.Should().NotContain("stat-tile-flagged")
             .And.Contain(">InSv*<")
             .And.Contain("statline-flag-legend")
             .And.Contain("flag-legend-line")

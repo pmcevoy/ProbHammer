@@ -35,6 +35,36 @@ public static partial class BsdataDatasheetMapper
     /// trigger regardless of which specific comparison the modifier uses.</summary>
     private static readonly string[] GameModeGateNames = ["Army Roster", "Crusade Force"];
 
+    /// <summary>Closed `BsModifier.Field` id -> Statline characteristic-property-name allowlist for
+    /// characteristic-modifier-caveats' classifier (see ClassifyCharacteristicModifierCandidates),
+    /// built from a full-corpus scan of the live BSData clone's real `Field` values (task 1.1), not
+    /// guessed - mirrors this mapper's own WeaponKeywordParser/ParseThreshold "closed vocabulary,
+    /// fail closed on the unrecognized case" discipline. Ids are the game system's own
+    /// profileTypes["Unit"].characteristicTypes ids (see BsCatalogue.ProfileTypes' own doc comment).
+    /// Deliberately excludes InSv (id "55a7-5b54-c60d-11dc") despite real corpus evidence a
+    /// modifier targets it (e.g. Black Templars' "Consecrating Aura" Enhancement, tier 1, no
+    /// condition) - InSv already has its own dedicated, more precise ResolveInvulnerableSave/
+    /// StatlineFlagRule-based resolution (a different CharacteristicView shape entirely, melee/
+    /// ranged pair vs. a plain scalar); a future extension covering it is tracked in
+    /// .claude/vnext-ideas.md, not attempted here. Also deliberately excludes every WeaponProfile
+    /// characteristic (Ranged/Melee Weapons' own A/S/AP/D/BS/WS/Range/Keywords ids) - a full-corpus
+    /// scan (task 1.1) confirmed zero real `entry.Modifiers`/`group.Modifiers` anywhere in the
+    /// corpus target a WeaponProfile field; every real occurrence of those ids lives inside a
+    /// Crusade-only `modifierGroups` block this loader doesn't read at all (unmapped, per
+    /// BsCatalogueFile.cs), never in the directly-modeled `modifiers` array. Building an untested,
+    /// unreachable WeaponProfile-targeting path would be exactly the kind of premature behavior on
+    /// an unconsumed shape this codebase deliberately avoids elsewhere.</summary>
+    private static readonly IReadOnlyDictionary<string, string> CharacteristicFieldIds =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["e703-ecb6-5ce7-aec1"] = "M",
+            ["d29d-cf75-fc2d-34a4"] = "T",
+            ["450-a17e-9d5e-29da"] = "Sv",
+            ["750a-a2ec-90d3-21fe"] = "W",
+            ["58d2-b879-49c7-43bc"] = "Ld",
+            ["bef7-942a-1a23-59f8"] = "Oc"
+        };
+
     public static Datasheet BuildDatasheet(
         BsSelectionEntry entry,
         IReadOnlyDictionary<string, BsSelectionEntry> idIndex,
@@ -62,7 +92,8 @@ public static partial class BsdataDatasheetMapper
             statlines: context.Statlines,
             weaponProfiles: context.Weapons.Values,
             optionalAbilities: context.OptionalAbilities.Values,
-            modelKeywords: context.ModelKeywords);
+            modelKeywords: context.ModelKeywords,
+            characteristicModifierCandidates: context.CharacteristicModifierCandidates);
     }
 
     /// <summary>Maps a `categoryLinks` list into a Keywords set: each entry's `name`, with a
@@ -115,6 +146,14 @@ public static partial class BsdataDatasheetMapper
         /// resolve-category-keywords. Populated 1:1 with Statlines, gated by the same
         /// SeenStatlineNames check, so no separate dedup is needed here.</summary>
         public List<(string Name, IReadOnlySet<string> Keywords)> ModelKeywords { get; } = [];
+
+        /// <summary>Classified characteristic-modifier candidates found while walking every entry
+        /// (see ClassifyCharacteristicModifierCandidates) - not deduped, unlike Weapons/
+        /// OptionalAbilities: two candidates naming the same EntryName/Characteristic pair (a real,
+        /// harmless corpus occurrence - e.g. "Cohort Cybernetica" carries two separate `increment`
+        /// modifiers on the same field) are not a conflict here, since application only ever reads
+        /// this list to find A match, never counts or combines matches.</summary>
+        public List<CharacteristicModifierCandidate> CharacteristicModifierCandidates { get; } = [];
 
         public Dictionary<string, WeaponProfile> Weapons { get; } = new(StringComparer.OrdinalIgnoreCase);
         public List<Ability> Abilities { get; } = [];
@@ -236,6 +275,8 @@ public static partial class BsdataDatasheetMapper
         if (IsGameModeGated(entry.Modifiers, ctx))
             return;
 
+        ctx.CharacteristicModifierCandidates.AddRange(ClassifyCharacteristicModifierCandidates(entry));
+
         var chain = new List<BsSelectionEntry>(ancestry) { entry };
 
         foreach (var profile in entry.Profiles)
@@ -252,6 +293,66 @@ public static partial class BsdataDatasheetMapper
 
         foreach (var link in entry.InfoLinks)
             WalkInfoLink(link, ctx, chain, enclosingGroupName);
+    }
+
+    /// <summary>Classifies <paramref name="entry"/>'s own directly-nested `modifiers` (never a
+    /// group's - see below) as characteristic-modifier candidates, per
+    /// characteristic-modifier-caveats' closed-world tier-1/tier-2 discipline: a modifier is
+    /// recognized only when it carries no `Conditions`/`ConditionGroups` at all (tier 1), or when
+    /// every condition it carries is a "selections" count of this same entry (by id) evaluated from
+    /// a "self" or "parent" scope (tier 2 - the only condition shape a full-corpus scan (task 1.2)
+    /// could confirm is genuinely local to the granting entry, never broader). Any other condition
+    /// shape - a sibling entry's id, an "associations" (live attachment) check, a "roster"/"force"-
+    /// scoped self-reference, or anything else - is left unclassified; the classifier never treats
+    /// an unrecognized condition as satisfied. A modifier whose `Field` isn't in
+    /// <see cref="CharacteristicFieldIds"/> is likewise left unclassified.
+    ///
+    /// Entry-scoped only, deliberately never called for a <see cref="BsSelectionEntryGroup"/>'s own
+    /// `modifiers` (WalkGroup has no equivalent call) - a full-corpus check found every real
+    /// group-level characteristic modifier is either itself tier 3+ (references a sibling entry,
+    /// e.g. Aeldari's "Craftworld Warleader") or belongs to a group with no own Profiles/
+    /// SelectionEntries of its own to ever resolve a matching name against (e.g. Adeptus Custodes'
+    /// "Custodian Guard (Vexilla)"/"(Shield)" groups) - classifying it would only ever produce a
+    /// candidate that fails closed by construction, never a reachable one.
+    ///
+    /// A genuine tier-2 example targeting a recognized characteristic field was NOT found anywhere
+    /// in the real corpus (task 1.2) - the one self-referencing-condition candidate found at all
+    /// (Astra Militarum's "Deficiency" Battle Scar) uses `scope: "roster"` with a roster-wide
+    /// `affects` path and is Crusade-mode-only content, correctly excluded by this method's
+    /// "self"/"parent"-only scope allowlist. Tier 2 is implemented per spec regardless (an empty
+    /// bucket is documented in design.md as an acceptable, honest outcome, not a design
+    /// failure).</summary>
+    private static IEnumerable<CharacteristicModifierCandidate> ClassifyCharacteristicModifierCandidates(
+        BsSelectionEntry entry)
+    {
+        foreach (var modifier in entry.Modifiers)
+        {
+            if (!CharacteristicFieldIds.TryGetValue(modifier.Field, out var characteristic))
+                continue;
+
+            if (!IsTier1OrTier2(modifier, entry.Id))
+                continue;
+
+            var rawValue = modifier.Value.ValueKind == JsonValueKind.String
+                ? modifier.Value.GetString() ?? ""
+                : modifier.Value.GetRawText();
+
+            yield return new CharacteristicModifierCandidate(entry.Name, characteristic, rawValue);
+        }
+    }
+
+    private static bool IsTier1OrTier2(BsModifier modifier, string entryId)
+    {
+        if (modifier.Conditions.Count == 0 && modifier.ConditionGroups.Count == 0)
+            return true;
+
+        if (modifier.ConditionGroups.Count > 0)
+            return false;
+
+        return modifier.Conditions.All(c =>
+            c.Field == "selections" &&
+            string.Equals(c.ChildId, entryId, StringComparison.OrdinalIgnoreCase) &&
+            (c.Scope == "self" || c.Scope == "parent"));
     }
 
     private static void WalkGroup(BsSelectionEntryGroup group, WalkContext ctx,

@@ -254,7 +254,12 @@
                             }
                             else if (block.ScalarMarker("OC") is { } ocMarker)
                             {
-                                <div class="stat-tile stat-tile-flagged"><span
+                                @* Amber only once OC is actually resolved (a real DerivedValue, e.g.
+                                   Vexilla's +1) - a still-caveated OC shows the plain catalogue
+                                   value and must not look already-adjusted (see RenderScalarTile's
+                                   own doc comment for the full rationale). *@
+                                var ocCssClass = block.Statline.Oc.IsCaveated ? "stat-tile" : "stat-tile stat-tile-flagged";
+                                <div class="@ocCssClass"><span
                                         class="stat-label">OC@(ocMarker)</span><span
                                         class="stat-value">@(block.Statline.Oc.Value)</span></div>
                             }
@@ -299,7 +304,11 @@
                             }
                             @if (inv.IsCaveated)
                             {
-                                <div class="stat-tile insv-tile stat-tile-flagged">
+                                @* Plain background, not amber - invDisplay here is still the pre-
+                                   caveat catalogue value (IsCaveated selects OriginalValue), not a
+                                   computed result; see RenderScalarTile's own doc comment for the
+                                   full rationale, which applies identically here. *@
+                                <div class="stat-tile insv-tile">
                                     <span class="stat-label">@insvLabel</span>
                                     <span class="stat-value">@(invDisplay.MeleeInSv)+</span>
                                 </div>
@@ -637,11 +646,22 @@
     // ("M"/"T"/"Sv"/"W"/"LD"), `label` is the display text a flagged run's own marker gets
     // appended to, `suffix` is the literal trailing text (`"`/`+`/none) each characteristic's own
     // printed convention uses.
+    //
+    // The amber .stat-tile-flagged background is reserved for a RESOLVED (non-caveated) run - one
+    // whose displayed value is an actual DerivedValue the app computed, not the plain catalogue
+    // Value shown while still caveated (characteristic-modifier-caveats' own tier-1/2 candidates are
+    // the first thing that ever produces a caveated Scalar view here - before that, a marker always
+    // meant "a StatlineFlagRule resolved this," never "still caveated," so this distinction was
+    // previously unreachable). The marker itself (and the legend line it points to) still renders
+    // either way - amber specifically means "this number has already been adjusted for you," which
+    // a still-caveated tile hasn't been; painting it amber would wrongly suggest the shown value
+    // already accounts for the linked ability, per direct user feedback reviewing a real caveated
+    // "Auric Mantle" W tile live.
     static string RenderScalarTile(string label, string fieldKey, StatlineBlockViewModel block, string suffix)
     {
         var view = LivePlayModel.GetScalarField(block.Statline, fieldKey);
         var marker = block.ScalarMarker(fieldKey);
-        var cssClass = marker is null ? "stat-tile" : "stat-tile stat-tile-flagged";
+        var cssClass = marker is not null && !view.IsCaveated ? "stat-tile stat-tile-flagged" : "stat-tile";
         var labelText = WebUtility.HtmlEncode(marker is null ? label : $"{label}{marker}");
         var valueText = WebUtility.HtmlEncode(view.Value.ToString());
         return $"<div class=\"{cssClass}\"><span class=\"stat-label\">{labelText}</span>" +

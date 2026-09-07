@@ -108,20 +108,93 @@ entry once it's been turned into a change (archived changes remain the historica
   that model was actually taken. 42 of the 45 cases the "unconditional" path judged safe were
   confirmed wrong by cross-checking real BSData source text and NewRecruit's own rendering — not a
   scan/test gap (515+ automated tests and full-corpus scans all passed throughout), a genuine blind
-  spot in what a scan can check versus a domain-informed manual read. The next attempt (not yet
-  started) reframes the goal in two explicit phases instead of one bake/defer decision: first
-  identify that an ability/rule/enhancement/wargear targets a specific characteristic ("caveated" —
-  populating `ContributingAbilities` with no `DerivedValue`, using the existing `IsCaveated`
-  vocabulary), strictly presence-gated at the `AttachedUnitAggregator` roster layer with no
-  exception for "provably unconditional"; only later, as an explicit separate step, compute an
-  actual derived value ("resolved"). Classification itself splits into structured-BSData-modifier
-  detection (mechanical, most of what the reverted attempt built) and prose classification for
-  abilities with no structured data behind them at all (confirmed real: Darnath Lysander's
-  "Inspiring Commander," an army-wide OC-affecting ability with zero `BsModifier` data) — ties into
-  the paused prose-classification schema described below. Same-unit application ships first;
-  cross-unit application (Lysander boosting a different unit elsewhere in the army) is an explicit,
-  deferred follow-on, since `AttachedUnitAggregator.Build` takes one `ICombatUnit` at a time with no
-  roster-wide visibility today.
+  spot in what a scan can check versus a domain-informed manual read.
+
+  **The reframed, two-phase approach shipped for tiers 1-2** —
+  `classify-characteristic-modifier-caveats` (implemented, see `.claude/domain-model-11e.md`'s own
+  "Characteristic-Modifier Caveats" section). It builds the "caveated, no `DerivedValue`" half only
+  (populating `ContributingAbilities`, using the existing `IsCaveated` vocabulary), strictly
+  presence-gated at the `AttachedUnitAggregator` roster layer with **no** "provably unconditional"
+  exception of any kind — every candidate, regardless of its own granting entry's structural type,
+  is presence-checked, which is exactly what structurally excludes the reverted attempt's second bug
+  from recurring. It deliberately narrows scope versus the earlier attempt in three ways, each
+  informed by a real-corpus finding during implementation: (1) only tier 1 (no condition) and tier 2
+  (a condition scoped to the modifier's own granting entry) are classified — every wider condition
+  shape (a sibling selection, live attachment state, a self-reference scoped broader than
+  "self"/"parent") is left unclassified, never guessed as safe, which is what structurally excludes
+  the reverted attempt's first bug; (2) the closed `Field` allowlist covers only the six Statline
+  scalars (M/T/Sv/W/Ld/Oc) — InSv and every `WeaponProfile` characteristic are excluded (InSv has
+  its own dedicated resolution path already; zero real corpus modifiers reachably target a
+  `WeaponProfile` field at all — every occurrence lives inside an unread, Crusade-only
+  `modifierGroups` block); (3) a genuine real-corpus overlap with the hand-authored
+  `StatlineFlagRuleCatalogue` (Adeptus Custodes' "Vexilla," which carries both a hand-authored rule
+  match and a classified structural candidate on the same wargear entry) confirmed the application
+  step must skip a field already touched by an earlier rule, rather than risk regressing an
+  already-resolved value back to merely caveated.
+
+  **Still not built**: computing an actual `DerivedValue` for any caveat this shipped work surfaces
+  (the explicit "resolved" phase) — the caveat is display-only, "this characteristic is affected,"
+  never "by how much, resulting in what." Also still not built: tier 3+ conditions (a sibling
+  selection, live attachment state, or a different unit entirely), and prose classification for
+  abilities with no structured `BsModifier` data behind them at all (confirmed real: Darnath
+  Lysander's "Inspiring Commander," an army-wide OC-affecting ability with zero `BsModifier` data) —
+  ties into the paused prose-classification schema described below. Cross-unit application (Lysander
+  boosting a different unit elsewhere in the army) remains an explicit, deferred follow-on either
+  way, since `AttachedUnitAggregator.Build` takes one `ICombatUnit` at a time with no roster-wide
+  visibility today.
+
+  **Tier 1-2-only scoping means this shipped work is, in practice, Enhancement/wargear-only, not
+  general-ability-or-rule coverage — confirmed by live testing, 2026-09-07 same day, not a design
+  intent.** Neither the classifier nor the presence-check actually discriminates by entry type or
+  `Ability.Origin` (an Intrinsic ability, a CoreRule/ArmyRule-origin one, and an Enhancement all match
+  identically once a name lines up) - the skew toward Enhancements/wargear in every real *working*
+  example found (Auric Mantle, Brazen Form, Blood-forged Armour, Vexilla) is an emergent consequence
+  of two things compounding, not a scoping choice: (1) a genuinely unconditional (tier-1) structural
+  modifier is rare outside player-choice contexts by BSData's own modeling convention - an always-on
+  boost doesn't need a modifier at all, since it can just be printed straight into the base stat text,
+  so a modifier tends to exist specifically because the value is conditional on a choice/attachment/
+  composition, which is exactly tier 3+; (2) even the rare tier-1 candidate on a non-wargear entry
+  (Custodes' "Allarus Custodian (Vexilla & Misericordia)" model slot) still needs a same-named
+  resolvable Ability to ever apply, which Enhancements/relics reliably carry and bare wargear-bundle/
+  intrinsic-rule entries usually don't. **Practical upshot: reaching real general-ability/rule
+  coverage (an Ancient's aura, a squad-wide Ld penalty gated on another model's presence, a CoreRule
+  like Oath of Moment touching a characteristic) is the same ask as tier 3+ classification above, not
+  a separate gap** - a decent share of real modifiers already carry cross-entity conditions (the
+  reverted attempt's own "42 of 45" finding), so tier 3+ is plausibly where most of the "general
+  ability" territory actually lives; unconfirmed until that classification tier is built and run
+  against the corpus.
+
+  **A caveated characteristic can only ever attribute ONE contributing ability, confirmed as a real
+  gap (2026-09-07, same day, live user testing after `classify-characteristic-modifier-caveats`
+  shipped)**. `ScalarCharacteristicView.Caveated`/`InvulnerableSaveCharacteristicView.Caveated` both
+  take a single `Ability`, not a list (unlike their own `Resolved` factories, which already accept
+  `IReadOnlyList<Ability>`) — so when two independently-classified candidates (or a candidate and an
+  already-`StatlineFlagRule`-touched field) target the same characteristic on the same unit,
+  `AttachedUnitAggregator`'s "skip if already touched" guard (load-bearing for the real Vexilla
+  overlap - see above) means only the FIRST one applied is recorded; the second is silently dropped
+  from that tile's own attribution, though it still renders normally in the unit's full ability list.
+  Confirmed and pinned down by a domain test
+  (`CharacteristicModifierApplicationTests.Two_present_candidates_targeting_the_same_characteristic_the_first_applied_wins_the_second_is_dropped`)
+  built specifically to demonstrate this, since a full-corpus probe found **no real, naturally-
+  reachable example** of two abilities simultaneously caveating the same field on one bearer -
+  every near-miss found either (a) resolves to an unresolvable wargear-bundle wrapper entry with no
+  matching Ability name (the same fail-closed pattern §1.3 already documented, unrelated to tier
+  scoping), or (b) is a set of mutually-exclusive alternative wargear/mount choices (Combat Bike vs.
+  Jump Pack vs. Terminator Armour, etc.) a real roster would only ever pick ONE of, not a genuinely
+  simultaneous stack. Whether tier-3+ classification (still unbuilt, above) would surface a *real*
+  simultaneous-stacking case is an open question, not yet checked in the corpus - a decent share of
+  real modifiers do carry cross-entity conditions (the reverted attempt's own "42 of 45" finding
+  above), so it's plausible but unconfirmed that some of those are stacking abilities gated on a
+  sibling selection, not just alternatives.
+
+  **Fix direction (not yet started)**: widen both `Caveated` factories to accept
+  `IReadOnlyList<Ability>` (mirroring their own `Resolved` overloads), change
+  `AttachedUnitAggregator`'s application step to ACCUMULATE additional caveat sources onto an
+  already-caveated field instead of skipping (while still never touching a field that's already
+  RESOLVED, non-caveated - the Vexilla-overlap guard must survive this change unchanged), and extend
+  `_UnitBlock.cshtml`'s legend-line rendering to list every contributing ability under one marker
+  instead of assuming exactly one. The pinning test above will need updating (from "second is
+  dropped" to "both accumulate") once this ships.
 
   **Remaining gap on the retyped fields**: `Statline`/`WeaponProfile.S`/`Ap`/`Bs`/`Ws` now use
   `ScalarCharacteristicView` (a `CharacteristicValue`, which does support `DiceCharacteristicValue`/
