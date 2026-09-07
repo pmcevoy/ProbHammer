@@ -430,7 +430,11 @@ public class LivePlayModel(
         return groups.Select(g =>
             {
                 var statline = g[0].Statline;
-                var ocSource = statline.Oc.ContributingAbilities.FirstOrDefault();
+                var scalarSources = ScalarStatlineFieldOrder
+                    .Select(field => (Field: field,
+                        Source: GetScalarField(statline, field).ContributingAbilities.FirstOrDefault()))
+                    .Where(x => x.Source is not null)
+                    .ToDictionary(x => x.Field, x => x.Source!);
                 var insvSource = statline.InSv.ContributingAbilities.FirstOrDefault();
 
                 return new StatlineBlockViewModel(
@@ -438,18 +442,44 @@ public class LivePlayModel(
                     LoadoutLabels: g.Select(entry => CompressLoadoutLabels(entry.Loadouts)).ToList(),
                     ModelAbilities: RowBoundAbilities(g, abilities, AbilityScope.Model),
                     UnitAbilities: RowBoundAbilities(g, abilities, AbilityScope.Unit),
-                    ObjectiveControlFlagSource: ocSource,
+                    ScalarFlagSources: scalarSources,
                     InvulnerableSaveFlagSource: insvSource);
             })
             .ToList();
     }
 
+    // The six ScalarCharacteristicView-backed Statline tiles, in their own left-to-right visual
+    // order - shared by GroupStatlines (collecting each one's own ContributingAbilities source),
+    // AssignFlagMarkers (assigning markers in this exact order so "*" always goes to whichever
+    // distinct source is encountered first left-to-right), and StatlineBlockViewModel.FlagLegend
+    // (rendering legend lines in the same order). "LD"/"OC" match GetScalarField's own expected
+    // field-name strings exactly.
+    internal static readonly string[] ScalarStatlineFieldOrder = ["M", "T", "Sv", "W", "LD", "OC"];
+
+    // Field-name -> ScalarCharacteristicView lookup shared by GroupStatlines and
+    // _UnitBlock.cshtml's RenderScalarTile - the read-only half of what used to be
+    // CharacteristicFieldAccessor (resolve-structured-characteristic-modifiers, reverted); no
+    // write side is needed since nothing mutates a Statline's fields today.
+    internal static ScalarCharacteristicView GetScalarField(Statline statline, string field) => field switch
+    {
+        "M" => statline.M,
+        "T" => statline.T,
+        "Sv" => statline.Sv,
+        "W" => statline.W,
+        "LD" => statline.Ld,
+        "OC" => statline.Oc,
+        _ => throw new ArgumentException($"Unknown statline field '{field}'", nameof(field))
+    };
+
     // Assigns a footnote marker (*, **, ...) to each distinct flag-producing source ability, in the
     // order its runs are first encountered - the first distinct source seen gets "*", the next
     // distinct source gets "**", and so on; every later run naming the same source (by exact Name +
     // Text) reuses its already-assigned marker (live-play-view's "Flagged Statline Characteristic
-    // Rendering" - marker identity is assigned once per unit block, not per run). Runs through OC
-    // before InSv within a run, matching the tiles' own left-to-right visual order.
+    // Rendering" - marker identity is assigned once per unit block, not per run). Runs through every
+    // ScalarStatlineFieldOrder tile before InSv within a run, matching the tiles' own left-to-right
+    // visual order - generalized (resolve-structured-characteristic-modifiers) from the original
+    // Oc-only version to cover M/T/Sv/W/Ld alike, with no distinction between a hand-authored
+    // statline-flag-rules match and a data-derived StructuralCharacteristicGrant one at this layer.
     private static IReadOnlyList<StatlineBlockViewModel> AssignFlagMarkers(IReadOnlyList<StatlineBlockViewModel> blocks)
     {
         var markerBySource = new Dictionary<(string Name, string Text), string>();
@@ -466,10 +496,18 @@ public class LivePlayModel(
             return marker;
         }
 
-        return blocks.Select(block => block with
+        return blocks.Select(block =>
         {
-            ObjectiveControlMarker = block.ObjectiveControlFlagSource is { } oc ? MarkerFor(oc) : null,
-            InvulnerableSaveMarker = block.InvulnerableSaveFlagSource is { } insv ? MarkerFor(insv) : null
+            var scalarMarkers = new Dictionary<string, string>();
+            foreach (var field in ScalarStatlineFieldOrder)
+                if (block.ScalarFlagSources.TryGetValue(field, out var source))
+                    scalarMarkers[field] = MarkerFor(source);
+
+            return block with
+            {
+                ScalarMarkers = scalarMarkers,
+                InvulnerableSaveMarker = block.InvulnerableSaveFlagSource is { } insv ? MarkerFor(insv) : null
+            };
         }).ToList();
     }
 
@@ -687,21 +725,24 @@ public sealed record LivePlaySyncResponse(Dictionary<int, string> Fragments, Lis
 /// element is that entry's own <c>Loadouts</c> compressed to their distinguishing weapons via
 /// <see cref="LivePlayModel.CompressLoadoutLabels"/>, in the same order. <see cref="ModelAbilities"/>/
 /// <see cref="UnitAbilities"/> are the row-bound (ModelLine-sourced) abilities matching this
-/// specific run. <see cref="ObjectiveControlFlagSource"/>/<see cref="InvulnerableSaveFlagSource"/>
-/// are that run's own flag-producing source (an unresolved InSv's <c>CaveatAbility</c>, or a
-/// matched statline-flag-rules source), set by <see cref="LivePlayModel.GroupStatlines"/>;
-/// <see cref="ObjectiveControlMarker"/>/<see cref="InvulnerableSaveMarker"/> are that source's own
-/// footnote marker, filled in afterwards by <see cref="LivePlayModel.AssignFlagMarkers"/> once every
-/// run's source is known (marker identity spans the whole unit block, not one run - live-play-view's
-/// "Flagged Statline Characteristic Rendering").</summary>
+/// specific run. <see cref="ScalarFlagSources"/> (keyed by
+/// <see cref="LivePlayModel.ScalarStatlineFieldOrder"/>'s own field-name strings - generalized,
+/// resolve-structured-characteristic-modifiers, from an earlier Objective-Control-only shape to
+/// cover any of the six <c>ScalarCharacteristicView</c>-backed tiles uniformly) and
+/// <see cref="InvulnerableSaveFlagSource"/> are that run's own flag-producing sources, set by
+/// <see cref="LivePlayModel.GroupStatlines"/>; <see cref="ScalarMarkers"/>/
+/// <see cref="InvulnerableSaveMarker"/> are those sources' own footnote markers, filled in
+/// afterwards by <see cref="LivePlayModel.AssignFlagMarkers"/> once every run's source is known
+/// (marker identity spans the whole unit block, not one run - live-play-view's "Flagged Statline
+/// Characteristic Rendering").</summary>
 public sealed record StatlineBlockViewModel(
     IReadOnlyList<AggregateStatlineEntry> Entries,
     IReadOnlyList<IReadOnlyList<string>> LoadoutLabels,
     IReadOnlyList<Ability> ModelAbilities,
     IReadOnlyList<Ability> UnitAbilities,
-    Ability? ObjectiveControlFlagSource = null,
+    IReadOnlyDictionary<string, Ability> ScalarFlagSources,
     Ability? InvulnerableSaveFlagSource = null,
-    string? ObjectiveControlMarker = null,
+    IReadOnlyDictionary<string, string>? ScalarMarkers = null,
     string? InvulnerableSaveMarker = null)
 {
     public Statline Statline => Entries[0].Statline;
@@ -712,15 +753,22 @@ public sealed record StatlineBlockViewModel(
     /// own summed <c>RemainingCount</c>, never stored independently.</summary>
     public bool IsFullyDead => Entries.All(e => e.RemainingCount == 0);
 
-    /// <summary>One entry per distinct marker present on this run's own tiles, in tile order (OC
-    /// before InSv) - the source lines this run's own legend renders, per "Flagged Statline
-    /// Characteristic Rendering".</summary>
+    /// <summary>This run's own footnote marker for one scalar tile (e.g. `"M"`, `"Sv"`, `"OC"` -
+    /// see <see cref="LivePlayModel.ScalarStatlineFieldOrder"/>), or null when that tile isn't
+    /// flagged.</summary>
+    public string? ScalarMarker(string field) => ScalarMarkers?.GetValueOrDefault(field);
+
+    /// <summary>One entry per distinct marker present on this run's own tiles, in tile order
+    /// (M, T, Sv, W, Ld, OC, then InSv) - the source lines this run's own legend renders, per
+    /// "Flagged Statline Characteristic Rendering".</summary>
     public IReadOnlyList<(string Marker, Ability Source)> FlagLegend
     {
         get
         {
             var legend = new List<(string, Ability)>();
-            if (ObjectiveControlFlagSource is { } oc && ObjectiveControlMarker is { } ocm) legend.Add((ocm, oc));
+            foreach (var field in LivePlayModel.ScalarStatlineFieldOrder)
+                if (ScalarFlagSources.TryGetValue(field, out var source) && ScalarMarker(field) is { } marker)
+                    legend.Add((marker, source));
             if (InvulnerableSaveFlagSource is { } insv && InvulnerableSaveMarker is { } im) legend.Add((im, insv));
             return legend;
         }

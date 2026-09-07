@@ -68,6 +68,33 @@ public sealed class BsCatalogue
     /// <see cref="RuleGlossary.Build"/> reads this field on every closure file, not only the game
     /// system.</summary>
     public List<BsRule> SharedRules { get; set; } = [];
+
+    /// <summary>Profile-type definitions (Unit/Ranged Weapons/Melee Weapons/Abilities/Transport on
+    /// the game-system file; a faction file can additionally declare its own faction-specific
+    /// profile types, e.g. World Eaters' "Wrathful Presence") - each carrying the characteristic
+    /// id lookup a `BsModifier.Field` value references. See
+    /// <see cref="Bsdata.BsdataDatasheetMapper"/>'s known-characteristic-field-id lookup, built
+    /// from the closure's own <see cref="BsdataClosure.GameSystem"/> file (the only place the
+    /// core Unit/Ranged Weapons/Melee Weapons ids are declared).</summary>
+    public List<BsProfileType> ProfileTypes { get; set; } = [];
+}
+
+/// <summary>One `profileTypes` entry - a profile "kind" (e.g. "Unit") and the characteristic ids
+/// its own profiles' `characteristics[].typeId` values reference.</summary>
+public sealed class BsProfileType
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public List<BsCharacteristicType> CharacteristicTypes { get; set; } = [];
+}
+
+/// <summary>One named characteristic slot within a profile type (e.g. Unit's "Sv" ->
+/// `450-a17e-9d5e-29da`) - the id a `BsModifier.Field` value names when targeting that
+/// characteristic.</summary>
+public sealed class BsCharacteristicType
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
 }
 
 /// <summary>Shape shared by both `sharedRules` (game-system level) and `rules` (faction/library
@@ -153,16 +180,37 @@ public sealed class BsSelectionEntryGroup
 }
 
 /// <summary>A BSData "modifiers" entry - the rules-engine primitive that sets some field to some
-/// value when its condition tree evaluates true. Only ever interpreted narrowly (see
-/// BsdataDatasheetMapper.IsGameModeGated): "does a hidden=true modifier's condition tree reference
-/// a specific force-type id anywhere" - a plain existence check, not general boolean evaluation
-/// (AND/OR nesting, comparison operators, etc. are all read structurally but never actually
-/// evaluated as logic).</summary>
+/// value when its condition tree evaluates true. Used both narrowly (see
+/// BsdataDatasheetMapper.IsGameModeGated: "does a hidden=true modifier's condition tree reference
+/// a specific force-type id anywhere" - a plain existence check, not general boolean evaluation)
+/// and, per resolve-structured-characteristic-modifiers, structurally (a `Field` naming a known
+/// Unit/Ranged-Weapon/Melee-Weapon characteristic id, a `Value` parsed per that characteristic's
+/// own shape - see `bsdata-modifier-resolution`). AND/OR nesting, comparison operators, etc. in
+/// `Conditions`/`ConditionGroups` are read structurally but never evaluated as general boolean
+/// logic - only the specific, narrow evaluations those two capabilities each perform.</summary>
 public sealed class BsModifier
 {
     public string Type { get; set; } = "";
     public string Field { get; set; } = "";
     public JsonElement Value { get; set; }
+
+    /// <summary>BattleScribe's own cosmetic display-bookkeeping payload (e.g. `"+0"`) - the real
+    /// content of a cosmetic `replace`/`append` modifier whose own `Value` carries none (see
+    /// `bsdata-modifier-resolution`'s "Cosmetic Modifier Pattern Exclusion"). Deserialized so a
+    /// corpus scan can distinguish "genuinely no independent payload" from "has a real arg-only
+    /// payload we're choosing to ignore" - not itself part of the cosmetic-exclusion predicate,
+    /// which keys off `Value`'s own shape instead.</summary>
+    public string? Arg { get; set; }
+
+    /// <summary>BattleScribe's own address-path field (e.g. `"self.entries.group.recursive.
+    /// profiles.Melee Weapons"`) - deserialized verbatim, never parsed into a real path evaluator
+    /// (see `statline-flag-rules`' design.md Decision 1's rejected alternative). Used only for one
+    /// narrow, structural signal: a value containing `"recursive"` means this modifier's reach
+    /// spans an entire subtree rather than just its own granting selection's directly-owned
+    /// profile, which `statline-flag-rules`' "Datasheet-Sourced Rule Scope Inference" uses to infer
+    /// a data-derived rule's Bearer/WholeUnit Scope.</summary>
+    public string? Affects { get; set; }
+
     public List<BsCondition> Conditions { get; set; } = [];
     public List<BsConditionGroup> ConditionGroups { get; set; } = [];
 }

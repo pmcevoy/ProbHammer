@@ -4,23 +4,23 @@ public sealed record RangedWeapon(
     string Name,
     int Range,
     DiceExpression A,
-    int Bs,
-    int S,
-    int Ap,
+    ScalarCharacteristicView Bs,
+    ScalarCharacteristicView S,
+    ScalarCharacteristicView Ap,
     DiceExpression D) : WeaponProfile(Name, WeaponType.Ranged, Range, A, S, Ap, D)
 {
-    public override int Skill => Bs;
+    public override ScalarCharacteristicView Skill => Bs;
 }
 
 public sealed record MeleeWeapon(
     string Name,
     DiceExpression A,
-    int Ws,
-    int S,
-    int Ap,
+    ScalarCharacteristicView Ws,
+    ScalarCharacteristicView S,
+    ScalarCharacteristicView Ap,
     DiceExpression D) : WeaponProfile(Name, WeaponType.Melee, 0, A, S, Ap, D)
 {
-    public override int Skill => Ws;
+    public override ScalarCharacteristicView Skill => Ws;
 }
 
 /// <summary>Abstract base with sealed <see cref="RangedWeapon"/>/<see cref="MeleeWeapon"/>
@@ -31,8 +31,8 @@ public abstract record WeaponProfile(
     WeaponType Type,
     int Range,
     DiceExpression A,
-    int S,
-    int Ap,
+    ScalarCharacteristicView S,
+    ScalarCharacteristicView Ap,
     DiceExpression D)
 {
     /// <summary>Computed per subtype (<see cref="RangedWeapon.Skill"/> => Bs, <see
@@ -41,7 +41,7 @@ public abstract record WeaponProfile(
     /// one name. An earlier draft stored Skill separately, forwarded from Bs/Ws at construction -
     /// that let the two backing values desync under a <c>with</c> expression; computing Skill
     /// from the subtype's own field removes that failure mode structurally.</summary>
-    public abstract int Skill { get; }
+    public abstract ScalarCharacteristicView Skill { get; }
 
     public bool Torrent { get; init; }
     public bool Blast { get; init; }
@@ -98,9 +98,9 @@ public abstract record WeaponProfile(
 
 public sealed record WeaponProfileEqualityKey(
     WeaponType WeaponType,
-    int Skill,
-    int S,
-    int Ap,
+    ScalarCharacteristicView Skill,
+    ScalarCharacteristicView S,
+    ScalarCharacteristicView Ap,
     DiceExpression D,
     bool Torrent,
     bool Blast,

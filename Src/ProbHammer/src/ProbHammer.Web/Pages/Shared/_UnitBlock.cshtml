@@ -230,16 +230,11 @@
                             </div>
                         }
                         <div class="statline-tiles">
-                            <div class="stat-tile"><span class="stat-label">M</span><span
-                                    class="stat-value">@(block.Statline.M)"</span></div>
-                            <div class="stat-tile"><span class="stat-label">T</span><span
-                                    class="stat-value">@(block.Statline.T)</span></div>
-                            <div class="stat-tile"><span class="stat-label">Sv</span><span
-                                    class="stat-value">@(block.Statline.Sv)+</span></div>
-                            <div class="stat-tile"><span class="stat-label">W</span><span
-                                    class="stat-value">@(block.Statline.W)</span></div>
-                            <div class="stat-tile"><span class="stat-label">Ld</span><span
-                                    class="stat-value">@(block.Statline.Ld)+</span></div>
+                            @Html.Raw(RenderScalarTile("M", "M", block, "\""))
+                            @Html.Raw(RenderScalarTile("T", "T", block, ""))
+                            @Html.Raw(RenderScalarTile("Sv", "Sv", block, "+"))
+                            @Html.Raw(RenderScalarTile("W", "W", block, ""))
+                            @Html.Raw(RenderScalarTile("Ld", "LD", block, "+"))
                             @* Battle-shocked: OC renders the same glyph as the header's Battle-shock
                                control, in the tile's own value color (never amber - see
                                design-tokens.md's "controls get amber ink when active, stat values
@@ -257,7 +252,7 @@
                                 <div class="stat-tile stat-tile-flagged"><span class="stat-label">OC</span><span
                                         class="stat-value">@Html.Raw(BoltSvgIcon("oc-battleshock-icon"))</span></div>
                             }
-                            else if (block.ObjectiveControlMarker is { } ocMarker)
+                            else if (block.ScalarMarker("OC") is { } ocMarker)
                             {
                                 <div class="stat-tile stat-tile-flagged"><span
                                         class="stat-label">OC@(ocMarker)</span><span
@@ -359,9 +354,22 @@
                                 @foreach (var flag in block.FlagLegend)
                                 {
                                     var legendTriggerHtml = WebUtility.HtmlEncode($"{flag.Marker} {AbilityDisplayName(flag.Source)}");
-                                    var (legendTrigger, legendTrailer) = BuildRulePopover(legendTriggerHtml, "ability-name-line flag-legend-line", flag.Source.Text, new HashSet<string>());
-                                    @Html.Raw(legendTrigger)
-                                    @Html.Raw(legendTrailer)
+                                    @* A build-time structural modifier's source ability can have no descriptive
+                                       text of its own (e.g. a wargear item like "Sigil of Corruption" with no
+                                       separate rules text) - renders as plain, non-interactive text instead of an
+                                       empty/non-functional popover trigger, mirroring the existing convention for
+                                       an unresolvable weapon-keyword chip. *@
+                                    if (string.IsNullOrWhiteSpace(flag.Source.Text))
+                                    {
+                                        <span
+                                            class="ability-name-line flag-legend-line">@Html.Raw(legendTriggerHtml)</span>
+                                    }
+                                    else
+                                    {
+                                        var (legendTrigger, legendTrailer) = BuildRulePopover(legendTriggerHtml, "ability-name-line flag-legend-line", flag.Source.Text, new HashSet<string>());
+                                        @Html.Raw(legendTrigger)
+                                        @Html.Raw(legendTrailer)
+                                    }
                                 }
                             </div>
                         }
@@ -477,9 +485,9 @@
                         </td>
                         <td>@(weapon.Range)"</td>
                         <td class="weapon-attacks-value">@row.Entry.TotalAttacks</td>
-                        <td>@(weapon.Skill)+</td>
-                        <td>@weapon.S</td>
-                        <td>@weapon.Ap</td>
+                        <td>@(weapon.Skill.Value)+</td>
+                        <td>@weapon.S.Value</td>
+                        <td>@weapon.Ap.Value</td>
                         <td>@weapon.D</td>
                     </tr>
                     @foreach (var breakdown in row.Breakdown)
@@ -574,9 +582,9 @@
                             }
                         </td>
                         <td class="weapon-attacks-value">@row.Entry.TotalAttacks</td>
-                        <td>@(weapon.Skill)+</td>
-                        <td>@weapon.S</td>
-                        <td>@weapon.Ap</td>
+                        <td>@(weapon.Skill.Value)+</td>
+                        <td>@weapon.S.Value</td>
+                        <td>@weapon.Ap.Value</td>
                         <td>@weapon.D</td>
                     </tr>
                     @foreach (var breakdown in row.Breakdown)
@@ -621,6 +629,24 @@
 
     static string AbilityDisplayName(Ability ability) =>
         ability.Origin == AbilityOrigin.Enhancement ? $"✦ {ability.Name}" : ability.Name;
+
+    // Shared renderer for the five ScalarCharacteristicView-backed statline tiles other than OC
+    // (which keeps its own bespoke branch for the Battle-shocked override - see
+    // resolve-known-ability-effects). Generalized from that same Oc-only flagged-tile pattern to
+    // cover M/T/Sv/W/Ld uniformly: `fieldKey` is the LivePlayModel.GetScalarField-recognized name
+    // ("M"/"T"/"Sv"/"W"/"LD"), `label` is the display text a flagged run's own marker gets
+    // appended to, `suffix` is the literal trailing text (`"`/`+`/none) each characteristic's own
+    // printed convention uses.
+    static string RenderScalarTile(string label, string fieldKey, StatlineBlockViewModel block, string suffix)
+    {
+        var view = LivePlayModel.GetScalarField(block.Statline, fieldKey);
+        var marker = block.ScalarMarker(fieldKey);
+        var cssClass = marker is null ? "stat-tile" : "stat-tile stat-tile-flagged";
+        var labelText = WebUtility.HtmlEncode(marker is null ? label : $"{label}{marker}");
+        var valueText = WebUtility.HtmlEncode(view.Value.ToString());
+        return $"<div class=\"{cssClass}\"><span class=\"stat-label\">{labelText}</span>" +
+               $"<span class=\"stat-value\">{valueText}{suffix}</span></div>";
+    }
 
     // Shared lightning-bolt shape for both the Battle-shock toolbar control and a Battle-shocked
     // unit's OC tile - "the same glyph", per half-strength-and-battleshock-indicators' spec, not

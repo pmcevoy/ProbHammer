@@ -37,9 +37,9 @@ public class BsdataDatasheetMapperTests
         var fistOfDorn = sheet.ResolveWeaponProfile("Fist of Dorn");
         fistOfDorn.Should().BeOfType<ProbHammer.Core.Domain.Catalogue.MeleeWeapon>();
         fistOfDorn.A.Should().Be(ProbHammer.Core.Domain.Catalogue.DiceExpression.Fixed(5));
-        fistOfDorn.Skill.Should().Be(2);
-        fistOfDorn.S.Should().Be(10);
-        fistOfDorn.Ap.Should().Be(-3);
+        fistOfDorn.Skill.Value.Should().Be(new ProbHammer.Core.Domain.Catalogue.NumericCharacteristicValue(2));
+        fistOfDorn.S.Value.Should().Be(new ProbHammer.Core.Domain.Catalogue.NumericCharacteristicValue(10));
+        fistOfDorn.Ap.Value.Should().Be(new ProbHammer.Core.Domain.Catalogue.NumericCharacteristicValue(-3));
         fistOfDorn.D.Should().Be(ProbHammer.Core.Domain.Catalogue.DiceExpression.Fixed(3));
         fistOfDorn.DevastatingWounds.Should().BeTrue();
         fistOfDorn.KeywordsText.Should().Equal("Devastating Wounds");

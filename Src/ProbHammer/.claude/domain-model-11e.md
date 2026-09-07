@@ -699,6 +699,38 @@ one-off BSData authoring anomalies (a bracket-placement typo in one Custodes abi
 non-reference bracket in one Blood Angels ability) — neither fixed, since no general rule could
 resolve either without risking a wrong fix elsewhere.
 
+### Remaining Scalar Characteristics Retyped
+
+`Statline.M`/`T`/`Sv`/`W`/`Ld` and `WeaponProfile.S`/`Ap`/`Bs`/`Ws` (`Bs` on `RangedWeapon`, `Ws` on
+`MeleeWeapon`) are `ScalarCharacteristicView`, not plain `int` — the same shape `Oc`/`InSv` already
+had (`unify-objective-control-characteristic-view`/`unify-invulnerable-save-characteristic-view`).
+`InSv` itself is untouched (still `ResolveInvulnerableSave`'s own dedicated path). Every real BSData
+mapping call site (`MapStatline`/weapon profile parsing) wraps its parsed base value as a plain,
+non-caveated view (`ContributingAbilities: []`) — nothing populates a real caveat on any of these
+five characteristics yet. `/LivePlay`'s rendering (`LivePlayModel.GetScalarField`/`GroupStatlines`,
+`_UnitBlock.cshtml`'s `RenderScalarTile`) already reads and displays all six scalar characteristics
+uniformly through the same flagged-tile-and-legend mechanism `Oc`/`InSv` established, so a real
+caveat source landing on any of `M`/`T`/`Sv`/`W`/`Ld` in the future needs no rendering change — only
+something that actually populates `ContributingAbilities`.
+
+A structured-BSData-modifier resolver (baking/deferring `BsModifier` data into these fields) was
+built and then reverted (2026-09-07) — see `project_resolve_structured_characteristic_modifiers_change`
+memory for the full history. Two independent, real-data-confirmed defects killed it: (1) its
+condition-tree check recognized only Force-type gates, silently treating BSData's other condition
+shapes (a specific other unit/character present, a sibling relic selection, a live attachment
+state) as unconditional; (2) its "is this optional" signal (`entry.Type == "upgrade"`) is
+unreliable — a real, capped, player-chosen squad slot (Adeptus Custodes' "Allarus Custodian
+(Vexilla & Misericordia)") is typed `"model"`, not `"upgrade"`, causing its OC+1 to bake into every
+model in the squad unconditionally. Both defects trace to the same root cause: `Datasheet` is a
+selection-blind catalog (see `project_datasheet_selection_blind_catalog_boundary`), and this
+resolver existed specifically to bypass that boundary for cases it judged "safe" — no BSData signal
+proved reliable enough to make that judgment. The planned replacement (not yet built) instead
+extends the existing caveat/resolved vocabulary (`CharacteristicView.IsCaveated`) uniformly: first
+identify that an ability/rule/enhancement/wargear targets a specific characteristic ("caveated"),
+strictly presence-gated at the `AttachedUnitAggregator` roster layer like `StatlineFlagRule` already
+is — never baked into the shared `Datasheet` — with computing an actual derived value ("resolved")
+as an explicit later step.
+
 ---
 
 ## Army List Import Pipeline
@@ -1278,26 +1310,21 @@ ProbHammer.Core.Domain.Roster.StatlineFlagRuleScope = Bearer | WholeUnit
                                        // just the bearer's own).
 
 StatlineFlagRule                      // abstract: AbilityName/AbilityText (the exact match key),
-                                       // Scope, Characteristic: StatlineFlagCharacteristic? (null
-                                       // means the target characteristic already self-describes via
-                                       // its own CharacteristicView - see below; non-null names an
-                                       // enum value for a rule still targeting a plain-value
-                                       // characteristic - today only ObjectiveControl, Domain/Roster/
-                                       // AttachedUnitAggregateView.cs), Matches(Ability) (exact
-                                       // Name+Text), Apply(Statline, matchedAbility) -> Statline (the
-                                       // mutation itself - matchedAbility added by
-                                       // unify-invulnerable-save-characteristic-view so a rule
-                                       // targeting a CharacteristicView characteristic can include
-                                       // itself in that view's own ContributingAbilities)
-ShieldDomeStatlineFlagRule             // Impulsor's Shield Dome - Bearer scope, Characteristic: null
-                                       // (targets InSv, a CharacteristicView characteristic):
+                                       // Scope, Matches(Ability) (exact Name+Text),
+                                       // Apply(Statline, matchedAbility) -> Statline (the mutation
+                                       // itself - no separate Characteristic field; every scalar
+                                       // Statline field is now a CharacteristicView
+                                       // (unify-objective-control-characteristic-view generalized
+                                       // this from InSv-only), so Apply just returns a Statline whose
+                                       // mutated field's own ContributingAbilities already carries
+                                       // matchedAbility - one recording mechanism, not two)
+ShieldDomeStatlineFlagRule             // Impulsor's Shield Dome - Bearer scope, targets InSv:
                                        // "The bearer has a 5+ invulnerable save." -> InSv =
                                        // InvulnerableSaveCharacteristicView.Resolved(5,5, [matchedAbility])
-VexillaStatlineFlagRule                // Custodian Guard's Vexilla - WholeUnit scope, Characteristic:
-                                       // ObjectiveControl (still a plain int): "Add 1 to the
-                                       // Objective Control characteristic of models in the bearer's
-                                       // unit." -> Oc + 1 (matchedAbility unused - OC isn't wrapped
-                                       // in a view yet)
+VexillaStatlineFlagRule                // Custodian Guard's Vexilla - WholeUnit scope, targets Oc:
+                                       // "Add 1 to the Objective Control characteristic of models in
+                                       // the bearer's unit." -> Oc =
+                                       // ScalarCharacteristicView.Resolved(original, current+1, [matchedAbility])
 StatlineFlagRuleCatalogue.All          // the full closed vocabulary - a real third rule joins this
                                        // list directly, no architecture change needed
 ```
@@ -1307,37 +1334,37 @@ StatlineFlagRuleCatalogue.All          // the full closed vocabulary - a real th
 every present `AggregateAbilityEntry` against `StatlineFlagRuleCatalogue.All`, then for each
 `AggregateStatlineEntry` whose (ComponentName, StatlineName) is that matched ability's own bearer
 (or, for a `WholeUnit`-scoped rule, unconditionally), applies the rule's `Apply` to produce a
-mutated `Statline`. When the matched rule's `Characteristic` is non-null (targets a plain-value
-characteristic, e.g. Vexilla/`ObjectiveControl`), a `StatlineFlag` (Characteristic + source
-`Ability`) is additionally recorded on that entry's own `AggregateStatlineEntry.Flags` - a rule
-whose `Characteristic` is null (targets a `CharacteristicView` characteristic, e.g. Shield
-Dome/InSv) records nothing there, since its own returned `Statline.InSv` view already carries the
-matched ability directly in `ContributingAbilities` (unify-invulnerable-save-characteristic-view -
-avoids two competing places recording the same fact). Since `BuildAbilities`' own output is already
-filtered to only currently-present sources (the same liveness rule that governs whether the ability
-itself renders), a flagged value's liveness falls out for free with no separate tracking — marking
-the bearer a casualty removes the matching `AggregateAbilityEntry` on the next `Build`, so the rule
-pass simply has nothing to match against and the affected `Statline` reverts to its own Datasheet
-base value. Never mutates `Datasheet`/`Unit`; only the returned, decorated copy of the statline
-entries carries a rule's effect.
+mutated `Statline`. `StatlineFlagRule` carries no separate flag/characteristic field of its own —
+`Apply` returns a `Statline` whose mutated characteristic (Shield Dome's InSv, Vexilla's Oc) already
+carries the matched `Ability` directly in its own `InvulnerableSaveCharacteristicView`/
+`ScalarCharacteristicView.ContributingAbilities` (the `unify-invulnerable-save-characteristic-view`/
+`unify-objective-control-characteristic-view` changes retired the older `StatlineFlag`/
+`AggregateStatlineEntry.Flags` side-channel this used before — a flag source is recorded in exactly
+one place now, on the mutated view itself). Since `BuildAbilities`' own output is already filtered
+to only currently-present sources (the same liveness rule that governs whether the ability itself
+renders), a flagged value's liveness falls out for free with no separate tracking — marking the
+bearer a casualty removes the matching `AggregateAbilityEntry` on the next `Build`, so the rule pass
+simply has nothing to match against and the affected `Statline` reverts to its own Datasheet base
+value. Never mutates `Datasheet`/`Unit`; only the returned, decorated copy of the statline entries
+carries a rule's effect.
 
-**`/LivePlay` display** (`resolve-known-ability-effects`; InSv's own data source updated by
-`unify-invulnerable-save-characteristic-view`): replaces the old InSv-only always-visible
-`.insv-caveat-text` paragraph with a
-general per-run footnote-marker-and-legend mechanism, driven uniformly by an unresolved
-invulnerable-save caveat and a `statline-flag-rules` match alike — see `.claude/design-tokens.md`'s
-"Flagged statline legend" for the visual mechanism, and `live-play-view`'s "Flagged Statline
-Characteristic Rendering" for the full requirement.
-`LivePlayModel.GroupStatlines` reads each run's own `AggregateStatlineEntry.Flags` for
-Objective Control, and `Statline.InSv.ContributingAbilities` directly for InSv (both parse-time-
-caveat and live-rule-match sources land there uniformly, so no separate branch is needed) to
-determine that run's own flag source per characteristic
-(`StatlineBlockViewModel.ObjectiveControlFlagSource`/`InvulnerableSaveFlagSource`);
-`LivePlayModel.AssignFlagMarkers` then walks every run in order, assigning the first distinct
-source seen `*`, the next `**`, and so on, reusing an already-assigned marker for the same source
-wherever it recurs — so a `WholeUnit`-scoped source affecting every run of a unit keeps one marker
-throughout and gets a legend line in every one of those runs, never consolidated into a single
-shared location.
+**`/LivePlay` display** (`resolve-known-ability-effects`; generalized from InSv/Oc-only to all six
+scalar characteristics by the "Remaining Scalar Characteristics Retyped" work above): replaces the
+old InSv-only always-visible `.insv-caveat-text` paragraph with a general per-run
+footnote-marker-and-legend mechanism, driven uniformly by any populated `ContributingAbilities` — an
+unresolved invulnerable-save caveat and a `statline-flag-rules` match alike — see
+`.claude/design-tokens.md`'s "Flagged statline legend" for the visual mechanism, and
+`live-play-view`'s "Flagged Statline Characteristic Rendering" for the full requirement.
+`LivePlayModel.GroupStatlines` reads each scalar field's own `ContributingAbilities` via
+`GetScalarField` (M/T/Sv/W/Ld/Oc, keyed by `LivePlayModel.ScalarStatlineFieldOrder`) into a
+`StatlineBlockViewModel.ScalarFlagSources` dictionary, and `Statline.InSv.ContributingAbilities`
+directly into its own dedicated `InvulnerableSaveFlagSource` field (InSv keeps its own bespoke
+compound-view renderer, never folded into the scalar dictionary); `LivePlayModel.AssignFlagMarkers`
+then walks every run in order, assigning the first distinct source seen `*`, the next `**`, and so
+on into `ScalarMarkers`/`InvulnerableSaveMarker`, reusing an already-assigned marker for the same
+source wherever it recurs — so a `WholeUnit`-scoped source affecting every run of a unit keeps one
+marker throughout and gets a legend line in every one of those runs, never consolidated into a
+single shared location.
 
 **`ArmyRoster`** (`Domain/Roster/ArmyRoster.cs`) wraps the per-unit roster (`Units`, an
 `IReadOnlyList<ICombatUnit>`) with army-level metadata: `Name`, `PointsSpent`, `Faction` (ordered —

@@ -131,6 +131,58 @@ public class LivePlayFlaggedStatlineRenderingTests : IClassFixture<WebApplicatio
         html.Should().Contain(">OC*<").And.Contain(">InSv**<");
     }
 
+    private static readonly Ability SigilOfCorruption = new()
+    {
+        Name = "Sigil of Corruption",
+        Text = "",
+        Scope = AbilityScope.Model,
+        Origin = AbilityOrigin.OptionalGrant
+    };
+
+    [Fact]
+    public async Task StructuralModifierFlaggedSave_RendersMarkedLabelFlaggedTileAndLegendTrigger()
+    {
+        // resolve-structured-characteristic-modifiers: generalizes the same marker/legend
+        // mechanism to any ScalarCharacteristicView-backed tile, not only OC - Sv here, with a
+        // source ability that has no descriptive text of its own (live-play-view's "no descriptive
+        // text" scenario).
+        var entry = new AggregateStatlineEntry(
+            ComponentName: "Test Unit", StatlineName: "Test Unit",
+            Statline: new Statline(6, 4, ScalarCharacteristicView.Resolved(3, 4, [SigilOfCorruption]), 5, 6, 1),
+            RemainingCount: 1, InitialCount: 1, Loadouts: []);
+        var view = new AttachedUnitAggregateView(
+            Name: "Test Unit", IsAttachedUnit: false, Statlines: [entry], Weapons: [], Abilities: [],
+            Keywords: new HashSet<string>());
+
+        var html = await RenderAsync(view);
+
+        html.Should().Contain(">Sv*<")
+            .And.Contain("stat-tile-flagged")
+            .And.Contain("statline-flag-legend")
+            .And.Contain("* Sigil of Corruption");
+        // no descriptive text of its own - renders as plain, non-interactive text, not a popover
+        // trigger button (live-play-view's "no descriptive text" scenario).
+        html.Should().Contain("class=\"ability-name-line flag-legend-line\">* Sigil of Corruption</span>")
+            .And.NotContain("popovertarget");
+    }
+
+    [Fact]
+    public async Task UnflaggedScalarTiles_RenderPlainLabelsWithNoMarker()
+    {
+        var entry = new AggregateStatlineEntry(
+            ComponentName: "Test Unit", StatlineName: "Test Unit",
+            Statline: new Statline(6, 4, 3, 5, 6, 1),
+            RemainingCount: 1, InitialCount: 1, Loadouts: []);
+        var view = new AttachedUnitAggregateView(
+            Name: "Test Unit", IsAttachedUnit: false, Statlines: [entry], Weapons: [], Abilities: [],
+            Keywords: new HashSet<string>());
+
+        var html = await RenderAsync(view);
+
+        html.Should().Contain(">M<").And.Contain(">T<").And.Contain(">Sv<").And.Contain(">W<").And.Contain(">Ld<")
+            .And.NotContain(">M*<").And.NotContain(">Sv*<").And.NotContain("stat-tile-flagged");
+    }
+
     [Fact]
     public async Task FullyDeadRun_RendersItsFlaggedTileAndLegendInsideTheSameCollapsedCell()
     {

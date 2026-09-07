@@ -23,7 +23,7 @@ public class DatasheetTests
         var datasheet = DatasheetFixtures.SwordBrethrenSquad();
 
         datasheet.Statlines.Should().ContainSingle();
-        datasheet.GetStatline("Sword Brother").T.Should().Be(4);
+        datasheet.GetStatline("Sword Brother").T.Value.Should().Be(new NumericCharacteristicValue(4));
     }
 
     [Fact]
@@ -32,8 +32,8 @@ public class DatasheetTests
         var datasheet = DatasheetFixtures.ChaosSpaceMarineSquad();
 
         datasheet.Statlines.Should().HaveCount(5);
-        datasheet.GetStatline("Chaos Space Marine Champion").W.Should().Be(3);
-        datasheet.GetStatline("Icon Bearer").W.Should().Be(2);
+        datasheet.GetStatline("Chaos Space Marine Champion").W.Value.Should().Be(new NumericCharacteristicValue(3));
+        datasheet.GetStatline("Icon Bearer").W.Value.Should().Be(new NumericCharacteristicValue(2));
     }
 
     [Fact]
@@ -57,9 +57,9 @@ public class DatasheetTests
 
         profile.Type.Should().Be(WeaponType.Melee);
         profile.A.Should().Be(DiceExpression.Fixed(4));
-        profile.Skill.Should().Be(3);
-        profile.S.Should().Be(4);
-        profile.Ap.Should().Be(-1);
+        profile.Skill.Value.Should().Be(new NumericCharacteristicValue(3));
+        profile.S.Value.Should().Be(new NumericCharacteristicValue(4));
+        profile.Ap.Value.Should().Be(new NumericCharacteristicValue(-1));
         profile.D.Should().Be(DiceExpression.Fixed(1));
     }
 

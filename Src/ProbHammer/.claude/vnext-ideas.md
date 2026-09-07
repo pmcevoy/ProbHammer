@@ -81,31 +81,55 @@ entry once it's been turned into a change (archived changes remain the historica
 - **Characteristic-modification domain hardening: the general engine (still not built).**
   `introduce-characteristic-domain-model`, `unify-invulnerable-save-characteristic-view`, and
   `unify-objective-control-characteristic-view` (all archived) wired `CharacteristicValue`/
-  `CharacteristicView` into both of today's actual consumers — `Statline.InSv` and `Statline.Oc`
-  both now carry `OriginalValue`/`DerivedValue`/`ContributingAbilities` uniformly, and the old
-  `StatlineFlag`/`StatlineFlagCharacteristic` side-channel is gone. What's described below is what's
-  still missing: a real modification/legality *engine*, needed only once a 3rd `StatlineFlagRule`
-  or any rule-stacking (two abilities touching the same characteristic) shows up — today's two
-  rules (Shield Dome → InSv, Vexilla → Oc) never overlap, so nothing here has a real caller yet.
+  `CharacteristicView` into every real consumer — `Statline.M`/`T`/`Sv`/`W`/`Ld`/`Oc`/`InSv` and
+  `WeaponProfile.S`/`Ap`/`Bs`/`Ws` all now carry `OriginalValue`/`DerivedValue`/
+  `ContributingAbilities` uniformly, and the old `StatlineFlag`/`StatlineFlagCharacteristic`
+  side-channel is gone. What's described below is what's still missing: a real modification/
+  legality *engine* handling multi-rule stacking order and a characteristic-type-wide clamp table —
+  `StatlineFlagRule`/`AttachedUnitAggregator.ApplyStatlineFlagRules`'s own same-field-stacking order
+  (when two *different* sources both touch one characteristic on the same unit) is still whatever
+  order matches happen to be discovered in, not a rulebook-derived one.
 
-  **The gap**: real 40k rules let multiple abilities cumulatively modify one characteristic, in a
-  defined order, with a hard cap for some characteristics — none of which
-  `StatlineFlagRule.Apply`'s raw arithmetic models. Two confirmed blockers:
-  1. `Statline`/`WeaponProfile.S`/`Ap` still have plain `int` fields for anything other than InSv/Oc
-     — no `DiceExpression`, no non-numeric (`-`/`*`/`N/A`) representation.
-     `CharacteristicResolutionAllowlist.cs` already documents a real, unfixed instance (Ork
-     Battlewagon "D6+6" `S` text skipped rather than parsed).
-  2. No legality/clamping layer exists — the rulebook's own 6-step order is **(1)** set/replace
-     (untouchable by 2–5 once set to `0`/`-`/`*`) → **(2)** multiply → **(3)** add → **(4)** divide →
-     **(5)** subtract → **(6)** round fractions up, plus a real cap table (below).
+  **A first attempt at the build-time half was built, then reverted (2026-09-07)** —
+  `resolve-structured-characteristic-modifiers`, un-archived and removed from the tree; see
+  `project_resolve_structured_characteristic_modifiers_change` memory for the full history. It
+  resolved BSData's structured `BsModifier` data (1,169 real instances, corrected from an original
+  717 estimate) into `Datasheet.StructuralModifierGrants`, applied by `AttachedUnitAggregator` only
+  once the granting ability was confirmed present on a live unit — deliberately never baking a
+  value into the shared, selection-blind `Datasheet` itself (see
+  [[project_datasheet_selection_blind_catalog_boundary]]), *except* for a modifier judged
+  "unconditional" by two signals: its own condition tree provably always true, or its granting
+  entry not being a player-selectable `"type": "upgrade"` choice. Both signals turned out unreliable
+  against real data, independently: the condition check recognized only Force-type gates, silently
+  treating every other real condition shape (a specific other character present elsewhere in the
+  army, a sibling relic selection, a live attachment state) as unconditional; and a real, capped,
+  player-chosen squad slot (Adeptus Custodes' "Allarus Custodian (Vexilla & Misericordia)") is typed
+  `"model"`, not `"upgrade"`, so its OC+1 baked into every model in the squad regardless of whether
+  that model was actually taken. 42 of the 45 cases the "unconditional" path judged safe were
+  confirmed wrong by cross-checking real BSData source text and NewRecruit's own rendering — not a
+  scan/test gap (515+ automated tests and full-corpus scans all passed throughout), a genuine blind
+  spot in what a scan can check versus a domain-informed manual read. The next attempt (not yet
+  started) reframes the goal in two explicit phases instead of one bake/defer decision: first
+  identify that an ability/rule/enhancement/wargear targets a specific characteristic ("caveated" —
+  populating `ContributingAbilities` with no `DerivedValue`, using the existing `IsCaveated`
+  vocabulary), strictly presence-gated at the `AttachedUnitAggregator` roster layer with no
+  exception for "provably unconditional"; only later, as an explicit separate step, compute an
+  actual derived value ("resolved"). Classification itself splits into structured-BSData-modifier
+  detection (mechanical, most of what the reverted attempt built) and prose classification for
+  abilities with no structured data behind them at all (confirmed real: Darnath Lysander's
+  "Inspiring Commander," an army-wide OC-affecting ability with zero `BsModifier` data) — ties into
+  the paused prose-classification schema described below. Same-unit application ships first;
+  cross-unit application (Lysander boosting a different unit elsewhere in the army) is an explicit,
+  deferred follow-on, since `AttachedUnitAggregator.Build` takes one `ICombatUnit` at a time with no
+  roster-wide visibility today.
 
-  **A structural discovery de-risks half of this for build-time modifiers.** BSData already ships
-  structured `BsModifier` (`Type`/`Field`/`Value`/`Conditions`) data — a corpus scan found 717 real
-  build-time instances (e.g. "select this wargear and Sv improves to 2+"), parsed today only for
-  hidden-gating (`IsGameModeGated`), never for literal effect. A purely structural resolver could
-  deterministically resolve most of these with zero AI involvement — but it only ever covers
-  build-time facts; a live-trigger ability (Vexilla; a per-combat weapon buff) has zero structured
-  signal and stays a prose problem regardless.
+  **Remaining gap on the retyped fields**: `Statline`/`WeaponProfile.S`/`Ap`/`Bs`/`Ws` now use
+  `ScalarCharacteristicView` (a `CharacteristicValue`, which does support `DiceCharacteristicValue`/
+  `SymbolicCharacteristicValue`) but every real construction call site still only ever constructs a
+  plain `NumericCharacteristicValue` via the implicit `int` conversion — `CharacteristicResolutionAllowlist.cs`
+  still documents the same real, unfixed instance (Ork Battlewagon "D6+6" `S` text skipped rather
+  than parsed as `DiceCharacteristicValue`) as before; the domain shape to fix it now exists, the
+  parsing to populate it doesn't yet.
 
   **The prose half has a drafted, paused classification approach**: a confidence-tiered schema
   (Tier 0 no signal → Tier 1 "something's modified" → Tier 2 "this specific characteristic" → Tier 3
