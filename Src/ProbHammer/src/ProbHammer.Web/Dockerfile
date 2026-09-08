@@ -14,6 +14,7 @@ WORKDIR /app
 EXPOSE 8080
 
 COPY --link src/ProbHammer.Web/BsData/ /app/BsData/
+COPY --link src/ProbHammer.Web/Data/ /app/Data/
 COPY --link --from=build /app/publish .
 
 ENTRYPOINT ["dotnet", "ProbHammer.Web.dll"]

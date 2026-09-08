@@ -1687,6 +1687,100 @@ extract their `CharacteristicEffect` but the source text also states content
 recurring non-characteristic effect) — silently dropped, with no signal the classification is
 incomplete. See `.claude/vnext-ideas.md`'s "Caveated rule-effect classifications" note.
 
+**Verified-Classification Baseline** (`baseline-rule-effect-classifications`): a checked-in JSON
+baseline (`src/ProbHammer.Web/Data/RuleEffectClassifications.json`, a sibling of `BsData/` — same
+`<Content Remove>`/`COPY --link` Docker-bundling treatment, never nested inside `BsData/` since
+`LocalDiskBsdataCatalogueSource.ListFileNames()` would otherwise try to parse it as a catalogue file)
+records, per distinct normalized rule/ability Text, the `RuleClassification` a human has explicitly
+verified as correct — so the report tool never has to reprint an already-verified, unchanged result
+on every future run, while any genuine change to a verified result is always resurfaced. Seeded with
+all 20 Effect results above; 5 (Blastajet Force Field, Leader-beast, Lesk's Heroes, Redoubtable
+Machine Spirit, Scattershield) carry a `note` recording that their classification is verified correct
+but known-incomplete (the "related idea" paragraph above).
+
+```
+RuleClassificationBaselineEntry(Text, Target, Effects, Note = null)
+                                       // Domain/Catalogue/RuleClassificationBaseline.cs - Note is a
+                                       // free-text, optional known-incomplete-gap explanation,
+                                       // mirroring AllowlistEntry<T>.Description's own hand-authored
+                                       // convention elsewhere. Classification (a computed, [JsonIgnore]
+                                       // property) is Text/Note's RuleTarget+Effects repackaged as a
+                                       // real RuleClassification for diffing against a fresh run.
+
+RuleClassificationBaselineFile(Entries)   // the root JSON shape - a flat list, Text-indexed only
+                                       // in-memory, not in the file itself
+
+RuleClassificationBaseline            // Text-keyed load/query/write wrapper, mirrors RuleGlossary's
+                                       // own "load once, query by key" shape
+  Load(path) -> RuleClassificationBaseline   // a missing file loads as empty, never throws
+  TryGet(text, out entry) -> bool
+  Upsert(entry)                       // replaces the tracked entry for its own Text
+  Save(path)                          // writes every tracked entry back, ordered by Text for a
+                                       // stable diff
+  Options                             // shared JsonSerializerOptions - camelCase properties,
+                                       // indented, and JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                                       // (this file is trusted checked-in data, not
+                                       // attacker-controlled HTML, so the default encoder's
+                                       // conservative '/+-style escaping of an apostrophe/
+                                       // "+" only hurts the diff's own readability here)
+
+RuleTarget's own [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]/[JsonDerivedType] pair
+                                       // added directly on the abstract type (mirrors
+                                       // StoredArmyImport's own polymorphic-record convention) so the
+                                       // baseline JSON's "target": { "kind": "AttachedUnit" } shape
+                                       // needs no separate translation layer as RuleTarget grows
+                                       // subtypes. EffectVerb gained a matching
+                                       // [JsonConverter(typeof(JsonStringEnumConverter))] so it always
+                                       // serializes as its own member name ("Improve") regardless of
+                                       // caller-supplied options.
+
+RuleClassificationDiff.Compare(baseline, current) -> RuleClassificationDiffResult
+                                       // Domain/Catalogue/RuleClassificationDiff.cs - a structural
+                                       // JSON diff between two serialized RuleClassification
+                                       // snapshots (baseline.Options), not a hand-written
+                                       // field-by-field comparator - deliberately sidesteps
+                                       // IReadOnlyList<T>'s own default-record reference-equality
+                                       // gotcha (Effects would never compare equal via `==`) for
+                                       // free, and needs no matching change when RuleTarget/
+                                       // CharacteristicEffect grow a field, only that field's own
+                                       // "boring default" - read directly off a single
+                                       // `new RuleClassification(new SelfRuleTarget())` instance's
+                                       // own serialization rather than a separate per-field table.
+                                       // A property present in both but unequal -> Drift (always
+                                       // surfaced). A property absent from the baseline (schema
+                                       // growth, a field added since that entry was verified) ->
+                                       // compared against ITS OWN default instead: equal -> silently
+                                       // treated as unchanged, unequal -> NewInformation (surfaced
+                                       // once, not a request to re-verify unrelated fields).
+```
+
+**Report tool integration**: a corpus text with a baseline entry (matched by
+`RuleEffectClassifier.Normalize`d Text, same key both sides) is diverted entirely out of the
+Effect/Target-only/default-only sections above into its own "Verified baseline" line — an unchanged
+entry only contributes to a summary count, never reprinted; a `Drift`/`NewInformation` entry prints
+under a "changed since verified" listing naming exactly which field(s) moved (`baseline=... ->
+current=...`, each side a raw JSON fragment via `JsonNode.ToJsonString()`) plus the entry's own `Note`
+if present. A text with no baseline entry is completely unaffected — the three original sections
+still print exactly as before this change existed. `--write-baseline` snapshots the CURRENT freshly-
+computed classification onto every baseline entry whose Text still resolves in this run's corpus
+(`Target`/`Effects` overwritten via `entry with { ... }`, `Note` left untouched, since a fresh
+classification run has no way to derive that itself) and writes the result back — refreshing an
+entry's tracked values needs no separate backfill path even for schema growth, since `--write-
+baseline` always writes whatever `RuleClassification` computes right now, defaulted field included.
+A genuinely new baseline entry must first be added to the checked-in JSON by hand (at minimum its
+`text`) — `--write-baseline` only ever refreshes Texts already present as a key in the loaded
+baseline, it never invents a new tracked entry on its own.
+
+**A real gap found while seeding the baseline, not by any test**: BSData source text can carry a
+literal embedded newline mid-sentence (confirmed: Redoubtable Machine Spirit's own JSON has `"...at
+the end of your\nCommand phase..."`, no comma, a bare `\n`) that `Truncate`'s `ReplaceLineEndings(" ")`
+collapses to a single space for **display only** — so a hand-typed baseline `text` value copied from
+the report's own printed output, with an ordinary space where that newline was, silently fails to
+match the real (un-displayed) dictionary key. Caught immediately by task 6.1's own verification (the
+seeded entry stayed in the unbaselined "Effect results" section instead of collapsing to "unchanged"),
+not a latent bug — but a real trap for hand-authoring any future baseline entry directly from console
+output rather than from the corpus text itself.
+
 ---
 
 **`ArmyRoster`** (`Domain/Roster/ArmyRoster.cs`) wraps the per-unit roster (`Units`, an

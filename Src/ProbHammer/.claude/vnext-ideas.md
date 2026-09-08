@@ -162,7 +162,11 @@ entry once it's been turned into a change (archived changes remain the historica
   call — the offline, batch LLM-assisted discovery pass described below remains real future work,
   unstarted. One real, confirmed extraction gap found by the corpus run and deliberately not fixed
   here (out of this slice's Effect-pattern scope): Marshal's Household's actual "+1 OC" shorthand
-  phrasing isn't recognized — only the "Add N to the X characteristic" phrasing is.
+  phrasing isn't recognized — only the "Add N to the X characteristic" phrasing is. Re-confirmed
+  in a follow-up session (2026-09-08, same day) against a fresh corpus run: still exactly one
+  occurrence in the whole 3830-text corpus. Queued to fix (a small, structural "+N Characteristic"
+  pattern addition, same low-risk class as the possessive-phrasing gap above) once
+  [[project_baseline_rule_effect_classifications_change]] is applied.
 
   **Six real gaps caught live during a sustained corpus-report review (2026-09-08, same day), all
   fixed** — none caught by the original ground-truth/negative-control unit tests (task 3.5) or the
@@ -197,20 +201,79 @@ entry once it's been turned into a change (archived changes remain the historica
   references for each of the six: `classify-rule-effects-from-text/tasks.md`'s task 4.3 notes.
 
   **Caveated rule-effect classifications - a real, confirmed, NOT-yet-built idea, surfaced by the same
-  live review**: several of the 20 real Effect results correctly extract their `CharacteristicEffect`
+  live review, revisited and given a validated mechanism in a follow-up session (2026-09-08, same
+  day)**: several of the 20 real Effect results correctly extract their `CharacteristicEffect`
   but the source text also states additional content `RuleClassification` has no vocabulary for at
-  all - silently dropped, with no signal the classification is incomplete. Confirmed real examples:
+  all - silently dropped, with no signal the classification is incomplete. Confirmed real examples -
+  **five, not the original four**, a fifth (Scattershield) found by re-walking all 20 results during
+  the follow-up session and initially missed by the live-review pass that found the first four:
   Blastajet Force Field (`Set InSv 4` - text also states losing a keyword), Leader-beast (`Set InSv 4`
   - text also grants two keywords and a separate ability), Lesk's Heroes (`Improve Ld 1` - text also
   grants a re-roll ability), Redoubtable Machine Spirit (`Set InSv 5` - text also states a recurring
-  per-Command-phase wound regen). The user's own framing: the characteristic mutation fully resolves,
+  per-Command-phase wound regen), Scattershield (`Set InSv 4` - text also states a per-attack Damage
+  reduction). The user's own framing: the characteristic mutation fully resolves,
   but the *ability as a whole* is still "caveated" against something - the mirror image of
   `CharacteristicView.IsCaveated` (there, the number can't resolve but everything else is known; here,
-  the number resolves but something else can't be represented). Natural shape for a future fix:
+  the number resolves but something else can't be represented). Shape for a future fix:
   `RuleClassification` gains something like an `IsCaveated`/`AdditionalContent` signal alongside
   `Target`/`Effects`, populated whenever recognized non-Effect content (a keyword grant/removal, an
   ability grant, a recurring non-characteristic effect) is detected trailing a matched Effect clause -
-  not attempting to classify what the extra content IS, just that there is some. Unscoped, not started.
+  not attempting to classify what the extra content IS, just that there is some.
+
+  **A concrete, validated structural signal for this was worked out (not yet implemented)**: take the
+  end position of every regex match that contributed to a text's Target or Effects (both count, not
+  just Effects), and look at whatever text remains after the LAST one. Trim whitespace and a single
+  trailing period; non-empty remainder → caveated. Checked by hand against all 20 real Effect results
+  and reproduces the desired five-caveated/fifteen-clean split exactly, including correctly staying
+  quiet on two texts that look superficially similar but aren't caveats - Sanctuary and Brute Shield
+  both have a *leading* "X model only." restriction sentence before the matched clause with nothing
+  trailing after it, and the signal only ever looks after the last match, so a leading eligibility
+  restriction never trips it (matches the intuition that "who this applies to" isn't the same kind of
+  gap as "what else it does"). Purely positional, no phrase denylist, generalizes for free to effects
+  not yet in the vocabulary - same class of structural anchor as `SentenceStart` itself. Only
+  meaningful when at least one match already succeeded (Effects.Count > 0 today); says nothing new
+  about the 618 Target-only / 3192 default-only buckets, where there's no partial success to caveat.
+
+  **No longer blocked - `baseline-rule-effect-classifications` implemented 2026-09-08, same day.** A
+  checked-in, Text-keyed baseline (`src/ProbHammer.Web/Data/RuleEffectClassifications.json`,
+  `RuleClassificationBaseline`/`RuleClassificationDiff` in `Domain/Catalogue`) now lets
+  `RuleEffectClassificationReport` collapse an already-verified, unchanged result to a summary count
+  instead of reprinting it, while surfacing real drift or new-field information every time - seeded
+  with all 20 current Effect results (5 carrying a known-incomplete `Note`, matching the caveat
+  examples just above). See `.claude/domain-model-11e.md`'s "Verified-Classification Baseline"
+  section for the full mechanism. This caveat work - along with the two smaller fixes below - is
+  queued to land on top of it, not blocked by it any longer.
+
+  **Three further small, real gaps found while chasing the caveat idea in the same follow-up
+  session, none yet fixed**:
+  - **Possessive characteristic phrasing** - `AddCharacteristic` requires literally
+    `the {Characteristic} characteristic`; real text often says `the bearer's {Characteristic}
+    characteristic`, which doesn't match at all. Confirmed real (this is what silently dropped every
+    real Wounds-boosting ability found in the corpus): Blasphemous Engine ("Add 2 to the bearer's
+    Wounds characteristic."), Da Krushin' Armour, an Ork mega-armour item ("Add 1 to the bearer's
+    Wounds characteristic."), and the first clause of Master Artisan. Narrow, safe widening - an
+    optional possessive noun between "the" and the characteristic name, no anchor risk.
+  - **A second, riskier gap in the same Master Artisan text**: "Add 1 to the bearer's Wounds
+    characteristic **and add** 1 to the Toughness characteristic of models in the bearer's unit." -
+    the second clause has correct phrasing but still misses, since `SentenceStart` only accepts a
+    match right after a period, and this one starts after "and" mid-sentence. Naively accepting "and"
+    as an additional boundary would reopen exactly the bug `SentenceStart` was built to close: a real
+    corpus text (Righteous Zeal - "While the bearer's unit is Righteous, add 2 to the Attacks
+    characteristic **and add** 1 to the Damage characteristic...") has a second "and add" clause that
+    is STILL conditional on "Righteous," and only fails to false-positive today by the accident that
+    Attacks/Damage aren't yet in the `CharacteristicNames` allowlist. Any future "and"-boundary
+    widening needs to distinguish "and joins two coordinate effects" from "and continues a still-
+    conditional clause" structurally, not just accept any "and" - deliberately parked, not attempted.
+  - **"Move" vs "Movement" synonym gap** - real corpus text ("Add 2" to the Move characteristic of
+    models in the bearer's unit...") uses the abbreviated "Move," which doesn't match
+    `CharacteristicNames`' "Movement" key at all. Small, separate lookup-table gap.
+  - **A misclassification trap for future `Improve`/`Worsen`-verb work**: Sanctified-Orators-style
+    text ("Improve this model's Leadership characteristic **by 1 for every 5 models in this unit**")
+    is a *scaling* effect tied to unit size, not a flat amount - a future "Improve X characteristic by
+    N" pattern that doesn't also detect and exclude a "for every N models" qualifier would silently
+    misclassify this as a flat `Improve Ld 1` when it's actually much stronger for a large unit.
+    Worth remembering when the Improve/Worsen verb work (see the rulebook arithmetic section below)
+    eventually gets built.
 
   **Still not built**: computing an actual `DerivedValue` for any caveat this shipped work surfaces
   (the explicit "resolved" phase) — the caveat is display-only, "this characteristic is affected,"

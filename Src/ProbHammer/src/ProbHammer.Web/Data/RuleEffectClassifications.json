@@ -1,0 +1,285 @@
+{
+  "entries": [
+    {
+      "text": "**^^Augmented Bone 'Ead^^** only. This model has a 4+ invulnerable save.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "InSv",
+          "verb": "Set",
+          "amount": 4
+        }
+      ],
+      "note": null
+    },
+    {
+      "text": "**^^Imperial Knights^^** model only. The bearer has a 5+ invulnerable save.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "InSv",
+          "verb": "Set",
+          "amount": 5
+        }
+      ],
+      "note": null
+    },
+    {
+      "text": "Add 1 to the Leadership characteristic of models in this unit and you can re-roll Battle-shock and Leadership tests taken for this unit.",
+      "target": {
+        "kind": "AttachedUnit"
+      },
+      "effects": [
+        {
+          "characteristic": "Ld",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "note": "Leadership improvement is correctly extracted, but the text also grants a re-roll ability (Battle-shock and Leadership tests), which the classifier has no vocabulary to extract."
+    },
+    {
+      "text": "Add 1 to the Objective Control characteristic of models in the bearer's unit.",
+      "target": {
+        "kind": "AttachedUnit"
+      },
+      "effects": [
+        {
+          "characteristic": "Oc",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "note": null
+    },
+    {
+      "text": "Add 1 to the Objective Control characteristic of models in this unit.",
+      "target": {
+        "kind": "AttachedUnit"
+      },
+      "effects": [
+        {
+          "characteristic": "Oc",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "note": null
+    },
+    {
+      "text": "Add 1 to the Toughness characteristic of **^^Emperor's Children^^** units from your Crusade army.",
+      "target": {
+        "kind": "Keyword",
+        "keyword": "EMPEROR'S CHILDREN"
+      },
+      "effects": [
+        {
+          "characteristic": "T",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "note": null
+    },
+    {
+      "text": "Add 1 to the Toughness characteristic of models in this unit.",
+      "target": {
+        "kind": "AttachedUnit"
+      },
+      "effects": [
+        {
+          "characteristic": "T",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "note": null
+    },
+    {
+      "text": "Adeptus Astartes Vehicle model only. The bearer has a 5+ invulnerable save and, at the end of your\nCommand phase, the bearer regains 1 lost wound.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "InSv",
+          "verb": "Set",
+          "amount": 5
+        }
+      ],
+      "note": "InSv grant is correctly extracted, but the text also states a recurring per-Command-phase wound-regeneration effect, which the classifier has no vocabulary to extract."
+    },
+    {
+      "text": "Chaplain Cassius has a 4+ invulnerable save.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "InSv",
+          "verb": "Set",
+          "amount": 4
+        }
+      ],
+      "note": null
+    },
+    {
+      "text": "The bearer has a 2+ invulnerable save.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "InSv",
+          "verb": "Set",
+          "amount": 2
+        }
+      ],
+      "note": null
+    },
+    {
+      "text": "The bearer has a 4+ Invulnerable save.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "InSv",
+          "verb": "Set",
+          "amount": 4
+        }
+      ],
+      "note": null
+    },
+    {
+      "text": "The bearer has a 4+ invulnerable save",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "InSv",
+          "verb": "Set",
+          "amount": 4
+        }
+      ],
+      "note": null
+    },
+    {
+      "text": "The bearer has a 4+ invulnerable save and each time an attack is allocated to the bearer, subtract 1 from the Damage characteristic of that attack.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "InSv",
+          "verb": "Set",
+          "amount": 4
+        }
+      ],
+      "note": "InSv grant is correctly extracted, but the text also states a per-attack Damage reduction, which the classifier has no vocabulary to extract."
+    },
+    {
+      "text": "The bearer has a 4+ invulnerable save, but it loses the **^^Grenades^^** keyword.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "InSv",
+          "verb": "Set",
+          "amount": 4
+        }
+      ],
+      "note": "InSv grant is correctly extracted, but the text also states the bearer loses the Grenades keyword, which the classifier has no vocabulary to extract."
+    },
+    {
+      "text": "The bearer has a 4+ invulnerable save.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "InSv",
+          "verb": "Set",
+          "amount": 4
+        }
+      ],
+      "note": null
+    },
+    {
+      "text": "The bearer has a 5+ invulnerable save.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "InSv",
+          "verb": "Set",
+          "amount": 5
+        }
+      ],
+      "note": null
+    },
+    {
+      "text": "This model has a 4+ Invulnerable save.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "InSv",
+          "verb": "Set",
+          "amount": 4
+        }
+      ],
+      "note": null
+    },
+    {
+      "text": "This model has a 4+ invulnerable save, add the **^^Psyker^^** and **^^Synapse^^** keywords, and it gains the Shadow in the Warp ability. If it is an **^^Infantry^^** model, add the following unit to the list of units this model can be attached to: **^^Neurogaunts^^**.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "InSv",
+          "verb": "Set",
+          "amount": 4
+        }
+      ],
+      "note": "InSv grant is correctly extracted, but the text also grants two keywords (Psyker, Synapse), the Shadow in the Warp ability, and a conditional attachment eligibility, none of which the classifier extracts."
+    },
+    {
+      "text": "This model has a 4+ invulnerable save.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "InSv",
+          "verb": "Set",
+          "amount": 4
+        }
+      ],
+      "note": null
+    },
+    {
+      "text": "This model has a 5+ invulnerable save.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "InSv",
+          "verb": "Set",
+          "amount": 5
+        }
+      ],
+      "note": null
+    }
+  ]
+}

@@ -8,6 +8,8 @@
     <Folder Include="BSData\" />
     <!--Don't copy the BSData implicitly into the image: we'll link in the Dockerfile-->
     <Content Remove="BsData/**" />
+    <!--Don't copy Data/ implicitly into the image either: we'll link in the Dockerfile-->
+    <Content Remove="Data/**" />
   </ItemGroup>
 
   <PropertyGroup>

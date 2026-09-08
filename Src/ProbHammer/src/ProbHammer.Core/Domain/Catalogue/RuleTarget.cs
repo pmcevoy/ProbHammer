@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ProbHammer.Core.Domain.Catalogue;
 
 /// <summary>Abstract base with sealed <see cref="SelfRuleTarget"/>/<see cref="AttachedUnitRuleTarget"/>/
@@ -8,7 +10,16 @@ namespace ProbHammer.Core.Domain.Catalogue;
 /// of a result. See classify-rule-effects-from-text/design.md's "RuleTarget is an abstract base with
 /// sealed subtypes, never nullable" and "Self and AttachedUnit are separate cases, not merged"
 /// decisions - the latter exists because a <c>DetachmentRule</c> carries no <see cref="Ability.Scope"/>
-/// field to defer to.</summary>
+/// field to defer to. The <see cref="JsonPolymorphicAttribute"/>/<see cref="JsonDerivedTypeAttribute"/>
+/// pair mirrors <c>StoredArmyImport</c>'s own polymorphic-record convention - added for
+/// baseline-rule-effect-classifications, whose checked-in baseline JSON serializes a
+/// <c>RuleClassification</c>'s own <see cref="RuleTarget"/> directly rather than a parallel
+/// representation (see that change's design.md "Baseline file shape" decision).</summary>
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
+[JsonDerivedType(typeof(SelfRuleTarget), "Self")]
+[JsonDerivedType(typeof(AttachedUnitRuleTarget), "AttachedUnit")]
+[JsonDerivedType(typeof(KeywordRuleTarget), "Keyword")]
+[JsonDerivedType(typeof(UnconditionalRuleTarget), "Unconditional")]
 public abstract record RuleTarget;
 
 /// <summary>The rule's own bearer alone, no broader target language recognized.</summary>

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Catalogue.Bsdata;
 
@@ -27,7 +28,14 @@ namespace ProbHammer.Tools.RuleEffectClassificationReport;
 /// Ancient's Banner/Vexilla's own text exists both ways in the corpus) is something Classify already
 /// treats as the same input, so the report groups it the same way rather than showing it twice. Every
 /// distinct Name seen for a given (normalized) Text is still reported, as data on the row rather than
-/// as part of the grouping key.</summary>
+/// as part of the grouping key.
+///
+/// Since baseline-rule-effect-classifications, a text with a matching entry in the checked-in
+/// <see cref="RuleClassificationBaseline"/> (src/ProbHammer.Web/Data/RuleEffectClassifications.json)
+/// is diverted from its normal Effect/Target-only/default-only section into a separate "Changed since
+/// verified" listing driven by <see cref="RuleClassificationDiff"/> - an unchanged, already-verified
+/// result collapses to a summary count instead of reprinting, while any drift is always surfaced. See
+/// that change's proposal.md/design.md for the full rationale.</summary>
 public static class Program
 {
     /// <summary>Same literal path already documented in CLAUDE.md/.claude/domain-model-11e.md and
@@ -36,6 +44,17 @@ public static class Program
     public const string DefaultClonePath = @"C:\Users\Pete\wh40k-11e";
 
     private const string ExcludedFileName = "Warhammer 40,000.json";
+
+    /// <summary>Unlike <see cref="DefaultClonePath"/> (genuinely outside the repo and
+    /// machine-specific), the baseline file lives inside this repo - resolved <c>[CallerFilePath]</c>-
+    /// relative from this tool's own source file, the same portable-across-machines/checkouts
+    /// convention <c>ArmyListParserTests.ReadDataFile</c> already uses for checked-in fixtures. Still
+    /// overridable via a second command-line argument, mirroring the clone-path argument's own
+    /// precedent - see baseline-rule-effect-classifications design.md's "Report tool's own path
+    /// resolution" decision.</summary>
+    private static string DefaultBaselinePath([CallerFilePath] string here = "") =>
+        Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "src", "ProbHammer.Web", "Data",
+            "RuleEffectClassifications.json");
 
     public static int Main(string[] args)
     {
@@ -47,7 +66,10 @@ public static class Program
         // redirect target.
         Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-        var clonePath = args.Length > 0 ? args[0] : DefaultClonePath;
+        var writeBaseline = args.Contains("--write-baseline");
+        var positionalArgs = args.Where(a => a != "--write-baseline").ToArray();
+        var clonePath = positionalArgs.Length > 0 ? positionalArgs[0] : DefaultClonePath;
+        var baselinePath = positionalArgs.Length > 1 ? positionalArgs[1] : DefaultBaselinePath();
 
         if (!Directory.Exists(clonePath))
         {
@@ -55,6 +77,8 @@ public static class Program
                 $"BSData clone not found at '{clonePath}' - pass a path as the first argument, or clone the live BSData 11th-edition repo to that location.");
             return 1;
         }
+
+        var baseline = RuleClassificationBaseline.Load(baselinePath);
 
         var source = new LocalDiskBsdataCatalogueSource(clonePath);
         var fileNames = source.ListFileNames()
@@ -133,6 +157,17 @@ public static class Program
             })
             .ToList();
 
+        // A text with a baseline entry is diverted entirely from the three sections below into its
+        // own "Changed since verified" listing (task 4.3) - the baseline only ever suppresses what it
+        // has actually recorded, so every other text keeps appearing exactly as before the baseline
+        // existed.
+        var unbaselined = results.Where(r => !baseline.TryGet(r.Text, out _)).ToList();
+        var baselined = results
+            .Where(r => baseline.TryGet(r.Text, out _))
+            .Select(r => (Result: r,
+                Diff: RuleClassificationDiff.Compare(baseline.Entries[r.Text].Classification, r.Classification)))
+            .ToList();
+
         // Three-way split, not the spec's original two-way non-default/default-only: results with
         // 1+ Effects are their own section (the one worth eyeballing to confirm an extracted Effect
         // actually matches what the text says), separate from results whose Target is broader than
@@ -140,17 +175,17 @@ public static class Program
         // still a "non-default" classification per the spec, just not an Effect-review candidate).
         // An earlier version of this split (Effects-only vs. everything-else) silently dropped the
         // Target-only bucket from BOTH sections - caught live, not by any test.
-        var effectResults = results
+        var effectResults = unbaselined
             .Where(r => r.Classification.Effects.Count > 0)
             .OrderBy(r => r.Names[0], StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        var targetOnlyResults = results
+        var targetOnlyResults = unbaselined
             .Where(r => r.Classification.Target is not SelfRuleTarget && r.Classification.Effects.Count == 0)
             .OrderBy(r => r.Names[0], StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        var defaultOnly = results
+        var defaultOnly = unbaselined
             .Where(r => r.Classification.Target is SelfRuleTarget && r.Classification.Effects.Count == 0)
             .OrderBy(r => r.Names[0], StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -185,6 +220,49 @@ public static class Program
             $"=== Default-only results: {defaultOnly.Count} (showing first {Math.Min(sampleSize, defaultOnly.Count)} for spot-checking) ===");
         foreach (var r in defaultOnly.Take(sampleSize))
             Console.WriteLine($"- {DescribeNames(r.Names)} :: \"{Truncate(r.Text)}\" (seen on: {r.Locations[0]})");
+
+        var unchanged = baselined.Where(b => b.Diff.Status == RuleClassificationBaselineStatus.Unchanged).ToList();
+        var changed = baselined
+            .Where(b => b.Diff.Status != RuleClassificationBaselineStatus.Unchanged)
+            .OrderBy(b => b.Result.Names[0], StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        Console.WriteLine();
+        Console.WriteLine(
+            $"=== Verified baseline: {baseline.Entries.Count} tracked, {unchanged.Count} unchanged, {changed.Count} changed since verified ===");
+        foreach (var (r, diff) in changed)
+        {
+            var kind = diff.Status == RuleClassificationBaselineStatus.Drift ? "DRIFT" : "NEW INFO";
+            Console.WriteLine($"- [{kind}] {DescribeNames(r.Names)}");
+            Console.WriteLine($"    text: \"{Truncate(r.Text)}\"");
+            foreach (var change in diff.Changes)
+            {
+                Console.WriteLine(
+                    $"    {change.Field}: baseline={change.BaselineValue?.ToJsonString() ?? "null"} -> current={change.CurrentValue?.ToJsonString() ?? "null"}");
+            }
+
+            if (baseline.Entries[r.Text].Note is { } note)
+                Console.WriteLine($"    note: {note}");
+            var extra = r.Locations.Count > 3 ? $", +{r.Locations.Count - 3} more" : "";
+            Console.WriteLine($"    seen on: {string.Join("; ", r.Locations.Take(3))}{extra}");
+        }
+
+        if (!writeBaseline)
+            return 0;
+
+        // Only refreshes entries already tracked in the baseline (matched by Text against this run's
+        // corpus) - a genuinely new entry must first be added to the checked-in JSON by hand (at
+        // minimum its Text) before this can snapshot a real classification onto it. Preserves Note
+        // untouched - a fresh classification run can't derive that by itself.
+        foreach (var (r, _) in baselined)
+        {
+            var existing = baseline.Entries[r.Text];
+            baseline.Upsert(existing with { Target = r.Classification.Target, Effects = r.Classification.Effects });
+        }
+
+        baseline.Save(baselinePath);
+        Console.WriteLine();
+        Console.WriteLine($"--write-baseline: refreshed {baselined.Count} baseline entries at '{baselinePath}'.");
 
         return 0;
 
