@@ -1511,6 +1511,184 @@ describes a characteristic change with no backing `BsModifier` at all, e.g. Darn
 
 ---
 
+## Rule Effect Classification (Text-Only)
+
+Full requirements: `openspec/changes/classify-rule-effects-from-text/`. A standalone, text-only
+counterpart to the structural `CharacteristicModifierCandidate` classifier above — instead of
+reading BSData's structured `BsModifier` JSON, `RuleEffectClassifier.Classify(name, text)` extracts
+a rule/ability's Target and unconditional characteristic Effects from its own Name+Text alone, with
+**no dependency on `Domain.Catalogue.Bsdata` or any BSData JSON type** — same classification for
+identical Name+Text regardless of which import pipeline (BSData or BattleScribe/NewRecruit)
+produced it. Lives in `Domain.Catalogue` (not `Domain.Catalogue.Bsdata`) for exactly that reason —
+the user's own stated discomfort with adding more classification responsibility to
+`BsdataDatasheetMapper` (already the source of several real data-misunderstanding bugs found only by
+manual NewRecruit cross-checks) is why this is an independent component rather than an extension of
+that mapper's existing ability-extraction walk. **Not wired to anything yet** — no
+`BsdataDatasheetMapper`/`AttachedUnitAggregator`/`/LivePlay` call site consumes a
+`RuleClassification` today; this proves the extraction mechanism works, nothing more. See
+`.claude/vnext-ideas.md`'s "Characteristic-modification domain hardening" entry for the still-open
+follow-on work (conditional effects, `WeaponProfile`-targeting effects, `Multiply`/`Divide` verbs,
+roster-wide predicate evaluation, applying a classified Effect anywhere, LLM-assisted discovery).
+
+```
+RuleTarget                            // Domain/Catalogue/RuleTarget.cs - abstract, sealed
+                                       // SelfRuleTarget/AttachedUnitRuleTarget/KeywordRuleTarget
+                                       // (string Keyword)/UnconditionalRuleTarget subtypes, never
+                                       // null - mirrors WeaponProfile's/CharacteristicValue's own
+                                       // abstract-base/sealed-subtype convention. SelfRuleTarget is
+                                       // the classifier's explicit default/fallback, not an absent
+                                       // result. Named SelfRuleTarget/AttachedUnitRuleTarget (not
+                                       // bare Self/AttachedUnit) to avoid colliding with the real
+                                       // Domain.Roster.AttachedUnit class. Self and AttachedUnit are
+                                       // deliberately separate cases, not merged into one - they map
+                                       // onto Ability.Scope's Model/Unit distinction for an ordinary
+                                       // ability, but DetachmentRule (a plain (Name, Text) record)
+                                       // carries no Scope field to defer to, so this component must
+                                       // classify both independently.
+
+EffectVerb = Improve | Worsen | Set   // rulebook vocabulary, not pre-resolved signed arithmetic -
+                                       // which sign each verb resolves to depends on the target
+                                       // characteristic's own arithmetic family (a still-unbuilt
+                                       // RollThreshold/ArmourPenetration/Plain "Kind" concept, see
+                                       // vnext-ideas.md) - resolving that is out of scope here.
+
+CharacteristicEffect(string Characteristic, EffectVerb Verb, int Amount)
+                                       // one atomic, unconditional mutation of exactly one named
+                                       // characteristic by a fixed amount. Characteristic is a plain
+                                       // string, the same convention CharacteristicModifierCandidate
+                                       // already uses - but unlike that classifier, "InSv" is a valid
+                                       // value here too (Shield Dome's own Set-shaped grant), since
+                                       // this is a separate mechanism with no InSv-already-has-its-
+                                       // own-path exclusion to inherit.
+
+RuleClassification(RuleTarget Target, IReadOnlyList<CharacteristicEffect> Effects)
+                                       // Effects defaults to empty, never null, via a
+                                       // Target-only constructor overload.
+
+RuleEffectClassifier.Classify(string name, string text) -> RuleClassification
+                                       // Domain/Catalogue/RuleEffectClassifier.cs - anchored/
+                                       // template regex matching, same rigor as
+                                       // InvulnerableSaveCaveatClassifier, but searches within
+                                       // arbitrary-length prose rather than matching a whole string
+                                       // (a Detachment/Core rule's own Text is rarely one sentence) -
+                                       // an accepted brittleness trade-off (see design.md's Risks),
+                                       // hardened by a live-review pass (below) into "first
+                                       // sentence-anchored match wins" for the two Effect patterns,
+                                       // not literally "first match anywhere."
+RuleEffectClassifier.Normalize(string text) -> string
+                                       // public (not private) so a caller comparing/grouping raw
+                                       // corpus text - e.g. the corpus report tool, below - normalizes
+                                       // the exact same way Classify itself does. Replaces a
+                                       // typographic U+2019 apostrophe with plain ASCII (real corpus
+                                       // data - Adeptus Custodes' Vexilla - carries both variants of
+                                       // the identical "bearer's unit" sentence across different
+                                       // entries) and a U+00A0 non-breaking space with a plain space
+                                       // (confirmed widespread - 1,543 of ~7,660 raw ability texts
+                                       // carry at least one). The NBSP half was originally claimed in
+                                       // this method's own doc comment without actually being
+                                       // implemented - caught live via a real console-encoding bug
+                                       // (a raw 0xFF byte in report output) that led to checking the
+                                       // claim against the actual code, not by any test.
+
+// Every word-literal pattern (AttachedUnitPhrase, MarkupKeywordPhrase, InvulnerableSaveGrant,
+// AddCharacteristic) matches case-insensitively - real corpus data confirmed the exact same "The
+// bearer has a 4+ invulnerable/Invulnerable save." sentence with inconsistent capitalization across
+// different wargear items (Storm Shield, Blizzard shield). AllCapsKeywordPhrase is the one
+// deliberate exception - it stays case-SENSITIVE, since capitalization is the actual signal that
+// distinguishes a real keyword from an ordinary capitalized word there, not noise to normalize past.
+//
+// Target recognizes: "the bearer's unit" OR "models in this unit" (functionally the same claim,
+// widened after surveying ~30 real corpus occurrences of the latter with zero counter-examples) ->
+// AttachedUnitRuleTarget; a markup-wrapped small-caps keyword ("**^^Adeptus Astartes^^** units",
+// GW's own rules-text convention, see RuleTextEmphasisRenderer) or a literal ALL-CAPS run ("SWORD
+// BRETHREN SQUAD units") followed by "units" -> KeywordRuleTarget; nothing recognized -> SelfRuleTarget
+// (the explicit default, never absent).
+//
+// Effects recognizes: "has a {N}+ invulnerable save" -> Set InSv N, EXCLUDING a match immediately
+// followed by "against" (an attack-type-restricted/split save - the same shape
+// InvulnerableSaveCaveatClassifier models separately as a melee/ranged pair - is conditional on the
+// incoming attack, not the unconditional grant this pattern means to recognize); "Add {N} to the
+// {Characteristic} characteristic" (a small closed name-lookup table: Movement/Toughness/Save/Wounds/
+// Leadership/Objective Control) -> Improve {code} N. Both Effect patterns are additionally anchored
+// by SentenceStart (private const, a lookbehind requiring the match begin at start-of-text or
+// immediately after a period+whitespace - deliberately NOT a bare newline or bullet marker) - without
+// it, a match anywhere in the conditional preamble of a longer sentence ("If it does, until the end
+// of the phase, the bearer has a 2+ invulnerable save.") or inside a bulleted/headed "select one of
+// the following" menu item (Moment Shackle's two alternatives; Combat Drugs'/Noospheric Transference's
+// option lists) wrongly extracted as an unconditional fact - a bullet/newline reads exactly like a
+// fresh sentence start but is confirmed, in every real example checked, to also separate mutually-
+// exclusive menu alternatives, unlike a period. This SentenceStart anchor - a structural "is this
+// clause actually at its sentence's true start" signal, not a growing denylist of trigger phrases
+// ("if it does"/"while X"/"each time X") - was the fix the user explicitly asked for over the
+// narrower alternative.
+//
+// Never throws on unrecognized text - defaults to SelfRuleTarget + empty Effects (see spec's
+// "Unrecognized Text Fails Closed").
+```
+
+**Ground-truth verification** (`tasks.md`'s task 1, before any template was written): Shield Dome's
+"The bearer has a 5+ invulnerable save." and Vexilla's "Add 1 to the Objective Control
+characteristic of models in the bearer's unit." both confirmed byte-for-byte against the live
+clone. Templar Vows' text (resolved via `Library - Astartes Heresy Legends.json`, not a file its own
+name would suggest) contains "...active for **^^Adeptus Astartes^^** units from your army." — the
+per-vow effect text further down names no single direct characteristic mutation, so zero Effects is
+the correct, spec-confirmed extraction. The rule referred to as "Marshal's Household" is actually a
+nested rule named "Faith-Fuelled Resolve" *inside* the "Marshal's Household" Detachment entry
+(`Imperium - Space Marines.json`): "Friendly SWORD BRETHREN SQUAD units have +1 OC.\n\n\nRestrictions:
+...ADEPTUS ASTARTES units..." — the Restrictions paragraph itself contains two further ALL-CAPS +
+"units" occurrences, confirming the classifier must (and does, via first-match-wins) pick the
+earlier, actual effect statement rather than either of those.
+
+**Corpus-Wide Classification Reporting**: `tools/RuleEffectClassificationReport/` (its own console
+app project referencing only `ProbHammer.Core`, not the test project) walks the live BSData clone
+the same way `BracketTokenResolutionScanTests` does — local + shared rules, every locally-built
+`Datasheet.Abilities` entry, plus `Datasheet.OptionalAbilityNames`/`TryResolveAbility` (needed since
+Shield Dome/Vexilla are OptionalGrant-origin and never in the always-enumerated `Abilities` list),
+plus every resolved Detachment's own rule text via `BsdataNameResolver.ResolveDetachmentEntries`/
+`DetachmentRuleTextExtractor` (needed for Marshal's Household/Faith-Fuelled Resolve, which is
+Detachment-nested text, not a Datasheet ability) — classifies every distinct rule/ability text found.
+Forces `Console.OutputEncoding = Encoding.UTF8` up front - the process's default encoding can't
+represent every character real BSData text carries (the same NBSP quirk `Normalize` handles) and
+silently substitutes a garbage byte instead of erroring, confirmed real via a stray `0xFF` in report
+output that turned out to be a mis-encoded NBSP.
+
+**Grouped by `RuleEffectClassifier.Normalize`d Text alone** — neither by `(Name, Text)` nor by raw
+Text. Not-by-Name: `Classify` never reads its own `name` parameter, so keying on Name too would
+artificially split one real classification result across several report rows purely because different
+wargear/abilities share the exact same sentence (confirmed real: 12 differently-named invulnerable-
+save items — Astartes shield, Blizzard shield, Brute Shield, Dispersion Shield, Endurant shield,
+Forceshield, Mistshield, Scattershield, Shield Generator, Shimmershield, Storm Shield, Weavefield
+crest — all grant "The bearer has a 4+ invulnerable save." verbatim). Not-by-raw-Text: a typographic-
+apostrophe or NBSP-vs-plain-space variant of one real sentence (confirmed: Ancient's Banner/Vexilla's
+own text exists both ways) is something `Classify` already treats as identical input, so the report
+groups it the same way rather than showing it twice. Every distinct Name seen for a given (normalized)
+Text is still reported as data on the row, alongside a truncated preview of the text itself.
+
+**Three report sections, not the spec's original two-way non-default/default-only split**: Effect
+results (1+ Effects — the ones worth eyeballing to confirm an extracted Effect matches the text),
+Target-only results (a Target broader than Self but no Effect — still "non-default" per the spec, just
+not an Effect-review candidate), and Default-only results (spot-checked, first 25). Added after an
+earlier two-way version (a user change narrowing the "non-default" section to Effects-only, for
+focused Effect review) was found to silently drop the Target-only bucket from both printed sections
+entirely — still counted in the header total, never shown anywhere.
+
+**Final numbers after a sustained live-review pass found and fixed six real classification bugs** (see
+`.claude/vnext-ideas.md`'s "Characteristic-modification domain hardening" entry and
+`classify-rule-effects-from-text/tasks.md`'s task 4.3 for the full list — case-insensitivity, the
+grouping fixes above, real NBSP normalization, the attack-type-restricted-save exclusion, the
+`SentenceStart` anchor, and the "models in this unit" Target widening): 45 files, 3830 distinct texts,
+**20 Effect results — every one manually reviewed and confirmed fully correct**, 618 Target-only, 3192
+default-only (25-entry spot-check found nothing that looked like an obvious, cheap-to-recognize miss).
+All four ground-truth examples classify as expected throughout.
+
+**A related, real, NOT-yet-built idea surfaced by this same review**: several Effect results correctly
+extract their `CharacteristicEffect` but the source text also states content
+`RuleClassification` has no vocabulary for at all (a keyword grant/removal, another ability grant, a
+recurring non-characteristic effect) — silently dropped, with no signal the classification is
+incomplete. See `.claude/vnext-ideas.md`'s "Caveated rule-effect classifications" note.
+
+---
+
 **`ArmyRoster`** (`Domain/Roster/ArmyRoster.cs`) wraps the per-unit roster (`Units`, an
 `IReadOnlyList<ICombatUnit>`) with army-level metadata: `Name`, `PointsSpent`, `Faction` (ordered —
 parent codex before sub-faction, e.g. `["Space Marines", "Black Templars"]`), `Detachments`

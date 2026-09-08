@@ -132,6 +132,86 @@ entry once it's been turned into a change (archived changes remain the historica
   step must skip a field already touched by an earlier rule, rather than risk regressing an
   already-resolved value back to merely caveated.
 
+  **A first, standalone slice of the prose half also shipped** —
+  `classify-rule-effects-from-text` (implemented, see `.claude/domain-model-11e.md`'s "Rule Effect
+  Classification (Text-Only)" section, and the change's own proposal.md/design.md). A
+  `RuleEffectClassifier` extracts a rule/ability's `RuleTarget` (`Self`/`AttachedUnit`/
+  `KeywordRuleTarget`/`UnconditionalRuleTarget`) and zero or more unconditional `CharacteristicEffect`s
+  (`Improve`/`Worsen`/`Set` one named Statline scalar by a fixed amount) from its Name+Text alone —
+  anchored regex/template matching, the same rigor as `InvulnerableSaveCaveatClassifier`, proven
+  against four ground-truth examples (Shield Dome, Vexilla, Templar Vows, Black Templars'
+  "Faith-Fuelled Resolve"/Marshal's Household) plus a full live-corpus run (final numbers, after the
+  six-fix live-review pass below: 3830 distinct real rule/ability texts, 20 with 1+ Effects - every
+  one manually reviewed and confirmed correct - 618 with a Target broader than Self but no Effect,
+  3192 all-default; the report groups by `RuleEffectClassifier.Normalize`d Text alone, not Name+Text,
+  since `Classify` never reads its own `name` argument; see domain-model-11e.md's "Corpus-Wide
+  Classification Reporting"). Deliberately standalone: no dependency on
+  `Domain.Catalogue.Bsdata`/BSData JSON types at all — the user's own stated discomfort with adding
+  more classification responsibility to `BsdataDatasheetMapper` (already the source of several real
+  data-misunderstanding bugs) is the central reason this lives as an independent component rather
+  than an extension of that mapper's existing ability-extraction walk. **Not yet wired to anything** —
+  no `BsdataDatasheetMapper`/`AttachedUnitAggregator`/`/LivePlay` call site consumes a
+  `RuleClassification` today; this change only proves the extraction works. Explicitly out of this
+  slice's scope, all still real/confirmed remaining needs: conditional effects (a Condition concept,
+  plus a player-assertable flag for the genuinely unknowable "Aura"-shaped subset, extending
+  `IsBattleShocked`/`IsHalfStrengthOverride`'s existing live-state pattern); `WeaponProfile`-targeting
+  effects (confirmed real in prose — a named-weapon Attacks buff, a melee-only WS debuff, an
+  incoming-attack Damage halve); `Multiply`/`Divide` verbs (e.g. "halve the Damage characteristic of
+  that attack"); evaluating a `KeywordRuleTarget`/`UnconditionalRuleTarget` predicate against an
+  actual resolved roster; applying/executing any classified Effect anywhere; and any live/runtime LLM
+  call — the offline, batch LLM-assisted discovery pass described below remains real future work,
+  unstarted. One real, confirmed extraction gap found by the corpus run and deliberately not fixed
+  here (out of this slice's Effect-pattern scope): Marshal's Household's actual "+1 OC" shorthand
+  phrasing isn't recognized — only the "Add N to the X characteristic" phrasing is.
+
+  **Six real gaps caught live during a sustained corpus-report review (2026-09-08, same day), all
+  fixed** — none caught by the original ground-truth/negative-control unit tests (task 3.5) or the
+  first mechanical corpus run (task 4.3), every one surfaced only once a person actually read the
+  report's real output and pushed on something that looked off. In the order found: (1) every
+  word-literal regex except `AllCapsKeywordPhrase` was case-sensitive, so real corpus capitalization
+  drift (`"The bearer has a 4+ Invulnerable save."`, capital I) silently missed its `Set InSv` Effect
+  - now case-insensitive, `AllCapsKeywordPhrase` deliberately excepted (capitalization is its actual
+  signal there). (2) the corpus report originally grouped by `(Name, Text)`, artificially splitting one
+  real classification result across several rows whenever different wargear names shared identical
+  text (Astartes shield/Blizzard shield/Storm Shield/etc. all granting the identical sentence) -
+  regrouped by Text alone. (3) `Normalize`'s own doc comment claimed it handled a U+00A0 NBSP quirk
+  but it never actually did (a stale claim, not code) - surfaced by a stray garbled byte in the
+  report's console output that turned out to be a real console-encoding bug too (fixed:
+  `Console.OutputEncoding = Encoding.UTF8`) sitting on top of the missing NBSP normalization (also
+  fixed). (4) `InvulnerableSaveGrant` matched an attack-type-restricted/split save ("...invulnerable
+  save against ranged attacks...") as an unconditional flat grant - user-flagged directly from real
+  output (Chaos Knights' "Ensorcelled Shield"/"Veil of Medrengard") - fixed with a negative lookahead.
+  (5) the deepest one: both Effect patterns matched anywhere in arbitrarily long prose, including
+  inside a comma-joined conditional preamble ("If it does, until the end of the phase, the bearer has
+  a 2+ invulnerable save.") or a bulleted/headed "select one of the following" menu item (Moment
+  Shackle's two alternatives; Combat Drugs'/Noospheric Transference's option lists) - both wrongly
+  extracted as unconditional facts. Fixed with `SentenceStart`, a structural anchor requiring a match
+  begin at the true start of its own sentence (a period, deliberately not a bare newline or bullet -
+  both are confirmed real menu-item separators, not sentence boundaries) - the user's own explicit
+  ask for a general fix over a narrower "deny specific trigger phrases" patch. (6) `AttachedUnitPhrase`
+  recognized only "the bearer's unit," missing "models in this unit" (functionally the same claim) -
+  user-flagged directly ("Astartes Banner" wrongly landed as `Self`) - widened after surveying ~30 real
+  corpus occurrences with zero counter-examples. A live reminder that "the tests pass and the corpus
+  scan ran clean" is not the same bar as "a person looked at the real output and it made sense" — see
+  [[feedback_verify_bsdata_mapper_changes_against_real_export]]. Full detail and regression-test
+  references for each of the six: `classify-rule-effects-from-text/tasks.md`'s task 4.3 notes.
+
+  **Caveated rule-effect classifications - a real, confirmed, NOT-yet-built idea, surfaced by the same
+  live review**: several of the 20 real Effect results correctly extract their `CharacteristicEffect`
+  but the source text also states additional content `RuleClassification` has no vocabulary for at
+  all - silently dropped, with no signal the classification is incomplete. Confirmed real examples:
+  Blastajet Force Field (`Set InSv 4` - text also states losing a keyword), Leader-beast (`Set InSv 4`
+  - text also grants two keywords and a separate ability), Lesk's Heroes (`Improve Ld 1` - text also
+  grants a re-roll ability), Redoubtable Machine Spirit (`Set InSv 5` - text also states a recurring
+  per-Command-phase wound regen). The user's own framing: the characteristic mutation fully resolves,
+  but the *ability as a whole* is still "caveated" against something - the mirror image of
+  `CharacteristicView.IsCaveated` (there, the number can't resolve but everything else is known; here,
+  the number resolves but something else can't be represented). Natural shape for a future fix:
+  `RuleClassification` gains something like an `IsCaveated`/`AdditionalContent` signal alongside
+  `Target`/`Effects`, populated whenever recognized non-Effect content (a keyword grant/removal, an
+  ability grant, a recurring non-characteristic effect) is detected trailing a matched Effect clause -
+  not attempting to classify what the extra content IS, just that there is some. Unscoped, not started.
+
   **Still not built**: computing an actual `DerivedValue` for any caveat this shipped work surfaces
   (the explicit "resolved" phase) — the caveat is display-only, "this characteristic is affected,"
   never "by how much, resulting in what." Also still not built: tier 3+ conditions (a sibling
