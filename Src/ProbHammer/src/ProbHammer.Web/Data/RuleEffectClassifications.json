@@ -12,7 +12,12 @@
           "amount": 4
         }
       ],
-      "note": null
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Brute Shield"
+      ]
     },
     {
       "text": "**^^Imperial Knights^^** model only. The bearer has a 5+ invulnerable save.",
@@ -26,7 +31,107 @@
           "amount": 5
         }
       ],
-      "note": null
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Sanctuary"
+      ]
+    },
+    {
+      "text": "**^^Infantry Warboss^^** model only. Add 2 to the bearer's Wounds characteristic.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "W",
+          "verb": "Improve",
+          "amount": 2
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Da Biggest Boss"
+      ]
+    },
+    {
+      "text": "**^^Shield-Captain^^** or **^^Blade Champion^^** model only. Add 2 to the bearer's Wounds characteristic.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "W",
+          "verb": "Improve",
+          "amount": 2
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Auric Mantle"
+      ]
+    },
+    {
+      "text": "**^^Tyranids Monster^^** only. Add 3 to the bearer's Objective Control characteristic.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "Oc",
+          "verb": "Improve",
+          "amount": 3
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Ominous Presence"
+      ]
+    },
+    {
+      "text": "**^^Vehicle Officer^^** model only. Add 3 to the bearer's Objective Control characteristic.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "Oc",
+          "verb": "Improve",
+          "amount": 3
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Regimental Banner"
+      ]
+    },
+    {
+      "text": "ADEPTUS ASTARTES TERMINATOR model only. This unit has +1 OC.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "Oc",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Thirst for Glory"
+      ]
     },
     {
       "text": "Add 1 to the Leadership characteristic of models in this unit and you can re-roll Battle-shock and Leadership tests taken for this unit.",
@@ -40,7 +145,12 @@
           "amount": 1
         }
       ],
-      "note": "Leadership improvement is correctly extracted, but the text also grants a re-roll ability (Battle-shock and Leadership tests), which the classifier has no vocabulary to extract."
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "Leadership improvement is correctly extracted, but the text also grants a re-roll ability (Battle-shock and Leadership tests), which the classifier has no vocabulary to extract.",
+      "names": [
+        "Lesk’s Heroes"
+      ]
     },
     {
       "text": "Add 1 to the Objective Control characteristic of models in the bearer's unit.",
@@ -54,7 +164,16 @@
           "amount": 1
         }
       ],
-      "note": null
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Ancient's Banner",
+        "Regimental Banner",
+        "Regimental Standard",
+        "Sanguinary Banner",
+        "Vexilla"
+      ]
     },
     {
       "text": "Add 1 to the Objective Control characteristic of models in this unit.",
@@ -68,7 +187,12 @@
           "amount": 1
         }
       ],
-      "note": null
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Astartes Banner"
+      ]
     },
     {
       "text": "Add 1 to the Toughness characteristic of **^^Emperor's Children^^** units from your Crusade army.",
@@ -83,7 +207,12 @@
           "amount": 1
         }
       ],
-      "note": null
+      "isCaveated": true,
+      "fullyHandled": true,
+      "note": null,
+      "names": [
+        "Army: Shivversplint"
+      ]
     },
     {
       "text": "Add 1 to the Toughness characteristic of models in this unit.",
@@ -97,7 +226,128 @@
           "amount": 1
         }
       ],
-      "note": null
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Leathery Resilience"
+      ]
+    },
+    {
+      "text": "Add 1 to the bearer's Toughness characteristic and the bearer has the Feel No Pain 5+ ability.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "T",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "Toughness improvement is correctly extracted, but the text also grants a Feel No Pain 5+ ability, which the classifier has no vocabulary to extract.",
+      "names": [
+        "Brazen Form"
+      ]
+    },
+    {
+      "text": "Add 1 to the bearer's Toughness characteristic. While the bearer is using the Unnatural Fortitude ability, each time an attack with a Damage characteristic of 1 is allocated to the bearer, add 1 to any armour saving throw made against that attack.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "T",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "Toughness improvement is correctly extracted, but the text also states a conditional armour-save bonus against low-Damage attacks, which the classifier has no vocabulary to extract.",
+      "names": [
+        "Fleshmetal Fusion"
+      ]
+    },
+    {
+      "text": "Add 1 to the bearer's Wounds characteristic.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "W",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Praesidium Shield",
+        "Relic Shield",
+        "Shield Drone"
+      ]
+    },
+    {
+      "text": "Add 2 to the bearer's Objective Control characteristic, and at the end of your Command phase, if the bearer is within range of an objective marker that is not in your deployment zone, you gain 1CP. In addition, at the end of the battle, if the bearer was in your Crusade army and you won that battle, roll one D6: on a 4+, your Crusade force acquires one Archeotech Part.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "Oc",
+          "verb": "Improve",
+          "amount": 2
+        }
+      ],
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "Objective Control improvement is correctly extracted, but the text also states a Command-phase CP-gain condition and an end-of-battle Crusade Archeotech Part roll, which the classifier has no vocabulary to extract.",
+      "names": [
+        "Augur of the First Reclamation"
+      ]
+    },
+    {
+      "text": "Add 2 to the bearer's Wounds characteristic.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "W",
+          "verb": "Improve",
+          "amount": 2
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Ironskein"
+      ]
+    },
+    {
+      "text": "Add 2 to the bearer's Wounds characteristic. Each time the bearer's unit makes a Malefic Surge, you can re-roll the Leadership test taken to see if it suffers any mortal wounds.",
+      "target": {
+        "kind": "AttachedUnit"
+      },
+      "effects": [
+        {
+          "characteristic": "W",
+          "verb": "Improve",
+          "amount": 2
+        }
+      ],
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "Wounds improvement is correctly extracted, but the text also grants a Malefic-Surge Leadership re-roll, which the classifier has no vocabulary to extract.",
+      "names": [
+        "Blasphemous Engine"
+      ]
     },
     {
       "text": "Adeptus Astartes Vehicle model only. The bearer has a 5+ invulnerable save and, at the end of your\nCommand phase, the bearer regains 1 lost wound.",
@@ -111,7 +361,31 @@
           "amount": 5
         }
       ],
-      "note": "InSv grant is correctly extracted, but the text also states a recurring per-Command-phase wound-regeneration effect, which the classifier has no vocabulary to extract."
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "InSv grant is correctly extracted, but the text also states a recurring per-Command-phase wound-regeneration effect, which the classifier has no vocabulary to extract.",
+      "names": [
+        "Redoubtable Machine Spirit"
+      ]
+    },
+    {
+      "text": "CHAOS LORD model only. Add 1 to the bearer's Wounds characteristic and the bearer has the Feel No Pain 5+ ability.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "W",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "Wounds improvement is correctly extracted, but the text also grants a Feel No Pain 5+ ability, which the classifier has no vocabulary to extract.",
+      "names": [
+        "Living Carapace"
+      ]
     },
     {
       "text": "Chaplain Cassius has a 4+ invulnerable save.",
@@ -125,7 +399,32 @@
           "amount": 4
         }
       ],
-      "note": null
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Invulnerable Save"
+      ]
+    },
+    {
+      "text": "Friendly SWORD BRETHREN SQUAD units have +1 OC.\n\n\nRestrictions: Your army can include BLACK TEMPLARS units, but it cannot include any ADEPTUS ASTARTES units drawn from any other Chapter.",
+      "target": {
+        "kind": "Keyword",
+        "keyword": "SWORD BRETHREN SQUAD"
+      },
+      "effects": [
+        {
+          "characteristic": "Oc",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": true,
+      "fullyHandled": true,
+      "note": "Objective Control improvement is correctly and completely extracted. The trailing Restrictions paragraph is army-composition eligibility text (which sub-Chapters may be included alongside Black Templars), not a game effect - the same kind of content an already-excluded LEADING restriction (e.g. 'Imperial Knights model only.') already isn't caveated for, just trailing instead of leading here. Confirmed real and recurring: 12 Space Marines chapter-Detachment rules share this exact 'Restrictions:' shape, though this is currently the only one that also produces an extracted Effect. Marked fullyHandled rather than fixing the classifier itself, since only one entry is affected today - see widen-rule-effect-classification-coverage's own follow-up notes and .claude/vnext-ideas.md for the deferred general fix (recognizing a trailing 'Restrictions:' section structurally, mirroring the existing leading-restriction exclusion) if more Detachment-rule Effects surface this shape later.",
+      "names": [
+        "Faith-Fuelled Resolve"
+      ]
     },
     {
       "text": "The bearer has a 2+ invulnerable save.",
@@ -139,7 +438,12 @@
           "amount": 2
         }
       ],
-      "note": null
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Personal: Sanctus vi"
+      ]
     },
     {
       "text": "The bearer has a 4+ Invulnerable save.",
@@ -153,7 +457,12 @@
           "amount": 4
         }
       ],
-      "note": null
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Storm Shield"
+      ]
     },
     {
       "text": "The bearer has a 4+ invulnerable save",
@@ -167,7 +476,12 @@
           "amount": 4
         }
       ],
-      "note": null
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Storm Shield"
+      ]
     },
     {
       "text": "The bearer has a 4+ invulnerable save and each time an attack is allocated to the bearer, subtract 1 from the Damage characteristic of that attack.",
@@ -181,7 +495,12 @@
           "amount": 4
         }
       ],
-      "note": "InSv grant is correctly extracted, but the text also states a per-attack Damage reduction, which the classifier has no vocabulary to extract."
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "InSv grant is correctly extracted, but the text also states a per-attack Damage reduction, which the classifier has no vocabulary to extract.",
+      "names": [
+        "Scattershield"
+      ]
     },
     {
       "text": "The bearer has a 4+ invulnerable save, but it loses the **^^Grenades^^** keyword.",
@@ -195,7 +514,12 @@
           "amount": 4
         }
       ],
-      "note": "InSv grant is correctly extracted, but the text also states the bearer loses the Grenades keyword, which the classifier has no vocabulary to extract."
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "InSv grant is correctly extracted, but the text also states the bearer loses the Grenades keyword, which the classifier has no vocabulary to extract.",
+      "names": [
+        "Blastajet Force Field"
+      ]
     },
     {
       "text": "The bearer has a 4+ invulnerable save.",
@@ -209,7 +533,23 @@
           "amount": 4
         }
       ],
-      "note": null
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Astartes shield",
+        "Blizzard shield",
+        "Brute Shield",
+        "Dispersion Shield",
+        "Endurant shield",
+        "Forceshield",
+        "Mistshield",
+        "Scattershield",
+        "Shield Generator",
+        "Shimmershield",
+        "Storm Shield",
+        "Weavefield crest"
+      ]
     },
     {
       "text": "The bearer has a 5+ invulnerable save.",
@@ -223,7 +563,32 @@
           "amount": 5
         }
       ],
-      "note": null
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Refractor Field",
+        "Shield Dome"
+      ]
+    },
+    {
+      "text": "This model has +2 W.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "W",
+          "verb": "Improve",
+          "amount": 2
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Swollen with Power"
+      ]
     },
     {
       "text": "This model has a 4+ Invulnerable save.",
@@ -237,7 +602,12 @@
           "amount": 4
         }
       ],
-      "note": null
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Storm Shield"
+      ]
     },
     {
       "text": "This model has a 4+ invulnerable save, add the **^^Psyker^^** and **^^Synapse^^** keywords, and it gains the Shadow in the Warp ability. If it is an **^^Infantry^^** model, add the following unit to the list of units this model can be attached to: **^^Neurogaunts^^**.",
@@ -251,7 +621,12 @@
           "amount": 4
         }
       ],
-      "note": "InSv grant is correctly extracted, but the text also grants two keywords (Psyker, Synapse), the Shadow in the Warp ability, and a conditional attachment eligibility, none of which the classifier extracts."
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "InSv grant is correctly extracted, but the text also grants two keywords (Psyker, Synapse), the Shadow in the Warp ability, and a conditional attachment eligibility, none of which the classifier extracts.",
+      "names": [
+        "Leader-beast"
+      ]
     },
     {
       "text": "This model has a 4+ invulnerable save.",
@@ -265,7 +640,13 @@
           "amount": 4
         }
       ],
-      "note": null
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Invulnerable Save",
+        "Invulnerable Save (4+)"
+      ]
     },
     {
       "text": "This model has a 5+ invulnerable save.",
@@ -279,7 +660,50 @@
           "amount": 5
         }
       ],
-      "note": null
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Invulnerable Save (5+)"
+      ]
+    },
+    {
+      "text": "This unit has +1 OC.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "characteristic": "Oc",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Writ of Compunction"
+      ]
+    },
+    {
+      "text": "^^**Haemonculus**^^ model only. Add 1 to the bearer's Wounds characteristic and add 1 to the Toughness characteristic of models in the bearer's unit.",
+      "target": {
+        "kind": "AttachedUnit"
+      },
+      "effects": [
+        {
+          "characteristic": "W",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": "A confirmed, known caveat-signal false negative (widen-rule-effect-classification-coverage): the text's second clause ('add 1 to the Toughness characteristic of models in the bearer's unit') is a real, unextracted Improve T Effect - the same deliberately-parked 'and add...' SentenceStart gap that also affects Righteous Zeal. The caveat signal misses it here specifically because the AttachedUnitPhrase match that classifies Target also happens to consume the tail of that same unextracted clause, leaving nothing trailing after it. Tracked in .claude/vnext-ideas.md alongside the parked Effect-extraction gap - not fixed by this entry's own classification.",
+      "names": [
+        "Master Artisan"
+      ]
     }
   ]
 }

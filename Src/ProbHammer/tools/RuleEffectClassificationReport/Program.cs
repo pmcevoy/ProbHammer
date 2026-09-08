@@ -35,7 +35,16 @@ namespace ProbHammer.Tools.RuleEffectClassificationReport;
 /// is diverted from its normal Effect/Target-only/default-only section into a separate "Changed since
 /// verified" listing driven by <see cref="RuleClassificationDiff"/> - an unchanged, already-verified
 /// result collapses to a summary count instead of reprinting, while any drift is always surfaced. See
-/// that change's proposal.md/design.md for the full rationale.</summary>
+/// that change's proposal.md/design.md for the full rationale.
+///
+/// Since widen-rule-effect-classification-coverage, a further "Caveated baseline entries needing
+/// review" section lists every baselined text whose current <see cref="RuleClassification.IsCaveated"/>
+/// is true and whose baseline entry carries no <see cref="RuleClassificationBaselineEntry.Note"/> yet -
+/// independent of the Unchanged/Drift/NewInformation split above, since a caveated-and-unchanged entry
+/// would otherwise collapse into the summary count and never prompt a return visit. A human reviewing
+/// this list either extends the classifier to capture the extra content, or accepts the entry as-is by
+/// hand-adding a `note` recording that decision - the only field this tool never computes on a human's
+/// behalf. Adding the note is what removes the entry from this list on the next run.</summary>
 public static class Program
 {
     /// <summary>Same literal path already documented in CLAUDE.md/.claude/domain-model-11e.md and
@@ -226,10 +235,12 @@ public static class Program
             .Where(b => b.Diff.Status != RuleClassificationBaselineStatus.Unchanged)
             .OrderBy(b => b.Result.Names[0], StringComparer.OrdinalIgnoreCase)
             .ToList();
+        var fullyHandledCount = baseline.Entries.Values.Count(e => e.FullyHandled);
 
         Console.WriteLine();
         Console.WriteLine(
-            $"=== Verified baseline: {baseline.Entries.Count} tracked, {unchanged.Count} unchanged, {changed.Count} changed since verified ===");
+            $"=== Verified baseline: {baseline.Entries.Count} tracked, {unchanged.Count} unchanged, " +
+            $"{changed.Count} changed since verified, {fullyHandledCount} fully handled ===");
         foreach (var (r, diff) in changed)
         {
             var kind = diff.Status == RuleClassificationBaselineStatus.Drift ? "DRIFT" : "NEW INFO";
@@ -241,9 +252,39 @@ public static class Program
                     $"    {change.Field}: baseline={change.BaselineValue?.ToJsonString() ?? "null"} -> current={change.CurrentValue?.ToJsonString() ?? "null"}");
             }
 
+            if (baseline.Entries[r.Text].FullyHandled)
+                Console.WriteLine("    [FULLY HANDLED] - reviewed, no further reading needed despite IsCaveated");
             if (baseline.Entries[r.Text].Note is { } note)
                 Console.WriteLine($"    note: {note}");
             var extra = r.Locations.Count > 3 ? $", +{r.Locations.Count - 3} more" : "";
+            Console.WriteLine($"    seen on: {string.Join("; ", r.Locations.Take(3))}{extra}");
+        }
+
+        // A baselined text's own IsCaveated says "this text states more than Target/Effects
+        // captured" - a standing question ("extend the classifier, or accept this?") that a `note`
+        // is the only thing that actually answers. Without this section, a caveated-and-unchanged
+        // entry silently vanishes into the "unchanged" collapse above forever, with nothing ever
+        // prompting a return visit - this list is that prompt, independent of Drift/NewInformation
+        // status (a caveated entry with no note still needs a decision even when nothing else about
+        // it changed this run). Once reviewed, adding a `note` to the entry is what removes it from
+        // this list on the next run - the same mechanism the five originally-seeded caveated entries
+        // already used, just not previously required for every future caveated entry too.
+        var caveatedNeedingReview = baselined
+            .Where(b => b.Result.Classification.IsCaveated
+                        && baseline.Entries[b.Result.Text].Note is null
+                        && !baseline.Entries[b.Result.Text].FullyHandled)
+            .OrderBy(b => b.Result.Names[0], StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        Console.WriteLine();
+        Console.WriteLine(
+            $"=== Caveated baseline entries needing review (no note recorded yet): {caveatedNeedingReview.Count} ===");
+        foreach (var (r, _) in caveatedNeedingReview)
+        {
+            var namesLabel = DescribeNames(r.Names);
+            var extra = r.Locations.Count > 3 ? $", +{r.Locations.Count - 3} more" : "";
+            Console.WriteLine($"- {namesLabel} -> {Describe(r.Classification)}");
+            Console.WriteLine($"    text: \"{Truncate(r.Text)}\"");
             Console.WriteLine($"    seen on: {string.Join("; ", r.Locations.Take(3))}{extra}");
         }
 
@@ -252,12 +293,21 @@ public static class Program
 
         // Only refreshes entries already tracked in the baseline (matched by Text against this run's
         // corpus) - a genuinely new entry must first be added to the checked-in JSON by hand (at
-        // minimum its Text) before this can snapshot a real classification onto it. Preserves Note
-        // untouched - a fresh classification run can't derive that by itself.
+        // minimum its Text) before this can snapshot a real classification onto it. Names is refreshed
+        // here too - unlike Note/FullyHandled, it's a corpus-derived fact (which abilities currently
+        // carry this text), not a human judgment call, so it belongs alongside Target/Effects/
+        // IsCaveated. Note/FullyHandled are preserved untouched - a fresh classification run can't
+        // derive either by itself.
         foreach (var (r, _) in baselined)
         {
             var existing = baseline.Entries[r.Text];
-            baseline.Upsert(existing with { Target = r.Classification.Target, Effects = r.Classification.Effects });
+            baseline.Upsert(existing with
+            {
+                Target = r.Classification.Target,
+                Effects = r.Classification.Effects,
+                Names = r.Names,
+                IsCaveated = r.Classification.IsCaveated
+            });
         }
 
         baseline.Save(baselinePath);
@@ -306,7 +356,9 @@ public static class Program
             ? "no effects"
             : string.Join(", ", classification.Effects.Select(e => $"{e.Verb} {e.Characteristic} {e.Amount}"));
 
-        return $"Target={target}; Effects=[{effects}]";
+        var caveated = classification.IsCaveated ? "; CAVEATED" : "";
+
+        return $"Target={target}; Effects=[{effects}]{caveated}";
     }
 
     private sealed class TextOccurrence

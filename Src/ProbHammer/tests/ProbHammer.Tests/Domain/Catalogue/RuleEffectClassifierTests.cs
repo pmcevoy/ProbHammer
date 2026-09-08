@@ -245,11 +245,13 @@ public class RuleEffectClassifierTests
     }
 
     [Fact]
-    public void MarshalsHousehold_ClassifiesAsKeywordTarget_DespiteFurtherCapsAndUnitsInRestrictions()
+    public void MarshalsHousehold_ClassifiesAsKeywordTarget_WithShorthandImproveEffect()
     {
         // The Restrictions paragraph itself contains two further ALL-CAPS + "units" occurrences
         // ("BLACK TEMPLARS units", "ADEPTUS ASTARTES units") - the classifier must pick the FIRST
-        // occurrence in the text (the actual effect statement), not one of these.
+        // occurrence in the text (the actual effect statement), not one of these. The "+1 OC"
+        // shorthand was a confirmed extraction gap (only "Add N to the X characteristic" was
+        // recognized) until ShorthandCharacteristicPlus was added.
         const string text =
             "Friendly SWORD BRETHREN SQUAD units have +1 OC.\n\n\nRestrictions: Your army can " +
             "include BLACK TEMPLARS units, but it cannot include any ADEPTUS ASTARTES units drawn " +
@@ -258,9 +260,51 @@ public class RuleEffectClassifierTests
         var result = RuleEffectClassifier.Classify("Faith-Fuelled Resolve", text);
 
         result.Target.Should().Be(new KeywordRuleTarget("SWORD BRETHREN SQUAD"));
-        // The "+1 OC" shorthand is a real, confirmed extraction gap - only the "Add N to the X
-        // characteristic" phrasing is recognized per design.md's task 3.3 scope, not this shorthand.
+        result.Effects.Should().Equal(new CharacteristicEffect("Oc", EffectVerb.Improve, 1));
+    }
+
+    [Theory]
+    [InlineData("+1 OC")]
+    [InlineData("+1 to OC")]
+    [InlineData("+1 oc")]
+    public void ShorthandCharacteristicPlus_RecognizesPlusNCharacteristic(string grant)
+    {
+        var result = RuleEffectClassifier.Classify("Test Ability",
+            $"Friendly TEST SQUAD units have {grant}.");
+
+        result.Effects.Should().Equal(new CharacteristicEffect("Oc", EffectVerb.Improve, 1));
+    }
+
+    [Fact]
+    public void ShorthandCharacteristicPlus_EmbeddedInConditionalClause_ExtractsNoEffect()
+    {
+        // Same SentenceStart anchor as every other Effect pattern - a shorthand grant gated behind a
+        // conditional preamble is not an unconditional fact.
+        var result = RuleEffectClassifier.Classify("Test Ability",
+            "If it does, until the end of the phase, this unit has +1 OC.");
+
         result.Effects.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("Add 2 to the bearer's Wounds characteristic.")]
+    [InlineData("Add 1 to the bearer's Wounds characteristic.")]
+    public void AddCharacteristic_RecognizesPossessivePhrasing(string text)
+    {
+        // Confirmed real, previously-dropped examples: Blasphemous Engine and Da Krushin' Armour both
+        // use "the bearer's X characteristic" rather than the plain "the X characteristic" phrasing.
+        var result = RuleEffectClassifier.Classify("Test Ability", text);
+
+        result.Effects.Should().ContainSingle().Which.Characteristic.Should().Be("W");
+    }
+
+    [Fact]
+    public void AddCharacteristic_RecognizesMoveAsMovementSynonym()
+    {
+        var result = RuleEffectClassifier.Classify("Test Ability",
+            "Add 2 to the Move characteristic of models in the bearer's unit.");
+
+        result.Effects.Should().Equal(new CharacteristicEffect("M", EffectVerb.Improve, 2));
     }
 
     [Theory]
@@ -274,5 +318,68 @@ public class RuleEffectClassifierTests
 
         result.Target.Should().Be(new SelfRuleTarget());
         result.Effects.Should().BeEmpty();
+    }
+
+    // Ground-truth texts below are taken verbatim from the checked-in baseline
+    // (src/ProbHammer.Web/Data/RuleEffectClassifications.json) - the five carrying a known-incomplete
+    // `note` are the confirmed real caveated examples; the other two are the confirmed real lookalikes
+    // (a leading eligibility restriction before the matched clause, with nothing trailing) that must
+    // NOT be flagged caveated - see widen-rule-effect-classification-coverage design.md.
+
+    [Theory]
+    [InlineData(
+        "Add 1 to the Leadership characteristic of models in this unit and you can re-roll Battle-shock and Leadership tests taken for this unit.",
+        "Lesk's Heroes")]
+    [InlineData(
+        "Adeptus Astartes Vehicle model only. The bearer has a 5+ invulnerable save and, at the end of your\nCommand phase, the bearer regains 1 lost wound.",
+        "Redoubtable Machine Spirit")]
+    [InlineData(
+        "The bearer has a 4+ invulnerable save and each time an attack is allocated to the bearer, subtract 1 from the Damage characteristic of that attack.",
+        "Scattershield")]
+    [InlineData(
+        "The bearer has a 4+ invulnerable save, but it loses the **^^Grenades^^** keyword.",
+        "Blastajet Force Field")]
+    [InlineData(
+        "This model has a 4+ invulnerable save, add the **^^Psyker^^** and **^^Synapse^^** keywords, and it gains the Shadow in the Warp ability. If it is an **^^Infantry^^** model, add the following unit to the list of units this model can be attached to: **^^Neurogaunts^^**.",
+        "Leader-beast")]
+    public void KnownCaveatedTexts_ExtractCorrectEffect_AndAreMarkedCaveated(string text, string name)
+    {
+        var result = RuleEffectClassifier.Classify(name, text);
+
+        result.Effects.Should().NotBeEmpty();
+        result.IsCaveated.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("**^^Augmented Bone 'Ead^^** only. This model has a 4+ invulnerable save.")]
+    [InlineData("**^^Imperial Knights^^** model only. The bearer has a 5+ invulnerable save.")]
+    public void LeadingRestrictionWithNothingTrailing_IsNotMarkedCaveated(string text)
+    {
+        // A leading eligibility restriction ("X model only.") before the matched clause is not the
+        // same kind of gap as real trailing content - the signal only ever looks after the LAST
+        // contributing match, so a leading restriction never trips it.
+        var result = RuleEffectClassifier.Classify("Test Ability", text);
+
+        result.Effects.Should().NotBeEmpty();
+        result.IsCaveated.Should().BeFalse();
+    }
+
+    [Fact]
+    public void OrdinaryCleanEffectResult_IsNotMarkedCaveated()
+    {
+        var result = RuleEffectClassifier.Classify("Shield Dome",
+            "The bearer has a 5+ invulnerable save.");
+
+        result.IsCaveated.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ZeroEffectClassification_IsNeverMarkedCaveated()
+    {
+        var result = RuleEffectClassifier.Classify("Templar Vows",
+            "for **^^Adeptus Astartes^^** units from your army, with no direct characteristic mutation.");
+
+        result.Effects.Should().BeEmpty();
+        result.IsCaveated.Should().BeFalse();
     }
 }

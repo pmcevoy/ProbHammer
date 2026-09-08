@@ -29,4 +29,15 @@ public class RuleClassificationTests
         classification.Effects.Should().NotBeNull();
         classification.Effects.Should().BeEmpty();
     }
+
+    [Fact]
+    public void RuleClassification_ConstructedWithoutIsCaveated_DefaultsToFalse()
+    {
+        // The "boring default" RuleClassificationDiff.DefaultClassification reads off this type's own
+        // serialization for schema-growth backfill - see widen-rule-effect-classification-coverage
+        // design.md.
+        var classification = new RuleClassification(new SelfRuleTarget(), []);
+
+        classification.IsCaveated.Should().BeFalse();
+    }
 }

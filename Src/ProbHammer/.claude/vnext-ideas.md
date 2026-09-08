@@ -160,13 +160,13 @@ entry once it's been turned into a change (archived changes remain the historica
   that attack"); evaluating a `KeywordRuleTarget`/`UnconditionalRuleTarget` predicate against an
   actual resolved roster; applying/executing any classified Effect anywhere; and any live/runtime LLM
   call — the offline, batch LLM-assisted discovery pass described below remains real future work,
-  unstarted. One real, confirmed extraction gap found by the corpus run and deliberately not fixed
-  here (out of this slice's Effect-pattern scope): Marshal's Household's actual "+1 OC" shorthand
-  phrasing isn't recognized — only the "Add N to the X characteristic" phrasing is. Re-confirmed
-  in a follow-up session (2026-09-08, same day) against a fresh corpus run: still exactly one
-  occurrence in the whole 3830-text corpus. Queued to fix (a small, structural "+N Characteristic"
-  pattern addition, same low-risk class as the possessive-phrasing gap above) once
-  [[project_baseline_rule_effect_classifications_change]] is applied.
+  unstarted. One real, confirmed extraction gap found by the corpus run, fixed by
+  `widen-rule-effect-classification-coverage` (2026-09-08): Marshal's Household's actual "+1 OC"
+  shorthand phrasing wasn't recognized — only the "Add N to the X characteristic" phrasing was. A new
+  `ShorthandCharacteristicPlus` pattern now recognizes "+N Code" (any of the six Statline scalar
+  codes), anchored by `SentenceStart` like every other Effect pattern. A live corpus re-run after
+  landing found this pattern also catches several more real occurrences beyond the one originally
+  confirmed (e.g. "This model has +2 W.", "This unit has +1 OC.") — see that change's own tasks.md.
 
   **Six real gaps caught live during a sustained corpus-report review (2026-09-08, same day), all
   fixed** — none caught by the original ground-truth/negative-control unit tests (task 3.5) or the
@@ -220,60 +220,100 @@ entry once it's been turned into a change (archived changes remain the historica
   ability grant, a recurring non-characteristic effect) is detected trailing a matched Effect clause -
   not attempting to classify what the extra content IS, just that there is some.
 
-  **A concrete, validated structural signal for this was worked out (not yet implemented)**: take the
-  end position of every regex match that contributed to a text's Target or Effects (both count, not
-  just Effects), and look at whatever text remains after the LAST one. Trim whitespace and a single
-  trailing period; non-empty remainder → caveated. Checked by hand against all 20 real Effect results
-  and reproduces the desired five-caveated/fifteen-clean split exactly, including correctly staying
-  quiet on two texts that look superficially similar but aren't caveats - Sanctuary and Brute Shield
-  both have a *leading* "X model only." restriction sentence before the matched clause with nothing
-  trailing after it, and the signal only ever looks after the last match, so a leading eligibility
-  restriction never trips it (matches the intuition that "who this applies to" isn't the same kind of
-  gap as "what else it does"). Purely positional, no phrase denylist, generalizes for free to effects
-  not yet in the vocabulary - same class of structural anchor as `SentenceStart` itself. Only
-  meaningful when at least one match already succeeded (Effects.Count > 0 today); says nothing new
-  about the 618 Target-only / 3192 default-only buckets, where there's no partial success to caveat.
+  **Implemented by `widen-rule-effect-classification-coverage` (2026-09-08).** The validated structural
+  signal described above shipped unchanged from its hand-designed shape: `RuleClassification` gained
+  `IsCaveated` (default `false`), computed only when at least one Effect was extracted, from the end
+  position of the last regex match that contributed to either Target or Effects, with the remaining
+  text (trimmed of whitespace, then a single trailing period) checked for emptiness. A full corpus
+  re-run after landing confirmed the hand-validated split on all 20 original Effect results, correctly
+  including the two leading-restriction lookalikes (Sanctuary/Brute-Shield-shaped texts) staying clean.
 
-  **No longer blocked - `baseline-rule-effect-classifications` implemented 2026-09-08, same day.** A
-  checked-in, Text-keyed baseline (`src/ProbHammer.Web/Data/RuleEffectClassifications.json`,
-  `RuleClassificationBaseline`/`RuleClassificationDiff` in `Domain/Catalogue`) now lets
-  `RuleEffectClassificationReport` collapse an already-verified, unchanged result to a summary count
-  instead of reprinting it, while surfacing real drift or new-field information every time - seeded
-  with all 20 current Effect results (5 carrying a known-incomplete `Note`, matching the caveat
-  examples just above). See `.claude/domain-model-11e.md`'s "Verified-Classification Baseline"
-  section for the full mechanism. This caveat work - along with the two smaller fixes below - is
-  queued to land on top of it, not blocked by it any longer.
+  **A real, previously-unnoticed sixth caveat was found on re-run, not just the original five**: "Army:
+  Shivversplint"'s Toughness buff for Emperor's Children units ("...from your Crusade army.") now
+  computes caveated - the trailing "from your Crusade army" names a real Crusade-mode-only scope
+  qualifier the classifier's `KeywordRuleTarget` doesn't capture, a genuine, correct new finding rather
+  than a false positive.
 
-  **Three further small, real gaps found while chasing the caveat idea in the same follow-up
-  session, none yet fixed**:
-  - **Possessive characteristic phrasing** - `AddCharacteristic` requires literally
-    `the {Characteristic} characteristic`; real text often says `the bearer's {Characteristic}
-    characteristic`, which doesn't match at all. Confirmed real (this is what silently dropped every
-    real Wounds-boosting ability found in the corpus): Blasphemous Engine ("Add 2 to the bearer's
-    Wounds characteristic."), Da Krushin' Armour, an Ork mega-armour item ("Add 1 to the bearer's
-    Wounds characteristic."), and the first clause of Master Artisan. Narrow, safe widening - an
-    optional possessive noun between "the" and the characteristic name, no anchor risk.
-  - **A second, riskier gap in the same Master Artisan text**: "Add 1 to the bearer's Wounds
-    characteristic **and add** 1 to the Toughness characteristic of models in the bearer's unit." -
-    the second clause has correct phrasing but still misses, since `SentenceStart` only accepts a
-    match right after a period, and this one starts after "and" mid-sentence. Naively accepting "and"
-    as an additional boundary would reopen exactly the bug `SentenceStart` was built to close: a real
-    corpus text (Righteous Zeal - "While the bearer's unit is Righteous, add 2 to the Attacks
-    characteristic **and add** 1 to the Damage characteristic...") has a second "and add" clause that
-    is STILL conditional on "Righteous," and only fails to false-positive today by the accident that
-    Attacks/Damage aren't yet in the `CharacteristicNames` allowlist. Any future "and"-boundary
-    widening needs to distinguish "and joins two coordinate effects" from "and continues a still-
-    conditional clause" structurally, not just accept any "and" - deliberately parked, not attempted.
-  - **"Move" vs "Movement" synonym gap** - real corpus text ("Add 2" to the Move characteristic of
-    models in the bearer's unit...") uses the abbreviated "Move," which doesn't match
-    `CharacteristicNames`' "Movement" key at all. Small, separate lookup-table gap.
-  - **A misclassification trap for future `Improve`/`Worsen`-verb work**: Sanctified-Orators-style
-    text ("Improve this model's Leadership characteristic **by 1 for every 5 models in this unit**")
-    is a *scaling* effect tied to unit size, not a flat amount - a future "Improve X characteristic by
-    N" pattern that doesn't also detect and exclude a "for every N models" qualifier would silently
-    misclassify this as a flat `Improve Ld 1` when it's actually much stronger for a large unit.
-    Worth remembering when the Improve/Worsen verb work (see the rulebook arithmetic section below)
-    eventually gets built.
+  **A real false-positive-IN-SPIRIT was found and given a proper fix, not a one-off workaround**:
+  Marshal's Household/Faith-Fuelled Resolve's own "+1 OC" shorthand correctly extracts, but its
+  trailing "Restrictions: Your army can include BLACK TEMPLARS units, but it cannot include any
+  ADEPTUS ASTARTES units..." paragraph trips `IsCaveated` too - even though, unlike the five genuine
+  caveated examples above, this trailing text names no game effect at all. It's the same *kind* of
+  content an already-excluded LEADING restriction ("Imperial Knights model only.") isn't caveated for
+  - just trailing instead of leading, which the purely positional signal has no way to recognize.
+  Confirmed NOT a one-off before deciding how to handle it: the identical "Restrictions:" shape recurs
+  **12 times** across Space Marines chapter Detachments in the live clone (Black Templars, Space
+  Wolves, Blood Angels, Dark Angels, etc.), though only this one entry currently produces an extracted
+  Effect - the other 11 grant things outside today's vocabulary (attack-restricted saves, weapon-profile
+  buffs, roll modifiers), so they never reach the caveat check at all yet.
+  
+  User-driven distinction that shaped the fix: `IsCaveated` staying `true` here is *correct* (there
+  genuinely is text left over) - what was missing was a way to say "and a human confirmed that leftover
+  text is not something the player ever needs to read," as opposed to the five genuine cases where the
+  player DOES need to read the ability text. `RuleClassificationBaselineEntry` gained `FullyHandled`
+  (bool, default `false`) for exactly this - a permanent human verdict, never computed, deliberately
+  kept OFF `RuleClassification` itself (so it can never inherit the schema-growth DRIFT-vs-NEW-INFO
+  problem described below - nothing computes it, so nothing needs to diff it) and never touched by
+  `--write-baseline` (mirrors `Note`). The report's "needing review" listing now excludes an entry
+  marked `FullyHandled` alongside one carrying a `Note`. Marshal's Household's own entry is now marked
+  `fullyHandled: true` with a note documenting the 12-occurrence finding.
+  
+  **The general fix (teaching the caveat signal to recognize a trailing "Restrictions:" section
+  structurally, mirroring the existing leading-restriction exclusion) was deliberately deferred, not
+  built** - only one of the 12 occurrences is actually reachable through the caveat check today, so
+  building classifier logic against a currently-N=1-active pattern would be exactly the kind of
+  premature complexity this codebase avoids elsewhere. Revisit if/when a future Effect-pattern widening
+  (a `WeaponProfile`-targeting Effect, an "advance/charge roll" verb, etc.) makes one of the other 11
+  reachable too - at that point "Restrictions:" would be confirmed as a real, general, worth-automating
+  structural marker rather than a single hand-noted exception.
+
+  **A real false NEGATIVE was also found, on newly-widened possessive-phrasing text, not yet fixed**:
+  Master Artisan ("Add 1 to the bearer's Wounds characteristic and add 1 to the Toughness
+  characteristic of models in the bearer's unit.") extracts only its first clause's `Improve W 1` (the
+  same already-parked "and add..." `SentenceStart` gap below), but the caveat signal ALSO fails to flag
+  it - the `AttachedUnitPhrase` match that classifies its `AttachedUnit` Target happens to consume the
+  tail end of the very same unextracted second clause, leaving nothing trailing to detect. Documented
+  on its own baseline entry's `note` rather than fixed - fixing it properly means solving the same
+  "and"-boundary ambiguity the parked gap below already describes, not a targeted caveat-signal patch.
+
+  **A real gap in the baseline mechanism's own schema-growth handling was found while backfilling
+  `IsCaveated` onto the existing 20 entries, confirmed but not fixed (out of scope for a
+  `rule-effect-classification` change - this is a `rule-effect-classification-baseline` concern)**:
+  `RuleClassificationBaselineEntry.Classification` always reconstructs a full `RuleClassification` via
+  its own record constructor, which means a genuinely-new field like `IsCaveated` is ALWAYS present
+  (at its default) in the serialized baseline node, never actually absent the way the "New
+  Classification Fields Backfill" requirement's own `NewInformation` status assumes. Practical effect:
+  every one of the six entries whose `IsCaveated` newly computed non-default value was reported as
+  `[DRIFT]` rather than `[NEW INFO]` on the one transitional run right after this field was added -
+  functionally harmless (the value still surfaced correctly, and one `--write-baseline` pass makes it
+  permanently `Unchanged` going forward), but a real, confirmed limitation for any FUTURE field added
+  to `RuleClassification` itself (as opposed to a field nested inside `RuleTarget`/
+  `CharacteristicEffect`, which `RuleClassificationDiff`'s own doc comment's claim was never actually
+  exercised against either). A real fix would need the baseline to track "which fields were present in
+  the literally-stored JSON," not reconstruct a same-shape-as-current object and diff off its
+  serialization - a bigger change to `RuleClassificationBaseline`'s own storage shape, not attempted
+  here.
+
+  **The "and add..." mid-sentence continuation widening remains deliberately parked** (see the false
+  negative just above, which is this same gap's effect on the caveat signal): "Add 1 to the bearer's
+  Wounds characteristic **and add** 1 to the Toughness characteristic of models in the bearer's unit."
+  - the second clause has correct phrasing but still misses, since `SentenceStart` only accepts a
+  match right after a period, and this one starts after "and" mid-sentence. Naively accepting "and"
+  as an additional boundary would reopen exactly the bug `SentenceStart` was built to close: a real
+  corpus text (Righteous Zeal - "While the bearer's unit is Righteous, add 2 to the Attacks
+  characteristic **and add** 1 to the Damage characteristic...") has a second "and add" clause that
+  is STILL conditional on "Righteous," and only fails to false-positive today by the accident that
+  Attacks/Damage aren't yet in the `CharacteristicNames` allowlist. Any future "and"-boundary
+  widening needs to distinguish "and joins two coordinate effects" from "and continues a still-
+  conditional clause" structurally, not just accept any "and" - deliberately parked, not attempted.
+
+  **A separate, unrelated misclassification trap for future `Improve`/`Worsen`-verb work**:
+  Sanctified-Orators-style text ("Improve this model's Leadership characteristic **by 1 for every 5
+  models in this unit**") is a *scaling* effect tied to unit size, not a flat amount - a future
+  "Improve X characteristic by N" pattern that doesn't also detect and exclude a "for every N models"
+  qualifier would silently misclassify this as a flat `Improve Ld 1` when it's actually much stronger
+  for a large unit. Worth remembering when the Improve/Worsen verb work (see the rulebook arithmetic
+  section below) eventually gets built.
 
   **Still not built**: computing an actual `DerivedValue` for any caveat this shipped work surfaces
   (the explicit "resolved" phase) — the caveat is display-only, "this characteristic is affected,"

@@ -1561,9 +1561,16 @@ CharacteristicEffect(string Characteristic, EffectVerb Verb, int Amount)
                                        // this is a separate mechanism with no InSv-already-has-its-
                                        // own-path exclusion to inherit.
 
-RuleClassification(RuleTarget Target, IReadOnlyList<CharacteristicEffect> Effects)
+RuleClassification(RuleTarget Target, IReadOnlyList<CharacteristicEffect> Effects,
+                    bool IsCaveated = false)
                                        // Effects defaults to empty, never null, via a
-                                       // Target-only constructor overload.
+                                       // Target-only constructor overload. IsCaveated
+                                       // (widen-rule-effect-classification-coverage) defaults false -
+                                       // see RuleEffectClassifier.IsCaveated below for what it means
+                                       // and how it's computed; this is the "boring default"
+                                       // RuleClassificationDiff.DefaultClassification reads off this
+                                       // type's own serialization for the baseline capability's
+                                       // schema-growth backfill.
 
 RuleEffectClassifier.Classify(string name, string text) -> RuleClassification
                                        // Domain/Catalogue/RuleEffectClassifier.cs - anchored/
@@ -1608,23 +1615,56 @@ RuleEffectClassifier.Normalize(string text) -> string
 // followed by "against" (an attack-type-restricted/split save - the same shape
 // InvulnerableSaveCaveatClassifier models separately as a melee/ranged pair - is conditional on the
 // incoming attack, not the unconditional grant this pattern means to recognize); "Add {N} to the
-// {Characteristic} characteristic" (a small closed name-lookup table: Movement/Toughness/Save/Wounds/
-// Leadership/Objective Control) -> Improve {code} N. Both Effect patterns are additionally anchored
-// by SentenceStart (private const, a lookbehind requiring the match begin at start-of-text or
-// immediately after a period+whitespace - deliberately NOT a bare newline or bullet marker) - without
-// it, a match anywhere in the conditional preamble of a longer sentence ("If it does, until the end
-// of the phase, the bearer has a 2+ invulnerable save.") or inside a bulleted/headed "select one of
-// the following" menu item (Moment Shackle's two alternatives; Combat Drugs'/Noospheric Transference's
-// option lists) wrongly extracted as an unconditional fact - a bullet/newline reads exactly like a
-// fresh sentence start but is confirmed, in every real example checked, to also separate mutually-
-// exclusive menu alternatives, unlike a period. This SentenceStart anchor - a structural "is this
-// clause actually at its sentence's true start" signal, not a growing denylist of trigger phrases
-// ("if it does"/"while X"/"each time X") - was the fix the user explicitly asked for over the
-// narrower alternative.
+// [X's] {Characteristic} characteristic" (a small closed name-lookup table: Movement/Move/Toughness/
+// Save/Wounds/Leadership/Objective Control - "Move" and an optional intervening possessive noun both
+// added by widen-rule-effect-classification-coverage, see below) -> Improve {code} N; a shorthand
+// "+{N} {Code}" grant (e.g. "+1 OC") naming one of the six Statline scalar codes directly, also
+// -> Improve {code} N (ShorthandCharacteristicPlus, same change). Every Effect pattern is
+// additionally anchored by SentenceStart (private const, a lookbehind requiring the match begin at
+// start-of-text or immediately after a period+whitespace - deliberately NOT a bare newline or bullet
+// marker) - without it, a match anywhere in the conditional preamble of a longer sentence ("If it
+// does, until the end of the phase, the bearer has a 2+ invulnerable save.") or inside a
+// bulleted/headed "select one of the following" menu item (Moment Shackle's two alternatives; Combat
+// Drugs'/Noospheric Transference's option lists) wrongly extracted as an unconditional fact - a
+// bullet/newline reads exactly like a fresh sentence start but is confirmed, in every real example
+// checked, to also separate mutually-exclusive menu alternatives, unlike a period. This SentenceStart
+// anchor - a structural "is this clause actually at its sentence's true start" signal, not a growing
+// denylist of trigger phrases ("if it does"/"while X"/"each time X") - was the fix the user explicitly
+// asked for over the narrower alternative. ShorthandCharacteristicPlus's own subject-run character
+// class deliberately excludes a comma (mirroring InvulnerableSaveGrant's) for the identical reason -
+// an early draft that allowed one let the subject span an entire comma-joined conditional preamble,
+// defeating this same anchor; caught by that pattern's own negative test before the corpus run.
 //
 // Never throws on unrecognized text - defaults to SelfRuleTarget + empty Effects (see spec's
 // "Unrecognized Text Fails Closed").
 ```
+
+**Caveated signal** (`widen-rule-effect-classification-coverage`): `RuleClassification.IsCaveated`
+signals "this text states more than Target/Effects captured," without attempting to classify what the
+extra content is. Computed only when at least one Effect was extracted
+(`RuleEffectClassifier.IsCaveated`, private): `ClassifyTarget`/`ClassifyEffects` were widened to
+return their contributing `Match` object(s) alongside their result, and `Classify` takes the maximum
+`Match.Index + Match.Length` across every Target- and Effect-contributing match, trims the text
+remaining after that position (whitespace, then a single trailing period), and marks the
+classification caveated when non-empty. A leading eligibility restriction before the matched clause
+(e.g. "Imperial Knights model only. The bearer has a 5+ invulnerable save.") never trips this - the
+signal only ever looks *after* the last match. Validated by hand against all 20 pre-existing Effect
+results (reproducing the known 5-caveated/15-clean split) and confirmed by a full corpus re-run:
+found one previously-unnoticed sixth real caveat (a Crusade-mode-only scope qualifier the classifier's
+`KeywordRuleTarget` doesn't capture), one confirmed false negative (Master Artisan - the
+`AttachedUnitPhrase` match that classifies its Target happens to consume the tail of the very same
+unextracted "and add..." second clause the parked `SentenceStart` gap already describes, below,
+leaving nothing trailing to detect), and one confirmed false-POSITIVE-in-spirit (Marshal's
+Household/Faith-Fuelled Resolve - its trailing "Restrictions:" paragraph is army-composition
+eligibility text, the same *kind* of content an already-excluded LEADING restriction isn't caveated
+for, just trailing instead; confirmed recurring 12 times across Space Marines chapter Detachments, not
+a one-off) - all three documented on their own baseline entries rather than fixed; the third one
+specifically via the new `FullyHandled` verdict (see "Verified-Classification Baseline" above), which
+keeps `IsCaveated` itself truthful (a permanent textual fact) while still recording that a human
+confirmed there's nothing left to read. See `.claude/vnext-ideas.md`'s "Characteristic-modification
+domain hardening" for the full detail on all three, plus a real, confirmed (but out-of-scope-here) gap
+in how the baseline capability's own schema-growth detection handles a brand-new top-level
+`RuleClassification` field.
 
 **Ground-truth verification** (`tasks.md`'s task 1, before any template was written): Shield Dome's
 "The bearer has a 5+ invulnerable save." and Vexilla's "Add 1 to the Objective Control
@@ -1637,7 +1677,10 @@ nested rule named "Faith-Fuelled Resolve" *inside* the "Marshal's Household" Det
 (`Imperium - Space Marines.json`): "Friendly SWORD BRETHREN SQUAD units have +1 OC.\n\n\nRestrictions:
 ...ADEPTUS ASTARTES units..." — the Restrictions paragraph itself contains two further ALL-CAPS +
 "units" occurrences, confirming the classifier must (and does, via first-match-wins) pick the
-earlier, actual effect statement rather than either of those.
+earlier, actual effect statement rather than either of those. Since
+`widen-rule-effect-classification-coverage`, the "+1 OC" shorthand itself is also recognized
+(`ShorthandCharacteristicPlus`), extracting `Improve Oc 1` alongside the `KeywordRuleTarget` — the
+trailing Restrictions paragraph is real content beyond that Effect, correctly marked `IsCaveated`.
 
 **Corpus-Wide Classification Reporting**: `tools/RuleEffectClassificationReport/` (its own console
 app project referencing only `ProbHammer.Core`, not the test project) walks the live BSData clone
@@ -1681,6 +1724,16 @@ grouping fixes above, real NBSP normalization, the attack-type-restricted-save e
 default-only (25-entry spot-check found nothing that looked like an obvious, cheap-to-recognize miss).
 All four ground-truth examples classify as expected throughout.
 
+**Updated numbers after `widen-rule-effect-classification-coverage`** (pattern widenings plus the new
+`IsCaveated` signal, both described above): a fresh corpus run against the same 45 files found 16
+additional real Effect results beyond the original 20 (615 Target-only, 3179 default-only — the drop
+from 618/3192 reflects texts that now classify with an Effect instead), every one manually reviewed
+and confirmed correct with no false positives; the same review found one real caveat-signal false
+negative (Master Artisan) and one real, previously-unnoticed sixth caveat on an already-tracked entry
+(Army: Shivversplint) — see the "Caveated signal" entry above and `.claude/vnext-ideas.md` for both.
+The checked-in baseline now tracks all 36 Effect results, so a future corpus run reports these as
+unchanged rather than reprinting them.
+
 **A related, real, NOT-yet-built idea surfaced by this same review**: several Effect results correctly
 extract their `CharacteristicEffect` but the source text also states content
 `RuleClassification` has no vocabulary for at all (a keyword grant/removal, another ability grant, a
@@ -1696,16 +1749,73 @@ verified as correct — so the report tool never has to reprint an already-verif
 on every future run, while any genuine change to a verified result is always resurfaced. Seeded with
 all 20 Effect results above; 5 (Blastajet Force Field, Leader-beast, Lesk's Heroes, Redoubtable
 Machine Spirit, Scattershield) carry a `note` recording that their classification is verified correct
-but known-incomplete (the "related idea" paragraph above).
+but known-incomplete (the "related idea" paragraph above). `widen-rule-effect-classification-coverage`
+grew this to 36 entries: `IsCaveated` backfilled onto all 20 original entries (one, "Army:
+Shivversplint," genuinely flipped to `true` — a real, previously-unnoticed caveat), plus 16 new
+entries for the real Effect results its own pattern widenings newly caught (one, Master Artisan,
+carries a `note` documenting a confirmed caveat-signal false negative rather than an incomplete-but-
+correct Effect — see that change's own tasks.md and `.claude/vnext-ideas.md`).
 
 ```
-RuleClassificationBaselineEntry(Text, Target, Effects, Note = null)
+RuleClassificationBaselineEntry(Text, Target, Effects, Names = null, IsCaveated = false,
+                                 FullyHandled = false, Note = null)
                                        // Domain/Catalogue/RuleClassificationBaseline.cs - Note is a
                                        // free-text, optional known-incomplete-gap explanation,
                                        // mirroring AllowlistEntry<T>.Description's own hand-authored
                                        // convention elsewhere. Classification (a computed, [JsonIgnore]
-                                       // property) is Text/Note's RuleTarget+Effects repackaged as a
-                                       // real RuleClassification for diffing against a fresh run.
+                                       // property) is Text/IsCaveated's RuleTarget+Effects repackaged
+                                       // as a real RuleClassification for diffing against a fresh run -
+                                       // Names, FullyHandled and Note are all deliberately excluded
+                                       // from that repackaging (see each's own entry). IsCaveated
+                                       // added by widen-rule-effect-classification-coverage - see that
+                                       // change's own tasks.md for why it had to be added here at all
+                                       // (without it, --write-baseline could never persist the field,
+                                       // so every run would re-surface the same "changed since
+                                       // verified" entries forever) and .claude/vnext-ideas.md for a
+                                       // related, confirmed, NOT-fixed-here gap in how schema growth is
+                                       // detected for a brand-new top-level RuleClassification field
+                                       // specifically.
+                                       //
+                                       // FullyHandled (same change, added slightly later, same day)
+                                       // answers a DIFFERENT question than IsCaveated: IsCaveated is a
+                                       // purely mechanical, text-only fact ("is there text left over
+                                       // after the last match") with no way to distinguish real omitted
+                                       // game content (the original 5 caveated entries' shape - a
+                                       // keyword grant, a recurring effect) from content the
+                                       // classifier's vocabulary was never meant to cover at all (an
+                                       // army-composition eligibility restriction). Confirmed real via
+                                       // Marshal's Household/Faith-Fuelled Resolve's own "Restrictions:"
+                                       // trailing paragraph - and confirmed NOT a one-off: the identical
+                                       // shape recurs 12 times across Space Marines chapter Detachments
+                                       // in the live clone, though only this one entry currently
+                                       // produces an extracted Effect. FullyHandled: true records a
+                                       // human's confirmation that nothing further needs reading despite
+                                       // IsCaveated staying true forever - the signal a future `/LivePlay`
+                                       // wiring of a classified Effect will actually need to decide
+                                       // whether to prompt the player to re-read the ability. Deliberately
+                                       // NOT a field on RuleClassification itself, for the identical
+                                       // reason IsCaveated's own schema-growth problem exists: nothing
+                                       // ever freshly computes FullyHandled, so keeping it off
+                                       // RuleClassification means it never enters RuleClassificationDiff's
+                                       // comparison at all - no diffing machinery needed for a field
+                                       // nothing could ever "drift" on. Never touched by
+                                       // --write-baseline's refresh loop, mirroring Note exactly.
+                                       //
+                                       // Names (same change, user-requested) is a purely cosmetic
+                                       // findability aid, never part of an entry's identity - Text
+                                       // remains the sole key, and two entries are never distinguished
+                                       // by Names alone. Confirmed real usability gap: locating a
+                                       // specific entry in the checked-in JSON meant searching for a
+                                       // snippet of its (sometimes long, sometimes near-duplicate) Text
+                                       // - "Army: Shivversplint" was hard to find purely from its own
+                                       // classified text. Records every distinct Name currently seen
+                                       // carrying that Text (real example: 12 differently-named
+                                       // invulnerable-save items sharing one identical sentence, all
+                                       // recorded on the one tracked entry). Unlike FullyHandled/Note,
+                                       // Names IS refreshed by --write-baseline (it's a corpus-derived
+                                       // fact, not a human judgment call) - still excluded from
+                                       // RuleClassification/RuleClassificationDiff for the identical
+                                       // "nothing to diff" reason FullyHandled is.
 
 RuleClassificationBaselineFile(Entries)   // the root JSON shape - a flat list, Text-indexed only
                                        // in-memory, not in the file itself
@@ -1761,15 +1871,35 @@ entry only contributes to a summary count, never reprinted; a `Drift`/`NewInform
 under a "changed since verified" listing naming exactly which field(s) moved (`baseline=... ->
 current=...`, each side a raw JSON fragment via `JsonNode.ToJsonString()`) plus the entry's own `Note`
 if present. A text with no baseline entry is completely unaffected — the three original sections
-still print exactly as before this change existed. `--write-baseline` snapshots the CURRENT freshly-
-computed classification onto every baseline entry whose Text still resolves in this run's corpus
-(`Target`/`Effects` overwritten via `entry with { ... }`, `Note` left untouched, since a fresh
-classification run has no way to derive that itself) and writes the result back — refreshing an
-entry's tracked values needs no separate backfill path even for schema growth, since `--write-
-baseline` always writes whatever `RuleClassification` computes right now, defaulted field included.
-A genuinely new baseline entry must first be added to the checked-in JSON by hand (at minimum its
-`text`) — `--write-baseline` only ever refreshes Texts already present as a key in the loaded
-baseline, it never invents a new tracked entry on its own.
+still print exactly as before this change existed. Since
+`widen-rule-effect-classification-coverage`'s own follow-on fix, a further "Caveated baseline entries
+needing review" section lists every baselined text whose current `IsCaveated` is true and whose
+baseline entry's `Note` is null AND `FullyHandled` is false — independent of
+Unchanged/Drift/NewInformation, since a caveated-and-unchanged entry would otherwise collapse into the
+summary count with nothing ever prompting a human to revisit it. A human reviewing this list has two
+genuinely different verdicts available, not one: extend the classifier to capture real omitted content
+(a keyword grant, a recurring effect — the original 5 caveated entries' shape, where the player
+genuinely needs to read the ability), or mark the entry `FullyHandled: true` with a `note` explaining
+that the leftover text names no game effect at all (an eligibility restriction, flavor text — Marshal's
+Household's shape). `IsCaveated` never changes either way; `FullyHandled` is the separate, permanent
+human verdict a future `/LivePlay` wiring will need to decide whether the player should ever be
+prompted to re-read the ability. `Note`/`FullyHandled` are the only two fields this tool never
+computes; setting either is what removes an entry from this review list.
+
+`Describe` also appends `; CAVEATED` when `IsCaveated` is true
+(`widen-rule-effect-classification-coverage`), the one addition needed to make that field manually
+reviewable at all; the "Verified baseline" summary line and any printed "changed since verified" entry
+also report a `[FULLY HANDLED]` marker/count from the baseline entry directly (never from
+`RuleClassification`, which carries no such field). `--write-baseline` snapshots the CURRENT
+freshly-computed classification onto every baseline entry whose Text still resolves in this run's
+corpus (`Target`/`Effects`/`IsCaveated`/`Names` overwritten via `entry with { ... }` — `Names` refreshed
+alongside the rest since it's corpus-derived, not a human judgment call; `Note`/`FullyHandled`
+left untouched, since neither is something a fresh classification run could ever derive) and writes
+the result back — refreshing an entry's tracked values needs no separate backfill path even for schema
+growth, since `--write-baseline` always writes whatever `RuleClassification` computes right now,
+defaulted field included. A genuinely new baseline entry must first be added to the checked-in JSON by
+hand (at minimum its `text`) — `--write-baseline` only ever refreshes Texts already present as a key in
+the loaded baseline, it never invents a new tracked entry on its own.
 
 **A real gap found while seeding the baseline, not by any test**: BSData source text can carry a
 literal embedded newline mid-sentence (confirmed: Redoubtable Machine Spirit's own JSON has `"...at

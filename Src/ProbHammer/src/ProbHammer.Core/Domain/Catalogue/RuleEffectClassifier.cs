@@ -16,11 +16,31 @@ public static partial class RuleEffectClassifier
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["Movement"] = "M",
+            // "Move" is the abbreviated form real corpus text sometimes uses in place of the full
+            // "Movement" name - a second key for the same value, not a Normalize()-level rewrite,
+            // since this is a characteristic-name synonym, not authoring-variance cleanup.
+            ["Move"] = "M",
             ["Toughness"] = "T",
             ["Save"] = "Sv",
             ["Wounds"] = "W",
             ["Leadership"] = "Ld",
             ["Objective Control"] = "Oc"
+        };
+
+    /// <summary>The six Statline scalar codes as they appear written bare (not spelled out) in a
+    /// shorthand "+N Code" grant, e.g. Marshal's Household's "+1 OC" - keyed case-insensitively since
+    /// real corpus text capitalizes these inconsistently, same as every other word-literal pattern in
+    /// this classifier (<see cref="AllCapsKeywordPhrase"/> excepted). Values are the canonical,
+    /// correctly-cased codes <see cref="CharacteristicEffect.Characteristic"/> expects.</summary>
+    private static readonly Dictionary<string, string> CharacteristicCodes =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["M"] = "M",
+            ["T"] = "T",
+            ["Sv"] = "Sv",
+            ["W"] = "W",
+            ["Ld"] = "Ld",
+            ["Oc"] = "Oc"
         };
 
     /// <summary>Anchors an Effect pattern to the actual start of its own sentence - start-of-text, or
@@ -99,13 +119,69 @@ public static partial class RuleEffectClassifier
         RegexOptions.IgnoreCase)]
     private static partial Regex InvulnerableSaveGrant();
 
-    [GeneratedRegex(SentenceStart + @"Add (\d+) to the ([A-Za-z ]+?) characteristic", RegexOptions.IgnoreCase)]
+    /// <summary>The optional non-capturing <c>(?:[A-Za-z]+'s\s+)?</c> group between "the" and the
+    /// characteristic name recognizes a possessive noun ("the bearer's Wounds characteristic"), not
+    /// just the plain phrasing ("the Wounds characteristic") the original pattern required - a
+    /// generic structural widening (any possessive noun), not a "bearer's"-specific denylist entry,
+    /// matching this classifier's established preference for structural anchors over phrase lists
+    /// (<see cref="SentenceStart"/>, <see cref="AttachedUnitPhrase"/>'s own widening). Confirmed real,
+    /// previously-dropped examples: Blasphemous Engine and Da Krushin' Armour ("Add N to the bearer's
+    /// Wounds characteristic.") and the first clause of Master Artisan. Group numbering is unaffected
+    /// - the possessive group is non-capturing, so group 1 (amount) and group 2 (characteristic name)
+    /// are the same as before this widening.</summary>
+    [GeneratedRegex(SentenceStart + @"Add (\d+) to the(?:\s+[A-Za-z]+'s)? ([A-Za-z ]+?) characteristic",
+        RegexOptions.IgnoreCase)]
     private static partial Regex AddCharacteristic();
+
+    /// <summary>A shorthand "+N Code" grant (e.g. Marshal's Household's "Friendly SWORD BRETHREN SQUAD
+    /// units have +1 OC."), recognized alongside the spelled-out "Add N to the X characteristic"
+    /// phrasing <see cref="AddCharacteristic"/> already covers. Requires a subject-shaped run of text
+    /// (mirroring <see cref="InvulnerableSaveGrant"/>'s own subject requirement) followed by "have"/
+    /// "has", then the shorthand grant itself, one of the six Statline scalar codes as a whole word
+    /// (see <see cref="CharacteristicCodes"/>) with an optional intervening "to" (covers both "+1 OC"
+    /// and a possible "+1 to OC" variant). Anchored by <see cref="SentenceStart"/> like every other
+    /// Effect pattern, for the same reason: an unanchored version could match a shorthand increment
+    /// embedded in a still-conditional clause. The subject-run character class deliberately excludes
+    /// a comma (matching <see cref="InvulnerableSaveGrant"/>'s own class exactly) - an early draft
+    /// allowed one and, caught immediately by its own negative test, let the subject run span an
+    /// entire comma-joined conditional preamble ("If it does, until the end of the phase, this unit
+    /// has +1 OC."), defeating the SentenceStart anchor the same way an unbounded subject class
+    /// always would.</summary>
+    [GeneratedRegex(
+        SentenceStart + @"[A-Za-z][A-Za-z''\- ]{0,80} (?:have|has) \+(\d+)(?:\s+to)?\s+(M|T|Sv|W|Ld|Oc)\b",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex ShorthandCharacteristicPlus();
 
     public static RuleClassification Classify(string name, string text)
     {
         var normalized = Normalize(text);
-        return new RuleClassification(ClassifyTarget(normalized), ClassifyEffects(normalized));
+        var (target, targetMatch) = ClassifyTarget(normalized);
+        var (effects, effectMatches) = ClassifyEffects(normalized);
+        var isCaveated = effects.Count > 0 && IsCaveated(normalized, targetMatch, effectMatches);
+
+        return new RuleClassification(target, effects, isCaveated);
+    }
+
+    /// <summary>The validated structural caveat signal (see widen-rule-effect-classification-coverage
+    /// design.md's "Caveat signal computed from raw match end positions" decision): the end position
+    /// of the LAST regex match that contributed to either the classified Target or an extracted
+    /// Effect, with whatever text remains after it (trimmed of whitespace, then a single trailing
+    /// period) checked for emptiness. A non-empty remainder means the text states real content beyond
+    /// what Target/Effects captured - this method never attempts to classify what that content is,
+    /// only that it exists. Only called when at least one Effect was extracted - see
+    /// <see cref="Classify"/> - since the hand-validated 5-caveated/15-clean split this mirrors was
+    /// only checked against results with 1+ Effects.</summary>
+    private static bool IsCaveated(string text, Match? targetMatch, IReadOnlyList<Match> effectMatches)
+    {
+        var lastEnd = effectMatches.Select(m => m.Index + m.Length).DefaultIfEmpty(0).Max();
+        if (targetMatch is { } match)
+            lastEnd = Math.Max(lastEnd, match.Index + match.Length);
+
+        var remainder = text[lastEnd..].Trim();
+        if (remainder.EndsWith('.'))
+            remainder = remainder[..^1].TrimEnd();
+
+        return remainder.Length > 0;
     }
 
     /// <summary>Normalizes known-harmless real-corpus authoring variance before matching: a
@@ -121,38 +197,61 @@ public static partial class RuleEffectClassifier
     /// inputs that <see cref="Classify"/> itself would treat identically.</summary>
     public static string Normalize(string text) => text.Replace('’', '\'').Replace(' ', ' ');
 
-    private static RuleTarget ClassifyTarget(string text)
+    /// <summary>Returns the classified Target alongside the specific <see cref="Match"/> that produced
+    /// it (null for the <see cref="SelfRuleTarget"/> fallback, which has no contributing match) - the
+    /// Match's own end position feeds <see cref="IsCaveated"/>.</summary>
+    private static (RuleTarget Target, Match? Match) ClassifyTarget(string text)
     {
         var markupMatch = MarkupKeywordPhrase().Match(text);
         if (markupMatch.Success)
-            return new KeywordRuleTarget(markupMatch.Groups[1].Value.ToUpperInvariant());
+            return (new KeywordRuleTarget(markupMatch.Groups[1].Value.ToUpperInvariant()), markupMatch);
 
         var allCapsMatch = AllCapsKeywordPhrase().Match(text);
         if (allCapsMatch.Success)
-            return new KeywordRuleTarget(allCapsMatch.Groups[1].Value);
+            return (new KeywordRuleTarget(allCapsMatch.Groups[1].Value), allCapsMatch);
 
-        if (AttachedUnitPhrase().IsMatch(text))
-            return new AttachedUnitRuleTarget();
+        var attachedUnitMatch = AttachedUnitPhrase().Match(text);
+        if (attachedUnitMatch.Success)
+            return (new AttachedUnitRuleTarget(), attachedUnitMatch);
 
-        return new SelfRuleTarget();
+        return (new SelfRuleTarget(), null);
     }
 
-    private static List<CharacteristicEffect> ClassifyEffects(string text)
+    /// <summary>Returns the extracted Effects alongside the specific <see cref="Match"/> that produced
+    /// each one, in the same order - every contributing Match's own end position feeds
+    /// <see cref="IsCaveated"/>.</summary>
+    private static (List<CharacteristicEffect> Effects, List<Match> Matches) ClassifyEffects(string text)
     {
         var effects = new List<CharacteristicEffect>();
+        var matches = new List<Match>();
 
         var invulnerableSaveMatch = InvulnerableSaveGrant().Match(text);
         if (invulnerableSaveMatch.Success)
+        {
             effects.Add(new CharacteristicEffect("InSv", EffectVerb.Set,
                 int.Parse(invulnerableSaveMatch.Groups[1].Value)));
+            matches.Add(invulnerableSaveMatch);
+        }
 
         foreach (Match match in AddCharacteristic().Matches(text))
         {
-            if (CharacteristicNames.TryGetValue(match.Groups[2].Value.Trim(), out var characteristic))
-                effects.Add(new CharacteristicEffect(characteristic, EffectVerb.Improve,
-                    int.Parse(match.Groups[1].Value)));
+            if (!CharacteristicNames.TryGetValue(match.Groups[2].Value.Trim(), out var characteristic))
+                continue;
+
+            effects.Add(new CharacteristicEffect(characteristic, EffectVerb.Improve,
+                int.Parse(match.Groups[1].Value)));
+            matches.Add(match);
         }
 
-        return effects;
+        var shorthandMatch = ShorthandCharacteristicPlus().Match(text);
+        if (shorthandMatch.Success &&
+            CharacteristicCodes.TryGetValue(shorthandMatch.Groups[2].Value, out var code))
+        {
+            effects.Add(new CharacteristicEffect(code, EffectVerb.Improve,
+                int.Parse(shorthandMatch.Groups[1].Value)));
+            matches.Add(shorthandMatch);
+        }
+
+        return (effects, matches);
     }
 }

@@ -1,48 +1,4 @@
-# rule-effect-classification Specification
-
-## Purpose
-
-Extracts, from a rule or ability's own Name and free-text Text alone, who it affects (its Target)
-and what unconditional characteristic mutations it states (its Effects) — independent of any
-specific catalogue JSON format or resolved roster, so the same classification applies uniformly
-regardless of which import pipeline produced the rule/ability text.
-
-## Requirements
-
-### Requirement: Text-Only Input, No Catalogue Format Dependency
-The system SHALL classify a rule/ability using only its Name and Text as input, with no dependency
-on BSData JSON structure, BattleScribe/NewRecruit JSON structure, or any other catalogue-format-
-specific type. The same classification SHALL be produced for identical Name+Text regardless of
-which import pipeline the rule/ability originated from.
-
-#### Scenario: Identical text classifies identically regardless of source pipeline
-- **WHEN** two abilities from different import pipelines share the exact same Name and Text
-- **THEN** classifying either produces the same Target and the same Effects
-
-### Requirement: Target Classification Is Always Present
-The system SHALL classify every rule/ability's Target as exactly one of a closed set of values,
-never absent and never ambiguous: the bearer alone (`Self`), the bearer's whole attached unit
-(`AttachedUnit`), a roster-wide target filtered by a named keyword found in the text
-(`KeywordRuleTarget`), or a roster-wide target with no keyword qualifier (`UnconditionalRuleTarget`).
-`Self` SHALL be the result when no broader target language is recognized in the text.
-
-#### Scenario: No broader target language classifies as Self
-- **WHEN** a rule/ability's text states an effect on "the bearer" with no further qualification
-  (e.g. Shield Dome: "The bearer has a 5+ invulnerable save.")
-- **THEN** its Target is `Self`
-
-#### Scenario: "the bearer's unit" language classifies as AttachedUnit
-- **WHEN** a rule/ability's text states an effect on "models in the bearer's unit" (e.g. Vexilla:
-  "Add 1 to the Objective Control characteristic of models in the bearer's unit.") or on "models in
-  this unit" (functionally the same claim, made from the bearer's own perspective)
-- **THEN** its Target is `AttachedUnit`
-
-#### Scenario: A named keyword qualifying "units" classifies as a keyword target
-- **WHEN** a rule/ability's text names a specific keyword qualifying which units it affects (e.g.
-  Templar Vows: "...for ADEPTUS ASTARTES units from your army"; a Detachment rule: "Friendly SWORD
-  BRETHREN SQUAD units have +1 OC")
-- **THEN** its Target is a `KeywordRuleTarget` carrying that keyword (`"ADEPTUS ASTARTES"` /
-  `"SWORD BRETHREN SQUAD"` respectively)
+## MODIFIED Requirements
 
 ### Requirement: Unconditional Characteristic Effect Extraction
 The system SHALL extract zero or more Effects from a rule/ability's Text, each stating an
@@ -109,6 +65,8 @@ common abbreviation ("Move") where the corpus uses both.
   "This model has a 4+ invulnerable save against ranged attacks.")
 - **THEN** zero Effects are extracted from that clause
 
+## ADDED Requirements
+
 ### Requirement: Caveated Signal For Text Stating More Than Extracted
 When a classification has extracted at least one Effect, the system SHALL determine whether the
 rule/ability's text states additional content beyond what its Target and Effects extraction
@@ -145,43 +103,3 @@ caveated by this requirement.
 #### Scenario: A classification with zero Effects is never marked caveated
 - **WHEN** a rule/ability's text produces zero extracted Effects, regardless of its classified Target
 - **THEN** the classification is not marked caveated
-
-### Requirement: Unrecognized Text Fails Closed
-The system SHALL NOT raise an error and SHALL NOT guess when a rule/ability's text matches none of
-its recognized Target or Effect patterns. Such text SHALL classify with Target `Self` and zero
-Effects — the same result as text that explicitly states no broader effect — rather than a
-distinguishable "unclassified" state.
-
-#### Scenario: Arbitrary unrecognized text classifies safely
-- **WHEN** a rule/ability's Text is arbitrary prose matching none of the classifier's recognized
-  patterns
-- **THEN** classification completes without error, producing Target `Self` and zero Effects
-
-### Requirement: Corpus-Wide Classification Reporting
-The system SHALL provide a way to run classification against a supplied set of real rule/ability
-Name+Text pairs (such as the live BSData corpus) and report, for each, its classified Target and
-Effects — distinguishing an entry that produced a non-default result (a recognized Target broader
-than `Self`, or one or more Effects) from one that classified to the all-default result — so
-real-corpus classification coverage can be inspected directly.
-
-For a text that already has a corresponding entry in the rule-effect-classification-baseline
-capability's baseline, the report SHALL instead apply that capability's new/drift/unchanged
-distinction in place of its normal non-default/default-only listing, so an already-verified,
-unchanged result is never reprinted in full while a genuine change to it is always surfaced. A text
-with no baseline entry is unaffected and continues to appear under the report's normal listing.
-
-#### Scenario: Running against a real corpus reports classified and default-only entries separately
-- **WHEN** classification is run against a supplied set of real rule/ability Name+Text pairs
-- **THEN** the report distinguishes entries that produced a non-default Target or at least one
-  Effect from entries that classified to the all-default result (`Self`, no Effects)
-
-#### Scenario: A baselined text is reported via the baseline's diff, not the normal listing
-- **WHEN** a corpus text being classified has a corresponding entry in the verified-classification
-  baseline
-- **THEN** the report applies the baseline's new/drift/unchanged distinction for that text instead
-  of listing it under the normal Effect/Target-only/default-only sections
-
-#### Scenario: A text with no baseline entry is unaffected
-- **WHEN** a corpus text being classified has no corresponding baseline entry
-- **THEN** the report lists it under its normal Effect/Target-only/default-only section exactly as
-  it did before the baseline existed
