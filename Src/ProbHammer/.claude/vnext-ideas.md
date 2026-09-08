@@ -483,6 +483,21 @@ entry once it's been turned into a change (archived changes remain the historica
   one before scoping this into a change, per
   [[feedback_verify_bsdata_mapper_changes_against_real_export]].
 
+  **The `Kind`/`ResolveDelta`/`Clamp` bottom layer of this sketch is now built** —
+  `introduce-characteristic-modification-kind` (implemented, see
+  `.claude/domain-model-11e.md`'s "Characteristic Modification Kind" section). Delivers exactly the
+  `Kind.ResolveDelta(Improve, amount) -> signed int` piece proposed above, plus the per-characteristic
+  clamp table, for the characteristics this codebase actually represents as a plain scalar today
+  (`Statline`'s M/T/Sv/W/Ld/Oc, `WeaponProfile`'s Bs/Ws/S/Ap, and the bare-integer Range) — proven to
+  reproduce `VexillaStatlineFlagRule`'s own resolved Objective Control exactly. **InSv is deliberately
+  excluded**, not merely deferred: it's a compound melee/ranged `InvulnerableSave`, not a plain
+  `CharacteristicValue`, so Shield Dome could not be used as a second proving example the way the
+  change's own first draft assumed — caught and corrected before any code was written (see that
+  change's own design.md). Everything else in this sketch remains unbuilt: the `CharacteristicModifier`/
+  Modification Engine/Mutator-rule layers above `Kind`, `Set`-vs-`Set` conflict resolution,
+  multi-characteristic ability support, the ranged-aura caveat-vs-resolved question, and covering InSv
+  through this mechanism at all.
+
   **Next real step**: wire `CharacteristicValue` into `WeaponProfile.S` (smallest bounded starting
   point — already has a confirmed real bug driving it, the Ork Battlewagon dice-notation skip
   above) as a stress test before designing the engine further in the abstract. Expect friction:
