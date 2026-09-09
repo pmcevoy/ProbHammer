@@ -56,6 +56,40 @@ Full domain model detail: @.claude/domain-model-11e.md
 Implementation gotchas and defensive notes: @.claude/implementation-notes.md  
 `/LivePlay` visual design tokens: @.claude/design-tokens.md  
 
+`domain-model-11e.md` is now just the intro/status, namespace list, and an index — it was split
+(2026-09-09) into topic files under `.claude/domain-model/` once it exceeded the 150k-character
+auto-load limit. Each topic file is loaded on demand, by path, not by `@`-include:
+
+- `.claude/domain-model/catalogue-context.md` — `Datasheet`/`Statline`/`WeaponProfile`/`Ability`
+  shapes, `AbilityOrigin` classification, `DiceExpression`.
+- `.claude/domain-model/characteristic-value-domain-model.md` — `CharacteristicValue`/
+  `CharacteristicView` abstract hierarchies.
+- `.claude/domain-model/characteristic-modification-kind.md` — the sign-and-clamp resolver for
+  applying an `Improve`/`Worsen`/`Set` verb to a characteristic.
+- `.claude/domain-model/bsdata-json-ingestion.md` — the BSData catalogue JSON loader: closure
+  resolution, `Datasheet` mapping, ability/core-rule/army-rule extraction, `InvulnerableSave`
+  resolution, weapon keyword parsing, full-corpus scan tests.
+- `.claude/domain-model/rules-glossary-and-popovers.md` — `RuleGlossary`, `[BRACKET]` token
+  resolution, `/LivePlay`'s popover wiring, the Army Header.
+- `.claude/domain-model/army-list-import-pipeline.md` — the GW-app text export pipeline: parsing,
+  BSData enrichment, Detachment resolution, session-backed storage.
+- `.claude/domain-model/battlescribe-import-pipeline.md` — the independent BattleScribe/NewRecruit
+  JSON import pipeline (no BSData involvement).
+- `.claude/domain-model/roster-context.md` — `Unit`/`AttachedUnit`/`ModelLine`/`ICombatUnit`,
+  `AttachedUnitAggregator`'s aggregate view, `ArmyRoster`.
+- `.claude/domain-model/statline-flag-rules.md` — how a matched `RuleClassificationBaseline` entry
+  derives a flagged, per-unit Statline value at roster-Build time.
+- `.claude/domain-model/characteristic-modifier-caveats.md` — `CharacteristicModifierCandidate`,
+  the structural (`BsModifier`-based) classifier, retired as a live mechanism.
+- `.claude/domain-model/rule-effect-classification.md` — `RuleEffectClassifier`, the text-only
+  Target/Effect extractor, the corpus report tool, the verified-classification baseline.
+- `.claude/domain-model/invulnerable-save-effect-resolution.md` — resolving a classified
+  `InvulnerableSaveCharacteristicEffect` into a real `InvulnerableSaveCharacteristicView`.
+- `.claude/domain-model/phase-turn-tracker.md` — the player-set phase/turn control and the
+  section-relevance table driving which unit-block sections render open.
+- `.claude/domain-model/deliberate-omissions.md` — what this app permanently does not model, and
+  why.
+
 Archived 10e docs, kept only as reference material, not auto-loaded:
 `legacy/10e-pipeline/.claude/domain-model.md`, `web-app.md`, `simulation-engine.md`,
 `bsdata-parsing.md`, `rules/combat-rules.md`, `design-tokens.md`,
