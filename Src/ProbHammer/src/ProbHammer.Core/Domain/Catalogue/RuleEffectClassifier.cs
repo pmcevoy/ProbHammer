@@ -125,27 +125,34 @@ public static partial class RuleEffectClassifier
         RegexOptions.IgnoreCase)]
     private static partial Regex InvulnerableSaveGrant();
 
-    /// <summary>Either a true sentence start with a subject-shaped prefix and "has" (the one-sided
-    /// grant shape, e.g. a hypothetical "This model has a 4+ invulnerable save against ranged
-    /// attacks."), or a ", and" continuation from an earlier clause in the same sentence with an
-    /// elided verb (the two-sided grant shape - confirmed real via the live BSData clone, Veil of
-    /// Medrengard's own melee clause below: "...against ranged attacks, and a 5+ invulnerable save
-    /// against melee attacks." is grammatically "...and [has] a 5+..."). See
+    /// <summary>Either a true sentence start with a subject-shaped prefix and "has"/"have" (the
+    /// one-sided grant shape, e.g. "This model has a 4+ invulnerable save against ranged attacks." or
+    /// the plural "Models in this unit have a 4+ invulnerable save against ranged attacks." -
+    /// Howling Banshees, confirmed real via the live BSData clone; the same claim stated from a whole
+    /// unit's own perspective rather than a single bearer's, mirroring
+    /// <see cref="InvulnerableSaveCaveatClassifier"/>'s own bare/unit template pairing so retiring that
+    /// mapper-time classifier in favor of this one doesn't regress this real corpus shape - see
+    /// widen-baseline-generation-coverage/design.md), or a ", and" continuation from an earlier clause
+    /// in the same sentence with an elided verb (the two-sided grant shape - confirmed real via the
+    /// live BSData clone, Veil of Medrengard's own melee clause below: "...against ranged attacks, and
+    /// a 5+ invulnerable save against melee attacks." is grammatically "...and [has] a 5+..."). See
     /// resolve-invulnerable-save-effects/design.md's D4.</summary>
     [GeneratedRegex(
         "(?:" + SentenceStart +
-        @"[A-Za-z][A-Za-z''\- ]{0,60} has|, and) an? (\d+)\+ invulnerable save against ranged attacks",
+        @"[A-Za-z][A-Za-z''\- ]{0,60} (?:has|have)|, and) an? (\d+)\+ invulnerable save against ranged attacks",
         RegexOptions.IgnoreCase)]
     private static partial Regex InvulnerableSaveRangedRestricted();
 
     /// <summary>The melee-axis counterpart to <see cref="InvulnerableSaveRangedRestricted"/> - same
-    /// two-alternative lead-in, same rationale. Confirmed real via both the one-sided shape
-    /// (Ensorcelled Shield: "This model has a 4+ invulnerable save against ranged attacks..." has no
-    /// melee clause at all, so this pattern correctly finds no match there) and the two-sided shape
-    /// (Veil of Medrengard's own melee clause, matched via the ", and" alternative).</summary>
+    /// three-alternative lead-in (singular "has", plural "have", or the elided-verb continuation), same
+    /// rationale. Confirmed real via both the one-sided shape (Ensorcelled Shield: "This model has a
+    /// 4+ invulnerable save against ranged attacks..." has no melee clause at all, so this pattern
+    /// correctly finds no match there) and the two-sided shape (Veil of Medrengard's own melee clause,
+    /// matched via the ", and" alternative); the plural form mirrors
+    /// <see cref="InvulnerableSaveRangedRestricted"/>'s own Howling Banshees rationale.</summary>
     [GeneratedRegex(
         "(?:" + SentenceStart +
-        @"[A-Za-z][A-Za-z''\- ]{0,60} has|, and) an? (\d+)\+ invulnerable save against melee attacks",
+        @"[A-Za-z][A-Za-z''\- ]{0,60} (?:has|have)|, and) an? (\d+)\+ invulnerable save against melee attacks",
         RegexOptions.IgnoreCase)]
     private static partial Regex InvulnerableSaveMeleeRestricted();
 

@@ -602,6 +602,51 @@ entry once it's been turned into a change (archived changes remain the historica
   `CharacteristicValue` has no comparison/ordering operator yet, and every site doing raw int
   arithmetic against these fields needs to unwrap/repack rather than operate directly.
 
+  **`widen-baseline-generation-coverage` (2026-09-09) closed the plural-InSv gap and added a second,
+  structural baseline-derivation path to the offline report tool** — see
+  `.claude/domain-model-11e.md`'s "Rule Effect Classification (Text-Only)" for the shipped
+  `RuleEffectClassifier`/report-tool shape. `InvulnerableSaveRangedRestricted`/
+  `InvulnerableSaveMeleeRestricted` now also match a plural ("Models in this unit have...") lead-in,
+  confirmed real (War Dog units' own footnoted "Invulnerable Save (4+*)"/"(5+*)" shared profiles) and
+  added to the baseline (43 entries now tracked, up from 41). The report tool's new structural path
+  (`CharacteristicModifierCandidate` -> `CharacteristicModificationResolver.ResolveVerbFromRawDelta` ->
+  `ScalarCharacteristicEffect`, joined to a collected ability by Name per design.md Decision 2) found
+  **zero disagreements** against the existing text classification across the full corpus - every text
+  that has both a text-classified and a structurally-derived Effect for the same characteristic
+  agrees exactly, a strong cross-validation of both signals. Neither of the change's own two
+  motivating examples ended up needing a new baseline entry: Auric Mantle already resolves correctly
+  via text (an earlier possessive-noun widening already covers it - the proposal's claim it was
+  "reachable only this way today" was stale by the time this change landed); Consecrating Aura stays
+  unresolved by design (InSv is deliberately excluded from `CharacteristicModifierCandidate`'s own
+  Field allowlist, out of scope here).
+
+  **A real, confirmed false-generalization risk in the structural path's own Name-based join** - the
+  exact ambiguity design.md's Decision 2 explicitly accepted rather than fixed
+  (`CharacteristicModifierCandidate` carries only a Name, mirroring
+  `AttachedUnitAggregator.ApplyCharacteristicModifierCandidates`'s own runtime join). Confirmed real,
+  not theoretical, by one live example: Adeptus Sororitas' "Simulacrum Imperialis" ability text (a
+  Miracle-dice relic, shared verbatim by 50+ squads/characters across the corpus) has a *second*,
+  unrelated, locally-authored BSData entry of the exact same Name nested only inside the Legends
+  "Sanctifiers" datasheet, carrying its own tier-1 structural modifier (`decrement` the Ld field by 1
+  - a genuine Ld *improvement*, RollThreshold-inverted). Because the report's join keys on Name
+  across the WHOLE Datasheet, not entry id, this one squad-specific modifier attaches to the shared
+  ability text's `StructuralCandidates` set alongside all 50+ unrelated occurrences. The report
+  surfaced this correctly (it's real corpus data, faithfully derived), but writing it into the
+  Text-keyed baseline would have wrongly generalized a one-squad fact to every other unit granting
+  this identical ability - so it (and, out of caution, a second, lower-confidence pattern where an
+  absolute "has a Wounds characteristic of N" text phrasing paired with a *relative* `Improve W`
+  structural delta shared across several differently-named wargear items with no way to confirm which
+  of them the one matched candidate actually belongs to) was deliberately left OUT of this run's
+  baseline growth rather than force-fit. The other ~24 structurally-derived results stayed
+  unbaselined too (not required by this change's own scope, and the same name-join risk can't be
+  cheaply ruled out for each one without per-entry corpus digging) - they remain visible in the
+  report's own "Structurally-derived Effect results" section for future review. **Real, confirmed,
+  NOT yet fixed**: consuming a structural derivation anywhere at runtime (the explicit
+  follow-up-change scope) needs either a real id-based join (Decision 2's own rejected alternative,
+  reconsidered for a runtime consumer rather than this offline tool) or some other per-instance
+  confidence signal before this ambiguity stops being a real correctness risk rather than just an
+  offline-report curiosity.
+
 - **Detachment rule structural-modifier detection ("phase 2" of `display-army-header-and-
   detachment-rules`).** That change captures every Detachment's rule text verbatim and renders it
   army-wide in the `/LivePlay` header - deliberately not attempting to tie any rule to a specific

@@ -65,7 +65,11 @@ attack type(s) are named, with an attack type the text does not name for that gr
 invulnerable save against that type. This extraction SHALL be scoped to the melee/ranged attack-type
 axis only: a save restricted by any other qualifier (e.g. "...invulnerable save against Psychic
 Attacks") SHALL NOT be extracted as an `InSv` Effect of any shape — such text SHALL classify exactly
-as unrecognized text does under this requirement.
+as unrecognized text does under this requirement. This restricted-grant recognition SHALL apply
+whether the subject of the grant is singular ("This model has a {N}+ invulnerable save against
+{ranged|melee} attacks.") or plural ("Models in this unit have a {N}+ invulnerable save against
+{ranged|melee} attacks.") — the same claim stated from either a single bearer's or a whole unit's
+own perspective.
 
 A characteristic-naming Effect (the "Add N to the X characteristic" phrasing) SHALL be recognized
 whether the characteristic name is stated plainly ("the Wounds characteristic") or with an
@@ -129,6 +133,14 @@ common abbreviation ("Move") where the corpus uses both.
   attack type (e.g. "...invulnerable save against Psychic Attacks") — outside the melee/ranged axis
   this requirement extracts
 - **THEN** zero Effects are extracted from that clause
+
+#### Scenario: A plural-subject restricted invulnerable save extracts the same as its singular form
+- **WHEN** a rule/ability's text states an attack-type-restricted invulnerable save from a whole
+  unit's own perspective (e.g. "Models in this unit have a 4+ invulnerable save against melee
+  attacks.") rather than a single bearer's ("This model has...")
+- **THEN** one Effect is extracted: `Set` the `InSv` characteristic with Melee `4` and no invulnerable
+  save against ranged attacks — the same extraction the singular form of the identical claim would
+  produce
 
 ### Requirement: Caveated Signal For Text Stating More Than Extracted
 When a classification has extracted at least one Effect, the system SHALL determine whether the

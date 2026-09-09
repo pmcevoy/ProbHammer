@@ -147,12 +147,18 @@ public static class Program
                 }
 
                 foreach (var ability in datasheet.Abilities)
-                    Collect(ability.Name, ability.Text, $"{fileName} :: '{entry.Name}' ability");
+                {
+                    Collect(ability.Name, ability.Text, $"{fileName} :: '{entry.Name}' ability",
+                        MatchingCandidates(datasheet, ability));
+                }
 
                 foreach (var optionalName in datasheet.OptionalAbilityNames)
                 {
                     if (datasheet.TryResolveAbility(optionalName, out var ability))
-                        Collect(ability.Name, ability.Text, $"{fileName} :: '{entry.Name}' optional ability");
+                    {
+                        Collect(ability.Name, ability.Text, $"{fileName} :: '{entry.Name}' optional ability",
+                            MatchingCandidates(datasheet, ability));
+                    }
                 }
             }
         }
@@ -161,8 +167,13 @@ public static class Program
             .Select(kvp =>
             {
                 var names = kvp.Value.Names.OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToList();
+                var structuralEffects = kvp.Value.StructuralCandidates
+                    .Select(TryDeriveStructuralEffect)
+                    .OfType<ScalarCharacteristicEffect>()
+                    .ToList();
                 return (Text: kvp.Key, Names: names, kvp.Value.Locations,
-                    Classification: RuleEffectClassifier.Classify(names[0], kvp.Key));
+                    Classification: RuleEffectClassifier.Classify(names[0], kvp.Key),
+                    StructuralEffects: structuralEffects);
             })
             .ToList();
 
@@ -218,6 +229,64 @@ public static class Program
             var extra = r.Locations.Count > 3 ? $", +{r.Locations.Count - 3} more" : "";
             Console.WriteLine($"- {namesLabel} -> {Describe(r.Classification)}");
             Console.WriteLine($"    text: \"{Truncate(r.Text)}\"");
+            Console.WriteLine($"    seen on: {string.Join("; ", r.Locations.Take(3))}{extra}");
+        }
+
+        // Structurally-derived results and their regex-vs-structural disagreements (task 3.2/3.3) are
+        // computed over ALL results, not just `unbaselined` - the checked-in baseline only ever tracks
+        // a text-classified Target/Effects/IsCaveated (widen-baseline-generation-coverage adds no
+        // baseline field for a structural derivation itself, only feeds it into the SAME Effects list
+        // task 4.3's --write-baseline already writes), so a baselined text's own structural candidates
+        // are just as worth surfacing/cross-checking as an unbaselined one's.
+        var structuralResults = results
+            .Where(r => r.StructuralEffects.Count > 0)
+            .OrderBy(r => r.Names[0], StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        Console.WriteLine();
+        Console.WriteLine($"=== Structurally-derived Effect results: {structuralResults.Count} ===");
+        foreach (var r in structuralResults)
+        {
+            var namesLabel = DescribeNames(r.Names);
+            var effectsLabel = string.Join(", ", r.StructuralEffects.Select(e => DescribeEffect(e)));
+            var extra = r.Locations.Count > 3 ? $", +{r.Locations.Count - 3} more" : "";
+            Console.WriteLine(
+                $"- {namesLabel} -> [{effectsLabel}] (from CharacteristicModifierCandidate data, no text parsing)");
+            Console.WriteLine($"    text: \"{Truncate(r.Text)}\"");
+            Console.WriteLine($"    seen on: {string.Join("; ", r.Locations.Take(3))}{extra}");
+        }
+
+        // widen-baseline-generation-coverage design.md Decision 4: disagreement is its own reviewable
+        // listing, never silently resolved by preferring either source. Agreement (same verb+amount on
+        // the same characteristic) and "only one source produced anything" both require no listing at
+        // all - only a genuine mismatch on a shared characteristic is surfaced.
+        var disagreements = results
+            .Select(r => (Result: r, Mismatches: r.StructuralEffects
+                .Select(structuralEffect => (
+                    Structural: structuralEffect,
+                    TextEffect: r.Classification.Effects.OfType<ScalarCharacteristicEffect>()
+                        .FirstOrDefault(e => e.Characteristic == structuralEffect.Characteristic)))
+                .Where(pair => pair.TextEffect is not null &&
+                               (pair.TextEffect.Verb != pair.Structural.Verb ||
+                                pair.TextEffect.Amount != pair.Structural.Amount))
+                .ToList()))
+            .Where(x => x.Mismatches.Count > 0)
+            .OrderBy(x => x.Result.Names[0], StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        Console.WriteLine();
+        Console.WriteLine($"=== Regex vs. structural disagreements: {disagreements.Count} ===");
+        foreach (var (r, mismatches) in disagreements)
+        {
+            Console.WriteLine($"- {DescribeNames(r.Names)}");
+            Console.WriteLine($"    text: \"{Truncate(r.Text)}\"");
+            foreach (var (structural, textEffect) in mismatches)
+            {
+                Console.WriteLine(
+                    $"    {structural.Characteristic}: text-classified={DescribeEffect(textEffect!)}, structurally-derived={DescribeEffect(structural)}");
+            }
+
+            var extra = r.Locations.Count > 3 ? $", +{r.Locations.Count - 3} more" : "";
             Console.WriteLine($"    seen on: {string.Join("; ", r.Locations.Take(3))}{extra}");
         }
 
@@ -334,7 +403,8 @@ public static class Program
 
         return 0;
 
-        void Collect(string name, string text, string location)
+        void Collect(string name, string text, string location,
+            IEnumerable<CharacteristicModifierCandidate>? structuralCandidates = null)
         {
             // Group by RuleEffectClassifier's own normalized text, not the raw text - otherwise two
             // texts Classify() would treat as identical (a typographic apostrophe or NBSP variant of
@@ -346,7 +416,50 @@ public static class Program
                 occurrencesByText[normalized] = occurrence = new TextOccurrence();
             occurrence.Names.Add(name);
             occurrence.Locations.Add($"{location} :: '{name}'");
+
+            if (structuralCandidates is null)
+                return;
+
+            foreach (var candidate in structuralCandidates)
+                occurrence.StructuralCandidates.Add(candidate);
         }
+    }
+
+    /// <summary>widen-baseline-generation-coverage design.md Decision 2: the same join
+    /// <c>AttachedUnitAggregator.ApplyCharacteristicModifierCandidates</c> already performs at
+    /// runtime (by <see cref="Ability.Name"/>, case-insensitive), performed here once per collected
+    /// ability rather than per resolved roster unit.</summary>
+    private static IEnumerable<CharacteristicModifierCandidate>
+        MatchingCandidates(Datasheet datasheet, Ability ability) =>
+        datasheet.CharacteristicModifierCandidates.Where(c =>
+            string.Equals(c.EntryName, ability.Name, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>widen-baseline-generation-coverage design.md Decision 3: mechanically derives a
+    /// <see cref="ScalarCharacteristicEffect"/> straight from a candidate's own structured
+    /// {Field, Type, Value} - no text parsing, no prose ambiguity. Returns null (fails closed) for a
+    /// non-numeric <see cref="CharacteristicModifierCandidate.RawValue"/> or an unrecognized
+    /// <see cref="CharacteristicModifierCandidate.RawType"/> (anything other than "increment"/
+    /// "decrement"/"set") - see design.md's Open Question, resolved by task 4.1's corpus run.</summary>
+    private static CharacteristicEffect? TryDeriveStructuralEffect(CharacteristicModifierCandidate candidate)
+    {
+        if (!int.TryParse(candidate.RawValue, out var value))
+            return null;
+
+        if (candidate.RawType == "set")
+            return new ScalarCharacteristicEffect(candidate.Characteristic, EffectVerb.Set, value);
+
+        var kind = CharacteristicModificationKinds.Of(candidate.Characteristic);
+        var delta = candidate.RawType switch
+        {
+            "increment" => value,
+            "decrement" => -value,
+            _ => (int?)null
+        };
+        if (delta is not { } d)
+            return null;
+
+        var (verb, amount) = CharacteristicModificationResolver.ResolveVerbFromRawDelta(kind, d);
+        return new ScalarCharacteristicEffect(candidate.Characteristic, verb, amount);
     }
 
     private static string DescribeNames(List<string> names) =>
@@ -391,5 +504,12 @@ public static class Program
     {
         public SortedSet<string> Names { get; } = new(StringComparer.OrdinalIgnoreCase);
         public List<string> Locations { get; } = [];
+
+        /// <summary>Every <see cref="CharacteristicModifierCandidate"/> matched to an ability whose
+        /// Text normalizes to this occurrence's own key (widen-baseline-generation-coverage design.md
+        /// Decision 2) - a plain <see cref="HashSet{T}"/> since the record's own value equality
+        /// dedupes identical candidates the same way <see cref="Names"/> already dedupes identical
+        /// names.</summary>
+        public HashSet<CharacteristicModifierCandidate> StructuralCandidates { get; } = [];
     }
 }

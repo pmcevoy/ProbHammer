@@ -60,6 +60,47 @@ public class RuleEffectClassifierTests
     }
 
     [Fact]
+    public void InvulnerableSaveGrant_PluralRangedRestricted_ExtractsRangedOnlyEffect()
+    {
+        // Real corpus text (Warhammer 40,000.json's shared "Invulnerable Save (5+*)" profile - a
+        // War Dog units' own footnoted ranged-only grant). The plural, whole-unit-perspective
+        // counterpart to InvulnerableSaveGrant_OneSidedRestricted_ExtractsRangedOnlyEffect's singular
+        // form, mirroring InvulnerableSaveCaveatClassifier's own bare/unit template pairing -
+        // widen-baseline-generation-coverage.
+        var result = RuleEffectClassifier.Classify("Invulnerable Save (5+*)",
+            "Models in this unit have a 5+ invulnerable save against ranged attacks.");
+
+        result.Effects.Should().Equal(new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(0, 5)));
+        result.IsCaveated.Should().BeFalse();
+    }
+
+    [Fact]
+    public void InvulnerableSaveGrant_PluralMeleeRestricted_ExtractsMeleeOnlyEffect()
+    {
+        // Real corpus text (Warhammer 40,000.json's shared "Invulnerable Save (4+*)" profile - a
+        // War Dog units' own footnoted melee-only grant).
+        var result = RuleEffectClassifier.Classify("Invulnerable Save (4+*)",
+            "Models in this unit have a 4+ invulnerable save against melee attacks.");
+
+        result.Effects.Should().Equal(new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(4, 0)));
+        result.IsCaveated.Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("This model has a 4+ invulnerable save against ranged attacks, and the Feel No Pain 6+ ability.")]
+    [InlineData(
+        "The bearer has a 4+ invulnerable save against ranged attacks, and a 5+ invulnerable save against melee attacks.")]
+    public void InvulnerableSaveGrant_SingularRestricted_StillExtractsAfterPluralWidening(string text)
+    {
+        // Regression guard: widening InvulnerableSaveRangedRestricted/InvulnerableSaveMeleeRestricted
+        // to also accept "have" must not stop either pattern from still matching the pre-existing
+        // singular "has" shapes above.
+        var result = RuleEffectClassifier.Classify("Test Ability", text);
+
+        result.Effects.Should().NotBeEmpty();
+    }
+
+    [Fact]
     public void InvulnerableSaveGrant_RestrictedByANonMeleeRangedQualifier_ExtractsNoEffect()
     {
         // Real corpus text (Imperium - Agents of the Imperium.json). The Psychic-Attacks restriction

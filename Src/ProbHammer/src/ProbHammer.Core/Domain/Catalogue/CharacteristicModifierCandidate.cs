@@ -10,5 +10,14 @@ namespace ProbHammer.Core.Domain.Catalogue;
 /// why InSv and every WeaponProfile characteristic are deliberately excluded. <see cref="RawValue"/>
 /// is the source BsModifier's own unparsed Value text, carried for a future DerivedValue-computing
 /// step (proposal.md's "Explicitly deferred") - unused by this change's own caveat-only
-/// application.</summary>
-public sealed record CharacteristicModifierCandidate(string EntryName, string Characteristic, string RawValue);
+/// application. <see cref="RawType"/> is the source BsModifier's own unparsed Type
+/// ("increment"/"decrement"/"set") - added by widen-baseline-generation-coverage for the offline
+/// report tool's structural derivation path (see CharacteristicModificationResolver
+/// .ResolveVerbFromRawDelta); purely additive, still unread by
+/// AttachedUnitAggregator.ApplyCharacteristicModifierCandidates, the same as RawValue already
+/// is.</summary>
+public sealed record CharacteristicModifierCandidate(
+    string EntryName,
+    string Characteristic,
+    string RawValue,
+    string RawType);

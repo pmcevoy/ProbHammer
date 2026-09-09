@@ -25,7 +25,7 @@ public class CharacteristicModifierApplicationTests
             statlines: [("Custodian Guard", new Statline(6, 6, 2, 4, 7, 2))], weaponProfiles: [],
             characteristicModifierCandidates:
             [
-                new CharacteristicModifierCandidate(entryName, characteristic, "1")
+                new CharacteristicModifierCandidate(entryName, characteristic, "1", "increment")
             ]);
 
     [Fact]
@@ -150,8 +150,8 @@ public class CharacteristicModifierApplicationTests
             statlines: [("Custodian Guard", new Statline(6, 6, 2, 4, 7, 2))], weaponProfiles: [],
             characteristicModifierCandidates:
             [
-                new CharacteristicModifierCandidate("First Relic", "W", "1"),
-                new CharacteristicModifierCandidate("Second Relic", "W", "1")
+                new CharacteristicModifierCandidate("First Relic", "W", "1", "increment"),
+                new CharacteristicModifierCandidate("Second Relic", "W", "1", "increment")
             ]);
         var unit = new Unit(datasheet, [],
             [new ModelLine("Custodian Guard", [], count: 1, abilities: [enhancementA, enhancementB])]);

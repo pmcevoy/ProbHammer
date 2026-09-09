@@ -54,6 +54,55 @@ public class CharacteristicModificationResolverTests
         CharacteristicModificationClamp.Apply("W", -5).Should().Be(-5);
     }
 
+    // widen-baseline-generation-coverage's own inverse function: raw stored-value delta -> rulebook
+    // verb, the mirror image of ResolveDelta above. Auric Mantle's real corpus modifier is a
+    // structural "increment" of 2 on Toughness's own Plain-family characteristic (W, in this
+    // Datasheet's own field allowlist) - a positive raw delta on a Plain characteristic is Improve,
+    // sign carried straight through.
+    [Fact]
+    public void ResolveVerbFromRawDelta_PlainFamily_AuricMantle_PositiveDeltaIsImprove()
+    {
+        var (verb, amount) = CharacteristicModificationResolver.ResolveVerbFromRawDelta(
+            CharacteristicModificationKind.Plain, delta: 2);
+
+        verb.Should().Be(EffectVerb.Improve);
+        amount.Should().Be(2);
+    }
+
+    [Fact]
+    public void ResolveVerbFromRawDelta_PlainFamily_NegativeDeltaIsWorsen()
+    {
+        var (verb, amount) = CharacteristicModificationResolver.ResolveVerbFromRawDelta(
+            CharacteristicModificationKind.Plain, delta: -3);
+
+        verb.Should().Be(EffectVerb.Worsen);
+        amount.Should().Be(3);
+    }
+
+    // RollThreshold/ArmourPenetration invert relative to Plain - raising the stored number is worse
+    // for both families, so a positive raw delta resolves to Worsen, not Improve.
+    [Theory]
+    [InlineData(CharacteristicModificationKind.RollThreshold)]
+    [InlineData(CharacteristicModificationKind.ArmourPenetration)]
+    public void ResolveVerbFromRawDelta_InvertedFamilies_PositiveDeltaIsWorsen(CharacteristicModificationKind kind)
+    {
+        var (verb, amount) = CharacteristicModificationResolver.ResolveVerbFromRawDelta(kind, delta: 1);
+
+        verb.Should().Be(EffectVerb.Worsen);
+        amount.Should().Be(1);
+    }
+
+    [Theory]
+    [InlineData(CharacteristicModificationKind.RollThreshold)]
+    [InlineData(CharacteristicModificationKind.ArmourPenetration)]
+    public void ResolveVerbFromRawDelta_InvertedFamilies_NegativeDeltaIsImprove(CharacteristicModificationKind kind)
+    {
+        var (verb, amount) = CharacteristicModificationResolver.ResolveVerbFromRawDelta(kind, delta: -1);
+
+        verb.Should().Be(EffectVerb.Improve);
+        amount.Should().Be(1);
+    }
+
     [Fact]
     public void Resolve_ImproveOnAPlainCharacteristic_AddsTheAmount()
     {

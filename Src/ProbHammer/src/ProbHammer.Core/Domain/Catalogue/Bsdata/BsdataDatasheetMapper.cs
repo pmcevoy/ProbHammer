@@ -337,7 +337,7 @@ public static partial class BsdataDatasheetMapper
                 ? modifier.Value.GetString() ?? ""
                 : modifier.Value.GetRawText();
 
-            yield return new CharacteristicModifierCandidate(entry.Name, characteristic, rawValue);
+            yield return new CharacteristicModifierCandidate(entry.Name, characteristic, rawValue, modifier.Type);
         }
     }
 

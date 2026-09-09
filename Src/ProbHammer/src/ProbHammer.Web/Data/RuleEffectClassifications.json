@@ -453,6 +453,48 @@
       ]
     },
     {
+      "text": "Models in this unit have a 4+ invulnerable save against melee attacks.",
+      "target": {
+        "kind": "AttachedUnit"
+      },
+      "effects": [
+        {
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 4,
+            "rangedInSv": 0
+          }
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Invulnerable Save (4+*)"
+      ]
+    },
+    {
+      "text": "Models in this unit have a 5+ invulnerable save against ranged attacks.",
+      "target": {
+        "kind": "AttachedUnit"
+      },
+      "effects": [
+        {
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 0,
+            "rangedInSv": 5
+          }
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Invulnerable Save (5+*)"
+      ]
+    },
+    {
       "text": "The bearer has a 2+ invulnerable save.",
       "target": {
         "kind": "Self"
