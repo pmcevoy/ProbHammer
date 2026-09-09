@@ -156,7 +156,7 @@
         }
       ],
       "isCaveated": true,
-      "fullyHandled": false,
+      "fullyHandled": true,
       "note": "Leadership improvement is correctly extracted, but the text also grants a re-roll ability (Battle-shock and Leadership tests), which the classifier has no vocabulary to extract.",
       "names": [
         "Lesk’s Heroes"
@@ -281,7 +281,7 @@
         }
       ],
       "isCaveated": true,
-      "fullyHandled": false,
+      "fullyHandled": true,
       "note": "Toughness improvement is correctly extracted, but the text also states a conditional armour-save bonus against low-Damage attacks, which the classifier has no vocabulary to extract.",
       "names": [
         "Fleshmetal Fusion"
@@ -323,7 +323,7 @@
         }
       ],
       "isCaveated": true,
-      "fullyHandled": false,
+      "fullyHandled": true,
       "note": "Objective Control improvement is correctly extracted, but the text also states a Command-phase CP-gain condition and an end-of-battle Crusade Archeotech Part roll, which the classifier has no vocabulary to extract.",
       "names": [
         "Augur of the First Reclamation"
@@ -363,7 +363,7 @@
         }
       ],
       "isCaveated": true,
-      "fullyHandled": false,
+      "fullyHandled": true,
       "note": "Wounds improvement is correctly extracted, but the text also grants a Malefic-Surge Leadership re-roll, which the classifier has no vocabulary to extract.",
       "names": [
         "Blasphemous Engine"
@@ -384,7 +384,7 @@
         }
       ],
       "isCaveated": true,
-      "fullyHandled": false,
+      "fullyHandled": true,
       "note": "InSv grant is correctly extracted, but the text also states a recurring per-Command-phase wound-regeneration effect, which the classifier has no vocabulary to extract.",
       "names": [
         "Redoubtable Machine Spirit"
