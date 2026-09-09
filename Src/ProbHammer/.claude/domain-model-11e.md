@@ -1376,63 +1376,84 @@ than through the `presentLines` filter.
 
 ## Statline-Flag Rules
 
-Full requirements: `openspec/changes/resolve-known-ability-effects/`. A small, closed-vocabulary
-mechanism that recognizes a specific ability (exact Name + exact Text, no partial/fuzzy match) and
-derives a flagged Statline-characteristic value for display on the *specific resolved unit* it's
-currently present on — never mutating the shared `Datasheet`/`Unit` themselves. The matched source
-ability always keeps rendering normally in the unit's Abilities/Enhancements listing alongside the
-derived value; this mechanism only ever adds a value, never removes or hides anything.
+Full requirements: `openspec/changes/resolve-known-ability-effects/` (original hand-authored
+mechanism) and `apply-rule-effect-baseline/` (current baseline-driven implementation — retired the
+former's closed 2-rule vocabulary). Recognizes a rule/ability by its own normalized Text (never
+Name+Text, and never a live call to `RuleEffectClassifier.Classify` — the checked-in,
+human-verified `RuleClassificationBaseline` is the runtime trust boundary, see
+"Verified-Classification Baseline" above) and derives a flagged Statline-characteristic value for
+display on the *specific resolved unit* it's currently present on — never mutating the shared
+`Datasheet`/`Unit` themselves. The matched source ability always keeps rendering normally in the
+unit's Abilities/Enhancements listing alongside the derived value; this mechanism only ever adds a
+value, never removes or hides anything.
 
 ```
-ProbHammer.Core.Domain.Roster.StatlineFlagRuleScope = Bearer | WholeUnit
-                                       // Bearer: the mutation applies only to the matched ability's
-                                       // own bearer row(s) - one specific model-line when the
-                                       // matched AggregateAbilityEntry.StatlineName is set, the
-                                       // whole owning component when it's null (a Datasheet-level or
-                                       // Enhancement-sourced ability). WholeUnit: applies to every
-                                       // row of the whole ICombatUnit regardless of which component
-                                       // granted it (Vexilla - "the bearer's unit" spans every
+AttachedUnitAggregator.ApplyStatlineFlagRules(statlines, abilities, baseline)
+                                       // looks up each present AggregateAbilityEntry's own Ability
+                                       // .Text, normalized via RuleEffectClassifier.Normalize,
+                                       // against baseline.TryGet - a match whose own classified
+                                       // RuleTarget is SelfRuleTarget or AttachedUnitRuleTarget is
+                                       // applicable (TryGetApplicableEntry); KeywordRuleTarget/
+                                       // UnconditionalRuleTarget produce no match, the same outcome
+                                       // as no baseline entry at all (no roster-wide keyword-
+                                       // predicate evaluation exists in this capability - the two
+                                       // known real instances, Army: Shivversplint and Faith-Fuelled
+                                       // Resolve, are expected, already-catalogued gaps, not bugs).
+IsBearer(abilityEntry, target, statlineEntry) -> bool
+                                       // the old StatlineFlagRuleScope.Bearer/WholeUnit split,
+                                       // reread off the matched entry's own classified RuleTarget
+                                       // instead of a hand-set enum: SelfRuleTarget - the matched
+                                       // ability's own bearer row(s), one specific model-line when
+                                       // AggregateAbilityEntry.StatlineName is set, the whole owning
+                                       // component when it's null (a Datasheet-level or Enhancement-
+                                       // sourced ability); AttachedUnitRuleTarget - every row of the
+                                       // whole ICombatUnit regardless of which component granted it
+                                       // (Vexilla's own "models in the bearer's unit" spans every
                                        // component of an attached formation in real 11e rules, not
                                        // just the bearer's own).
-
-StatlineFlagRule                      // abstract: AbilityName/AbilityText (the exact match key),
-                                       // Scope, Matches(Ability) (exact Name+Text),
-                                       // Apply(Statline, matchedAbility) -> Statline (the mutation
-                                       // itself - no separate Characteristic field; every scalar
-                                       // Statline field is now a CharacteristicView
-                                       // (unify-objective-control-characteristic-view generalized
-                                       // this from InSv-only), so Apply just returns a Statline whose
-                                       // mutated field's own ContributingAbilities already carries
-                                       // matchedAbility - one recording mechanism, not two)
-ShieldDomeStatlineFlagRule             // Impulsor's Shield Dome - Bearer scope, targets InSv:
-                                       // "The bearer has a 5+ invulnerable save." -> InSv =
-                                       // InvulnerableSaveCharacteristicView.Resolved(5,5, [matchedAbility])
-VexillaStatlineFlagRule                // Custodian Guard's Vexilla - WholeUnit scope, targets Oc:
-                                       // "Add 1 to the Objective Control characteristic of models in
-                                       // the bearer's unit." -> Oc =
-                                       // ScalarCharacteristicView.Resolved(original, current+1, [matchedAbility])
-StatlineFlagRuleCatalogue.All          // the full closed vocabulary - a real third rule joins this
-                                       // list directly, no architecture change needed
+ApplyEffect(statline, effect, sourceAbility) -> Statline
+                                       // dispatches per CharacteristicEffect subtype:
+                                       // ScalarCharacteristicEffect -> ApplyScalarEffect (below);
+                                       // InvulnerableSaveCharacteristicEffect -> ApplyInvulnerableSaveEffect,
+                                       // a thin wrapper around the already-proven
+                                       // InvulnerableSaveEffectResolver.Resolve (Invulnerable-Save
+                                       // Effect Resolution above)
+ApplyScalarEffect(statline, effect, sourceAbility) -> Statline
+                                       // the one piece of glue CharacteristicModificationResolver
+                                       // itself doesn't provide (Characteristic-Modification Kind's
+                                       // own Non-Goals): resolves via
+                                       // CharacteristicModificationResolver.Resolve(effect
+                                       // .Characteristic, current.Value, effect.Verb, effect.Amount),
+                                       // then wraps the result back into a ScalarCharacteristicView
+                                       // via ScalarCharacteristicView.Resolved(current.OriginalValue,
+                                       // resolvedValue, [sourceAbility]) - preserving the true
+                                       // pre-mutation OriginalValue through a chain of mutations,
+                                       // mirroring VexillaStatlineFlagRule.Apply's own old behavior
+                                       // exactly. Both ApplyScalarEffect and
+                                       // ApplyInvulnerableSaveEffect skip (return the statline
+                                       // unchanged) when the target field already carries a
+                                       // contributing ability - same-field stacking between two
+                                       // baseline matches: the first applied wins, the second is
+                                       // skipped, no accumulate logic (no real corpus example needs
+                                       // it - checked against the full 41-entry baseline).
 ```
 
-**Wiring** (`AttachedUnitAggregator.Build`): runs as an additional step after `BuildStatlines`/
-`BuildAbilities` produce their live, casualty-filtered results (`ApplyStatlineFlagRules`) - matches
-every present `AggregateAbilityEntry` against `StatlineFlagRuleCatalogue.All`, then for each
-`AggregateStatlineEntry` whose (ComponentName, StatlineName) is that matched ability's own bearer
-(or, for a `WholeUnit`-scoped rule, unconditionally), applies the rule's `Apply` to produce a
-mutated `Statline`. `StatlineFlagRule` carries no separate flag/characteristic field of its own —
-`Apply` returns a `Statline` whose mutated characteristic (Shield Dome's InSv, Vexilla's Oc) already
-carries the matched `Ability` directly in its own `InvulnerableSaveCharacteristicView`/
-`ScalarCharacteristicView.ContributingAbilities` (the `unify-invulnerable-save-characteristic-view`/
-`unify-objective-control-characteristic-view` changes retired the older `StatlineFlag`/
-`AggregateStatlineEntry.Flags` side-channel this used before — a flag source is recorded in exactly
-one place now, on the mutated view itself). Since `BuildAbilities`' own output is already filtered
-to only currently-present sources (the same liveness rule that governs whether the ability itself
-renders), a flagged value's liveness falls out for free with no separate tracking — marking the
-bearer a casualty removes the matching `AggregateAbilityEntry` on the next `Build`, so the rule pass
-simply has nothing to match against and the affected `Statline` reverts to its own Datasheet base
-value. Never mutates `Datasheet`/`Unit`; only the returned, decorated copy of the statline entries
-carries a rule's effect.
+**Wiring** (`AttachedUnitAggregator.Build`, which now takes a `RuleClassificationBaseline` parameter
+- registered as a singleton in `Program.cs`, loaded once from
+`src/ProbHammer.Web/Data/RuleEffectClassifications.json` resolved against
+`IWebHostEnvironment.ContentRootPath`, mirroring `BsdataCatalogueCache`'s own root-resolution
+convention, and threaded through `LivePlay.cshtml.cs`/`LivePlayCasualtyService`'s own DI-injected
+copy): runs as an additional step after `BuildStatlines`/`BuildAbilities` produce their live,
+casualty-filtered results (`ApplyStatlineFlagRules`). Since `BuildAbilities`' own output is already
+filtered to only currently-present sources (the same liveness rule that governs whether the ability
+itself renders), a flagged value's liveness falls out for free with no separate tracking — marking
+the bearer a casualty removes the matching `AggregateAbilityEntry` on the next `Build`, so the
+lookup pass simply has nothing to match against and the affected `Statline` reverts to its own
+Datasheet base value. Never mutates `Datasheet`/`Unit`; only the returned, decorated copy of the
+statline entries carries an effect. Every matched baseline Effect is applied regardless of its own
+`IsCaveated`/`FullyHandled` state — every Effect-bearing baseline entry is independently verified
+correct for that Effect specifically, regardless of what else its own text states (see
+"Verified-Classification Baseline" above).
 
 **`/LivePlay` display** (`resolve-known-ability-effects`; generalized from InSv/Oc-only to all six
 scalar characteristics by the "Remaining Scalar Characteristics Retyped" work above): replaces the
@@ -2068,24 +2089,28 @@ InvulnerableSaveEffectResolver.Resolve(effect, sourceAbility, current)
                                        // pre-mutation OriginalValue is preserved from current's own
                                        // OriginalValue (never its effective Value, which may already
                                        // reflect an earlier mutation), mirroring every other
-                                       // hand-authored Resolved(...) call site in this codebase (e.g.
-                                       // ShieldDomeStatlineFlagRule.Apply).
+                                       // hand-authored Resolved(...) call site in this codebase.
 ```
 
 **Ground-truth verified, not just unit-tested**: resolving the Effect classified from Shield Dome's
 own real Name+Text ("The bearer has a 5+ invulnerable save.") against Shield Dome's own `Ability`
-reproduces `ShieldDomeStatlineFlagRule.Apply`'s exact result (`IsCaveated`/`OriginalValue`/
-`DerivedValue`/`ContributingAbilities` all compared field-by-field, not via whole-record equality -
-mirrors every other test in this codebase touching `InvulnerableSaveCharacteristicView`, which
-consistently avoids that in favor of explicit field assertions) — proving the general resolver is at
-least as correct as the specific hand-authored rule it is meant to eventually replace.
+reproduces the exact hand-computed result the now-retired `ShieldDomeStatlineFlagRule.Apply` used to
+produce (`IsCaveated`/`OriginalValue`/`DerivedValue`/`ContributingAbilities` all compared
+field-by-field, not via whole-record equality - mirrors every other test in this codebase touching
+`InvulnerableSaveCharacteristicView`, which consistently avoids that in favor of explicit field
+assertions) — proving the general resolver was at least as correct as the specific hand-authored
+rule it went on to replace.
 
-**Not consumed by anything yet** — no `AttachedUnitAggregator`/`StatlineFlagRuleCatalogue`/`/LivePlay`
-call site uses this resolver; `ShieldDomeStatlineFlagRule` is untouched and remains the only thing
-actually producing a real `InvulnerableSaveCharacteristicView` on a live roster today. Same
-sequencing `characteristic-modification-kind` itself used, and the same one this whole prose-
-classification effort has followed throughout: prove a component correct in isolation before a later
-change asks anything to trust it.
+**Now the runtime consumer** (`apply-rule-effect-baseline`): `AttachedUnitAggregator`'s
+`ApplyStatlineFlagRules` calls this resolver directly for every present ability whose normalized
+Text matches a `RuleClassificationBaseline` entry classified with an
+`InvulnerableSaveCharacteristicEffect` — see "Statline-Flag Rules" above. `StatlineFlagRule`/
+`ShieldDomeStatlineFlagRule`/`StatlineFlagRuleCatalogue` are deleted; this resolver, run from the
+checked-in baseline, is the only thing producing a real `InvulnerableSaveCharacteristicView` on a
+live roster now. Confirmed byte-for-byte equivalent to the retired hand-authored rule both by the
+ground-truth test above (now comparing against a hand-computed expected value rather than a call to
+the deleted type) and by a real captured export's Impulsor/Shield Dome rendering identically
+pre- and post-migration.
 
 ---
 

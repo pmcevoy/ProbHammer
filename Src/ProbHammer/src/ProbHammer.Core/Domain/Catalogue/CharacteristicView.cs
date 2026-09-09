@@ -61,7 +61,7 @@ public sealed record ScalarCharacteristicView(
     public static implicit operator ScalarCharacteristicView(int uniformValue) =>
         Resolved(uniformValue, uniformValue, []);
 
-    /// <summary>A matched, fully-understood StatlineFlagRule mutating an existing value uses this
+    /// <summary>A matched, fully-understood baseline Effect mutating an existing value uses this
     /// overload - <paramref name="originalValue"/> is the value's own pre-mutation
     /// <c>OriginalValue</c> (never its effective <c>Value</c>, which may already reflect an earlier
     /// rule in a chain), so the true catalogue value keeps surviving every mutation applied on top
@@ -118,7 +118,7 @@ public sealed record InvulnerableSaveCharacteristicView(
     public static InvulnerableSaveCharacteristicView Resolved(int melee, int ranged) =>
         Resolved(new InvulnerableSave(melee, ranged));
 
-    /// <summary>A matched, fully-understood StatlineFlagRule mutating an existing value (e.g.
+    /// <summary>A matched, fully-understood baseline Effect mutating an existing value (e.g.
     /// Shield Dome replacing whatever the Datasheet's own base InSv was) uses this overload -
     /// <paramref name="originalValue"/> is the value's own pre-mutation <c>OriginalValue</c> (never
     /// its effective <c>Value</c>, which may already reflect an earlier rule in a chain), so the

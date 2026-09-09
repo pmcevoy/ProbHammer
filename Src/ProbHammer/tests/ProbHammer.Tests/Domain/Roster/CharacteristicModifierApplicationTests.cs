@@ -1,6 +1,7 @@
 using FluentAssertions;
 using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Roster;
+using ProbHammer.Tests.Domain.Fixtures;
 
 namespace ProbHammer.Tests.Domain.Roster;
 
@@ -34,7 +35,7 @@ public class CharacteristicModifierApplicationTests
         var unit = new Unit(datasheet, [],
             [new ModelLine("Custodian Guard", [], count: 1, abilities: [GrantingAbility])]);
 
-        var view = AttachedUnitAggregator.Build(unit);
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.W.IsCaveated.Should().BeTrue();
@@ -50,7 +51,7 @@ public class CharacteristicModifierApplicationTests
         var datasheet = DatasheetWithCandidate("Auric Mantle", "W");
         var unit = new Unit(datasheet, [], [new ModelLine("Custodian Guard", [], count: 1, abilities: [])]);
 
-        var view = AttachedUnitAggregator.Build(unit);
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.W.IsCaveated.Should().BeFalse();
@@ -65,7 +66,7 @@ public class CharacteristicModifierApplicationTests
             [new ModelLine("Custodian Guard", [], count: 1, abilities: [GrantingAbility])]);
         unit.ModelLines[0].RemoveCasualties(1);
 
-        var view = AttachedUnitAggregator.Build(unit);
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
 
         // the whole statline entry still reports (RemainingCount 0 / InitialCount 1, "persist at
         // zero" - AttachedUnitAggregator's own documented behavior), but its own Ability is no
@@ -89,7 +90,7 @@ public class CharacteristicModifierApplicationTests
 
         var attachedUnit = new AttachedUnit(bodyguard, [warden]);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit);
+        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
 
         view.Statlines.Should().ContainSingle(s => s.StatlineName == "Custodian Guard" && s.Statline.W.IsCaveated);
         view.Statlines.Should().ContainSingle(s => s.StatlineName == "Custodian Warden" && !s.Statline.W.IsCaveated);
@@ -97,11 +98,11 @@ public class CharacteristicModifierApplicationTests
 
     [Fact]
     public void
-        A_data_derived_candidate_and_a_hand_authored_StatlineFlagRule_coexist_without_regressing_the_resolved_rule()
+        A_data_derived_candidate_and_a_baseline_matched_effect_coexist_without_regressing_the_resolved_value()
     {
         // Real corpus overlap (Adeptus Custodes' "Vexilla"): the same wargear entry carries both a
-        // hand-authored StatlineFlagRule match (fully resolving Oc) and a classified structural Oc
-        // candidate. The candidate application step must not overwrite the already-resolved value.
+        // baseline-matched Effect (fully resolving Oc) and a classified structural Oc candidate. The
+        // candidate application step must not overwrite the already-resolved value.
         var vexilla = new Ability
         {
             Name = "Vexilla",
@@ -112,7 +113,7 @@ public class CharacteristicModifierApplicationTests
         var datasheet = DatasheetWithCandidate("Vexilla", "Oc");
         var unit = new Unit(datasheet, [], [new ModelLine("Custodian Guard", [], count: 1, abilities: [vexilla])]);
 
-        var view = AttachedUnitAggregator.Build(unit);
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.Oc.IsCaveated.Should().BeFalse();
@@ -155,7 +156,7 @@ public class CharacteristicModifierApplicationTests
         var unit = new Unit(datasheet, [],
             [new ModelLine("Custodian Guard", [], count: 1, abilities: [enhancementA, enhancementB])]);
 
-        var view = AttachedUnitAggregator.Build(unit);
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.W.IsCaveated.Should().BeTrue();

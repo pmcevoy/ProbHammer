@@ -1,12 +1,17 @@
 using FluentAssertions;
 using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Roster;
+using ProbHammer.Tests.Domain.Fixtures;
 
 namespace ProbHammer.Tests.Domain.Roster;
 
-/// <summary>Covers statline-flag-rules' three requirements against the two seed rules (Shield Dome,
-/// Vexilla) via <see cref="AttachedUnitAggregator.Build"/> directly - the rule pass runs inside
-/// Build (design D3), so its effect is only observable through the aggregate view it produces.</summary>
+/// <summary>Covers statline-flag-rules' requirements against a small, hand-built
+/// <see cref="RuleClassificationBaseline"/> fixture reproducing Shield Dome's and Vexilla's real
+/// baseline entries (<see cref="RuleClassificationBaselineFixtures.ShieldDomeAndVexilla"/>), matched
+/// via <see cref="AttachedUnitAggregator.Build"/> directly - the baseline lookup runs inside Build
+/// (design D3), so its effect is only observable through the aggregate view it produces. Replaces
+/// the old exact-Name+Text StatlineFlagRuleCatalogue vocabulary this test file used to cover
+/// (apply-rule-effect-baseline).</summary>
 public class StatlineFlagRuleTests
 {
     private static readonly Ability ShieldDome = new()
@@ -38,7 +43,7 @@ public class StatlineFlagRuleTests
     {
         var unit = ImpulsorWithShieldDome();
 
-        var view = AttachedUnitAggregator.Build(unit);
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.InSv.IsCaveated.Should().BeFalse();
@@ -54,7 +59,7 @@ public class StatlineFlagRuleTests
     {
         var unit = ImpulsorWithShieldDome();
 
-        var view = AttachedUnitAggregator.Build(unit);
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
 
         view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Shield Dome");
     }
@@ -65,7 +70,7 @@ public class StatlineFlagRuleTests
         var unit = ImpulsorWithShieldDome();
         unit.ModelLines[0].RemoveCasualties(1);
 
-        var view = AttachedUnitAggregator.Build(unit);
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.InSv.IsCaveated.Should().BeFalse();
@@ -83,7 +88,7 @@ public class StatlineFlagRuleTests
             statlines: [("Impulsor", new Statline(12, 9, 3, 11, 6, 2))], weaponProfiles: []);
         var unit = new Unit(datasheet, [], [new ModelLine("Impulsor", [], count: 1, abilities: [mismatched])]);
 
-        var view = AttachedUnitAggregator.Build(unit);
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.InSv.IsCaveated.Should().BeFalse();
@@ -112,7 +117,7 @@ public class StatlineFlagRuleTests
     {
         var attachedUnit = CustodianGuardWithVexilla();
 
-        var view = AttachedUnitAggregator.Build(attachedUnit);
+        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
 
         view.Statlines.Should().HaveCount(2);
         var bodyguardEntry = view.Statlines.Should().ContainSingle(s => s.StatlineName == "Custodian Guard").Subject;
@@ -128,7 +133,7 @@ public class StatlineFlagRuleTests
         var attachedUnit = CustodianGuardWithVexilla();
         attachedUnit.Attached[0].ModelLines[0].RemoveCasualties(1); // the Warden, not the Vexilla bearer
 
-        var view = AttachedUnitAggregator.Build(attachedUnit);
+        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
 
         view.Statlines.Should().ContainSingle(s => s.StatlineName == "Custodian Guard" && s.Statline.Oc.Value == 3);
     }
@@ -139,8 +144,110 @@ public class StatlineFlagRuleTests
         var attachedUnit = CustodianGuardWithVexilla();
         attachedUnit.Bodyguard.ModelLines[0].RemoveCasualties(4);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit);
+        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
 
         view.Statlines.Should().OnlyContain(s => s.Statline.Oc.Value == 2);
+    }
+
+    // statline-flag-rules' new "Target-Scoped Application" requirement (apply-rule-effect-baseline).
+    [Fact]
+    public void KeywordScopedBaselineMatch_ProducesNoFlaggedValue()
+    {
+        var keywordScoped = new Ability
+        {
+            Name = "Faith-Fuelled Resolve",
+            Text = "Friendly SWORD BRETHREN SQUAD units have +1 OC.",
+            Scope = AbilityScope.Unit,
+            Origin = AbilityOrigin.OptionalGrant
+        };
+        var baseline = RuleClassificationBaseline.FromEntries(
+        [
+            new RuleClassificationBaselineEntry(
+                Text: keywordScoped.Text,
+                Target: new KeywordRuleTarget("SWORD BRETHREN SQUAD"),
+                Effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)])
+        ]);
+        var datasheet = new Datasheet(
+            "Sword Brethren Squad", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Sword Brother", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: []);
+        var unit = new Unit(datasheet, [],
+            [new ModelLine("Sword Brother", [], count: 1, abilities: [keywordScoped])]);
+
+        var view = AttachedUnitAggregator.Build(unit, baseline);
+
+        var entry = view.Statlines.Should().ContainSingle().Subject;
+        entry.Statline.Oc.IsCaveated.Should().BeFalse();
+        entry.Statline.Oc.ContributingAbilities.Should().BeEmpty();
+        entry.Statline.Oc.Value.Should().Be((CharacteristicValue)1);
+    }
+
+    [Fact]
+    public void UnconditionallyRosterWideBaselineMatch_ProducesNoFlaggedValue()
+    {
+        var unconditional = new Ability
+        {
+            Name = "Some Army-Wide Rule",
+            Text = "Add 1 to the Toughness characteristic.",
+            Scope = AbilityScope.Unit,
+            Origin = AbilityOrigin.OptionalGrant
+        };
+        var baseline = RuleClassificationBaseline.FromEntries(
+        [
+            new RuleClassificationBaselineEntry(
+                Text: unconditional.Text,
+                Target: new UnconditionalRuleTarget(),
+                Effects: [new ScalarCharacteristicEffect("T", EffectVerb.Improve, 1)])
+        ]);
+        var datasheet = new Datasheet(
+            "Some Unit", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: []);
+        var unit = new Unit(datasheet, [],
+            [new ModelLine("Some Unit", [], count: 1, abilities: [unconditional])]);
+
+        var view = AttachedUnitAggregator.Build(unit, baseline);
+
+        var entry = view.Statlines.Should().ContainSingle().Subject;
+        entry.Statline.T.IsCaveated.Should().BeFalse();
+        entry.Statline.T.ContributingAbilities.Should().BeEmpty();
+        entry.Statline.T.Value.Should().Be((CharacteristicValue)4);
+    }
+
+    // design.md Decision 6: same-field stacking between two baseline matches - the first applied
+    // wins, the second is skipped. Mirrors CharacteristicModifierApplicationTests' own pinning-test
+    // convention for the sibling mechanism.
+    [Fact]
+    public void TwoBaselineMatchesTargetingTheSameCharacteristic_TheFirstAppliedWins_TheSecondIsSkipped()
+    {
+        var abilityA = new Ability
+        {
+            Name = "First Grant", Text = "Add 1 to the Wounds characteristic.",
+            Scope = AbilityScope.Model, Origin = AbilityOrigin.Enhancement
+        };
+        var abilityB = new Ability
+        {
+            Name = "Second Grant", Text = "Add 2 to the Wounds characteristic.",
+            Scope = AbilityScope.Model, Origin = AbilityOrigin.Enhancement
+        };
+        var baseline = RuleClassificationBaseline.FromEntries(
+        [
+            new RuleClassificationBaselineEntry(
+                Text: abilityA.Text, Target: new SelfRuleTarget(),
+                Effects: [new ScalarCharacteristicEffect("W", EffectVerb.Improve, 1)]),
+            new RuleClassificationBaselineEntry(
+                Text: abilityB.Text, Target: new SelfRuleTarget(),
+                Effects: [new ScalarCharacteristicEffect("W", EffectVerb.Improve, 2)])
+        ]);
+        var datasheet = new Datasheet(
+            "Custodian Guard", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Custodian Guard", new Statline(6, 6, 2, 4, 7, 2))], weaponProfiles: []);
+        var unit = new Unit(datasheet, [],
+            [new ModelLine("Custodian Guard", [], count: 1, abilities: [abilityA, abilityB])]);
+
+        var view = AttachedUnitAggregator.Build(unit, baseline);
+
+        var entry = view.Statlines.Should().ContainSingle().Subject;
+        entry.Statline.W.IsCaveated.Should().BeFalse();
+        entry.Statline.W.Value.Should().Be((CharacteristicValue)5); // base 4 + First Grant's 1, not + Second's 2
+        entry.Statline.W.ContributingAbilities.Should().ContainSingle(a => a.Name == "First Grant");
     }
 }

@@ -54,10 +54,11 @@ public class InvulnerableSaveEffectResolverTests
     public void ReproducesShieldDomesResolvedInvulnerableSave()
     {
         // Ground-truth: resolving the Effect classified from Shield Dome's own real Name+Text against
-        // Shield Dome's own Ability must reproduce ShieldDomeStatlineFlagRule.Apply's exact result -
-        // proving the general resolver is at least as correct as the specific rule it is meant to
-        // eventually replace. See invulnerable-save-effect-resolution's "Reproduces An Existing
-        // Hand-Authored Rule's Result".
+        // Shield Dome's own Ability must reproduce the exact hand-computed result the now-retired
+        // ShieldDomeStatlineFlagRule.Apply used to produce (apply-rule-effect-baseline replaced it
+        // with this general resolver, run from the checked-in baseline) - proving the general
+        // resolver is at least as correct as the specific rule it replaced. See
+        // invulnerable-save-effect-resolution's "Reproduces An Existing Hand-Authored Rule's Result".
         var shieldDome = new Ability
         {
             Name = "Shield Dome",
@@ -72,7 +73,8 @@ public class InvulnerableSaveEffectResolverTests
         var baseStatline = new Statline(12, 9, 3, 11, 6, 2);
         var resolved = InvulnerableSaveEffectResolver.Resolve(effect, shieldDome, baseStatline.InSv);
 
-        var expected = new ShieldDomeStatlineFlagRule().Apply(baseStatline, shieldDome).InSv;
+        var expected = InvulnerableSaveCharacteristicView.Resolved(
+            baseStatline.InSv.OriginalValue, new InvulnerableSave(5, 5), [shieldDome]);
 
         resolved.IsCaveated.Should().Be(expected.IsCaveated);
         resolved.OriginalValue.Should().Be(expected.OriginalValue);

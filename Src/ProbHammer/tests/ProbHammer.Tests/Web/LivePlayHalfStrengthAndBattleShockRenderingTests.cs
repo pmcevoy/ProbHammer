@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Catalogue.Bsdata;
 using ProbHammer.Core.Domain.Roster;
 using ProbHammer.Tests.Domain.Fixtures;
@@ -32,7 +33,8 @@ public class LivePlayHalfStrengthAndBattleShockRenderingTests : IClassFixture<We
         var httpContext = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
         var renderer = scope.ServiceProvider.GetRequiredService<IRazorPartialRenderer>();
 
-        var view = AttachedUnitAggregator.Build(unit);
+        var baseline = scope.ServiceProvider.GetRequiredService<RuleClassificationBaseline>();
+        var view = AttachedUnitAggregator.Build(unit, baseline);
         var unitBlock = LivePlayModel.BuildUnitBlock(view, unit);
         var glossary = RuleGlossary.Build(new BsdataClosure([]));
         var model = new UnitBlockRenderModel(0, unitBlock, glossary);

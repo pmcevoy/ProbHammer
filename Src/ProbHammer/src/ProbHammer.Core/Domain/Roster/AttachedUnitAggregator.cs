@@ -9,7 +9,7 @@ namespace ProbHammer.Core.Domain.Roster;
 /// </summary>
 public static class AttachedUnitAggregator
 {
-    public static AttachedUnitAggregateView Build(ICombatUnit combatUnit)
+    public static AttachedUnitAggregateView Build(ICombatUnit combatUnit, RuleClassificationBaseline baseline)
     {
         var presentLines = combatUnit.Components
             .SelectMany(unit => unit.ModelLines.Select(modelLine => (Unit: unit, ModelLine: modelLine)))
@@ -17,7 +17,7 @@ public static class AttachedUnitAggregator
             .ToList();
 
         var abilities = BuildAbilities(combatUnit);
-        var statlines = ApplyStatlineFlagRules(BuildStatlines(combatUnit), abilities);
+        var statlines = ApplyStatlineFlagRules(BuildStatlines(combatUnit), abilities, baseline);
         statlines = ApplyCharacteristicModifierCandidates(combatUnit, statlines, abilities);
 
         return new AttachedUnitAggregateView(
@@ -30,19 +30,18 @@ public static class AttachedUnitAggregator
     }
 
     // A separate step from ApplyStatlineFlagRules (design.md's Decision), run after it - the two
-    // operate on different candidate sources (hand-authored StatlineFlagRuleCatalogue vs.
+    // operate on different candidate sources (the checked-in RuleClassificationBaseline vs.
     // data-derived Datasheet.CharacteristicModifierCandidates) with different match keys (ability
-    // Name+Text vs. entry Name). Presence-check reuses the *existing* resolved-Ability name
+    // normalized Text vs. entry Name). Presence-check reuses the *existing* resolved-Ability name
     // presence (AggregateAbilityEntry, already built by BuildAbilities) rather than any new match-
     // key concept - a candidate's EntryName is looked up against the SAME component's present
     // ability names (design.md's Decision: "no new is this candidate present concept"). Running
     // AFTER ApplyStatlineFlagRules, and skipping a field ApplyStatlineFlagRules already touched
     // (ContributingAbilities.Count > 0), is not incidental ordering - a real corpus overlap exists
-    // (Adeptus Custodes' "Vexilla": both a hand-authored StatlineFlagRule match on its own Ability
-    // text AND a classified structural Oc-increment candidate on the same wargear entry) where the
-    // hand-authored rule already fully resolves Oc (a real derived value, not caveated) - applying
-    // this coarser, caveat-only mechanism on top would regress a correct, resolved value back to
-    // merely caveated.
+    // (Adeptus Custodes' "Vexilla": both a baseline-matched Effect on its own Ability text AND a
+    // classified structural Oc-increment candidate on the same wargear entry) where the baseline
+    // match already fully resolves Oc (a real derived value, not caveated) - applying this coarser,
+    // caveat-only mechanism on top would regress a correct, resolved value back to merely caveated.
     private static IReadOnlyList<AggregateStatlineEntry> ApplyCharacteristicModifierCandidates(
         ICombatUnit combatUnit, IReadOnlyList<AggregateStatlineEntry> statlines,
         IReadOnlyList<AggregateAbilityEntry> abilities)
@@ -80,9 +79,9 @@ public static class AttachedUnitAggregator
         }).ToList();
     }
 
-    // Same Bearer-scope targeting IsBearer already uses for a StatlineFlagRuleScope.Bearer rule - a
-    // data-derived candidate has no WholeUnit-scoped equivalent (no real corpus candidate's own
-    // text spans "the bearer's whole unit" the way Vexilla's hand-authored text explicitly does).
+    // Same Bearer-scope targeting IsBearer already uses for a SelfRuleTarget match - a data-derived
+    // candidate has no AttachedUnitRuleTarget-scoped equivalent (no real corpus candidate's own text
+    // spans "the bearer's whole unit" the way Vexilla's own baseline entry does).
     private static bool IsBearerOfCandidate(AggregateAbilityEntry abilityEntry, AggregateStatlineEntry statlineEntry) =>
         abilityEntry.StatlineName is not null
             ? abilityEntry.ComponentName == statlineEntry.ComponentName &&
@@ -125,16 +124,20 @@ public static class AttachedUnitAggregator
         };
 
     // Runs after BuildStatlines/BuildAbilities produce their live, casualty-filtered results (design
-    // D3) - abilities is already filtered to only currently-present sources, so a matched rule's
+    // D3) - abilities is already filtered to only currently-present sources, so a matched entry's
     // liveness falls out for free with no separate tracking (statline-flag-rules' "Mutation Liveness
     // Follows Ability Presence"). Never mutates Datasheet/Unit; only the returned decorated copy of
-    // the statline entries carries a rule's effect.
+    // the statline entries carries an effect. Looks up each present ability's own normalized Text
+    // against the checked-in RuleClassificationBaseline (never Name+Text, and never a live call to
+    // RuleEffectClassifier.Classify - apply-rule-effect-baseline design.md's Decisions 1/2), replacing
+    // the old closed StatlineFlagRuleCatalogue vocabulary.
     private static IReadOnlyList<AggregateStatlineEntry> ApplyStatlineFlagRules(
-        IReadOnlyList<AggregateStatlineEntry> statlines, IReadOnlyList<AggregateAbilityEntry> abilities)
+        IReadOnlyList<AggregateStatlineEntry> statlines, IReadOnlyList<AggregateAbilityEntry> abilities,
+        RuleClassificationBaseline baseline)
     {
         var matches = abilities
-            .Select(a => (Entry: a, Rule: StatlineFlagRuleCatalogue.All.FirstOrDefault(r => r.Matches(a.Ability))))
-            .Where(x => x.Rule is not null)
+            .Select(a => (Entry: a, Matched: TryGetApplicableEntry(baseline, a.Ability)))
+            .Where(x => x.Matched is not null)
             .ToList();
 
         if (matches.Count == 0)
@@ -142,32 +145,86 @@ public static class AttachedUnitAggregator
 
         return statlines.Select(entry =>
         {
-            var applicable = matches.Where(m => IsBearer(m.Entry, m.Rule!, entry)).ToList();
+            var applicable = matches.Where(m => IsBearer(m.Entry, m.Matched!.Target, entry)).ToList();
             if (applicable.Count == 0)
                 return entry;
 
             var mutated = entry.Statline;
-            foreach (var (abilityEntry, rule) in applicable)
-                mutated = rule!.Apply(mutated, abilityEntry.Ability);
+            foreach (var (abilityEntry, baselineEntry) in applicable)
+            foreach (var effect in baselineEntry!.Effects)
+                mutated = ApplyEffect(mutated, effect, abilityEntry.Ability);
 
             return entry with { Statline = mutated };
         }).ToList();
     }
 
-    // A bearer-only rule's bearer is the matched ability's own (ComponentName, StatlineName) - one
-    // specific model-line when StatlineName is set, the whole component when it's null (a
-    // Datasheet-level or Enhancement-sourced ability, per D4). A whole-unit rule applies to every
-    // row regardless, since the matched ability is already confirmed present on this ICombatUnit.
-    private static bool IsBearer(AggregateAbilityEntry abilityEntry, StatlineFlagRule rule,
+    // A baseline entry whose own classified target this capability can't yet apply (KeywordRuleTarget/
+    // UnconditionalRuleTarget - no roster-wide predicate evaluation exists) produces no match at all,
+    // the same outcome as an ability matching no baseline entry (design.md Decision 4).
+    private static RuleClassificationBaselineEntry? TryGetApplicableEntry(RuleClassificationBaseline baseline,
+        Ability ability)
+    {
+        var normalizedText = RuleEffectClassifier.Normalize(ability.Text);
+        return baseline.TryGet(normalizedText, out var entry) &&
+               entry.Target is SelfRuleTarget or AttachedUnitRuleTarget
+            ? entry
+            : null;
+    }
+
+    // SelfRuleTarget maps onto the old Bearer scope - the matched ability's own (ComponentName,
+    // StatlineName): one specific model-line when StatlineName is set, the whole component when it's
+    // null (a Datasheet-level or Enhancement-sourced ability). AttachedUnitRuleTarget maps onto the
+    // old WholeUnit scope - applies to every row regardless, since the matched ability is already
+    // confirmed present on this ICombatUnit (design.md Decision 4).
+    private static bool IsBearer(AggregateAbilityEntry abilityEntry, RuleTarget target,
         AggregateStatlineEntry statlineEntry)
     {
-        if (rule.Scope == StatlineFlagRuleScope.WholeUnit)
+        if (target is AttachedUnitRuleTarget)
             return true;
 
         return abilityEntry.StatlineName is not null
             ? abilityEntry.ComponentName == statlineEntry.ComponentName &&
               abilityEntry.StatlineName == statlineEntry.StatlineName
             : abilityEntry.ComponentName == statlineEntry.ComponentName;
+    }
+
+    // Design.md Decision 6: if two baseline-matched entries would both touch the same characteristic
+    // of the same statline entry, the first applied wins and the second is skipped - the same
+    // "skip if the field already carries a contributing ability" shape
+    // ApplyCharacteristicModifierCandidates already uses for its own overlap with this mechanism, no
+    // separate accumulate logic. No real corpus example needs this today (checked - see design.md).
+    private static Statline ApplyEffect(Statline statline, CharacteristicEffect effect, Ability sourceAbility) =>
+        effect switch
+        {
+            ScalarCharacteristicEffect scalar => ApplyScalarEffect(statline, scalar, sourceAbility),
+            InvulnerableSaveCharacteristicEffect insv => ApplyInvulnerableSaveEffect(statline, insv, sourceAbility),
+            _ => throw new ArgumentOutOfRangeException(nameof(effect))
+        };
+
+    // Design.md Decision 7: the one missing piece of glue CharacteristicModificationResolver itself
+    // doesn't provide - wraps its resolved raw CharacteristicValue back into a ScalarCharacteristicView,
+    // preserving the true pre-mutation OriginalValue through a chain of mutations (never the field's
+    // current effective Value, which may already reflect an earlier effect in this same pass).
+    private static Statline ApplyScalarEffect(Statline statline, ScalarCharacteristicEffect effect,
+        Ability sourceAbility)
+    {
+        var current = GetScalarField(statline, effect.Characteristic);
+        if (current.ContributingAbilities.Count > 0)
+            return statline;
+
+        var resolvedValue = CharacteristicModificationResolver.Resolve(
+            effect.Characteristic, current.Value, effect.Verb, effect.Amount);
+        var resolved = ScalarCharacteristicView.Resolved(current.OriginalValue, resolvedValue, [sourceAbility]);
+        return SetScalarField(statline, effect.Characteristic, resolved);
+    }
+
+    private static Statline ApplyInvulnerableSaveEffect(Statline statline, InvulnerableSaveCharacteristicEffect effect,
+        Ability sourceAbility)
+    {
+        if (statline.InSv.ContributingAbilities.Count > 0)
+            return statline;
+
+        return statline with { InSv = InvulnerableSaveEffectResolver.Resolve(effect, sourceAbility, statline.InSv) };
     }
 
     // Component display order: an AttachedUnit's Attached units first, in their list order, then

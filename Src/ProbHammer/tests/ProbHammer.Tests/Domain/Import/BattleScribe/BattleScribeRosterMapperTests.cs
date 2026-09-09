@@ -3,6 +3,7 @@ using FluentAssertions;
 using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Import.BattleScribe;
 using ProbHammer.Core.Domain.Roster;
+using ProbHammer.Tests.Domain.Fixtures;
 
 namespace ProbHammer.Tests.Domain.Import.BattleScribe;
 
@@ -206,7 +207,7 @@ public class BattleScribeRosterMapperTests
         var army = BuildRoster();
         var impulsor = army.Units.OfType<Unit>().Single(u => u.Name == "Impulsor");
 
-        var view = AttachedUnitAggregator.Build(impulsor);
+        var view = AttachedUnitAggregator.Build(impulsor, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.InSv.IsCaveated.Should().BeFalse();

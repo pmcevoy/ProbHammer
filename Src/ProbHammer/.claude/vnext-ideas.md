@@ -332,10 +332,10 @@ entry once it's been turned into a change (archived changes remain the historica
   of an unreviewable ~3,000-entry one. A new, standalone `InvulnerableSaveEffectResolver` (mirrors
   `CharacteristicModificationKind`/`CharacteristicModificationResolver`'s own not-yet-consumed,
   proven-in-isolation discipline) resolves a classified InSv Effect + its source Ability into a real
-  `InvulnerableSaveCharacteristicView`, ground-truth-verified to reproduce
-  `ShieldDomeStatlineFlagRule.Apply`'s exact result — **still not wired into
-  `AttachedUnitAggregator`/`StatlineFlagRuleCatalogue`**; `ShieldDomeStatlineFlagRule` remains
-  untouched and the only thing actually producing a real InSv view on a live roster today. The
+  `InvulnerableSaveCharacteristicView`, ground-truth-verified to reproduce the now-retired
+  `ShieldDomeStatlineFlagRule.Apply`'s exact result — **since `apply-rule-effect-baseline`, wired
+  into `AttachedUnitAggregator` directly, run from the checked-in `RuleClassificationBaseline`**;
+  `StatlineFlagRule`/`ShieldDomeStatlineFlagRule`/`StatlineFlagRuleCatalogue` are deleted. The
   Psychic-Attack/Daemon-attack-source restriction axis remains explicitly out of scope (no `/LivePlay`
   representation exists for a qualifier-restricted save at all).
 
@@ -375,6 +375,43 @@ entry once it's been turned into a change (archived changes remain the historica
   known-incomplete-but-correct extraction specifically because the source text grants a keyword or a
   separate ability alongside its extracted characteristic mutation — see "Caveated rule-effect
   classifications" above for the original find. Same footing as the already-deferred `WeaponEffect`.
+  **Confirmed during `apply-rule-effect-baseline`'s exploration (2026-09-09): these would NOT derive
+  from `CharacteristicEffect`**, unlike `WeaponEffect` (which still targets a `WeaponProfile`
+  characteristic, the same general shape) — a keyword or an ability grant lives on the Unit/ModelLine
+  itself, not as a Statline/WeaponProfile characteristic value at all. The right future shape is a
+  broader sibling hierarchy sitting above today's `CharacteristicEffect` (something like
+  `RuleClassification.Effects: IReadOnlyList<RuleEffect>` with `CharacteristicEffect`/`KeywordEffect`/
+  `AbilityEffect` as siblings under it), deliberately not built now — there is no real keyword/ability
+  text-extraction pattern to design the shape against yet, and generalizing ahead of a second real
+  consumer is exactly the premature-behavior trap this project has reverted from before (see
+  [[feedback_avoid_premature_behavior_on_unconsumed_domain_types]]). Revisit when a real keyword- or
+  ability-grant extraction pattern is actually being built, not before.
+
+  **A default "known-affected, unresolved" InSv Effect — real idea, evidenced, deliberately deferred
+  (surfaced 2026-09-09 exploring `apply-rule-effect-baseline`).** When ability text trips
+  `RuleEffectClassifier.MayStateInvulnerableSave`'s D5 gate (contains "invulnerable save") but matches
+  none of the three specific InSv patterns, `ClassifyEffects` today silently produces zero Effects —
+  the same outcome as text that never mentioned InSv at all. Idea: a final fallback branch producing a
+  new `UnresolvedCharacteristicEffect(string Characteristic)` `CharacteristicEffect` subtype (no verb/
+  amount/value — just "this text names this characteristic and we know it's touched") whenever the D5
+  gate passes but no specific pattern matches; resolving it would call the ALREADY-EXISTING
+  `ScalarCharacteristicView.Caveated(...)`/`InvulnerableSaveCharacteristicView.Caveated(...)` factories
+  directly — no new value-resolution logic, the same shape `ApplyCharacteristicModifierCandidates`'s
+  own caveat step and `ResolveInvulnerableSave`'s footnote-caveat path already use. Follows the
+  method's own existing "specific pattern wins, falls back to a generic marker" structure — literally
+  filling in an `else` that currently produces nothing. **Concrete, calculable consequence if built**:
+  the ~47 texts that trip the D5 gate but match nothing (today's "Default-only results with unmatched
+  invulnerable-save language" report section, all previously reviewed as correctly-unmatched,
+  including the confirmed T'au "Skirmish Fighters" gap above) would flip into visible `Effect results`
+  needing a baseline entry each — a real, bounded batch-review cost, not a free type addition.
+  **Scoping decision, not yet committed**: eventually wanted for all six Statline scalars too, but the
+  user is explicitly wary of the review volume growing unmanageable — InSv already has the
+  `MayStateInvulnerableSave` gate to size the batch (~47, manageable); the six scalars have no
+  equivalent "characteristic named but no verb matched" gate built yet, so extending there needs that
+  gate built first to even estimate the cost. This is also the general fix for a separately-raised
+  gap: `RuleClassification.IsCaveated` is one whole-record bool with no way to say "Oc: confident, InSv:
+  unknown" within a single classification — this idea moves the confidence signal from the
+  whole-record `IsCaveated` down onto the Effect itself, which is the more precise fix.
 
   **Still not built**: computing an actual `DerivedValue` for any caveat this shipped work surfaces
   (the explicit "resolved" phase) — the caveat is display-only, "this characteristic is affected,"

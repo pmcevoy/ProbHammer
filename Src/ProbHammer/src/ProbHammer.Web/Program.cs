@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Catalogue.Bsdata;
 using ProbHammer.Core.Domain.Import;
 using ProbHammer.Web.Pages;
@@ -21,6 +22,16 @@ var bsdataSource = new LocalDiskBsdataCatalogueSource(bsdataRoot);
 
 builder.Services.AddSingleton<IBsdataCatalogueSource>(bsdataSource);
 builder.Services.AddSingleton(new BsdataCatalogueCache(bsdataSource));
+
+// The human-verified rule/ability -> characteristic-Effect vocabulary AttachedUnitAggregator
+// consults at runtime (apply-rule-effect-baseline) - loaded once, mirrors BsdataCatalogueCache's own
+// ContentRootPath-resolved root convention. A missing file loads as an empty baseline rather than
+// throwing (RuleClassificationBaseline.Load's own contract).
+var ruleClassificationBaselinePath = Path.Combine(
+    builder.Environment.ContentRootPath,
+    builder.Configuration["RuleEffectClassifications:FilePath"] ?? "Data/RuleEffectClassifications.json");
+builder.Services.AddSingleton(RuleClassificationBaseline.Load(ruleClassificationBaselinePath));
+
 builder.Services.AddSingleton<IArmyListParser, ArmyListParser>();
 builder.Services.AddSingleton<IArmyRosterProvider, ArmyRosterProvider>();
 builder.Services.AddSingleton<ISessionArmyListStore, SessionArmyListStore>();
@@ -48,8 +59,9 @@ app.MapRazorPages();
 
 // Sync /LivePlay casualty adjustments and unit-status (half-strength/Battle-shocked) toggles,
 // returning rendered fragments for the affected units.
-app.MapPost("/api/live-play/casualties", async (HttpContext ctx, LivePlaySyncRequest request, ILivePlayCasualtyService svc) =>
-    await svc.SyncAsync(ctx, request));
+app.MapPost("/api/live-play/casualties",
+    async (HttpContext ctx, LivePlaySyncRequest request, ILivePlayCasualtyService svc) =>
+        await svc.SyncAsync(ctx, request));
 
 app.Run();
 

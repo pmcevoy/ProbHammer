@@ -86,18 +86,31 @@ public sealed class RuleClassificationBaseline
 
     public IReadOnlyDictionary<string, RuleClassificationBaselineEntry> Entries => _entriesByText;
 
+    /// <summary>No tracked entries at all - every lookup misses. Mirrors
+    /// <c>InvulnerableSaveCharacteristicView.None</c>'s own named-preset convention for a specific,
+    /// frequently-constructed value (e.g. <c>Domain.Examples</c>'s own unreferenced-by-Web call site,
+    /// which has no real baseline to load from disk).</summary>
+    public static readonly RuleClassificationBaseline Empty = FromEntries([]);
+
+    /// <summary>Builds a baseline from an already-known, in-memory set of entries rather than a
+    /// checked-in file - mirrors <c>RuleGlossary.BuildFrom</c>'s own "caller's source isn't a real
+    /// closure/file" escape hatch. Used by tests building a small, hand-authored fixture baseline
+    /// (mirrors the BSData trimmed-fixture testing convention) rather than loading the real,
+    /// growing corpus file.</summary>
+    public static RuleClassificationBaseline FromEntries(IEnumerable<RuleClassificationBaselineEntry> entries) =>
+        new(entries.ToDictionary(e => e.Text));
+
     /// <summary>A missing file loads as an empty baseline rather than throwing - lets a fresh checkout
     /// with no baseline yet (or a scratch path a test points at) run the report tool with every text
     /// simply unbaselined.</summary>
     public static RuleClassificationBaseline Load(string path)
     {
         if (!File.Exists(path))
-            return new RuleClassificationBaseline(new Dictionary<string, RuleClassificationBaselineEntry>());
+            return Empty;
 
         var json = File.ReadAllText(path);
         var file = JsonSerializer.Deserialize<RuleClassificationBaselineFile>(json, Options);
-        var entriesByText = (file?.Entries ?? []).ToDictionary(e => e.Text);
-        return new RuleClassificationBaseline(entriesByText);
+        return FromEntries(file?.Entries ?? []);
     }
 
     public bool TryGet(string text, out RuleClassificationBaselineEntry entry) =>

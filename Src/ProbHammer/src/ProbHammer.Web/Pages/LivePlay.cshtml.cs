@@ -13,7 +13,8 @@ namespace ProbHammer.Web.Pages;
 public class LivePlayModel(
     ISessionArmyListStore sessionStore,
     IArmyRosterProvider rosterProvider,
-    IPhaseTurnStore phaseTurnStore)
+    IPhaseTurnStore phaseTurnStore,
+    RuleClassificationBaseline ruleClassificationBaseline)
     : PageModel
 {
     public List<UnitBlockViewModel> Units { get; private set; } = [];
@@ -45,7 +46,7 @@ public class LivePlayModel(
             return RedirectToPage("/Import");
 
         var result = rosterProvider.Build(import);
-        Units = BuildUnitBlocks(result.Roster);
+        Units = BuildUnitBlocks(result.Roster, ruleClassificationBaseline);
         Header = BuildArmyHeader(result.Roster);
         Glossary = result.Glossary;
         PhaseTurn = phaseTurnStore.Load(HttpContext.Session) ?? PhaseTurnSelection.Default;
@@ -106,9 +107,9 @@ public class LivePlayModel(
     // against a hand-built ArmyRoster, without needing a real HttpContext.Session. Threads each
     // sorted unit alongside its own aggregate view (rather than discarding the unit once the view
     // is built) so BuildUnitBlock can read HalfStrengthResolution/IsBattleShocked off it.
-    internal static List<UnitBlockViewModel> BuildUnitBlocks(ArmyRoster roster) =>
-        SortRoster(roster.Units)
-            .Select(unit => BuildUnitBlock(AttachedUnitAggregator.Build(unit), unit))
+    internal static List<UnitBlockViewModel> BuildUnitBlocks(ArmyRoster roster, RuleClassificationBaseline baseline) =>
+        SortRoster(roster.Units, baseline)
+            .Select(unit => BuildUnitBlock(AttachedUnitAggregator.Build(unit, baseline), unit))
             .ToList();
 
     // Builds the header's own view model directly from the roster's army-level metadata plus the
@@ -147,9 +148,10 @@ public class LivePlayModel(
     // rebuild (RebuildRoster) assigns each unit the same UnitIndex a pristine GET would, without
     // duplicating the sort key logic. Safe to sort by a pristine build's keys even when adjustments
     // are pending: none of the three keys depend on RemainingCount (see design.md's Risks section).
-    internal static List<ICombatUnit> SortRoster(IEnumerable<ICombatUnit> roster) =>
+    internal static List<ICombatUnit>
+        SortRoster(IEnumerable<ICombatUnit> roster, RuleClassificationBaseline baseline) =>
         roster
-            .Select(unit => (Unit: unit, View: AttachedUnitAggregator.Build(unit)))
+            .Select(unit => (Unit: unit, View: AttachedUnitAggregator.Build(unit, baseline)))
             .OrderByDescending(x => x.View.IsAttachedUnit)
             .ThenByDescending(x => x.View.Statlines.Sum(s => s.InitialCount))
             .ThenBy(x => x.View.Name, StringComparer.OrdinalIgnoreCase)
@@ -178,8 +180,9 @@ public class LivePlayModel(
     // ComponentName/StatlineName/LoadoutIndex) is silently ignored rather than throwing - defensive
     // against stale localStorage from a roster shape that no longer matches (e.g. after a re-import).
     internal static List<AttachedUnitAggregateView> RebuildRoster(
-        IReadOnlyList<ICombatUnit> units, IReadOnlyList<CasualtyAdjustment> adjustments) =>
-        RebuildRosterWithStatus(units, adjustments, []).Select(x => x.View).ToList();
+        IReadOnlyList<ICombatUnit> units, IReadOnlyList<CasualtyAdjustment> adjustments,
+        RuleClassificationBaseline baseline) =>
+        RebuildRosterWithStatus(units, adjustments, [], baseline).Select(x => x.View).ToList();
 
     // The half-strength/Battle-shocked-toggle counterpart to RebuildRoster - applies both a
     // casualty batch and a unit-status-toggle batch onto a freshly sorted roster before
@@ -190,9 +193,10 @@ public class LivePlayModel(
     internal static List<(ICombatUnit Unit, AttachedUnitAggregateView View)> RebuildRosterWithStatus(
         IReadOnlyList<ICombatUnit> units,
         IReadOnlyList<CasualtyAdjustment> casualtyAdjustments,
-        IReadOnlyList<UnitStatusAdjustment> statusAdjustments)
+        IReadOnlyList<UnitStatusAdjustment> statusAdjustments,
+        RuleClassificationBaseline baseline)
     {
-        var sortedUnits = SortRoster(units);
+        var sortedUnits = SortRoster(units, baseline);
 
         for (var unitIndex = 0; unitIndex < sortedUnits.Count; unitIndex++)
         {
@@ -208,7 +212,7 @@ public class LivePlayModel(
             }
         }
 
-        return sortedUnits.Select(unit => (unit, AttachedUnitAggregator.Build(unit))).ToList();
+        return sortedUnits.Select(unit => (unit, AttachedUnitAggregator.Build(unit, baseline))).ToList();
     }
 
     private static void ApplyAdjustment(ICombatUnit unit, CasualtyCoordinate coordinate, int remainingCount)

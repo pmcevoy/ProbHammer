@@ -1,3 +1,4 @@
+using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Roster;
 using ProbHammer.Web.Pages;
 
@@ -24,7 +25,8 @@ public class LivePlayCasualtyService(
     IRazorPartialRenderer renderer,
     ISessionArmyListStore sessionStore,
     IArmyRosterProvider rosterProvider,
-    IPhaseTurnStore phaseTurnStore)
+    IPhaseTurnStore phaseTurnStore,
+    RuleClassificationBaseline ruleClassificationBaseline)
     : ILivePlayCasualtyService
 {
     private static readonly LivePlaySyncResponse EmptyResponse = new([], []);
@@ -64,7 +66,7 @@ public class LivePlayCasualtyService(
             : [];
 
         var roster = LivePlayModel.RebuildRosterWithStatus(
-            result.Roster.Units, request.CasualtyAdjustments, request.StatusAdjustments);
+            result.Roster.Units, request.CasualtyAdjustments, request.StatusAdjustments, ruleClassificationBaseline);
         var fragments = new Dictionary<int, string>();
 
         foreach (var unitIndex in unitIndexes)

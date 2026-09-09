@@ -12,7 +12,7 @@ public class LivePlayModelTests
     [Fact]
     public void OnGet_OrdersAttachedUnitsBeforePlainUnits_LargestFirstWithinEachGroup_TiesByName()
     {
-        var units = LivePlayModel.BuildUnitBlocks(View.Roster());
+        var units = LivePlayModel.BuildUnitBlocks(View.Roster(), RuleClassificationBaseline.Empty);
 
         // Attached-sourced units (Crusader Squad x2 @ 12 models, Sword Bretheren @ 5) precede
         // plain-Unit-sourced ones (Assault Intercessor / Howling Banshees / Scout @ 5 models each,
@@ -127,7 +127,7 @@ public class LivePlayModelTests
         // per-loadout rows (SelectKey set, Label the compressed distinguishing weapon) - the raw
         // rows exist for live-play.js's selection filtering even though they stay hidden by default
         // whenever the group's loadouts currently agree (see live-play.js recomputeWeaponRow).
-        var view = AttachedUnitAggregator.Build(Units.CrusaderSquad_Helbrecht_Ancient());
+        var view = AttachedUnitAggregator.Build(Units.CrusaderSquad_Helbrecht_Ancient(), RuleClassificationBaseline.Empty);
         var boltPistol = view.Weapons.Single(w =>
             w.Profile.Name.Equals("Bolt pistol", StringComparison.OrdinalIgnoreCase));
         var loadoutLabels = LivePlayModel.BuildLoadoutLabelLookup(view.Statlines);
@@ -202,7 +202,7 @@ public class LivePlayModelTests
     [Fact]
     public void OnGet_AttachesContributionBreakdown_ForCrusaderSquadsMergedBoltPistolRow()
     {
-        var units = LivePlayModel.BuildUnitBlocks(View.Roster());
+        var units = LivePlayModel.BuildUnitBlocks(View.Roster(), RuleClassificationBaseline.Empty);
 
         var unit = units.Single(u => u.Name == "Crusader Squad with High Marshal Helbrecht and Crusade Ancient");
         var boltPistolRow = unit.RangedWeapons.Single(w =>
@@ -230,7 +230,7 @@ public class LivePlayModelTests
         // Pyre pistol is carried only by the Sword Brother (1 model, D6 attacks) - the exact
         // "it was the Sword Brother that contributed it" case: a single contributor, still shown
         // because the unit as a whole has several other ModelLines.
-        var units = LivePlayModel.BuildUnitBlocks(View.Roster());
+        var units = LivePlayModel.BuildUnitBlocks(View.Roster(), RuleClassificationBaseline.Empty);
 
         var unit = units.Single(u => u.Name == "Crusader Squad with High Marshal Helbrecht and Crusade Ancient");
         var pyrePistolRow = unit.RangedWeapons.Single(w => w.Entry.Profile.Name == "Pyre pistol");
@@ -250,7 +250,7 @@ public class LivePlayModelTests
         // expand trigger. Breakdown itself still has one raw row per weapon (its own SelectKey) -
         // that data isn't gated by ShowsBreakdownTrigger, since selection-scoped filtering still
         // needs it even for a unit with only one addressable statline.
-        var units = LivePlayModel.BuildUnitBlocks(View.Roster());
+        var units = LivePlayModel.BuildUnitBlocks(View.Roster(), RuleClassificationBaseline.Empty);
 
         var unit = units.Single(u => u.Name == "Impulsor");
 
@@ -263,7 +263,7 @@ public class LivePlayModelTests
     {
         // Real fixture: both Initiate loadouts also carry Bolt pistol and Heavy Bolt pistol, so
         // only the weapon that actually differs (Power fist / Astartes chainsword) should render.
-        var view = AttachedUnitAggregator.Build(Units.CrusaderSquad_Helbrecht_Ancient());
+        var view = AttachedUnitAggregator.Build(Units.CrusaderSquad_Helbrecht_Ancient(), RuleClassificationBaseline.Empty);
         var initiate = view.Statlines.Single(s => s.StatlineName == "Initiate");
 
         var labels = LivePlayModel.CompressLoadoutLabels(initiate.Loadouts);
@@ -332,9 +332,9 @@ public class LivePlayModelTests
     [Fact]
     public void RebuildRoster_WithNoAdjustments_MatchesThePristineSortedRoster()
     {
-        var pristine = LivePlayModel.SortRoster(View.MyArmyRoster()).Select(AttachedUnitAggregator.Build).ToList();
+        var pristine = LivePlayModel.SortRoster(View.MyArmyRoster(), RuleClassificationBaseline.Empty).Select(u => AttachedUnitAggregator.Build(u, RuleClassificationBaseline.Empty)).ToList();
 
-        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), []);
+        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), [], RuleClassificationBaseline.Empty);
 
         rebuilt.Select(v => v.Name).Should().Equal(pristine.Select(v => v.Name));
     }
@@ -348,7 +348,7 @@ public class LivePlayModelTests
         var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1),
             RemainingCount: 2);
 
-        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment]);
+        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment], RuleClassificationBaseline.Empty);
 
         var unit = rebuilt[0];
         unit.Name.Should().Be("Crusader Squad with High Marshal Helbrecht and Crusade Ancient");
@@ -363,7 +363,7 @@ public class LivePlayModelTests
         var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Initiate", 0),
             RemainingCount: 0);
 
-        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment]);
+        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment], RuleClassificationBaseline.Empty);
 
         var initiate = rebuilt[0].Statlines.Single(s => s.StatlineName == "Initiate");
         initiate.Loadouts[0].RemainingCount.Should().Be(0); // Power fist loadout, fully removed
@@ -377,7 +377,7 @@ public class LivePlayModelTests
         var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1),
             RemainingCount: 99);
 
-        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment]);
+        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment], RuleClassificationBaseline.Empty);
 
         rebuilt[0].Statlines.Single(s => s.StatlineName == "Neophyte").RemainingCount.Should()
             .Be(4); // clamped at Count
@@ -394,10 +394,10 @@ public class LivePlayModelTests
         var adjustment = new CasualtyAdjustment(
             new CasualtyCoordinate(unitIndex, componentName, statlineName, loadoutIndex), RemainingCount: 0);
 
-        var act = () => LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment]);
+        var act = () => LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment], RuleClassificationBaseline.Empty);
 
         act.Should().NotThrow();
-        var pristine = LivePlayModel.SortRoster(View.MyArmyRoster()).Select(AttachedUnitAggregator.Build).ToList();
+        var pristine = LivePlayModel.SortRoster(View.MyArmyRoster(), RuleClassificationBaseline.Empty).Select(u => AttachedUnitAggregator.Build(u, RuleClassificationBaseline.Empty)).ToList();
         act().Select(v => v.Statlines.Sum(s => s.RemainingCount))
             .Should().Equal(pristine.Select(v => v.Statlines.Sum(s => s.RemainingCount)));
     }
@@ -408,7 +408,7 @@ public class LivePlayModelTests
         var unit = AttachedUnitFixtures.LeaderUnit(); // single-model
         unit.IsHalfStrengthOverride = true;
         unit.IsBattleShocked = true;
-        var view = AttachedUnitAggregator.Build(unit);
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
 
         var block = LivePlayModel.BuildUnitBlock(view, unit);
 
@@ -422,7 +422,7 @@ public class LivePlayModelTests
     {
         var unit = UnitFixtures.AssaultIntercessorSquadWithUnitLeader(); // 5 full-health models
         unit.IsHalfStrengthOverride = true; // never read for a multi-model unit
-        var view = AttachedUnitAggregator.Build(unit);
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
 
         var block = LivePlayModel.BuildUnitBlock(view, unit);
 
@@ -435,7 +435,7 @@ public class LivePlayModelTests
     {
         var statusAdjustment = new UnitStatusAdjustment(0, IsHalfStrength: false, IsBattleShocked: true);
 
-        var rebuilt = LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [], [statusAdjustment]);
+        var rebuilt = LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [], [statusAdjustment], RuleClassificationBaseline.Empty);
 
         rebuilt[0].Unit.IsBattleShocked.Should().BeTrue();
         rebuilt.Skip(1).Should().OnlyContain(x => !x.Unit.IsBattleShocked);
@@ -444,7 +444,7 @@ public class LivePlayModelTests
     [Fact]
     public void RebuildRosterWithStatus_LeavesStatusUnset_WhenNoAdjustmentAddressesAnyUnit()
     {
-        var rebuilt = LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [], []);
+        var rebuilt = LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [], [], RuleClassificationBaseline.Empty);
 
         rebuilt.Should().OnlyContain(x => !x.Unit.IsBattleShocked && !x.Unit.IsHalfStrengthOverride);
     }
@@ -457,7 +457,7 @@ public class LivePlayModelTests
         var statusAdjustment = new UnitStatusAdjustment(0, IsHalfStrength: false, IsBattleShocked: true);
 
         var rebuilt =
-            LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [casualtyAdjustment], [statusAdjustment]);
+            LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [casualtyAdjustment], [statusAdjustment], RuleClassificationBaseline.Empty);
 
         rebuilt[0].View.Statlines.Single(s => s.StatlineName == "Neophyte").RemainingCount.Should().Be(2);
         rebuilt[0].Unit.IsBattleShocked.Should().BeTrue();

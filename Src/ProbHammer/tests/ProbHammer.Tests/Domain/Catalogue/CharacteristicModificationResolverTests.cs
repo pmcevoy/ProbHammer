@@ -1,13 +1,12 @@
 using FluentAssertions;
 using ProbHammer.Core.Domain.Catalogue;
-using ProbHammer.Core.Domain.Roster;
 
 namespace ProbHammer.Tests.Domain.Catalogue;
 
 /// <summary>Covers introduce-characteristic-modification-kind's requirements: sign resolution per
 /// arithmetic family, per-characteristic clamp bounds, symbolic-value no-op, and the proving
-/// requirement against Vexilla's own hand-authored rule (see that change's design.md for why
-/// Shield Dome/InSv is not a valid proving example here).</summary>
+/// requirement against Vexilla's own known-correct Objective Control mutation (see that change's
+/// design.md for why Shield Dome/InSv is not a valid proving example here).</summary>
 public class CharacteristicModificationResolverTests
 {
     // Rulebook worked examples (.claude/vnext-ideas.md, quoted verbatim from the user):
@@ -98,19 +97,15 @@ public class CharacteristicModificationResolverTests
     [Fact]
     public void Resolve_ReproducesVexillaStatlineFlagRulesResolvedObjectiveControl()
     {
-        var vexilla = new Ability
-        {
-            Name = "Vexilla",
-            Text = "Add 1 to the Objective Control characteristic of models in the bearer's unit.",
-            Scope = AbilityScope.Model,
-            Origin = AbilityOrigin.OptionalGrant
-        };
+        // Ground-truth: Vexilla's own known-correct mutation is a plain +1 to Oc (the now-retired
+        // VexillaStatlineFlagRule.Apply's own "current + 1" - apply-rule-effect-baseline replaced it
+        // with this general resolver, run from the checked-in baseline).
         var baseStatline = new Statline(6, 6, 2, 4, 7, 2); // Custodian Guard, base Oc 2
 
-        var viaHandAuthoredRule = new VexillaStatlineFlagRule().Apply(baseStatline, vexilla);
+        var expected = new NumericCharacteristicValue(((NumericCharacteristicValue)baseStatline.Oc.Value).Value + 1);
         var viaKindResolver = CharacteristicModificationResolver.Resolve(
             "Oc", baseStatline.Oc.Value, EffectVerb.Improve, 1);
 
-        viaKindResolver.Should().Be(viaHandAuthoredRule.Oc.Value);
+        viaKindResolver.Should().Be(expected);
     }
 }

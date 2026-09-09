@@ -21,6 +21,30 @@ follow-up until the base Android import bug is fixed first. No code for this has
 
 ## Recently Completed
 
+- OpenSpec change `apply-rule-effect-baseline` implemented (20/20 tasks, not yet archived): retires
+  `StatlineFlagRule`/`ShieldDomeStatlineFlagRule`/`VexillaStatlineFlagRule`/`StatlineFlagRuleCatalogue`/
+  `StatlineFlagRuleScope` (deleted) in favor of the checked-in, human-verified
+  `RuleClassificationBaseline` as the sole runtime source of flagged Statline/InSv values — see
+  `.claude/domain-model-11e.md`'s "Statline-Flag Rules".
+  - `AttachedUnitAggregator.Build` gains a required `RuleClassificationBaseline` parameter;
+    `ApplyStatlineFlagRules` now looks up each present ability's normalized Text against the baseline
+    (never Name+Text, never a live `RuleEffectClassifier.Classify` call), maps a matched entry's
+    `RuleTarget` onto the old Bearer/WholeUnit scope concept (`SelfRuleTarget`/`AttachedUnitRuleTarget`;
+    `KeywordRuleTarget`/`UnconditionalRuleTarget` produce no flagged value), and applies every
+    classified Effect via `CharacteristicModificationResolver` (scalars, wrapped back into a
+    `ScalarCharacteristicView` — the one piece of glue that resolver itself didn't provide) or the
+    already-proven `InvulnerableSaveEffectResolver` (InSv) — both now real runtime consumers for the
+    first time.
+  - `Program.cs` registers `RuleClassificationBaseline` as a singleton, loaded once from
+    `Data/RuleEffectClassifications.json` (already Docker-bundled), threaded through
+    `LivePlay.cshtml.cs`/`LivePlayCasualtyService`.
+  - Verified against a real captured export (`data/gw-app-export-templars.txt`, `dotnet run`): the
+    Impulsor's InSv tile renders identically to before the change (flagged, amber, "5+", "* Shield
+    Dome" legend line) — exactly one flagged tile on the whole rendered roster, confirming no false
+    positives among the export's ~30 other abilities.
+  - All 603 tests pass (589 run, 14 explicit corpus-scan tests skipped by default); full solution
+    build clean, 0 warnings.
+
 - OpenSpec change `resolve-invulnerable-save-effects` implemented (23/23 tasks, not yet archived):
   extends `rule-effect-classification` to recognize a melee/ranged-attack-type-restricted
   invulnerable-save grant (one-sided, e.g. Chaos Knights' Ensorcelled Shield; or two-sided in one
@@ -51,12 +75,13 @@ follow-up until the base Android import bug is fixed first. No code for this has
     (T'au's "Skirmish Fighters," a markup-prefixed two-sided grant with a comma-less "and" join)
     recorded in `.claude/vnext-ideas.md` rather than fixed, per this codebase's own
     precision-over-recall convention.
-  - **New `InvulnerableSaveEffectResolver`** (`Domain/Catalogue`, unwired — mirrors
-    `CharacteristicModificationKind`/`CharacteristicModificationResolver`'s own proven-in-isolation
+  - **New `InvulnerableSaveEffectResolver`** (`Domain/Catalogue`, proven-in-isolation on its own
+    landing, mirroring `CharacteristicModificationKind`/`CharacteristicModificationResolver`'s own
     discipline): resolves a classified InSv Effect + source `Ability` into a real
-    `InvulnerableSaveCharacteristicView`, ground-truth-verified to reproduce
-    `ShieldDomeStatlineFlagRule.Apply`'s exact result. Not wired into `AttachedUnitAggregator`/
-    `StatlineFlagRuleCatalogue` — `ShieldDomeStatlineFlagRule` remains untouched, by design.
+    `InvulnerableSaveCharacteristicView`, ground-truth-verified to reproduce the (at the time)
+    hand-authored `ShieldDomeStatlineFlagRule.Apply`'s exact result. Wired into
+    `AttachedUnitAggregator` by the later `apply-rule-effect-baseline` change (above), which also
+    deleted `ShieldDomeStatlineFlagRule`/`StatlineFlagRuleCatalogue` entirely.
   - **Baseline migration**: `src/ProbHammer.Web/Data/RuleEffectClassifications.json`'s existing
     entries (all uniform InSv grants) migrated to the new discriminated shape via a `jq` transform,
     confirmed unchanged by `--write-baseline`; 5 newly-surfaced split-save Effect results reviewed

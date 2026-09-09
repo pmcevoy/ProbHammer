@@ -167,7 +167,7 @@ public class LivePlayArmyHeaderRenderingTests : IClassFixture<WebApplicationFact
         var headerHtml = await RenderHeaderAsync(roster);
         headerHtml.Should().Contain("Templar Vows");
 
-        var unitBlocks = LivePlayModel.BuildUnitBlocks(roster);
+        var unitBlocks = LivePlayModel.BuildUnitBlocks(roster, RuleClassificationBaseline.Empty);
         var glossary = RuleGlossary.Build(new BsdataClosure([]));
         var unitHtml = await RenderAsync("/Pages/Shared/_UnitBlock.cshtml",
             new UnitBlockRenderModel(0, unitBlocks[0], glossary));
