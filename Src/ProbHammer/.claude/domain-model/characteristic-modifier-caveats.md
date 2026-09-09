@@ -34,19 +34,7 @@ old mechanism's always-caveated fallback.
 
 ```
 CharacteristicModifierCandidate(EntryName, Characteristic, RawValue, RawType)   // Domain/Catalogue
-                                       // - a classified, data-derived candidate: "EntryName, if
-                                       // actually selected on a resolved unit, structurally
-                                       // modifies Characteristic." Characteristic is one of
-                                       // "M"/"T"/"Sv"/"W"/"Ld"/"Oc"/"InSv" (Statline's own scalar
-                                       // property names) - the only fields the classifier's closed
-                                       // Field allowlist recognizes (see below for the one
-                                       // remaining exclusion and why). RawValue/RawType are the
-                                       // source BsModifier's own unparsed Value/Type text - not
-                                       // read by anything at Build time (see above); RawType feeds
-                                       // only the offline report tool's own structural-derivation
-                                       // path. Never applied to a Datasheet's own Statline fields -
-                                       // selection-blind catalog data, identical for every roster
-                                       // resolving that Datasheet.
+                                       // - see record's own doc comment
 
 Datasheet.CharacteristicModifierCandidates: IReadOnlyList<CharacteristicModifierCandidate>
                                        // on-demand exposure, mirroring OptionalAbilityNames/
@@ -54,60 +42,30 @@ Datasheet.CharacteristicModifierCandidates: IReadOnlyList<CharacteristicModifier
                                        // the always-enumerated Statlines/Abilities.
 
 BsdataDatasheetMapper.ClassifyCharacteristicModifierCandidates(entry) -> IEnumerable<...>
-                                       // entry-scoped only (never a BsSelectionEntryGroup's own
-                                       // Modifiers - a full-corpus check found every real group-level
-                                       // characteristic modifier is either itself tier 3+ or belongs
-                                       // to a group with no own Profiles/SelectionEntries to ever
-                                       // resolve a matching name against, so classifying one would
-                                       // only ever produce an unreachable candidate). Reads
+                                       // see method's own doc comment (entry-scoped only, never a
+                                       // group's; the tier-1/tier-2 discipline). Reads
                                        // entry.Modifiers alongside IsGameModeGated's existing read of
-                                       // the same data, keyed by a closed Field id -> characteristic
-                                       // allowlist (CharacteristicFieldIds) built from a full-corpus
-                                       // scan of the live clone, not guessed.
+                                       // the same data, keyed by CharacteristicFieldIds - see its
+                                       // own doc comment.
 BsdataDatasheetMapper.IsTier1OrTier2(modifier, entryId) -> bool
-                                       // closed-world condition-tier classifier: tier 1 (no
-                                       // Conditions/ConditionGroups at all) or tier 2 (every
-                                       // condition is a "selections" count of this same entry, by
-                                       // id, evaluated from a "self" or "parent" scope) classify;
-                                       // any other condition shape - a sibling entry's id, an
-                                       // "associations" (live attachment) check, a self-reference
-                                       // scoped broader than "self"/"parent" (e.g. "roster") - is
-                                       // left unclassified, never guessed as safe.
+                                       // see ClassifyCharacteristicModifierCandidates' own doc
+                                       // comment for the tier-1/tier-2 discipline this implements.
 ```
 
-**Closed Field allowlist covers the six Statline scalars plus InSv (M/T/Sv/W/Ld/Oc/InSv)** — built
-from a full-corpus scan of the live BSData clone's real `BsModifier.Field` values (resolved against
-the game system's own `profileTypes["Unit"].characteristicTypes` id table), not guessed. InSv
-(`55a7-5b54-c60d-11dc`) rejoined this allowlist via `unify-characteristic-effect-resolution` — it
-was excluded originally only because no downstream consumer could resolve a structurally-derived
-InSv candidate safely; that reason no longer holds now that `AttachedUnitAggregator`'s
-`ResolveCaveatedInvulnerableSaves` step (see statline-flag-rules.md) is a single,
-safe consumer for every characteristic-affecting present ability, InSv included. Real corpus case
-this unlocks: Black Templars' "Consecrating Aura" Enhancement (tier 1, unconditional, previously
-discarded entirely). One exclusion remains, confirmed by the same scan:
-- **Every `WeaponProfile` characteristic** (Ranged/Melee Weapons' own A/S/AP/D/BS/WS/Range/Keywords
-  ids) is excluded — the scan confirmed zero real `entry.Modifiers`/`group.Modifiers` anywhere in the
-  corpus target a `WeaponProfile` field; every real occurrence of those ids lives inside a
-  Crusade-only `modifierGroups` block this loader doesn't read at all (unmapped, per
-  `BsCatalogueFile.cs`'s own doc comment), never in the directly-modeled `modifiers` array. Building
-  an untested, unreachable WeaponProfile-targeting classification/application path would be exactly
-  the kind of premature behavior on an unconsumed shape this codebase avoids elsewhere.
+**Closed Field allowlist covers the six Statline scalars plus InSv (M/T/Sv/W/Ld/Oc/InSv)** — see
+`CharacteristicFieldIds`'s own doc comment for the full corpus-scan provenance, the InSv-rejoin
+rationale (real corpus case unlocked: Black Templars' "Consecrating Aura" Enhancement), and why
+every `WeaponProfile` characteristic remains excluded.
 
-**Tier 2 is empty in the real corpus** — implemented per spec regardless (an empty bucket is an
-honest, acceptable outcome, not a design failure). The one self-referencing-condition example found
-at all (Astra Militarum's "Deficiency" Battle Scar) uses `scope: "roster"` with a roster-wide
-`affects` path and is Crusade-mode-only content, correctly excluded by requiring a recognized tier-2
-condition's own `scope` be "self" or "parent" only.
+**Tier 2 is empty in the real corpus** — see `ClassifyCharacteristicModifierCandidates`'s own doc
+comment for the full finding (the one self-referencing-condition example found at all, Astra
+Militarum's "Deficiency" Battle Scar, and why it's correctly excluded).
 
-**Full-Corpus Scan** (`CharacteristicModifierClassificationScanTests.cs`, same permanent
-`[Fact(Explicit = true)]` pattern as the other CorpusScan tests): reuses the real, public
-`BuildDatasheet` as its own classification oracle (each interesting entry re-rooted as its own
-Datasheet's starting entry) rather than re-deriving a second copy of the classifier's own predicate,
-so the scan can never share an undetected bug with the classifier it checks. Only unclassified
-occurrences are collected into the allowlist-checked results (`CharacteristicModifierClassificationAllowlist.cs`
-— now just the "condition present" tier-3+ bucket, since InSv's own allowlist entry was removed
-once it started classifying successfully like any other recognized field); a separate sanity
-assertion confirms real tier-1 classifications are still found (never silently zero).
+**Full-Corpus Scan** (`CharacteristicModifierClassificationScanTests.cs`): see its own class doc
+comment for the scan shape and classification-oracle rationale. Only unclassified occurrences are
+collected (`CharacteristicModifierClassificationAllowlist.cs` — now just the "condition present"
+tier-3+ bucket, since InSv's own allowlist entry was removed once it started classifying
+successfully like any other recognized field).
 
 **Explicitly deferred, not part of any change to date** (tracked in `.claude/vnext-ideas.md`):
 computing an actual `DerivedValue` for any caveat a future mechanism surfaces; tier 3+ conditions (a

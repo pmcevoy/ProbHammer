@@ -9,18 +9,11 @@ ResolvedBsdataCatalogue) → ArmyRoster → /LivePlay`, with per-session storage
 
 ```
 ParsedModelGroup(ModelName, Count, Weapons: IReadOnlyList<string>)
-                                       // already-split per-loadout sub-group - the shared-vs-
-                                       // alternating weapon-count partition has already been
-                                       // applied by parse time (below). Weapons is flat and
-                                       // per-model; duplicates are meaningful (two "Storm bolter"
-                                       // entries mean two copies on one model).
+                                       // see record's own doc comment
 ParsedUnit(Name, ModelGroups: IReadOnlyList<ParsedModelGroup>, Enhancements: IReadOnlyList<string>)
-                                       // Role (Leader/Support/Bodyguard) isn't a field - captured
-                                       // structurally by which list of ParsedAttachmentGroup a
-                                       // member ends up in, mirroring AttachedUnit's Bodyguard/
-                                       // Attached split. The export's role-line category
-                                       // parenthetical is discarded during parsing.
+                                       // see record's own doc comment
 ParsedAttachmentGroup(Bodyguard: ParsedUnit, Attached: IReadOnlyList<ParsedUnit>)
+                                       // see record's own doc comment
 ParsedArmyList(Name, PointsSpent, Faction, Detachments, ForceDisposition, BattleSize, PointsLimit,
                AttachmentGroups: IReadOnlyList<ParsedAttachmentGroup>,
                StandaloneUnits: IReadOnlyList<ParsedUnit>)
@@ -28,23 +21,17 @@ ParsedArmyList(Name, PointsSpent, Faction, Detachments, ForceDisposition, Battle
                                        // shapes - see Roster Context in roster-context.md
 
 IArmyListParser.Parse(exportText) -> ParsedArmyList
-ArmyListParser                        // the only implementation, covering both iOS- and Android-
-                                       // captured exports uniformly via bullet character plus
-                                       // per-line indentation (Android drops the nested "◦" glyph
-                                       // entirely and relies on indentation alone - see
-                                       // CollectBulletBlocks' own doc comment for the two-signal
-                                       // algorithm this needs, and harden-army-list-parsing-for-
-                                       // android-exports/design.md for the full format-difference
-                                       // catalogue). Line-based: blank lines discarded, the fixed
-                                       // army-metadata preamble classified positionally, everything
-                                       // else by a small set of regexes; ForceDisposition is
-                                       // optional (a real Android export omits it entirely). A
-                                       // unit's top-level bullets classify as an attachment-role
-                                       // line, an Enhancement list, an explicit "Nx ModelName"
-                                       // model-group header, or a direct weapon selection - see the
-                                       // class's own doc comment for the exact classification
-                                       // rules, and PartitionModelGroup's own doc comment for its
-                                       // still-open Custodian Guard partition-ambiguity gap.
+ArmyListParser                        // the only implementation - see the class's own doc comment
+                                       // for the iOS/Android bullet+indentation classification
+                                       // algorithm (CollectBulletBlocks' own doc comment has the
+                                       // two-signal detail; harden-army-list-parsing-for-android-
+                                       // exports/design.md has the full format-difference catalogue).
+                                       // ForceDisposition is optional (a real Android export omits
+                                       // it entirely). A unit's top-level bullets classify as an
+                                       // attachment-role line, an Enhancement list, an explicit
+                                       // "Nx ModelName" model-group header, or a direct weapon
+                                       // selection - see PartitionModelGroup's own doc comment for
+                                       // its still-open Custodian Guard partition-ambiguity gap.
 
 ArmyListParseException(message, unitName?, rawText?)
 ```
@@ -53,39 +40,25 @@ ArmyListParseException(message, unitName?, rawText?)
 
 ```
 BsdataFactionResolver.ResolveStartingFileName(faction, availableFileNames) -> string
-                                       // suffix-matches only the most specific (last) Faction
-                                       // entry: a file named exactly "{entry}.json" or ending
-                                       // " - {entry}.json", excluding any name containing
-                                       // "Library" (shared content, never a playable faction
-                                       // identity). Throws BsdataFactionResolutionException on
-                                       // zero or multiple matches.
+                                       // see class's own doc comment
 
 ResolvedBsdataCatalogue(Closure, IdIndex, GroupIdIndex, ProfileIdIndex)
-                                       // bundles a resolved closure with the three
-                                       // BsdataNameResolver indices over it
+                                       // see class's own doc comment
   Build(source, startingFileName) -> ResolvedBsdataCatalogue   // static factory
   ResolveDatasheet(entryName) -> Datasheet   // throws BsdataNameResolutionException with a
                                               // "did you mean...?" suggestion on a miss
 
-BsdataCatalogueCache(source)          // app-wide cache of ResolvedBsdataCatalogue, keyed by
+BsdataCatalogueCache(source)          // see class's own doc comment
   GetOrBuild(startingFileName) -> ResolvedBsdataCatalogue
-                                       // starting file name, ConcurrentDictionary-backed, lazy,
-                                       // valid for the lifetime of the holding singleton
-                                       // (registered in ProbHammer.Web's Program.cs) - the
-                                       // expensive part of enrichment is static per faction and
-                                       // identical for every user, so built at most once per
-                                       // starting file, never per request/session
+                                       // see class's own doc comment (ConcurrentDictionary-backed,
+                                       // lazy, valid for the holding singleton's lifetime)
 
 BsdataNameNormalization.Normalize(text) -> string
-                                       // typographic (U+2019) -> plain ASCII apostrophe, applied
-                                       // before every BSData lookup (real: "Emperor's Champion")
+                                       // see class's own doc comment
 
 BsdataNameSuggestion.FindClosest(target, candidates, maxDistance = 3) -> string?
-                                       // Levenshtein "did you mean...?" hint on a resolution-
-                                       // failure exception - diagnostic only. Chosen over a
-                                       // curated mismatch map (real: export's "Absolvor bolt
-                                       // pistol" vs. BSData's "Absolver bolt pistol") since the
-                                       // corpus is too large/fluid for a hand-maintained table
+                                       // see class's own doc comment (Levenshtein "did you mean...?"
+                                       // hint, diagnostic only, chosen over a curated mismatch map)
 
 ArmyRosterEnricher.Enrich(ParsedArmyList, ResolvedBsdataCatalogue) -> ArmyRoster
                                        // Every name resolution is eager, each failure throwing
@@ -107,8 +80,8 @@ ArmyRosterEnricher.Enrich(ParsedArmyList, ResolvedBsdataCatalogue) -> ArmyRoster
                                        // Enhancement is ever attached just because the Datasheet
                                        // defines one available.
 
-BsdataFactionResolutionException(faction, message)   // carries the offending Faction entry
-BsdataNameResolutionException(text, message)         // carries the offending text
+BsdataFactionResolutionException(faction, message)   // see class's own doc comment
+BsdataNameResolutionException(text, message)         // see class's own doc comment
 ```
 
 `Datasheet` also gained `TryGetStatline`/`TryResolveWeaponProfile` (non-throwing variants) and
@@ -137,30 +110,23 @@ BsdataNameResolver.ResolveDetachmentEntries(closure) -> IReadOnlyList<BsSelectio
                                        // out of scope here. See the method's own doc comment for
                                        // per-faction examples of both shapes.
 
-DetachmentGroupNameScanTests           // tests/.../CorpusScan/ - same permanent [Fact(Explicit =
-                                       // true)] pattern. Every real faction file (excluding
-                                       // "Library" files) gets a turn as its closure's starting
-                                       // file; must resolve at least one Detachment entry. First
-                                       // run: 15 failures against the single-shape assumption;
-                                       // generalizing to shape 2 fixed 11; the remaining 4 are the
-                                       // confirmed importRootEntries gap above, allowlisted.
+DetachmentGroupNameScanTests           // tests/.../CorpusScan/ - see the class's own doc comment
+                                       // for the permanent-scan shape. First run: 15 failures
+                                       // against the single-shape assumption; generalizing to
+                                       // shape 2 fixed 11; the remaining 4 are the confirmed
+                                       // importRootEntries gap above, allowlisted.
 
 ResolvedBsdataCatalogue.DetachmentEntries / .DetachmentNames / .ResolveDetachment(name)
                                        // built once in Build() (same convention as the other
-                                       // indices). ResolveDetachment(name) is exact-name lookup
-                                       // with the same "did you mean...?" contract as
-                                       // ResolveDatasheet.
+                                       // indices) - see DetachmentEntries' and ResolveDetachment's
+                                       // own doc comments.
 
 DetachmentRuleTextExtractor.Extract(detachmentEntry, glossary) -> IReadOnlyList<(Name, Text)>
-                                       // Domain.Catalogue.Bsdata - extracts zero or more rule pairs
-                                       // from a resolved Detachment entry: a locally-declared rule
-                                       // (BsSelectionEntry.Rules, mirrors BsCatalogue.Rules) and a
-                                       // "type": "rule" infoLink resolved via RuleGlossary.TryResolve
-                                       // - the same lookup Core Rule Ability Extraction uses, but
-                                       // WITHOUT that extraction's "type: upgrade" ancestry guard,
-                                       // since a Detachment entry's direct infoLinks carry no
-                                       // equivalent weapon-keyword ambiguity. An unresolvable
-                                       // infoLink is skipped, not failed.
+                                       // Domain.Catalogue.Bsdata - see the class's own doc comment
+                                       // (a locally-declared rule and a "type": "rule" infoLink
+                                       // resolved via RuleGlossary.TryResolve, deliberately WITHOUT
+                                       // Core Rule Ability Extraction's "type: upgrade" ancestry
+                                       // guard). An unresolvable infoLink is skipped, not failed.
 
 RuleGlossary.Build's own generalization (this change)   // A catalogue file's own local sharedRules
                                        // was assumed to appear only on the game-system file - real
@@ -169,14 +135,11 @@ RuleGlossary.Build's own generalization (this change)   // A catalogue file's ow
                                        // file's own SharedRules too, purely additive.
 
 DetachmentNameResolver.Resolve(text, catalogue) -> IReadOnlyList<ResolvedDetachment>
-                                       // Domain.Roster - a greedy, longest-known-name-first "chomp"
-                                       // that disambiguates a natural-language-joined Detachments
-                                       // entry without a syntactic split on "and"/commas, masking
-                                       // matched spans with spaces (not splicing) so results stay
-                                       // ordered by position in the original text. See the class's
-                                       // own doc comment for the two real collision shapes this
-                                       // resolves (a Detachment name containing "and"; one name a
-                                       // literal substring of another) and the failure contract.
+                                       // Domain.Roster - see the class's own doc comment (greedy,
+                                       // longest-known-name-first "chomp"; masks matched spans with
+                                       // spaces, not splicing, so results stay ordered by position
+                                       // in the original text; the two real collision shapes this
+                                       // resolves and the failure contract).
 
 ArmyRosterEnricher.Enrich             // now also resolves each Detachments entry via
                                        // DetachmentNameResolver.Resolve, flattened (SelectMany)
@@ -184,13 +147,13 @@ ArmyRosterEnricher.Enrich             // now also resolves each Detachments entr
                                        // more than one ResolvedDetachment.
 
 BattleScribeRosterMapper.MapDetachment(selection) -> ResolvedDetachment
-                                       // BattleScribe pipeline - no BSData involvement: a selected
-                                       // Detachment's rule text is already inline on its own
-                                       // selections[].rules[] (see method's own doc comment).
-                                       // FindGroup(force.Selections, "Detachment", "Detachments")
-                                       // matches by EITHER name (first match wins) - see that
-                                       // method's own doc comment for the real Custodes plural/
-                                       // singular bug this fixes.
+                                       // BattleScribe pipeline - no BSData involvement; see
+                                       // method's own doc comment (rule text already inline on
+                                       // selections[].rules[]).
+                                       // FindGroup(force.Selections, "Detachment", "Detachments") -
+                                       // see that method's own doc comment for the matching
+                                       // convention and the real Custodes plural/singular bug it
+                                       // fixes.
 ```
 
 ### Session-Backed Import (`ProbHammer.Web`)
@@ -205,28 +168,19 @@ battlescribe-import-pipeline.md) — so
 ```
 ISessionArmyListStore.Save(ISession, StoredArmyImport)
                      .Load(ISession) -> StoredArmyImport?
-                                       // plain System.Text.Json round-trip through ISession's
-                                       // string storage. Stores only the source-level intermediate,
-                                       // never the built ArmyRoster - every request re-builds fresh
-                                       // via IArmyRosterProvider.
+                                       // see interface's own doc comment; every request re-builds
+                                       // fresh via IArmyRosterProvider, never re-reading a built
+                                       // ArmyRoster from storage.
 
 IArmyRosterProvider.Build(StoredArmyImport) -> ArmyRosterBuildResult
-                                       // dispatches on variant: TextArmyImport runs the existing
-                                       // BsdataFactionResolver -> BsdataCatalogueCache.GetOrBuild ->
-                                       // ArmyRosterEnricher.Enrich orchestration; BattleScribeArmyImport
-                                       // runs BattleScribeRosterMapper.Map directly (no BSData
-                                       // involvement). Used by the import page (validate before
-                                       // session-save) and /LivePlay's per-request rebuild - one
-                                       // place for a sequence needed at three call sites.
+                                       // see interface's own doc comment
 
-ImportModel (/Import Razor Page)      // paste box + submit. OnPost first attempts
-                                       // BattleScribeRosterFormat.TryParse (format recognition -
-                                       // see battlescribe-import-pipeline.md); on a match wraps as BattleScribeArmyImport,
-                                       // otherwise falls through to ArmyListParser and wraps as
-                                       // TextArmyImport. Either way calls IArmyRosterProvider.Build
-                                       // to validate BEFORE ISessionArmyListStore.Save, so a failed
-                                       // re-import never touches a previously-successful session.
-                                       // Catches ArmyListParseException/
+ImportModel (/Import Razor Page)      // paste box + submit - see class's own doc comment (format
+                                       // detection via BattleScribeRosterFormat.TryParse - see
+                                       // battlescribe-import-pipeline.md; validates via
+                                       // IArmyRosterProvider.Build BEFORE ISessionArmyListStore.Save,
+                                       // so a failed re-import never touches a previously-successful
+                                       // session). Catches ArmyListParseException/
                                        // BsdataFactionResolutionException/
                                        // BsdataNameResolutionException/
                                        // AmbiguousCharacteristicException/

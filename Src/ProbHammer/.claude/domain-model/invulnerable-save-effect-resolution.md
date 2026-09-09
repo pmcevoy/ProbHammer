@@ -10,14 +10,8 @@ isolation via the exact same not-yet-consumed discipline that component establis
 ```
 InvulnerableSaveEffectResolver.Resolve(effect, sourceAbility, current)
     -> InvulnerableSaveCharacteristicView
-                                       // Domain/Catalogue/InvulnerableSaveEffectResolver.cs - a
-                                       // single static method. Returns
-                                       // InvulnerableSaveCharacteristicView.Resolved(current
-                                       // .OriginalValue, effect.Value, [sourceAbility]) - the
-                                       // pre-mutation OriginalValue is preserved from current's own
-                                       // OriginalValue (never its effective Value, which may already
-                                       // reflect an earlier mutation), mirroring every other
-                                       // hand-authored Resolved(...) call site in this codebase.
+                                       // Domain/Catalogue/InvulnerableSaveEffectResolver.cs - see
+                                       // class's and method's own doc comments
 ```
 
 **Ground-truth verified, not just unit-tested**: resolving the Effect classified from Shield Dome's
@@ -29,10 +23,8 @@ field-by-field, not via whole-record equality - mirrors every other test in this
 assertions) — proving the general resolver was at least as correct as the specific hand-authored
 rule it went on to replace.
 
-**Now the runtime consumer** (`apply-rule-effect-baseline`): `AttachedUnitAggregator`'s
-`ApplyStatlineFlagRules` calls this resolver directly for every present ability whose normalized
-Text matches a `RuleClassificationBaseline` entry classified with an
-`InvulnerableSaveCharacteristicEffect` — see "Statline-Flag Rules" in statline-flag-rules.md. `StatlineFlagRule`/
+**Now the runtime consumer** (`apply-rule-effect-baseline`) — see the class's own doc comment; also
+"Statline-Flag Rules" in statline-flag-rules.md. `StatlineFlagRule`/
 `ShieldDomeStatlineFlagRule`/`StatlineFlagRuleCatalogue` are deleted; this resolver, run from the
 checked-in baseline, is the only thing producing a real `InvulnerableSaveCharacteristicView` on a
 live roster now. Confirmed byte-for-byte equivalent to the retired hand-authored rule both by the

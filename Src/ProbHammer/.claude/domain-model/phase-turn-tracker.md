@@ -10,19 +10,15 @@ existing content for readability.
 ```
 ProbHammer.Core.Domain.Roster.GameTurn = Mine | Theirs
 ProbHammer.Core.Domain.Roster.GamePhase = Command | Movement | Shooting | Charge | Fight
-PhaseTurnSelection(GameTurn Turn, GamePhase? Phase)   // Domain/Roster/PhaseTurnSelection.cs - a
-                                       // null Phase is a row-label-only selection (the whole Turn,
-                                       // no specific Phase). Default: (Mine, Command). Placed in
-                                       // Domain.Roster (not ProbHammer.Web) specifically so a
-                                       // future Core-level capability (e.g. phase/turn-aware
-                                       // ability highlighting) can consume it directly with no
-                                       // rework - this record holds only the raw asserted value.
+PhaseTurnSelection(GameTurn Turn, GamePhase? Phase)   // Domain/Roster/PhaseTurnSelection.cs - see
+                                       // record's own doc comment. Placed in Domain.Roster (not
+                                       // ProbHammer.Web) specifically so a future Core-level
+                                       // capability (e.g. phase/turn-aware ability highlighting) can
+                                       // consume it directly with no rework - this record holds only
+                                       // the raw asserted value.
 
-IPhaseTurnStore / PhaseTurnStore      // ProbHammer.Web/Services/PhaseTurnStore.cs - mirrors
-                                       // ISessionArmyListStore exactly: Save(ISession,
-                                       // PhaseTurnSelection) / Load(ISession) -> PhaseTurnSelection?,
-                                       // a plain System.Text.Json round trip under its own session
-                                       // key ("PhaseTurn"). Registered as a singleton alongside
+IPhaseTurnStore / PhaseTurnStore      // ProbHammer.Web/Services/PhaseTurnStore.cs - see interface's
+                                       // own doc comment. Registered as a singleton alongside
                                        // ISessionArmyListStore. Rides the same non-persistent
                                        // session backing that store already does - a lost session
                                        // (see live-play-view's "Live Play Redirects Without An

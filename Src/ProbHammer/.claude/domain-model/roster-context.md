@@ -3,12 +3,10 @@
 ```
 ModelLine(StatlineName, Weapons: IReadOnlyList<string>, Count, Abilities: IReadOnlyList<Ability>,
           Keywords: IReadOnlySet<string> = [])
-                     // Keywords scoped to this specific model-line, distinct from its Datasheet's
-                     // Keywords - e.g. a Psyker keyword on one named individual within a shared
-                     // statline. Case-insensitive, matching Datasheet.Keywords's convention.
+                     // see Keywords property's own doc comment
   RemainingCount   // live, adjustable in both directions; alive/dead granularity only, clamped
                    // to [0, Count]
-  SetRemainingCount(value)   // the one primitive both directions reduce to, clamped to [0, Count]
+  SetRemainingCount(value)   // see method's own doc comment
   RemoveCasualties(n)         // thin wrapper: SetRemainingCount(RemainingCount - n)
 
 Unit : ICombatUnit
@@ -26,52 +24,31 @@ AttachedUnit : ICombatUnit
   Components -> [Bodyguard, ..Attached]
 
 ICombatUnit
-  Components: IReadOnlyList<Unit>   // Composite-pattern shape; lets aggregate-view logic treat a
-                                     // plain Unit and an AttachedUnit uniformly
+  Components: IReadOnlyList<Unit>   // see interface's own doc comment
   Name: string                      // computed, not stored - see Pure functions below
-  IsHalfStrengthOverride: bool      // mutable, live-state, player-set only, defaults false.
-                                     // Meaningful only when HalfStrengthResolution
-                                     // .StartingStrength(this) == 1 (a genuine single-model unit) -
-                                     // the real determination there is wound-based, which this app
-                                     // doesn't track (Deliberate Omissions); for combined starting
-                                     // strength 2+ the computed determination governs instead and
-                                     // this value goes unread. One flag per ICombatUnit - an
-                                     // AttachedUnit's own flag is unrelated to its Bodyguard's/each
-                                     // Attached Unit's own flag.
-  IsBattleShocked: bool             // mutable, live-state, player-set only, defaults false; the
-                                     // app never simulates the 2D6-vs-Leadership test, only
-                                     // records the player's reported result. Never cleared by any
-                                     // other domain operation - 11e only clears Battle-shock on a
-                                     // *passed* subsequent test, so this is a plain persistent
+  IsHalfStrengthOverride: bool      // see property's own doc comment. One flag per ICombatUnit -
+                                     // an AttachedUnit's own flag is unrelated to its Bodyguard's/
+                                     // each Attached Unit's own flag.
+  IsBattleShocked: bool             // see property's own doc comment; 11e only clears Battle-shock
+                                     // on a *passed* subsequent test, so this is a plain persistent
                                      // latch the player clears themselves (the app has no turn-
                                      // tracking concept to auto-reset it against anyway).
 ```
 
 **Pure functions (not stored state):**
-- `KeywordResolution.EffectiveKeywords(ICombatUnit)` — union of `Keywords` over currently-present
-  components' Datasheets, plus the `Keywords` of currently-present (`RemainingCount > 0`)
-  `ModelLine`s. Recomputes live, never cached. Model-level keyword checks must read a specific
-  `Unit.Datasheet.Keywords` together with that specific model's own `ModelLine.Keywords` directly,
-  never a sibling `ModelLine`'s and never this union.
-- `ToughnessResolution.ResolveDefendingToughness(AttachedUnit)` — highest Toughness among present
-  Bodyguard models if any remain, else highest among present Leader/Support models. Domain fact
-  only; not wired to `Simulation/*`.
-- `ICombatUnit.Name` — computed on read, not stored: neither BattleScribe/NewRecruit exports nor
-  GW's own app support free-form per-instance unit naming, so no external source could populate a
-  stored value. `Unit.Name` is its Datasheet's name. `AttachedUnit.Name` is a humanized join:
-  none attached → Bodyguard name alone; one → `"{Bodyguard} with {A}"`; two →
-  `"{Bodyguard} with {A} and {B}"`; three+ → an Oxford-comma join. Duplicate attached-leader names
-  are not deduplicated (two Marshals render as `"...with Marshal and Marshal"`) — a known, accepted
-  limitation.
-- `HalfStrengthResolution` — `StartingStrength(ICombatUnit)`/`CurrentStrength(ICombatUnit)` sum
-  `Σ ModelLine.Count`/`Σ ModelLine.RemainingCount` across every `Components` entry combined,
-  matching the real rule that an attached unit's starting strength is combined, not per-component.
-  `IsAtOrBelowHalfStrength(ICombatUnit)` is true when `CurrentStrength <= floor(StartingStrength /
-  2)` (rounded down — a real bug once used `ceil`, one casualty too eager), but only meaningful
-  when `StartingStrength >= 2` — exactly 1 always returns `false` here, since that determination is
-  wound-based and this app has no partial-wound data (see `IsHalfStrengthOverride` above).
-  `IsAtOrBelowHalfStrengthStatus(ICombatUnit)` is the one combined read most callers want — the
-  computed value when `StartingStrength >= 2`, the player-set override when it's exactly 1.
+- `KeywordResolution.EffectiveKeywords(ICombatUnit)` — see class's and method's own doc comments.
+  Model-level keyword checks must read a specific `Unit.Datasheet.Keywords` together with that
+  specific model's own `ModelLine.Keywords` directly, never a sibling `ModelLine`'s and never this
+  union.
+- `ToughnessResolution.ResolveDefendingToughness(AttachedUnit)` — see class's and method's own doc
+  comments.
+- `ICombatUnit.Name` — see `ICombatUnit.Name`'s own doc comment (computed on read, not stored) and
+  `AttachedUnit.Name`'s own doc comment for the humanized-join shape. Duplicate attached-leader
+  names are not deduplicated (two Marshals render as `"...with Marshal and Marshal"`) — a known,
+  accepted limitation.
+- `HalfStrengthResolution` — see each method's own doc comment (`StartingStrength`/
+  `CurrentStrength`/`IsAtOrBelowHalfStrength`/`IsAtOrBelowHalfStrengthStatus`). Rounds down (a real
+  bug once used `ceil`, one casualty too eager).
 
 **Aggregate view** (`AttachedUnitAggregator.Build(ICombatUnit) -> AttachedUnitAggregateView`):
 
@@ -82,8 +59,9 @@ AttachedUnitAggregateView(Name: string, IsAttachedUnit: bool, Statlines, Weapons
   // `combatUnit is AttachedUnit` - lets a page-layer consumer distinguish source type without
   // re-deriving it from Statlines/Weapons shape; true even with zero Attached units.
 
-ModelLineLoadout(WeaponsLabel, RemainingCount, InitialCount)
-  // WeaponsLabel is ModelLine.Weapons comma-joined, e.g. "Bolt pistol, Heavy Bolt pistol, Power fist"
+ModelLineLoadout(WeaponsLabel, Weapons: IReadOnlyList<string>, RemainingCount, InitialCount)
+  // WeaponsLabel is Weapons (== that ModelLine.Weapons) comma-joined, e.g. "Bolt pistol, Heavy Bolt
+  // pistol, Power fist" - Weapons itself is carried alongside for a consumer that needs the raw list.
 
 AggregateStatlineEntry(ComponentName, StatlineName, Statline, RemainingCount, InitialCount,
                         Loadouts: IReadOnlyList<ModelLineLoadout>)
@@ -94,22 +72,24 @@ AggregateStatlineEntry(ComponentName, StatlineName, Statline, RemainingCount, In
   // weapon list) so a fully-wiped loadout-variant still shows 0/InitialCount instead of
   // disappearing.
 
-WeaponContribution(ComponentName, StatlineName, Count, PerModelAttacks)
-  // ComponentName is the owning Unit.Datasheet.Name; Count is that ModelLine's RemainingCount
+WeaponContribution(ComponentName, StatlineName, Count, PerModelAttacks, LoadoutIndex = -1)
+  // ComponentName is the owning Unit.Datasheet.Name; Count is that ModelLine's RemainingCount.
+  // LoadoutIndex is the contributing ModelLine's position within its statline's own Loadouts list
+  // (-1 when the statline has only one ModelLine, so no Loadouts breakdown renders at all) - see
+  // the record's own doc comment for why it's needed (two sibling loadouts under the same statline
+  // name are otherwise indistinguishable by ComponentName/StatlineName alone, and Count isn't
+  // reliable either, since two loadouts can coincidentally share a model count).
 
 AggregateWeaponEntry(Profile: WeaponProfile, TotalAttacks: DiceExpression,
                       Contributions: IReadOnlyList<WeaponContribution>)
-  // Profile is retained for identity fields only - Profile.A is NOT authoritative once a row
-  // merges more than one contribution. Only TotalAttacks is safe to render.
+  // see record's own doc comment
 
 AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ability,
                        ContributingComponentNames: IReadOnlyList<string> = [])
-  // StatlineName is null for a component-wide ability (Datasheet-sourced or Enhancement), set for
-  // a ModelLine-sourced one. No cross-component dedup EXCEPT (gate-and-dedupe-core-rule-abilities)
-  // when two+ present components share an identical CoreRule-origin ability by Name - collapsed
-  // into one entry (ComponentName/StatlineName null, ContributingComponentNames listing every
-  // contributor), rendered as its own row above every component's rows. See the record's own doc
-  // comment for the full rationale and collapse rule.
+  // see the record's own doc comment for the full rationale and collapse rule (StatlineName null
+  // vs. set; the gate-and-dedupe-core-rule-abilities cross-component collapse). Also has a 3-arg
+  // convenience ctor (ComponentName: string, StatlineName, Ability) forwarding to the 4-arg form
+  // with ContributingComponentNames: [] - the ordinary single-component-source case.
 ```
 
 - `Statlines` — built by walking components in display order (an `AttachedUnit`'s `Attached` list
@@ -161,12 +141,10 @@ than through the `presentLines` filter.
 ---
 
 **`ArmyRoster`** (`Domain/Roster/ArmyRoster.cs`) wraps the per-unit roster (`Units`, an
-`IReadOnlyList<ICombatUnit>`) with army-level metadata: `Name`, `PointsSpent`, `Faction` (ordered —
-parent codex before sub-faction, e.g. `["Space Marines", "Black Templars"]`), `Detachments`
-(ordered by selection — `IReadOnlyList<ResolvedDetachment>`:
-`ResolvedDetachment(Name, Rules: IReadOnlyList<DetachmentRule>)`, `DetachmentRule(Name, Text)` —
-see "Detachment Resolution" in army-list-import-pipeline.md), `ForceDisposition`, `BattleSize`, `PointsLimit`. Originally
-added ahead of the (then-unbuilt) GW-app export parser so parsing work had a settled target type;
+`IReadOnlyList<ICombatUnit>`) with army-level metadata — see `Faction`'s and `Detachments`' own
+doc comments for their ordering conventions (`ResolvedDetachment(Name, Rules: IReadOnlyList<DetachmentRule>)`,
+`DetachmentRule(Name, Text)` — see "Detachment Resolution" in army-list-import-pipeline.md).
+Originally added ahead of the (then-unbuilt) GW-app export parser so parsing work had a settled target type;
 `import-army-list-for-live-play`'s real `ArmyListParser`/`ArmyRosterEnricher` now populate this
 exact shape from a real pasted export unchanged. `PointsSpent` is still plain sample data on the
 `Examples/` fixture path — not derived from or reconciled against `Units`, since no points value is

@@ -95,12 +95,9 @@ AttachedUnitAggregator.ResolveCaveatedInvulnerableSaves(statlines, baseline)
 `IWebHostEnvironment.ContentRootPath`, mirroring `BsdataCatalogueCache`'s own root-resolution
 convention, and threaded through `LivePlay.cshtml.cs`/`LivePlayCasualtyService`'s own DI-injected
 copy): runs as an additional step after `BuildStatlines`/`BuildAbilities` produce their live,
-casualty-filtered results (`ApplyStatlineFlagRules`). Since `BuildAbilities`' own output is already
-filtered to only currently-present sources (the same liveness rule that governs whether the ability
-itself renders), a flagged value's liveness falls out for free with no separate tracking — marking
-the bearer a casualty removes the matching `AggregateAbilityEntry` on the next `Build`, so the
-lookup pass simply has nothing to match against and the affected `Statline` reverts to its own
-Datasheet base value. Never mutates `Datasheet`/`Unit`; only the returned, decorated copy of the
+casualty-filtered results (`ApplyStatlineFlagRules`) — see resolve-known-ability-effects' "Mutation
+Liveness Follows Ability Presence" requirement for why a flagged value's liveness falls out for
+free with no separate tracking. Never mutates `Datasheet`/`Unit`; only the returned, decorated copy of the
 statline entries carries an effect. Every matched baseline Effect is applied regardless of its own
 `IsCaveated`/`FullyHandled` state — every Effect-bearing baseline entry is independently verified
 correct for that Effect specifically, regardless of what else its own text states (see

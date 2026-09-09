@@ -33,19 +33,12 @@ Json/BsRosterFile.cs                  // System.Text.Json-backed types for the s
                                        // silently ignored on deserialize.
 
 BattleScribeRosterFormat.TryParse(text, out BsRoster?) -> bool
-                                       // Format recognition: true only for JSON containing a
-                                       // top-level "roster" object whose "xmlns" equals the
-                                       // standard cross-tool BattleScribe roster schema URL - never
-                                       // throws, so non-matching text simply isn't recognized
-                                       // (falls through to the GW-app text pipeline). Uses a
+                                       // see class's and method's own doc comments. Uses a
                                        // CamelCase/case-insensitive JsonSerializerOptions, matching
                                        // BsdataCatalogueReader's own convention.
 
 BattleScribeRosterParseException(message)
-                                       // thrown by the mapper when a recognized payload doesn't
-                                       // resolve into an ArmyRoster (e.g. a selection with no
-                                       // resolvable Unit-typeName profile anywhere reachable) -
-                                       // mirrors ArmyListParseException's role
+                                       // see class's own doc comment
 ```
 
 **`BattleScribeRosterMapper.Map(BsRoster) -> ArmyRoster`**: army metadata comes from
@@ -64,33 +57,25 @@ neither association is standalone. Confirmed against the sample's three real ass
 2-member groups, one Leader-only group) — a 3-member group remains UNVERIFIED pending a second
 sample.
 
-Unit assembly (`BuildUnit`): "Abilities"-typeName profiles become Intrinsic; "rules" entries become
-CoreRule- or ArmyRule-origin, deliberately with NO chapter/mode gating (a roster JSON only ever
-contains rules already applicable to the exported army). Origin uses the same
+Unit assembly (`BuildUnit`): see the method's own doc comment for the exact wiring (Intrinsic vs.
+CoreRule/ArmyRule origin, `FindEnhancements`' whole-tree walk). Origin uses the same
 `ArmyRuleNameLookup.Resolve(Faction).Contains(rule.Name)` check the BSData pipeline uses, so
 `AttachedUnitAggregator.PromoteArmyRuleAbilities`'s cross-component dedup (e.g. "Templar Vows")
-applies here too. Enhancement resolution (`FindEnhancements`) walks the whole selection tree for
-any descendant carrying a `costs["Enhancements"]` entry — structurally cannot leak an unselected
-Enhancement, since a roster JSON only contains actual selections. See `BuildUnit`'s own doc comment
-for the exact wiring.
+applies here too. Deliberately NO chapter/mode gating — a roster JSON only ever contains rules
+already applicable to the exported army, and structurally cannot leak an unselected Enhancement,
+since it only contains actual selections.
 
-ModelLine assembly (`BuildModelLines`): one loadout ModelLine per immediate "model"-typed nested
-selection, each using its own Unit-typeName profile when it has one or falling back to the
-top-level selection's own Unit profile when it doesn't (a shared-statline squad, e.g. Sword
-Brethren); with no such nested children, the top-level selection is itself a solo model producing
-one ModelLine. No partition inference is ever needed — each already-split loadout node carries its
-own count directly (this pipeline structurally cannot reproduce `harden-army-list-parsing-for-
-android-exports`'s still-open Custodian Guard case). See the method's own doc comment for the
-real-data examples.
+ModelLine assembly (`BuildModelLines`): see the method's own doc comment for the exact wiring and
+real-data examples (Sword Brethren's shared-statline fallback, Helbrecht/Impulsor's solo-model
+case). No partition inference is ever needed — each already-split loadout node carries its own
+count directly (this pipeline structurally cannot reproduce `harden-army-list-parsing-for-android-
+exports`'s still-open Custodian Guard case).
 
-Weapon/ability collection (`CollectWeaponsAndAbilities`): walks a loadout node's own nested wargear
-`selections` recursively, dividing a weapon-carrying child's own `number` by the loadout's model
-count to recover the per-model quantity. A selection with neither weapon nor "Abilities" profiles
-(a pure grouping wrapper) is walked one level deeper rather than skipped. An "Abilities"-typeName
-child becomes an OptionalGrant-origin Ability on that specific ModelLine, mirroring the BSData
-pipeline's equivalent classification; an Enhancement-tagged selection is skipped (resolved once by
-`FindEnhancements` above). See the method's own doc comment for the Storm-Bolters-style wrapper
-example.
+Weapon/ability collection (`CollectWeaponsAndAbilities`): see the method's own doc comment for the
+exact wiring and the Storm-Bolters-style wrapper example — dividing a weapon-carrying child's own
+`number` by the loadout's model count recovers the per-model quantity; an "Abilities"-typeName
+child becomes an OptionalGrant-origin Ability, mirroring the BSData pipeline's equivalent
+classification.
 
 Characteristic-text parsing reuses `DiceExpression.Parse` (A/D) and `WeaponKeywordParser.Apply`
 (Keywords) directly — this format's own text shapes are byte-for-byte the same convention BSData
@@ -114,23 +99,10 @@ separate filter is needed here.
 
 ```
 BattleScribeRuleGlossaryBuilder.Build(BsRoster) -> RuleGlossary
-                                       // builds a roster-scoped RuleGlossary by walking the WHOLE
-                                       // roster once - the force's own `rules`, every top-level
-                                       // selection's own `rules`, and every nested wargear
-                                       // selection's own `rules` (e.g. a weapon's own "Sustained
-                                       // Hits"/"Anti" keyword rule text) - deduped by id, first
-                                       // occurrence wins, into RuleDefinitions via RuleGlossary
-                                       // .BuildFrom (below). Gives /LivePlay's existing [BRACKET]
-                                       // resolution and weapon-keyword popovers working text for a
-                                       // BattleScribe-sourced roster too, with ZERO changes to that
-                                       // rendering pipeline - /LivePlay only ever needs *a*
-                                       // RuleGlossary, not specifically a BSData-sourced one.
+                                       // see class's own doc comment
 
 RuleGlossary.BuildFrom(IEnumerable<RuleDefinition>) -> RuleGlossary
-                                       // indexes an already-known flat set of RuleDefinitions the
-                                       // same way as Build(BsdataClosure) (by Name and every Alias,
-                                       // normalized, first occurrence wins), for a caller whose
-                                       // "closure" isn't a BsdataClosure at all
+                                       // see method's own doc comment
 ```
 
 `StoredArmyImport`/`TextArmyImport`/`BattleScribeArmyImport` live in `Domain.Import` itself — see
