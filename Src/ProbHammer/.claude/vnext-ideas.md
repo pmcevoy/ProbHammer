@@ -315,6 +315,67 @@ entry once it's been turned into a change (archived changes remain the historica
   for a large unit. Worth remembering when the Improve/Worsen verb work (see the rulebook arithmetic
   section below) eventually gets built.
 
+  **`resolve-invulnerable-save-effects` (2026-09-09) closed one real, evidenced piece of the "still
+  not built" DerivedValue gap — for InSv specifically, not the general engine.** `CharacteristicEffect`
+  is now abstract with two sealed subtypes (`ScalarCharacteristicEffect`, today's original
+  `(Characteristic, Verb, Amount)` shape renamed; `InvulnerableSaveCharacteristicEffect(InvulnerableSave
+  Value)`, always `Set`-shaped — see that change's design.md D1/D2), so InSv now participates fully in
+  `RuleClassification.Effects` instead of being excluded. `RuleEffectClassifier` gained two new
+  patterns (`InvulnerableSaveRangedRestricted`/`InvulnerableSaveMeleeRestricted`) recognizing a
+  melee/ranged-attack-type-restricted invulnerable-save grant — one-sided (Ensorcelled Shield) or
+  two-sided (Veil of Medrengard, whose melee clause has an elided verb: "...against ranged attacks,
+  **and** a 5+ invulnerable save against melee attacks" — matched via a `", and"` lead-in alternative
+  alongside the usual `SentenceStart` + subject-shaped-prefix + "has" anchor) — replacing the previous
+  behavior of excluding these entirely. A new D5 pre-filter gate (`RuleEffectClassifier
+  .MayStateInvulnerableSave`, a strict substring over-approximation) now also sharpens the corpus
+  report tool's default-only bucket into a small (47-entry, out of ~3,174), fully-reviewed set instead
+  of an unreviewable ~3,000-entry one. A new, standalone `InvulnerableSaveEffectResolver` (mirrors
+  `CharacteristicModificationKind`/`CharacteristicModificationResolver`'s own not-yet-consumed,
+  proven-in-isolation discipline) resolves a classified InSv Effect + its source Ability into a real
+  `InvulnerableSaveCharacteristicView`, ground-truth-verified to reproduce
+  `ShieldDomeStatlineFlagRule.Apply`'s exact result — **still not wired into
+  `AttachedUnitAggregator`/`StatlineFlagRuleCatalogue`**; `ShieldDomeStatlineFlagRule` remains
+  untouched and the only thing actually producing a real InSv view on a live roster today. The
+  Psychic-Attack/Daemon-attack-source restriction axis remains explicitly out of scope (no `/LivePlay`
+  representation exists for a qualifier-restricted save at all).
+
+  **One real, confirmed extraction gap found reviewing the D5-gated 47-entry bucket, not fixed —
+  deliberately, per the precision-over-recall convention this codebase already follows** (see
+  [[feedback_precision_over_recall_for_text_classifiers]]): T'au's "Skirmish Fighters" detachment rule
+  ("**^^Kroot^^** models from your army have a 6+ invulnerable save against melee attacks and a 5+
+  invulnerable save against ranged attacks.") is a real two-sided restricted grant that extracts
+  nothing, for two independent reasons neither pattern was designed to handle: (1) its first clause's
+  subject is markup-prefixed (`**^^Kroot^^**`) — the same pre-existing gap `InvulnerableSaveGrant`'s
+  own subject class already had before this change (a markup character never matches
+  `[A-Za-z][A-Za-z''\- ]{0,60}`'s required leading letter); (2) its second clause joins via literal
+  `"attacks and a"` with **no comma** before "and", while this change's own `", and"` lead-in
+  alternative requires the comma. Neither was speculatively fixed — the two real corpus examples this
+  change was built against (Ensorcelled Shield, Veil of Medrengard) both use plain, non-markup
+  subjects and a comma-before-"and" join, and widening the patterns to cover a third, differently-
+  shaped real example found only during final review risks the same kind of ad hoc, ungrounded
+  pattern-growth this codebase has deliberately avoided elsewhere (`SentenceStart`'s own structural-
+  anchor-over-denylist history above is the model to follow, not a one-off regex tweak). A future
+  targeted change addressing markup-prefixed subjects generally (which would also, for free, fix this
+  same gap on the plain uniform `InvulnerableSaveGrant` pattern — confirmed to independently affect at
+  least one other real corpus text, "Soul Forge Boons") is the right shape for a fix, not a Skirmish-
+  Fighters-specific patch.
+
+  **Open question from design.md, still unresolved, deliberately not decided by this change**: should
+  `RuleEffectClassifier` become a composed pipeline of independently-gated "effect family" classifiers
+  (each owning its own gate + extraction, composed by a thin orchestrator) rather than one growing
+  static method? Only two families exist in practice even after this change (Scalar, InvulnerableSave)
+  — not enough real evidence to design the right composition shape without guessing, the same mistake
+  this codebase has walked back before (`ComputeDerivedValue`'s rejected generic classifier parameter,
+  `introduce-characteristic-domain-model`). Revisit once `KeywordEffect`/`AbilityEffect` (next
+  paragraph) are real, built things, giving three-plus real families to generalize from.
+
+  **`KeywordEffect`/`AbilityEffect` sibling types remain real, evidenced, and deferred** — named
+  explicitly as a Non-Goal by `resolve-invulnerable-save-effects` rather than attempted alongside the
+  InSv work. Five of the (now 41, was 36 pre-this-change) baseline entries carry a `note` recording
+  known-incomplete-but-correct extraction specifically because the source text grants a keyword or a
+  separate ability alongside its extracted characteristic mutation — see "Caveated rule-effect
+  classifications" above for the original find. Same footing as the already-deferred `WeaponEffect`.
+
   **Still not built**: computing an actual `DerivedValue` for any caveat this shipped work surfaces
   (the explicit "resolved" phase) — the caveat is display-only, "this characteristic is affected,"
   never "by how much, resulting in what." Also still not built: tier 3+ conditions (a sibling

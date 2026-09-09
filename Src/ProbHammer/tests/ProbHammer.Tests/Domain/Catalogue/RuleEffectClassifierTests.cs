@@ -15,7 +15,7 @@ public class RuleEffectClassifierTests
             "The bearer has a 5+ invulnerable save.");
 
         result.Target.Should().Be(new SelfRuleTarget());
-        result.Effects.Should().Equal(new CharacteristicEffect("InSv", EffectVerb.Set, 5));
+        result.Effects.Should().Equal(new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(5, 5)));
     }
 
     [Theory]
@@ -27,24 +27,48 @@ public class RuleEffectClassifierTests
         // wargear item (Storm Shield/Blizzard shield both have a lowercase and a capitalized variant).
         var result = RuleEffectClassifier.Classify("Storm Shield", text);
 
-        result.Effects.Should().Equal(new CharacteristicEffect("InSv", EffectVerb.Set, 4));
+        result.Effects.Should().Equal(new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(4, 4)));
     }
 
-    [Theory]
-    [InlineData(
-        "This model has a 4+ invulnerable save against ranged attacks, and the Feel No Pain 6+ ability.")]
-    [InlineData(
-        "The bearer has a 4+ invulnerable save against ranged attacks, and a 5+ invulnerable save against melee attacks.")]
-    public void InvulnerableSaveGrant_AttackTypeRestricted_ExtractsNoEffect(string text)
+    [Fact]
+    public void InvulnerableSaveGrant_OneSidedRestricted_ExtractsRangedOnlyEffect_AndIsCaveated()
     {
-        // Real corpus text (Chaos Knights' "**Ensorcelled Shield" / "**Veil of Medrengard" - both
-        // War Dog Executioner optional abilities). An attack-type-restricted save ("...against ranged
-        // attacks") is conditional on the incoming attack's type - the same shape
-        // InvulnerableSaveCaveatClassifier already models separately as a melee/ranged pair - not the
-        // unconditional flat grant this pattern means to recognize. Confirmed real false positive
-        // before InvulnerableSaveGrant's negative lookahead: both used to wrongly extract a flat
-        // Set InSv effect (4 for the first text), caught live reviewing corpus-report output.
-        var result = RuleEffectClassifier.Classify("Test Ability", text);
+        // Real corpus text (Chaos Knights Library.json - "**Ensorcelled Shield", a War Dog
+        // Executioner optional ability). Ranged-only restricted grant, plus trailing content
+        // (the Feel No Pain clause) beyond the matched invulnerable-save clause - marked caveated,
+        // matching invulnerable-save-effect-resolution/rule-effect-classification's own scenario for
+        // this exact real example.
+        var result = RuleEffectClassifier.Classify("Ensorcelled Shield",
+            "This model has a 4+ invulnerable save against ranged attacks, and the Feel No Pain 6+ ability.");
+
+        result.Effects.Should().Equal(new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(0, 4)));
+        result.IsCaveated.Should().BeTrue();
+    }
+
+    [Fact]
+    public void InvulnerableSaveGrant_TwoSidedRestricted_ExtractsBothStatedValues_AndIsNotCaveated()
+    {
+        // Real corpus text (Chaos Knights Library.json - "**Veil of Medrengard", a War Dog
+        // Executioner optional ability). Both attack types stated in one sentence, with the melee
+        // clause's own verb elided ("...and [has] a 5+..."). Nothing trails the last matched clause,
+        // so this is not caveated.
+        var result = RuleEffectClassifier.Classify("Veil of Medrengard",
+            "The bearer has a 4+ invulnerable save against ranged attacks, and a 5+ invulnerable save against melee attacks.");
+
+        result.Effects.Should().Equal(new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(5, 4)));
+        result.IsCaveated.Should().BeFalse();
+    }
+
+    [Fact]
+    public void InvulnerableSaveGrant_RestrictedByANonMeleeRangedQualifier_ExtractsNoEffect()
+    {
+        // Real corpus text (Imperium - Agents of the Imperium.json). The Psychic-Attacks restriction
+        // axis is explicitly out of scope (resolve-invulnerable-save-effects proposal.md's Non-Goals)
+        // - this extraction is scoped to the melee/ranged attack-type axis only, and this text names
+        // neither, so it must classify exactly as unrecognized text does: zero Effects, not a
+        // uniform/ranged/melee grant of any shape.
+        var result = RuleEffectClassifier.Classify("Test Ability",
+            "The bearer's unit has a 4+ invulnerable save against Psychic Attacks.");
 
         result.Effects.Should().BeEmpty();
     }
@@ -134,7 +158,7 @@ public class RuleEffectClassifierTests
             "Add 1 to the Objective Control characteristic of models in this unit.");
 
         result.Target.Should().Be(new AttachedUnitRuleTarget());
-        result.Effects.Should().Equal(new CharacteristicEffect("Oc", EffectVerb.Improve, 1));
+        result.Effects.Should().Equal(new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1));
     }
 
     [Fact]
@@ -146,7 +170,7 @@ public class RuleEffectClassifierTests
         var result = RuleEffectClassifier.Classify("Sanctuary",
             "Imperial Knights model only. The bearer has a 5+ invulnerable save.");
 
-        result.Effects.Should().Equal(new CharacteristicEffect("InSv", EffectVerb.Set, 5));
+        result.Effects.Should().Equal(new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(5, 5)));
     }
 
     [Fact]
@@ -156,7 +180,7 @@ public class RuleEffectClassifierTests
             "Add 1 to the Objective Control characteristic of models in the bearer's unit.");
 
         result.Target.Should().Be(new AttachedUnitRuleTarget());
-        result.Effects.Should().Equal(new CharacteristicEffect("Oc", EffectVerb.Improve, 1));
+        result.Effects.Should().Equal(new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1));
     }
 
     [Fact]
@@ -168,7 +192,7 @@ public class RuleEffectClassifierTests
             "Add 1 to the Objective Control characteristic of models in the bearer’s unit.");
 
         result.Target.Should().Be(new AttachedUnitRuleTarget());
-        result.Effects.Should().Equal(new CharacteristicEffect("Oc", EffectVerb.Improve, 1));
+        result.Effects.Should().Equal(new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1));
     }
 
     [Fact]
@@ -186,7 +210,7 @@ public class RuleEffectClassifierTests
         var result = RuleEffectClassifier.Classify("Vexilla", text);
 
         result.Target.Should().Be(new AttachedUnitRuleTarget());
-        result.Effects.Should().Equal(new CharacteristicEffect("Oc", EffectVerb.Improve, 1));
+        result.Effects.Should().Equal(new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1));
     }
 
     [Fact]
@@ -260,7 +284,7 @@ public class RuleEffectClassifierTests
         var result = RuleEffectClassifier.Classify("Faith-Fuelled Resolve", text);
 
         result.Target.Should().Be(new KeywordRuleTarget("SWORD BRETHREN SQUAD"));
-        result.Effects.Should().Equal(new CharacteristicEffect("Oc", EffectVerb.Improve, 1));
+        result.Effects.Should().Equal(new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1));
     }
 
     [Theory]
@@ -272,7 +296,7 @@ public class RuleEffectClassifierTests
         var result = RuleEffectClassifier.Classify("Test Ability",
             $"Friendly TEST SQUAD units have {grant}.");
 
-        result.Effects.Should().Equal(new CharacteristicEffect("Oc", EffectVerb.Improve, 1));
+        result.Effects.Should().Equal(new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1));
     }
 
     [Fact]
@@ -295,7 +319,8 @@ public class RuleEffectClassifierTests
         // use "the bearer's X characteristic" rather than the plain "the X characteristic" phrasing.
         var result = RuleEffectClassifier.Classify("Test Ability", text);
 
-        result.Effects.Should().ContainSingle().Which.Characteristic.Should().Be("W");
+        result.Effects.Should().ContainSingle().Which.Should().BeOfType<ScalarCharacteristicEffect>()
+            .Which.Characteristic.Should().Be("W");
     }
 
     [Fact]
@@ -304,7 +329,7 @@ public class RuleEffectClassifierTests
         var result = RuleEffectClassifier.Classify("Test Ability",
             "Add 2 to the Move characteristic of models in the bearer's unit.");
 
-        result.Effects.Should().Equal(new CharacteristicEffect("M", EffectVerb.Improve, 2));
+        result.Effects.Should().Equal(new ScalarCharacteristicEffect("M", EffectVerb.Improve, 2));
     }
 
     [Theory]

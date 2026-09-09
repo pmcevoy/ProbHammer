@@ -21,6 +21,49 @@ follow-up until the base Android import bug is fixed first. No code for this has
 
 ## Recently Completed
 
+- OpenSpec change `resolve-invulnerable-save-effects` implemented (23/23 tasks, not yet archived):
+  extends `rule-effect-classification` to recognize a melee/ranged-attack-type-restricted
+  invulnerable-save grant (one-sided, e.g. Chaos Knights' Ensorcelled Shield; or two-sided in one
+  sentence, e.g. Veil of Medrengard), and adds a standalone resolver proving the extracted Effect
+  can produce a real, displayable value — not yet wired to `/LivePlay`.
+  - **`CharacteristicEffect` retyped abstract/polymorphic**: two sealed subtypes,
+    `ScalarCharacteristicEffect` (today's original `(Characteristic, Verb, Amount)` shape, renamed)
+    and `InvulnerableSaveCharacteristicEffect(InvulnerableSave Value)` (always `Set`-shaped, no
+    `Verb` field), with a `[JsonPolymorphic]`/`[JsonDerivedType]` `"kind"` discriminator mirroring
+    `RuleTarget`'s own convention. InSv stays inside `RuleClassification.Effects` as a new element
+    type, not a sibling field — every existing construction site updated.
+  - **`RuleEffectClassifier` widened**: two new patterns (`InvulnerableSaveRangedRestricted`/
+    `InvulnerableSaveMeleeRestricted`), each anchored by `SentenceStart` + subject-shaped prefix +
+    "has" (the one-sided shape) OR a `", and"` continuation from an earlier clause with an elided
+    verb (the two-sided shape — Veil of Medrengard's own melee clause: "...against ranged attacks,
+    and a 5+ invulnerable save against melee attacks."), tried before the existing uniform
+    `InvulnerableSaveGrant` pattern, which now only runs as a fallback when neither restricted
+    pattern matched. `InvulnerableSaveGrant`'s own `(?!\s+against\b)` negative lookahead was
+    **kept**, not removed as tasks.md's own task 2.3 literally suggested — it's still required so a
+    restriction on any OTHER axis (e.g. "...invulnerable save against Psychic Attacks") correctly
+    extracts nothing once it reaches this fallback, per the spec's own "scoped to the melee/ranged
+    attack-type axis only" requirement (verified against a real regression case, Agents of the
+    Imperium's own Psychic-Attacks-restricted save).
+  - **D5 pre-filter gate** (`RuleEffectClassifier.MayStateInvulnerableSave`): a cheap, provably-safe
+    substring over-approximation ahead of the whole InSv pattern family, used both internally and to
+    sharpen the corpus report tool's default-only bucket from an unreviewable ~3,000-entry listing
+    into a small (47-entry), fully-reviewed one — 46 correctly unmatched, one real confirmed gap
+    (T'au's "Skirmish Fighters," a markup-prefixed two-sided grant with a comma-less "and" join)
+    recorded in `.claude/vnext-ideas.md` rather than fixed, per this codebase's own
+    precision-over-recall convention.
+  - **New `InvulnerableSaveEffectResolver`** (`Domain/Catalogue`, unwired — mirrors
+    `CharacteristicModificationKind`/`CharacteristicModificationResolver`'s own proven-in-isolation
+    discipline): resolves a classified InSv Effect + source `Ability` into a real
+    `InvulnerableSaveCharacteristicView`, ground-truth-verified to reproduce
+    `ShieldDomeStatlineFlagRule.Apply`'s exact result. Not wired into `AttachedUnitAggregator`/
+    `StatlineFlagRuleCatalogue` — `ShieldDomeStatlineFlagRule` remains untouched, by design.
+  - **Baseline migration**: `src/ProbHammer.Web/Data/RuleEffectClassifications.json`'s existing
+    entries (all uniform InSv grants) migrated to the new discriminated shape via a `jq` transform,
+    confirmed unchanged by `--write-baseline`; 5 newly-surfaced split-save Effect results reviewed
+    and added, growing the baseline to 41 entries.
+  - All 600 tests pass (586 run, 14 explicit corpus-scan tests skipped by default); full solution
+    build clean, 0 warnings.
+
 - OpenSpec change `live-play-phase-turn-tracker` implemented (17/17 tasks): a player-set phase/turn
   tracker for `/LivePlay`, plus a section-relevance model that collapses/expands each unit block's
   Statline/Ranged/Melee/Keywords sections based on it.

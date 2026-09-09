@@ -1599,7 +1599,12 @@ describes a characteristic change with no backing `BsModifier` at all, e.g. Darn
 
 ## Rule Effect Classification (Text-Only)
 
-Full requirements: `openspec/changes/classify-rule-effects-from-text/`. A standalone, text-only
+Full requirements: `openspec/changes/classify-rule-effects-from-text/` (original extraction),
+`openspec/changes/widen-rule-effect-classification-coverage/` (pattern widenings, the `IsCaveated`
+signal), `openspec/changes/baseline-rule-effect-classifications/` (the checked-in baseline),
+`openspec/changes/resolve-invulnerable-save-effects/` (the widened InSv extraction described below,
+plus the standalone resolver documented in its own "Invulnerable-Save Effect Resolution" section).
+A standalone, text-only
 counterpart to the structural `CharacteristicModifierCandidate` classifier above — instead of
 reading BSData's structured `BsModifier` JSON, `RuleEffectClassifier.Classify(name, text)` extracts
 a rule/ability's Target and unconditional characteristic Effects from its own Name+Text alone, with
@@ -1638,14 +1643,30 @@ EffectVerb = Improve | Worsen | Set   // rulebook vocabulary, not pre-resolved s
                                        // RollThreshold/ArmourPenetration/Plain "Kind" concept, see
                                        // vnext-ideas.md) - resolving that is out of scope here.
 
-CharacteristicEffect(string Characteristic, EffectVerb Verb, int Amount)
+CharacteristicEffect                  // Domain/Catalogue/CharacteristicEffect.cs - abstract, sealed
+                                       // ScalarCharacteristicEffect/InvulnerableSaveCharacteristicEffect
+                                       // subtypes (resolve-invulnerable-save-effects; was a single
+                                       // sealed record before that change) - mirrors RuleTarget's own
+                                       // abstract-base/sealed-subtype convention, incl. an identical
+                                       // [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]/
+                                       // [JsonDerivedType] pair ("Scalar"/"InvulnerableSave"). Stays
+                                       // inside RuleClassification's existing Effects list as the
+                                       // element type varying per characteristic, not a new sibling
+                                       // field - see that change's design.md D1.
+ScalarCharacteristicEffect(string Characteristic, EffectVerb Verb, int Amount) : CharacteristicEffect
                                        // one atomic, unconditional mutation of exactly one named
-                                       // characteristic by a fixed amount. Characteristic is a plain
-                                       // string, the same convention CharacteristicModifierCandidate
-                                       // already uses - but unlike that classifier, "InSv" is a valid
-                                       // value here too (Shield Dome's own Set-shaped grant), since
-                                       // this is a separate mechanism with no InSv-already-has-its-
-                                       // own-path exclusion to inherit.
+                                       // Statline scalar characteristic by a fixed amount.
+                                       // Characteristic is a plain string, the same convention
+                                       // CharacteristicModifierCandidate already uses. Today's
+                                       // original single-shape CharacteristicEffect record, renamed.
+InvulnerableSaveCharacteristicEffect(InvulnerableSave Value) : CharacteristicEffect
+                                       // an unconditional invulnerable-save grant, as a melee/ranged
+                                       // pair - always Set-shaped (every real corpus grant on this
+                                       // axis is a flat grant, never an Improve/Worsen - see
+                                       // resolve-invulnerable-save-effects/design.md's D2), so no
+                                       // separate Verb field. An attack type the text doesn't name
+                                       // for this grant is 0 on that side (D3 - reuses
+                                       // InvulnerableSave.None's own sentinel convention).
 
 RuleClassification(RuleTarget Target, IReadOnlyList<CharacteristicEffect> Effects,
                     bool IsCaveated = false)
@@ -1697,10 +1718,20 @@ RuleEffectClassifier.Normalize(string text) -> string
 // BRETHREN SQUAD units") followed by "units" -> KeywordRuleTarget; nothing recognized -> SelfRuleTarget
 // (the explicit default, never absent).
 //
-// Effects recognizes: "has a {N}+ invulnerable save" -> Set InSv N, EXCLUDING a match immediately
-// followed by "against" (an attack-type-restricted/split save - the same shape
-// InvulnerableSaveCaveatClassifier models separately as a melee/ranged pair - is conditional on the
-// incoming attack, not the unconditional grant this pattern means to recognize); "Add {N} to the
+// Effects recognizes: "has a {N}+ invulnerable save" -> a uniform Set InSv (N, N), EXCLUDING a match
+// immediately followed by "against" (any restriction axis, e.g. Psychic Attacks - see below for the
+// one axis this IS recognized on); a melee/ranged-attack-type-restricted grant - one-sided (e.g.
+// "...invulnerable save against ranged attacks") or two-sided in one sentence (e.g. "...against
+// ranged attacks, and a 5+ invulnerable save against melee attacks", the second clause's verb
+// elided) - -> Set InSv with the stated value(s), the untargeted side (if one-sided) 0
+// (resolve-invulnerable-save-effects: InvulnerableSaveRangedRestricted/
+// InvulnerableSaveMeleeRestricted, tried before the uniform pattern, which falls back only when
+// neither restricted pattern matched - the uniform pattern's own "against"-exclusion is what then
+// correctly extracts nothing for a restriction on any OTHER axis, e.g. Psychic Attacks, per that
+// requirement's own "scoped to the melee/ranged attack-type axis only" text). A cheap D5 pre-filter
+// gate (RuleEffectClassifier.MayStateInvulnerableSave, requiring the literal substring "invulnerable
+// save") runs ahead of this whole pattern family - a strict, provably-safe over-approximation used
+// both internally and by the corpus report tool's own default-only bucketing (below); "Add {N} to the
 // [X's] {Characteristic} characteristic" (a small closed name-lookup table: Movement/Move/Toughness/
 // Save/Wounds/Leadership/Objective Control - "Move" and an optional intervening possessive noun both
 // added by widen-rule-effect-classification-coverage, see below) -> Improve {code} N; a shorthand
@@ -1801,6 +1832,18 @@ earlier two-way version (a user change narrowing the "non-default" section to Ef
 focused Effect review) was found to silently drop the Target-only bucket from both printed sections
 entirely — still counted in the header total, never shown anywhere.
 
+**A fourth listing splits the Default-only bucket further** (`resolve-invulnerable-save-effects`,
+D5/D6): the D5 gate (`RuleEffectClassifier.MayStateInvulnerableSave`) partitions Default-only into a
+gate-rejected majority (no "invulnerable save" substring at all - carries zero review value, since no
+InSv pattern could ever have matched it, and is excluded from any reviewable listing entirely) and a
+small, distinct "Default-only results with unmatched invulnerable-save language" section, printed in
+full rather than sampled. A live run against the full corpus found 3,174 total default-only texts,
+3,127 gate-rejected, leaving 47 fully reviewable - all 47 manually reviewed: 46 correctly, deliberately
+unmatched (a conditional preamble before the grant, a restriction axis other than melee/ranged, or a
+pre-existing markup-prefixed-subject/mid-sentence-comma-list limitation `InvulnerableSaveGrant` already
+had), and one real, confirmed gap (T'au's "Skirmish Fighters") recorded in `.claude/vnext-ideas.md`
+rather than fixed - see that entry for the full detail.
+
 **Final numbers after a sustained live-review pass found and fixed six real classification bugs** (see
 `.claude/vnext-ideas.md`'s "Characteristic-modification domain hardening" entry and
 `classify-rule-effects-from-text/tasks.md`'s task 4.3 for the full list — case-insensitivity, the
@@ -1819,6 +1862,14 @@ negative (Master Artisan) and one real, previously-unnoticed sixth caveat on an 
 (Army: Shivversplint) — see the "Caveated signal" entry above and `.claude/vnext-ideas.md` for both.
 The checked-in baseline now tracks all 36 Effect results, so a future corpus run reports these as
 unchanged rather than reprinting them.
+
+**Updated numbers after `resolve-invulnerable-save-effects`** (the widened melee/ranged-restricted
+InSv extraction, described above): a fresh corpus run found 5 new real Effect results - Chaos
+Knights' Ensorcelled Shield (ranged-only, caveated by its own trailing Feel No Pain grant) and Veil
+of Medrengard (two-sided, not caveated), plus three more real ranged-/melee-only grants (War Dog
+units' footnoted "*Invulnerable Save"/"Invulnerable Save (N+*)" profiles; Space Marines' Judiciar,
+melee-only) - all five manually reviewed and added to the baseline, which now tracks 41 entries, all
+unchanged on the next run.
 
 **A related, real, NOT-yet-built idea surfaced by this same review**: several Effect results correctly
 extract their `CharacteristicEffect` but the source text also states content
@@ -1996,6 +2047,45 @@ match the real (un-displayed) dictionary key. Caught immediately by task 6.1's o
 seeded entry stayed in the unbaselined "Effect results" section instead of collapsing to "unchanged"),
 not a latent bug — but a real trap for hand-authoring any future baseline entry directly from console
 output rather than from the corpus text itself.
+
+---
+
+## Invulnerable-Save Effect Resolution
+
+Full requirements: `openspec/changes/resolve-invulnerable-save-effects/`. The InSv-specific
+counterpart to `characteristic-modification-kind`'s own scalar resolution — resolves a classified
+`InvulnerableSaveCharacteristicEffect` (see "Rule Effect Classification (Text-Only)" above) plus its
+source `Ability` into a real, displayable `InvulnerableSaveCharacteristicView`, proven correct in
+isolation via the exact same not-yet-consumed discipline that component established.
+
+```
+InvulnerableSaveEffectResolver.Resolve(effect, sourceAbility, current)
+    -> InvulnerableSaveCharacteristicView
+                                       // Domain/Catalogue/InvulnerableSaveEffectResolver.cs - a
+                                       // single static method. Returns
+                                       // InvulnerableSaveCharacteristicView.Resolved(current
+                                       // .OriginalValue, effect.Value, [sourceAbility]) - the
+                                       // pre-mutation OriginalValue is preserved from current's own
+                                       // OriginalValue (never its effective Value, which may already
+                                       // reflect an earlier mutation), mirroring every other
+                                       // hand-authored Resolved(...) call site in this codebase (e.g.
+                                       // ShieldDomeStatlineFlagRule.Apply).
+```
+
+**Ground-truth verified, not just unit-tested**: resolving the Effect classified from Shield Dome's
+own real Name+Text ("The bearer has a 5+ invulnerable save.") against Shield Dome's own `Ability`
+reproduces `ShieldDomeStatlineFlagRule.Apply`'s exact result (`IsCaveated`/`OriginalValue`/
+`DerivedValue`/`ContributingAbilities` all compared field-by-field, not via whole-record equality -
+mirrors every other test in this codebase touching `InvulnerableSaveCharacteristicView`, which
+consistently avoids that in favor of explicit field assertions) — proving the general resolver is at
+least as correct as the specific hand-authored rule it is meant to eventually replace.
+
+**Not consumed by anything yet** — no `AttachedUnitAggregator`/`StatlineFlagRuleCatalogue`/`/LivePlay`
+call site uses this resolver; `ShieldDomeStatlineFlagRule` is untouched and remains the only thing
+actually producing a real `InvulnerableSaveCharacteristicView` on a live roster today. Same
+sequencing `characteristic-modification-kind` itself used, and the same one this whole prose-
+classification effort has followed throughout: prove a component correct in isolation before a later
+change asks anything to trust it.
 
 ---
 

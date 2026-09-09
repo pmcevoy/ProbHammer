@@ -199,6 +199,15 @@ public static class Program
             .OrderBy(r => r.Names[0], StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        // D5's gate (resolve-invulnerable-save-effects) splits the default-only bucket: a text the
+        // gate rejects (no "invulnerable save" substring at all) can never plausibly have matched any
+        // InSv pattern, so it carries zero review value and is excluded from the reviewable listing
+        // entirely rather than sampled; a text that passes the gate but matched no recognized InSv
+        // pattern is the small, high-signal set actually worth reading in full - see design.md's D6.
+        var defaultOnlyReviewable = defaultOnly
+            .Where(r => RuleEffectClassifier.MayStateInvulnerableSave(r.Text))
+            .ToList();
+
         Console.WriteLine();
         Console.WriteLine($"Scanned {fileNames.Count} catalogue files, {results.Count} distinct rule/ability texts.");
         Console.WriteLine();
@@ -226,8 +235,17 @@ public static class Program
         const int sampleSize = 25;
         Console.WriteLine();
         Console.WriteLine(
-            $"=== Default-only results: {defaultOnly.Count} (showing first {Math.Min(sampleSize, defaultOnly.Count)} for spot-checking) ===");
+            $"=== Default-only results: {defaultOnly.Count} total, {defaultOnly.Count - defaultOnlyReviewable.Count} " +
+            "excluded by the D5 gate (no invulnerable-save language at all) ===");
+        Console.WriteLine(
+            $"    (showing first {Math.Min(sampleSize, defaultOnly.Count)} of the full bucket for general spot-checking)");
         foreach (var r in defaultOnly.Take(sampleSize))
+            Console.WriteLine($"- {DescribeNames(r.Names)} :: \"{Truncate(r.Text)}\" (seen on: {r.Locations[0]})");
+
+        Console.WriteLine();
+        Console.WriteLine(
+            $"=== Default-only results with unmatched invulnerable-save language: {defaultOnlyReviewable.Count} ===");
+        foreach (var r in defaultOnlyReviewable)
             Console.WriteLine($"- {DescribeNames(r.Names)} :: \"{Truncate(r.Text)}\" (seen on: {r.Locations[0]})");
 
         var unchanged = baselined.Where(b => b.Diff.Status == RuleClassificationBaselineStatus.Unchanged).ToList();
@@ -354,12 +372,20 @@ public static class Program
 
         var effects = classification.Effects.Count == 0
             ? "no effects"
-            : string.Join(", ", classification.Effects.Select(e => $"{e.Verb} {e.Characteristic} {e.Amount}"));
+            : string.Join(", ", classification.Effects.Select(DescribeEffect));
 
         var caveated = classification.IsCaveated ? "; CAVEATED" : "";
 
         return $"Target={target}; Effects=[{effects}]{caveated}";
     }
+
+    private static string DescribeEffect(CharacteristicEffect effect) => effect switch
+    {
+        ScalarCharacteristicEffect scalar => $"{scalar.Verb} {scalar.Characteristic} {scalar.Amount}",
+        InvulnerableSaveCharacteristicEffect insv =>
+            $"Set InSv (Melee {insv.Value.MeleeInSv}, Ranged {insv.Value.RangedInSv})",
+        _ => effect.ToString()!
+    };
 
     private sealed class TextOccurrence
     {

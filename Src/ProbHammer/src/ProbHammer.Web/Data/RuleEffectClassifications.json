@@ -7,9 +7,11 @@
       },
       "effects": [
         {
-          "characteristic": "InSv",
-          "verb": "Set",
-          "amount": 4
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 4,
+            "rangedInSv": 4
+          }
         }
       ],
       "isCaveated": false,
@@ -26,9 +28,11 @@
       },
       "effects": [
         {
-          "characteristic": "InSv",
-          "verb": "Set",
-          "amount": 5
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 5,
+            "rangedInSv": 5
+          }
         }
       ],
       "isCaveated": false,
@@ -45,6 +49,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "W",
           "verb": "Improve",
           "amount": 2
@@ -64,6 +69,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "W",
           "verb": "Improve",
           "amount": 2
@@ -83,6 +89,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "Oc",
           "verb": "Improve",
           "amount": 3
@@ -102,6 +109,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "Oc",
           "verb": "Improve",
           "amount": 3
@@ -121,6 +129,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "Oc",
           "verb": "Improve",
           "amount": 1
@@ -140,6 +149,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "Ld",
           "verb": "Improve",
           "amount": 1
@@ -159,6 +169,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "Oc",
           "verb": "Improve",
           "amount": 1
@@ -182,6 +193,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "Oc",
           "verb": "Improve",
           "amount": 1
@@ -202,6 +214,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "T",
           "verb": "Improve",
           "amount": 1
@@ -221,6 +234,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "T",
           "verb": "Improve",
           "amount": 1
@@ -240,6 +254,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "T",
           "verb": "Improve",
           "amount": 1
@@ -259,6 +274,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "T",
           "verb": "Improve",
           "amount": 1
@@ -278,6 +294,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "W",
           "verb": "Improve",
           "amount": 1
@@ -299,6 +316,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "Oc",
           "verb": "Improve",
           "amount": 2
@@ -318,6 +336,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "W",
           "verb": "Improve",
           "amount": 2
@@ -337,6 +356,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "W",
           "verb": "Improve",
           "amount": 2
@@ -356,9 +376,11 @@
       },
       "effects": [
         {
-          "characteristic": "InSv",
-          "verb": "Set",
-          "amount": 5
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 5,
+            "rangedInSv": 5
+          }
         }
       ],
       "isCaveated": true,
@@ -375,6 +397,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "W",
           "verb": "Improve",
           "amount": 1
@@ -394,9 +417,11 @@
       },
       "effects": [
         {
-          "characteristic": "InSv",
-          "verb": "Set",
-          "amount": 4
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 4,
+            "rangedInSv": 4
+          }
         }
       ],
       "isCaveated": false,
@@ -414,6 +439,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "Oc",
           "verb": "Improve",
           "amount": 1
@@ -433,9 +459,11 @@
       },
       "effects": [
         {
-          "characteristic": "InSv",
-          "verb": "Set",
-          "amount": 2
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 2,
+            "rangedInSv": 2
+          }
         }
       ],
       "isCaveated": false,
@@ -452,9 +480,11 @@
       },
       "effects": [
         {
-          "characteristic": "InSv",
-          "verb": "Set",
-          "amount": 4
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 4,
+            "rangedInSv": 4
+          }
         }
       ],
       "isCaveated": false,
@@ -471,9 +501,11 @@
       },
       "effects": [
         {
-          "characteristic": "InSv",
-          "verb": "Set",
-          "amount": 4
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 4,
+            "rangedInSv": 4
+          }
         }
       ],
       "isCaveated": false,
@@ -484,15 +516,38 @@
       ]
     },
     {
+      "text": "The bearer has a 4+ invulnerable save against ranged attacks, and a 5+ invulnerable save against melee attacks.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 5,
+            "rangedInSv": 4
+          }
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "**Veil of Medrengard"
+      ]
+    },
+    {
       "text": "The bearer has a 4+ invulnerable save and each time an attack is allocated to the bearer, subtract 1 from the Damage characteristic of that attack.",
       "target": {
         "kind": "Self"
       },
       "effects": [
         {
-          "characteristic": "InSv",
-          "verb": "Set",
-          "amount": 4
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 4,
+            "rangedInSv": 4
+          }
         }
       ],
       "isCaveated": true,
@@ -509,9 +564,11 @@
       },
       "effects": [
         {
-          "characteristic": "InSv",
-          "verb": "Set",
-          "amount": 4
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 4,
+            "rangedInSv": 4
+          }
         }
       ],
       "isCaveated": true,
@@ -528,9 +585,11 @@
       },
       "effects": [
         {
-          "characteristic": "InSv",
-          "verb": "Set",
-          "amount": 4
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 4,
+            "rangedInSv": 4
+          }
         }
       ],
       "isCaveated": false,
@@ -558,9 +617,11 @@
       },
       "effects": [
         {
-          "characteristic": "InSv",
-          "verb": "Set",
-          "amount": 5
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 5,
+            "rangedInSv": 5
+          }
         }
       ],
       "isCaveated": false,
@@ -578,6 +639,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "W",
           "verb": "Improve",
           "amount": 2
@@ -597,9 +659,11 @@
       },
       "effects": [
         {
-          "characteristic": "InSv",
-          "verb": "Set",
-          "amount": 4
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 4,
+            "rangedInSv": 4
+          }
         }
       ],
       "isCaveated": false,
@@ -610,15 +674,80 @@
       ]
     },
     {
+      "text": "This model has a 4+ invulnerable save against melee attacks.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 4,
+            "rangedInSv": 0
+          }
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "*Invulnerable Save"
+      ]
+    },
+    {
+      "text": "This model has a 4+ invulnerable save against ranged attacks, and the Feel No Pain 6+ ability.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 0,
+            "rangedInSv": 4
+          }
+        }
+      ],
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "InSv grant is correctly extracted (ranged only, no melee save), but the text also grants a Feel No Pain 6+ ability, which the classifier has no vocabulary to extract.",
+      "names": [
+        "**Ensorcelled Shield"
+      ]
+    },
+    {
+      "text": "This model has a 4+ invulnerable save against ranged attacks.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 0,
+            "rangedInSv": 4
+          }
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Invulnerable Save (4+*)"
+      ]
+    },
+    {
       "text": "This model has a 4+ invulnerable save, add the **^^Psyker^^** and **^^Synapse^^** keywords, and it gains the Shadow in the Warp ability. If it is an **^^Infantry^^** model, add the following unit to the list of units this model can be attached to: **^^Neurogaunts^^**.",
       "target": {
         "kind": "Self"
       },
       "effects": [
         {
-          "characteristic": "InSv",
-          "verb": "Set",
-          "amount": 4
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 4,
+            "rangedInSv": 4
+          }
         }
       ],
       "isCaveated": true,
@@ -635,9 +764,11 @@
       },
       "effects": [
         {
-          "characteristic": "InSv",
-          "verb": "Set",
-          "amount": 4
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 4,
+            "rangedInSv": 4
+          }
         }
       ],
       "isCaveated": false,
@@ -649,15 +780,39 @@
       ]
     },
     {
+      "text": "This model has a 5+ invulnerable save against ranged attacks.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 0,
+            "rangedInSv": 5
+          }
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "*Invulnerable Save",
+        "Invulnerable Save (5+*)"
+      ]
+    },
+    {
       "text": "This model has a 5+ invulnerable save.",
       "target": {
         "kind": "Self"
       },
       "effects": [
         {
-          "characteristic": "InSv",
-          "verb": "Set",
-          "amount": 5
+          "kind": "InvulnerableSave",
+          "value": {
+            "meleeInSv": 5,
+            "rangedInSv": 5
+          }
         }
       ],
       "isCaveated": false,
@@ -674,6 +829,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "Oc",
           "verb": "Improve",
           "amount": 1
@@ -693,6 +849,7 @@
       },
       "effects": [
         {
+          "kind": "Scalar",
           "characteristic": "W",
           "verb": "Improve",
           "amount": 1

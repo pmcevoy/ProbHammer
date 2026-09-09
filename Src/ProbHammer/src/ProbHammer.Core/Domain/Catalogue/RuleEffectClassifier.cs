@@ -31,7 +31,7 @@ public static partial class RuleEffectClassifier
     /// shorthand "+N Code" grant, e.g. Marshal's Household's "+1 OC" - keyed case-insensitively since
     /// real corpus text capitalizes these inconsistently, same as every other word-literal pattern in
     /// this classifier (<see cref="AllCapsKeywordPhrase"/> excepted). Values are the canonical,
-    /// correctly-cased codes <see cref="CharacteristicEffect.Characteristic"/> expects.</summary>
+    /// correctly-cased codes <see cref="ScalarCharacteristicEffect.Characteristic"/> expects.</summary>
     private static readonly Dictionary<string, string> CharacteristicCodes =
         new(StringComparer.OrdinalIgnoreCase)
         {
@@ -105,19 +105,49 @@ public static partial class RuleEffectClassifier
 
     /// <summary>Requires a short (subject-shaped, comma-free) run of text between the sentence start
     /// (see <see cref="SentenceStart"/>) and "has" - "The bearer"/"This model"/"This unit"/a named
-    /// character, never a subordinate clause. Also deliberately excludes a match immediately followed
-    /// by "against" (e.g. "...invulnerable save against ranged attacks") via negative lookahead - that
-    /// phrasing is an attack-type-restricted/split save (the same shape
-    /// <see cref="InvulnerableSaveCaveatClassifier"/> models separately as a melee/ranged pair), which
-    /// is conditional on the incoming attack's type, not the unconditional flat grant this pattern is
-    /// meant to recognize. Confirmed real and previously a false positive: "This model has a 4+
-    /// invulnerable save against ranged attacks..." (Ensorcelled Shield) and "The bearer has a 4+
-    /// invulnerable save against ranged attacks, and a 5+ invulnerable save against melee attacks."
-    /// (Veil of Medrengard) both wrongly extracted a flat Set InSv before this exclusion - caught live
-    /// reviewing corpus-report output (2026-09-08), not by any test.</summary>
+    /// character, never a subordinate clause. Still deliberately excludes a match immediately followed
+    /// by "against" (e.g. "...invulnerable save against ranged attacks") via negative lookahead - not
+    /// because a ranged/melee-restricted grant is unrecognized any more
+    /// (resolve-invulnerable-save-effects added <see cref="InvulnerableSaveRangedRestricted"/>/
+    /// <see cref="InvulnerableSaveMeleeRestricted"/>, tried first in <see cref="ClassifyEffects"/> and
+    /// short-circuiting this pattern whenever either matches - see that change's design.md D4), but
+    /// because a restriction on any OTHER axis (e.g. "...invulnerable save against Psychic Attacks")
+    /// must still extract nothing at all, per that requirement's own "scoped to the melee/ranged
+    /// attack-type axis only" text - this lookahead is what keeps this pattern from wrongly treating
+    /// that as an unconditional flat grant once it reaches this fallback. Confirmed real and previously
+    /// a false positive before this exclusion existed: "This model has a 4+ invulnerable save against
+    /// ranged attacks..." (Ensorcelled Shield) and "The bearer has a 4+ invulnerable save against
+    /// ranged attacks, and a 5+ invulnerable save against melee attacks." (Veil of Medrengard) both
+    /// wrongly extracted a flat Set InSv - caught live reviewing corpus-report output (2026-09-08), not
+    /// by any test; both now correctly extract via the two restricted patterns instead of via this
+    /// one.</summary>
     [GeneratedRegex(SentenceStart + @"[A-Za-z][A-Za-z''\- ]{0,60} has an? (\d+)\+ invulnerable save(?!\s+against\b)",
         RegexOptions.IgnoreCase)]
     private static partial Regex InvulnerableSaveGrant();
+
+    /// <summary>Either a true sentence start with a subject-shaped prefix and "has" (the one-sided
+    /// grant shape, e.g. a hypothetical "This model has a 4+ invulnerable save against ranged
+    /// attacks."), or a ", and" continuation from an earlier clause in the same sentence with an
+    /// elided verb (the two-sided grant shape - confirmed real via the live BSData clone, Veil of
+    /// Medrengard's own melee clause below: "...against ranged attacks, and a 5+ invulnerable save
+    /// against melee attacks." is grammatically "...and [has] a 5+..."). See
+    /// resolve-invulnerable-save-effects/design.md's D4.</summary>
+    [GeneratedRegex(
+        "(?:" + SentenceStart +
+        @"[A-Za-z][A-Za-z''\- ]{0,60} has|, and) an? (\d+)\+ invulnerable save against ranged attacks",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex InvulnerableSaveRangedRestricted();
+
+    /// <summary>The melee-axis counterpart to <see cref="InvulnerableSaveRangedRestricted"/> - same
+    /// two-alternative lead-in, same rationale. Confirmed real via both the one-sided shape
+    /// (Ensorcelled Shield: "This model has a 4+ invulnerable save against ranged attacks..." has no
+    /// melee clause at all, so this pattern correctly finds no match there) and the two-sided shape
+    /// (Veil of Medrengard's own melee clause, matched via the ", and" alternative).</summary>
+    [GeneratedRegex(
+        "(?:" + SentenceStart +
+        @"[A-Za-z][A-Za-z''\- ]{0,60} has|, and) an? (\d+)\+ invulnerable save against melee attacks",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex InvulnerableSaveMeleeRestricted();
 
     /// <summary>The optional non-capturing <c>(?:[A-Za-z]+'s\s+)?</c> group between "the" and the
     /// characteristic name recognizes a possessive noun ("the bearer's Wounds characteristic"), not
@@ -217,6 +247,28 @@ public static partial class RuleEffectClassifier
         return (new SelfRuleTarget(), null);
     }
 
+    private const string InvulnerableSaveTrigger = "invulnerable save";
+
+    /// <summary>D5's cheap, provably-safe pre-filter gate ahead of the whole invulnerable-save
+    /// pattern family (<see cref="InvulnerableSaveRangedRestricted"/>/
+    /// <see cref="InvulnerableSaveMeleeRestricted"/>/<see cref="InvulnerableSaveGrant"/>): every one
+    /// of those patterns already requires the literal substring "invulnerable save" to match at all,
+    /// so this is a strict over-approximation - it can never reject a text any InSv pattern would
+    /// have accepted, checkable by inspection of the patterns themselves rather than by
+    /// corpus-running. See resolve-invulnerable-save-effects/design.md's D5/D8; scoped narrowly to
+    /// this family only, not a general "every family gets a gate" redesign. Takes already-
+    /// <see cref="Normalize"/>d text, matching this class's other private helpers - a caller working
+    /// from raw text should call <see cref="MayStateInvulnerableSave"/> instead.</summary>
+    private static bool ContainsInvulnerableSaveTrigger(string normalizedText) =>
+        normalizedText.Contains(InvulnerableSaveTrigger, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Public, raw-text-accepting wrapper around the same D5 gate <see cref="ClassifyEffects"/>
+    /// uses internally - lets a caller working from raw corpus text (e.g. the corpus report tool, task
+    /// 5.1) distinguish a text that could never plausibly state an invulnerable-save effect from one
+    /// that could but matched no recognized pattern, without duplicating the gate's own
+    /// substring/normalization logic.</summary>
+    public static bool MayStateInvulnerableSave(string text) => ContainsInvulnerableSaveTrigger(Normalize(text));
+
     /// <summary>Returns the extracted Effects alongside the specific <see cref="Match"/> that produced
     /// each one, in the same order - every contributing Match's own end position feeds
     /// <see cref="IsCaveated"/>.</summary>
@@ -225,12 +277,34 @@ public static partial class RuleEffectClassifier
         var effects = new List<CharacteristicEffect>();
         var matches = new List<Match>();
 
-        var invulnerableSaveMatch = InvulnerableSaveGrant().Match(text);
-        if (invulnerableSaveMatch.Success)
+        // The two restricted patterns are tried first; the uniform InvulnerableSaveGrant pattern
+        // (which excludes any "against"-followed match, including a restriction on some OTHER axis
+        // like Psychic Attacks - see that pattern's own doc comment) is only attempted as a fallback
+        // when neither restricted pattern matched, avoiding double-extraction of the same clause -
+        // see resolve-invulnerable-save-effects/design.md's D4.
+        if (ContainsInvulnerableSaveTrigger(text))
         {
-            effects.Add(new CharacteristicEffect("InSv", EffectVerb.Set,
-                int.Parse(invulnerableSaveMatch.Groups[1].Value)));
-            matches.Add(invulnerableSaveMatch);
+            var rangedMatch = InvulnerableSaveRangedRestricted().Match(text);
+            var meleeMatch = InvulnerableSaveMeleeRestricted().Match(text);
+
+            if (rangedMatch.Success || meleeMatch.Success)
+            {
+                var ranged = rangedMatch.Success ? int.Parse(rangedMatch.Groups[1].Value) : 0;
+                var melee = meleeMatch.Success ? int.Parse(meleeMatch.Groups[1].Value) : 0;
+                effects.Add(new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(melee, ranged)));
+                if (rangedMatch.Success) matches.Add(rangedMatch);
+                if (meleeMatch.Success) matches.Add(meleeMatch);
+            }
+            else
+            {
+                var invulnerableSaveMatch = InvulnerableSaveGrant().Match(text);
+                if (invulnerableSaveMatch.Success)
+                {
+                    var value = int.Parse(invulnerableSaveMatch.Groups[1].Value);
+                    effects.Add(new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(value, value)));
+                    matches.Add(invulnerableSaveMatch);
+                }
+            }
         }
 
         foreach (Match match in AddCharacteristic().Matches(text))
@@ -238,7 +312,7 @@ public static partial class RuleEffectClassifier
             if (!CharacteristicNames.TryGetValue(match.Groups[2].Value.Trim(), out var characteristic))
                 continue;
 
-            effects.Add(new CharacteristicEffect(characteristic, EffectVerb.Improve,
+            effects.Add(new ScalarCharacteristicEffect(characteristic, EffectVerb.Improve,
                 int.Parse(match.Groups[1].Value)));
             matches.Add(match);
         }
@@ -247,7 +321,7 @@ public static partial class RuleEffectClassifier
         if (shorthandMatch.Success &&
             CharacteristicCodes.TryGetValue(shorthandMatch.Groups[2].Value, out var code))
         {
-            effects.Add(new CharacteristicEffect(code, EffectVerb.Improve,
+            effects.Add(new ScalarCharacteristicEffect(code, EffectVerb.Improve,
                 int.Parse(shorthandMatch.Groups[1].Value)));
             matches.Add(shorthandMatch);
         }
