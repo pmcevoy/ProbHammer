@@ -9,16 +9,14 @@ namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 /// </summary>
 public static class CharacteristicModifierClassificationAllowlist
 {
+    // unify-characteristic-effect-resolution: InSv rejoined CharacteristicFieldIds, so a tier-1/
+    // tier-2 InSv modifier now classifies successfully like any other recognized field - no longer
+    // allowlisted here. A tier-3+ InSv modifier still falls through to the HasCondition entry below,
+    // the same as any other characteristic's unrecognized condition shape.
     public const string InvulnerableSaveFieldId = "55a7-5b54-c60d-11dc";
 
     public static readonly IReadOnlyList<AllowlistEntry<ModifierOccurrence>> Entries =
     [
-        new(
-            "InSv is deliberately excluded from this classifier's own Field allowlist - it has its " +
-            "own dedicated ResolveInvulnerableSave/StatlineFlagRule-based resolution (a different " +
-            "CharacteristicView shape). Real example: Black Templars' 'Consecrating Aura' " +
-            "Enhancement (tier 1, no condition).",
-            (ModifierOccurrence o) => o.Field == InvulnerableSaveFieldId),
         new(
             "A condition shape the tier-1/tier-2 classifier doesn't recognize as locally-scoped to " +
             "its own granting entry (a sibling entry's id, live attachment state via 'associations', " +

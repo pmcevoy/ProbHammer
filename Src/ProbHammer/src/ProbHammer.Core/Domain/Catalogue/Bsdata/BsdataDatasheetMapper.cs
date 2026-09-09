@@ -41,19 +41,21 @@ public static partial class BsdataDatasheetMapper
     /// guessed - mirrors this mapper's own WeaponKeywordParser/ParseThreshold "closed vocabulary,
     /// fail closed on the unrecognized case" discipline. Ids are the game system's own
     /// profileTypes["Unit"].characteristicTypes ids (see BsCatalogue.ProfileTypes' own doc comment).
-    /// Deliberately excludes InSv (id "55a7-5b54-c60d-11dc") despite real corpus evidence a
-    /// modifier targets it (e.g. Black Templars' "Consecrating Aura" Enhancement, tier 1, no
-    /// condition) - InSv already has its own dedicated, more precise ResolveInvulnerableSave/
-    /// StatlineFlagRule-based resolution (a different CharacteristicView shape entirely, melee/
-    /// ranged pair vs. a plain scalar); a future extension covering it is tracked in
-    /// .claude/vnext-ideas.md, not attempted here. Also deliberately excludes every WeaponProfile
-    /// characteristic (Ranged/Melee Weapons' own A/S/AP/D/BS/WS/Range/Keywords ids) - a full-corpus
-    /// scan (task 1.1) confirmed zero real `entry.Modifiers`/`group.Modifiers` anywhere in the
-    /// corpus target a WeaponProfile field; every real occurrence of those ids lives inside a
-    /// Crusade-only `modifierGroups` block this loader doesn't read at all (unmapped, per
-    /// BsCatalogueFile.cs), never in the directly-modeled `modifiers` array. Building an untested,
-    /// unreachable WeaponProfile-targeting path would be exactly the kind of premature behavior on
-    /// an unconsumed shape this codebase deliberately avoids elsewhere.</summary>
+    /// InSv (id "55a7-5b54-c60d-11dc") rejoined this allowlist via unify-characteristic-effect-
+    /// resolution - it was excluded previously only because no downstream consumer could safely
+    /// resolve a structurally-derived candidate without double-application risk; that risk is gone
+    /// now that AttachedUnitAggregator resolves every characteristic-affecting present ability
+    /// through the single baseline-driven pass (see AttachedUnitAggregator's own
+    /// ResolveCaveatedInvulnerableSaves/ApplyStatlineFlagRules). Real corpus case this unlocks:
+    /// Black Templars' "Consecrating Aura" Enhancement (tier 1, no condition). Still deliberately
+    /// excludes every WeaponProfile characteristic (Ranged/Melee Weapons' own A/S/AP/D/BS/WS/Range/
+    /// Keywords ids) - a full-corpus scan (task 1.1) confirmed zero real
+    /// `entry.Modifiers`/`group.Modifiers` anywhere in the corpus target a WeaponProfile field;
+    /// every real occurrence of those ids lives inside a Crusade-only `modifierGroups` block this
+    /// loader doesn't read at all (unmapped, per BsCatalogueFile.cs), never in the directly-modeled
+    /// `modifiers` array. Building an untested, unreachable WeaponProfile-targeting path would be
+    /// exactly the kind of premature behavior on an unconsumed shape this codebase deliberately
+    /// avoids elsewhere.</summary>
     private static readonly IReadOnlyDictionary<string, string> CharacteristicFieldIds =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -62,7 +64,8 @@ public static partial class BsdataDatasheetMapper
             ["450-a17e-9d5e-29da"] = "Sv",
             ["750a-a2ec-90d3-21fe"] = "W",
             ["58d2-b879-49c7-43bc"] = "Ld",
-            ["bef7-942a-1a23-59f8"] = "Oc"
+            ["bef7-942a-1a23-59f8"] = "Oc",
+            ["55a7-5b54-c60d-11dc"] = "InSv"
         };
 
     public static Datasheet BuildDatasheet(
@@ -626,11 +629,7 @@ public static partial class BsdataDatasheetMapper
             var footnotedDigit = int.Parse((leftFootnoted ? left : right).Groups[1].Value);
             var plainDigit = int.Parse((leftFootnoted ? right : left).Groups[1].Value);
             var splitAbility = ResolveCaveatAbility(footnotedDigit, ancestry, ctx, text);
-            var resolved =
-                InvulnerableSaveCaveatClassifier.TryResolveSplit(splitAbility.Text, footnotedDigit, plainDigit);
-            return resolved is { } r
-                ? InvulnerableSaveCharacteristicView.Resolved(r.Melee, r.Ranged)
-                : InvulnerableSaveCharacteristicView.Caveated(plainDigit, plainDigit, splitAbility);
+            return InvulnerableSaveCharacteristicView.Caveated(plainDigit, plainDigit, splitAbility);
         }
 
         var bareMatch = InSvBareValueRegex().Match(text);
@@ -642,10 +641,7 @@ public static partial class BsdataDatasheetMapper
             return InvulnerableSaveCharacteristicView.Resolved(bareDigit, bareDigit);
 
         var bareAbility = ResolveCaveatAbility(bareDigit, ancestry, ctx, text);
-        var bareResolved = InvulnerableSaveCaveatClassifier.TryResolveBare(bareAbility.Text);
-        return bareResolved is { } br
-            ? InvulnerableSaveCharacteristicView.Resolved(br.Melee, br.Ranged)
-            : InvulnerableSaveCharacteristicView.Caveated(bareDigit, bareDigit, bareAbility);
+        return InvulnerableSaveCharacteristicView.Caveated(bareDigit, bareDigit, bareAbility);
     }
 
     /// <summary>Resolves the specific Ability a footnoted InSv value of the given digit is linked

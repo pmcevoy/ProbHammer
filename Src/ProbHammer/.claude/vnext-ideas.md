@@ -449,33 +449,27 @@ entry once it's been turned into a change (archived changes remain the historica
   gap (2026-09-07, same day, live user testing after `classify-characteristic-modifier-caveats`
   shipped)**. `ScalarCharacteristicView.Caveated`/`InvulnerableSaveCharacteristicView.Caveated` both
   take a single `Ability`, not a list (unlike their own `Resolved` factories, which already accept
-  `IReadOnlyList<Ability>`) — so when two independently-classified candidates (or a candidate and an
-  already-`StatlineFlagRule`-touched field) target the same characteristic on the same unit,
-  `AttachedUnitAggregator`'s "skip if already touched" guard (load-bearing for the real Vexilla
-  overlap - see above) means only the FIRST one applied is recorded; the second is silently dropped
-  from that tile's own attribution, though it still renders normally in the unit's full ability list.
-  Confirmed and pinned down by a domain test
-  (`CharacteristicModifierApplicationTests.Two_present_candidates_targeting_the_same_characteristic_the_first_applied_wins_the_second_is_dropped`)
-  built specifically to demonstrate this, since a full-corpus probe found **no real, naturally-
-  reachable example** of two abilities simultaneously caveating the same field on one bearer -
-  every near-miss found either (a) resolves to an unresolvable wargear-bundle wrapper entry with no
-  matching Ability name (the same fail-closed pattern §1.3 already documented, unrelated to tier
-  scoping), or (b) is a set of mutually-exclusive alternative wargear/mount choices (Combat Bike vs.
-  Jump Pack vs. Terminator Armour, etc.) a real roster would only ever pick ONE of, not a genuinely
-  simultaneous stack. Whether tier-3+ classification (still unbuilt, above) would surface a *real*
-  simultaneous-stacking case is an open question, not yet checked in the corpus - a decent share of
-  real modifiers do carry cross-entity conditions (the reverted attempt's own "42 of 45" finding
-  above), so it's plausible but unconfirmed that some of those are stacking abilities gated on a
-  sibling selection, not just alternatives.
+  `IReadOnlyList<Ability>`). **Partially moot as of `unify-characteristic-effect-resolution`
+  (2026-09-09)**: that change deleted `AttachedUnitAggregator.ApplyCharacteristicModifierCandidates`
+  outright (the "candidate vs. candidate" and "candidate vs. already-`StatlineFlagRule`-touched
+  field" shapes this entry originally described, including its own pinning test
+  `CharacteristicModifierApplicationTests.Two_present_candidates_targeting_the_same_characteristic_the_first_applied_wins_the_second_is_dropped`,
+  no longer exist - `CharacteristicModifierCandidate` has no live Build-time consumer at all
+  anymore). The underlying single-Ability limitation on the two `Caveated` factories themselves is
+  untouched, though, and the identical "first applied wins, second is skipped" shape still lives on
+  in `AttachedUnitAggregator.ApplyStatlineFlagRules` itself (design.md Decision 6 there) for two
+  *present abilities* whose own baseline-matched Effects would both touch the same field on the same
+  bearer - no real corpus example of that specific shape is known today (unchecked since this
+  narrowing), and no pinning test for it currently exists (the one that did was deleted alongside the
+  now-retired mechanism it was actually built to exercise).
 
   **Fix direction (not yet started)**: widen both `Caveated` factories to accept
   `IReadOnlyList<Ability>` (mirroring their own `Resolved` overloads), change
-  `AttachedUnitAggregator`'s application step to ACCUMULATE additional caveat sources onto an
-  already-caveated field instead of skipping (while still never touching a field that's already
-  RESOLVED, non-caveated - the Vexilla-overlap guard must survive this change unchanged), and extend
-  `_UnitBlock.cshtml`'s legend-line rendering to list every contributing ability under one marker
-  instead of assuming exactly one. The pinning test above will need updating (from "second is
-  dropped" to "both accumulate") once this ships.
+  `AttachedUnitAggregator.ApplyStatlineFlagRules`'s own application step to ACCUMULATE additional
+  caveat sources onto an already-caveated field instead of skipping (while still never touching a
+  field that's already RESOLVED, non-caveated - the Vexilla-overlap guard must survive this change
+  unchanged), and extend `_UnitBlock.cshtml`'s legend-line rendering to list every contributing
+  ability under one marker instead of assuming exactly one.
 
   **Remaining gap on the retyped fields**: `Statline`/`WeaponProfile.S`/`Ap`/`Bs`/`Ws` now use
   `ScalarCharacteristicView` (a `CharacteristicValue`, which does support `DiceCharacteristicValue`/
@@ -616,14 +610,20 @@ entry once it's been turned into a change (archived changes remain the historica
   agrees exactly, a strong cross-validation of both signals. Neither of the change's own two
   motivating examples ended up needing a new baseline entry: Auric Mantle already resolves correctly
   via text (an earlier possessive-noun widening already covers it - the proposal's claim it was
-  "reachable only this way today" was stale by the time this change landed); Consecrating Aura stays
-  unresolved by design (InSv is deliberately excluded from `CharacteristicModifierCandidate`'s own
-  Field allowlist, out of scope here).
+  "reachable only this way today" was stale by the time this change landed); Consecrating Aura stayed
+  unresolved by design at the time this note was written (InSv was then deliberately excluded from
+  `CharacteristicModifierCandidate`'s own Field allowlist) — **now resolved**:
+  `unify-characteristic-effect-resolution` (2026-09-09) rejoined InSv to that allowlist once
+  `AttachedUnitAggregator` gained a single, safe consumer for every characteristic-affecting present
+  ability (including InSv), so Consecrating Aura now classifies and resolves like any other tier-1
+  candidate.
 
   **A real, confirmed false-generalization risk in the structural path's own Name-based join** - the
   exact ambiguity design.md's Decision 2 explicitly accepted rather than fixed
-  (`CharacteristicModifierCandidate` carries only a Name, mirroring
-  `AttachedUnitAggregator.ApplyCharacteristicModifierCandidates`'s own runtime join). Confirmed real,
+  (`CharacteristicModifierCandidate` carries only a Name, mirroring what was then
+  `AttachedUnitAggregator.ApplyCharacteristicModifierCandidates`'s own runtime join - that runtime
+  step no longer exists as of `unify-characteristic-effect-resolution`, but this report tool's own
+  Name-based join, and the risk it carries, is unaffected). Confirmed real,
   not theoretical, by one live example: Adeptus Sororitas' "Simulacrum Imperialis" ability text (a
   Miracle-dice relic, shared verbatim by 50+ squads/characters across the corpus) has a *second*,
   unrelated, locally-authored BSData entry of the exact same Name nested only inside the Legends

@@ -4,8 +4,9 @@ using ProbHammer.Core.Domain.Catalogue.Bsdata.Json;
 namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 
 /// <summary>One real BsModifier occurrence found targeting a Statline characteristic field
-/// (including the deliberately-excluded InSv id - see CharacteristicModifierClassificationAllowlist)
-/// - only unclassified occurrences are ever added to the scan's own results list (see
+/// (including InSv, which rejoined the recognized-field set via unify-characteristic-effect-
+/// resolution - see CharacteristicModifierClassificationAllowlist) - only unclassified occurrences
+/// are ever added to the scan's own results list (see
 /// Full_corpus_characteristic_modifier_classification_scan's own doc comment for why).</summary>
 public sealed record ModifierOccurrence(string File, string EntryName, string Field, bool HasCondition)
 {
@@ -17,9 +18,9 @@ public sealed record ModifierOccurrence(string File, string EntryName, string Fi
 /// Permanent, manually-triggered regression scan (same [Fact(Explicit = true)] pattern as the other
 /// CorpusScan tests) proving characteristic-modifier-caveats' classifier's real-corpus behavior:
 /// every entry anywhere in the live clone carrying a modifier that targets a Statline characteristic
-/// field (the 6-field allowlist, plus InSv - deliberately excluded, see the allowlist's own doc
-/// comment) is either successfully classified by the real production classifier, or unclassified for
-/// one of the documented reasons in CharacteristicModifierClassificationAllowlist.
+/// field (the 7-field allowlist, InSv included since unify-characteristic-effect-resolution) is
+/// either successfully classified by the real production classifier, or unclassified for one of the
+/// documented reasons in CharacteristicModifierClassificationAllowlist.
 ///
 /// Reuses the real, public BsdataDatasheetMapper.BuildDatasheet as the classification oracle rather
 /// than re-deriving a second copy of the classifier's own tier-1/tier-2 predicate here (which would

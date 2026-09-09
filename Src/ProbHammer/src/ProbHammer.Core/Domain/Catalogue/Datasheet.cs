@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace ProbHammer.Core.Domain.Catalogue;
 
 /// <summary>
@@ -32,6 +34,32 @@ public sealed class Datasheet
     private static readonly HashSet<string> ExcludedAttachmentAbilityNames =
         new(StringComparer.OrdinalIgnoreCase) { "Leader", "Support", "Attached Unit" };
 
+    // The generic InSv-caveat-internal naming convention (unify-characteristic-effect-resolution) -
+    // every real corpus occurrence of this exact name is BsdataDatasheetMapper.ResolveCaveatAbility's
+    // own internal mechanism, never a player-facing ability (see that method's own doc comment for
+    // the base-catalogue collision - two different profiles both named "Invulnerable Save (4+*)"
+    // with opposite melee/ranged meanings - that makes it nonsensical as a genuinely independently-
+    // readable ability). Excluding it here, alongside ExcludedAttachmentAbilityNames, is what stops
+    // it being independently rediscovered by the general ability walk at component-wide scope once
+    // Statline.InSv.ContributingAbilities already carries it at its one correct, per-Statline scope.
+    private const string InvulnerableSaveCaveatAbilityName = "*Invulnerable Save";
+
+    // The digit-parameterized InSv-caveat-internal naming convention, e.g. "Invulnerable Save
+    // (4+*)" - same rationale and exclusion reason as InvulnerableSaveCaveatAbilityName above, just
+    // parameterized by the footnoted digit rather than generic.
+    private static readonly Regex InvulnerableSaveCaveatAbilityNamePattern =
+        new(@"^Invulnerable Save \(\d+\+\*\)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static bool IsInvulnerableSaveCaveatAbilityName(string name) =>
+        string.Equals(name, InvulnerableSaveCaveatAbilityName, StringComparison.OrdinalIgnoreCase) ||
+        InvulnerableSaveCaveatAbilityNamePattern.IsMatch(name);
+
+    // Shared by both the Intrinsic (Abilities) and optional (optionalAbilities) constructor
+    // parameters - either naming convention can appear via either the local-profile or infoLink path
+    // ResolveCaveatAbility searches, so both public surfaces need the identical exclusion.
+    private static bool IsExcludedFromGeneralAbilityWalk(string name) =>
+        ExcludedAttachmentAbilityNames.Contains(name) || IsInvulnerableSaveCaveatAbilityName(name);
+
     /// <summary><paramref name="weaponProfiles"/>/<paramref name="optionalAbilities"/> are plain
     /// enumerables, not pre-built dictionaries - the internal lookups are built from each item's
     /// own <c>Name</c> here, so a dictionary key can never disagree with its own Name (a real bug
@@ -54,11 +82,13 @@ public sealed class Datasheet
         Name = name;
         FactionKeywords = new HashSet<string>(factionKeywords, StringComparer.OrdinalIgnoreCase);
         Keywords = new HashSet<string>(keywords, StringComparer.OrdinalIgnoreCase);
-        Abilities = abilities.Where(a => !ExcludedAttachmentAbilityNames.Contains(a.Name)).ToList();
+        Abilities = abilities.Where(a => !IsExcludedFromGeneralAbilityWalk(a.Name)).ToList();
         Statlines = statlines;
         _statlinesByName = statlines.ToDictionary(x => x.Name, x => x.Statline, StringComparer.OrdinalIgnoreCase);
         _weaponProfiles = weaponProfiles.ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
-        _optionalAbilities = (optionalAbilities ?? []).ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
+        _optionalAbilities = (optionalAbilities ?? [])
+            .Where(a => !IsExcludedFromGeneralAbilityWalk(a.Name))
+            .ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
         _modelKeywordsByName =
             (modelKeywords ?? []).ToDictionary(x => x.Name, x => x.Keywords, StringComparer.OrdinalIgnoreCase);
         CharacteristicModifierCandidates = (characteristicModifierCandidates ?? []).ToList();

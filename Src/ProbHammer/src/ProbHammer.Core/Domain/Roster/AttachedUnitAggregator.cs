@@ -17,8 +17,8 @@ public static class AttachedUnitAggregator
             .ToList();
 
         var abilities = BuildAbilities(combatUnit);
-        var statlines = ApplyStatlineFlagRules(BuildStatlines(combatUnit), abilities, baseline);
-        statlines = ApplyCharacteristicModifierCandidates(combatUnit, statlines, abilities);
+        var statlines = ResolveCaveatedInvulnerableSaves(BuildStatlines(combatUnit), baseline);
+        statlines = ApplyStatlineFlagRules(statlines, abilities, baseline);
 
         return new AttachedUnitAggregateView(
             Name: combatUnit.Name,
@@ -29,75 +29,37 @@ public static class AttachedUnitAggregator
             Keywords: KeywordResolution.EffectiveKeywords(combatUnit));
     }
 
-    // A separate step from ApplyStatlineFlagRules (design.md's Decision), run after it - the two
-    // operate on different candidate sources (the checked-in RuleClassificationBaseline vs.
-    // data-derived Datasheet.CharacteristicModifierCandidates) with different match keys (ability
-    // normalized Text vs. entry Name). Presence-check reuses the *existing* resolved-Ability name
-    // presence (AggregateAbilityEntry, already built by BuildAbilities) rather than any new match-
-    // key concept - a candidate's EntryName is looked up against the SAME component's present
-    // ability names (design.md's Decision: "no new is this candidate present concept"). Running
-    // AFTER ApplyStatlineFlagRules, and skipping a field ApplyStatlineFlagRules already touched
-    // (ContributingAbilities.Count > 0), is not incidental ordering - a real corpus overlap exists
-    // (Adeptus Custodes' "Vexilla": both a baseline-matched Effect on its own Ability text AND a
-    // classified structural Oc-increment candidate on the same wargear entry) where the baseline
-    // match already fully resolves Oc (a real derived value, not caveated) - applying this coarser,
-    // caveat-only mechanism on top would regress a correct, resolved value back to merely caveated.
-    private static IReadOnlyList<AggregateStatlineEntry> ApplyCharacteristicModifierCandidates(
-        ICombatUnit combatUnit, IReadOnlyList<AggregateStatlineEntry> statlines,
-        IReadOnlyList<AggregateAbilityEntry> abilities)
-    {
-        var matches = new List<(AggregateAbilityEntry AbilityEntry, CharacteristicModifierCandidate Candidate)>();
-        foreach (var component in ComponentDisplayOrder(combatUnit))
+    // unify-characteristic-effect-resolution: a caveated Statline.InSv gets exactly one resolution
+    // attempt against the checked-in baseline, via the same InvulnerableSaveEffectResolver
+    // ApplyInvulnerableSaveEffect (below) already uses for an ordinary present ability. Deliberately
+    // narrow - scoped to InSv only, reading Statline.InSv directly rather than joining through
+    // BuildAbilities' present-ability list - since Datasheet's own exclusion of the InSv-caveat-
+    // internal ability names (see Datasheet.IsExcludedFromGeneralAbilityWalk) already ensures that
+    // ability is never independently "present" for ApplyStatlineFlagRules to also match: there is no
+    // ability-presence collision left here to coordinate against, so ordering relative to
+    // ApplyStatlineFlagRules doesn't matter for correctness. Placed before it only because "resolve
+    // what's already known to need resolving, then apply ability-presence-driven flags" reads most
+    // naturally (design.md Decision 3).
+    private static IReadOnlyList<AggregateStatlineEntry> ResolveCaveatedInvulnerableSaves(
+        IReadOnlyList<AggregateStatlineEntry> statlines, RuleClassificationBaseline baseline) =>
+        statlines.Select(entry =>
         {
-            if (!component.IsPresent)
-                continue;
-
-            foreach (var candidate in component.Datasheet.CharacteristicModifierCandidates)
-            {
-                var match = abilities.FirstOrDefault(a =>
-                    a.ComponentName == component.Datasheet.Name &&
-                    string.Equals(a.Ability.Name, candidate.EntryName, StringComparison.OrdinalIgnoreCase));
-                if (match is not null)
-                    matches.Add((match, candidate));
-            }
-        }
-
-        if (matches.Count == 0)
-            return statlines;
-
-        return statlines.Select(entry =>
-        {
-            var applicable = matches.Where(m => IsBearerOfCandidate(m.AbilityEntry, entry)).ToList();
-            if (applicable.Count == 0)
+            var insv = entry.Statline.InSv;
+            if (!insv.IsCaveated)
                 return entry;
 
-            var mutated = entry.Statline;
-            foreach (var (abilityEntry, candidate) in applicable)
-                mutated = ApplyCandidate(mutated, candidate, abilityEntry.Ability);
+            var sourceAbility = insv.ContributingAbilities[0];
+            var normalizedText = RuleEffectClassifier.Normalize(sourceAbility.Text);
+            if (!baseline.TryGet(normalizedText, out var baselineEntry))
+                return entry;
 
-            return entry with { Statline = mutated };
+            var effect = baselineEntry.Effects.OfType<InvulnerableSaveCharacteristicEffect>().FirstOrDefault();
+            if (effect is null)
+                return entry;
+
+            var resolved = InvulnerableSaveEffectResolver.Resolve(effect, sourceAbility, insv);
+            return entry with { Statline = entry.Statline with { InSv = resolved } };
         }).ToList();
-    }
-
-    // Same Bearer-scope targeting IsBearer already uses for a SelfRuleTarget match - a data-derived
-    // candidate has no AttachedUnitRuleTarget-scoped equivalent (no real corpus candidate's own text
-    // spans "the bearer's whole unit" the way Vexilla's own baseline entry does).
-    private static bool IsBearerOfCandidate(AggregateAbilityEntry abilityEntry, AggregateStatlineEntry statlineEntry) =>
-        abilityEntry.StatlineName is not null
-            ? abilityEntry.ComponentName == statlineEntry.ComponentName &&
-              abilityEntry.StatlineName == statlineEntry.StatlineName
-            : abilityEntry.ComponentName == statlineEntry.ComponentName;
-
-    private static Statline ApplyCandidate(Statline statline, CharacteristicModifierCandidate candidate,
-        Ability sourceAbility)
-    {
-        var current = GetScalarField(statline, candidate.Characteristic);
-        if (current.ContributingAbilities.Count > 0)
-            return statline;
-
-        var caveated = ScalarCharacteristicView.Caveated(current.Value, sourceAbility);
-        return SetScalarField(statline, candidate.Characteristic, caveated);
-    }
 
     private static ScalarCharacteristicView GetScalarField(Statline statline, string characteristic) =>
         characteristic switch
@@ -189,10 +151,9 @@ public static class AttachedUnitAggregator
     }
 
     // Design.md Decision 6: if two baseline-matched entries would both touch the same characteristic
-    // of the same statline entry, the first applied wins and the second is skipped - the same
-    // "skip if the field already carries a contributing ability" shape
-    // ApplyCharacteristicModifierCandidates already uses for its own overlap with this mechanism, no
-    // separate accumulate logic. No real corpus example needs this today (checked - see design.md).
+    // of the same statline entry, the first applied wins and the second is skipped - "skip if the
+    // field already carries a contributing ability", no separate accumulate logic. No real corpus
+    // example needs this today (checked - see design.md).
     private static Statline ApplyEffect(Statline statline, CharacteristicEffect effect, Ability sourceAbility) =>
         effect switch
         {

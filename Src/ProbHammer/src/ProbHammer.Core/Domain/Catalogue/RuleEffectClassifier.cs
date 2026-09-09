@@ -4,8 +4,9 @@ namespace ProbHammer.Core.Domain.Catalogue;
 
 /// <summary>Classifies a rule/ability's Target and unconditional characteristic Effects from its own
 /// Name+Text alone - no BSData JSON type, no `Domain.Catalogue.Bsdata` dependency, no roster
-/// resolution. Anchored/template regex matching against known phrasings, same rigor as
-/// <see cref="InvulnerableSaveCaveatClassifier"/> - not a general NLP/parsing approach. Unlike that
+/// resolution. Anchored/template regex matching against known phrasings, same rigor as the
+/// now-retired InvulnerableSaveCaveatClassifier (superseded by unify-characteristic-effect-resolution's
+/// baseline-driven Build-time resolution) - not a general NLP/parsing approach. Unlike that
 /// classifier's whole-string templates, these patterns search within arbitrary-length prose (a
 /// Detachment rule/Core rule's own Text is rarely a single sentence), so the first pattern match wins;
 /// see classify-rule-effects-from-text/design.md's Risks for why this is an accepted, fail-closed
@@ -49,11 +50,11 @@ public static partial class RuleEffectClassifier
     /// never succeeds (real corpus example: "If it does, until the end of the phase, the bearer has a
     /// 2+ invulnerable save." - "the bearer has..." is not at its sentence's true start). A structural
     /// signal, not a phrase denylist - it generalizes past "if it does"/"while X"/"each time X" and any
-    /// other conditional-preamble phrasing without enumerating each one, the same way
-    /// <see cref="InvulnerableSaveCaveatClassifier"/>'s own whole-string anchoring rules out extra
-    /// leading text, just scoped to a sentence instead of the whole input (this classifier, unlike that
-    /// one, must search within arbitrary-length, often multi-sentence prose - see the class's own doc
-    /// comment). Confirmed real and previously a false positive on both Effect patterns before this
+    /// other conditional-preamble phrasing without enumerating each one, the same way the now-retired
+    /// InvulnerableSaveCaveatClassifier's own whole-string anchoring rules out extra leading text, just
+    /// scoped to a sentence instead of the whole input (this classifier, unlike that one, must search
+    /// within arbitrary-length, often multi-sentence prose - see the class's own doc comment).
+    /// Confirmed real and previously a false positive on both Effect patterns before this
     /// anchor - caught live reviewing corpus-report output (2026-09-08), not by any test:
     /// invulnerable-save Relic grants gated behind "If it does, until the end of the phase, the bearer
     /// has a N+ invulnerable save." wrongly extracted a flat Set InSv, and Toughness/Objective Control
@@ -129,9 +130,9 @@ public static partial class RuleEffectClassifier
     /// one-sided grant shape, e.g. "This model has a 4+ invulnerable save against ranged attacks." or
     /// the plural "Models in this unit have a 4+ invulnerable save against ranged attacks." -
     /// Howling Banshees, confirmed real via the live BSData clone; the same claim stated from a whole
-    /// unit's own perspective rather than a single bearer's, mirroring
-    /// <see cref="InvulnerableSaveCaveatClassifier"/>'s own bare/unit template pairing so retiring that
-    /// mapper-time classifier in favor of this one doesn't regress this real corpus shape - see
+    /// unit's own perspective rather than a single bearer's, mirroring the now-retired
+    /// InvulnerableSaveCaveatClassifier's own bare/unit template pairing so retiring that mapper-time
+    /// classifier in favor of this one doesn't regress this real corpus shape - see
     /// widen-baseline-generation-coverage/design.md), or a ", and" continuation from an earlier clause
     /// in the same sentence with an elided verb (the two-sided grant shape - confirmed real via the
     /// live BSData clone, Veil of Medrengard's own melee clause below: "...against ranged attacks, and
@@ -225,7 +226,7 @@ public static partial class RuleEffectClassifier
     /// typographic U+2019 apostrophe (confirmed: Adeptus Custodes' Vexilla has both variants across
     /// different entries) and a U+00A0 non-breaking space used in place of a plain space (confirmed
     /// widespread - 1,543 of ~7,660 raw ability texts in the live corpus contain at least one),
-    /// mirroring <see cref="InvulnerableSaveCaveatClassifier"/>'s own identical NBSP normalization -
+    /// mirroring the now-retired InvulnerableSaveCaveatClassifier's own identical NBSP normalization -
     /// this method previously claimed to do this in its own doc comment without actually doing it,
     /// caught live reviewing corpus-report output (2026-09-08) rather than by any test, since none of
     /// today's patterns happen to require an exact space at a position real text puts an NBSP. Public

@@ -68,8 +68,8 @@ public static class Program
     public static int Main(string[] args)
     {
         // The process's default console encoding can't represent every character real BSData text
-        // carries (e.g. a U+00A0 non-breaking space authoring quirk - see
-        // InvulnerableSaveCaveatClassifier's own doc comment for the same quirk elsewhere), and
+        // carries (e.g. a U+00A0 non-breaking space authoring quirk - the same quirk the now-retired
+        // InvulnerableSaveCaveatClassifier once normalized elsewhere), and
         // silently substitutes a garbage byte instead of erroring - forcing UTF-8 makes every
         // character in a Truncate()d text preview round-trip correctly regardless of terminal or
         // redirect target.
@@ -425,10 +425,13 @@ public static class Program
         }
     }
 
-    /// <summary>widen-baseline-generation-coverage design.md Decision 2: the same join
-    /// <c>AttachedUnitAggregator.ApplyCharacteristicModifierCandidates</c> already performs at
-    /// runtime (by <see cref="Ability.Name"/>, case-insensitive), performed here once per collected
-    /// ability rather than per resolved roster unit.</summary>
+    /// <summary>widen-baseline-generation-coverage design.md Decision 2: matches a classified
+    /// <see cref="CharacteristicModifierCandidate"/> against its granting ability by
+    /// <see cref="Ability.Name"/> (case-insensitive) - the same join
+    /// <c>AttachedUnitAggregator.ApplyCharacteristicModifierCandidates</c> used to perform at
+    /// runtime before unify-characteristic-effect-resolution retired that live mechanism entirely;
+    /// this tool's own offline join is unaffected, performed here once per collected ability rather
+    /// than per resolved roster unit.</summary>
     private static IEnumerable<CharacteristicModifierCandidate>
         MatchingCandidates(Datasheet datasheet, Ability ability) =>
         datasheet.CharacteristicModifierCandidates.Where(c =>

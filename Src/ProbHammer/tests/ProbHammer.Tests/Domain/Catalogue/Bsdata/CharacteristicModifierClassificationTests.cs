@@ -15,6 +15,7 @@ public class CharacteristicModifierClassificationTests
 {
     private const string OcFieldId = "bef7-942a-1a23-59f8";
     private const string MFieldId = "e703-ecb6-5ce7-aec1";
+    private const string InSvFieldId = "55a7-5b54-c60d-11dc";
 
     private static JsonElement JsonValue(string raw) => JsonDocument.Parse(raw).RootElement.Clone();
 
@@ -46,6 +47,22 @@ public class CharacteristicModifierClassificationTests
         candidate.EntryName.Should().Be("Test Grant");
         candidate.Characteristic.Should().Be("Oc");
         candidate.RawValue.Should().Be("1");
+    }
+
+    [Fact]
+    public void An_InSv_targeting_modifier_is_classified_now_that_a_safe_consumer_exists()
+    {
+        // Real corpus case (unify-characteristic-effect-resolution): Black Templars' "Consecrating
+        // Aura" Enhancement - tier 1, unconditional, previously discarded entirely because InSv was
+        // excluded from CharacteristicFieldIds. It now classifies like any other tier-1 candidate,
+        // since AttachedUnitAggregator resolves it through the same single baseline-driven pass as
+        // every other characteristic-affecting ability.
+        var entry = WithModifier(new BsModifier { Field = InSvFieldId, Type = "set", Value = JsonValue("\"4\"") });
+
+        var sheet = Build(entry);
+
+        sheet.CharacteristicModifierCandidates.Should().ContainSingle();
+        sheet.CharacteristicModifierCandidates[0].Characteristic.Should().Be("InSv");
     }
 
     [Fact]

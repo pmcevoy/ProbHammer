@@ -61,37 +61,41 @@ public class InvulnerableSaveResolutionTests
     }
 
     [Fact]
-    public void Bare_footnote_resolves_via_an_infoLink_into_a_known_template()
+    public void Bare_footnote_via_an_infoLink_stays_caveated_pending_build_time_resolution()
     {
-        // Canis Rex's shape: a "profile"-type infoLink into a standalone shared profile - here its
-        // text is an exact known-template match ("This model has a 5+ invulnerable save against
-        // ranged attacks."), so the InvulnerableSaveCaveatClassifier resolves it to a real,
-        // non-caveated ranged-only split rather than staying caveated.
+        // Canis Rex's shape: a "profile"-type infoLink into a standalone shared profile whose text
+        // is an exact known-template match - the mapper no longer interprets that text itself
+        // (unify-characteristic-effect-resolution retired InvulnerableSaveCaveatClassifier from
+        // this parse-time path); it always stays caveated, with a uniform fallback of the raw
+        // footnoted digit on both sides, deferring real resolution to
+        // AttachedUnitAggregator's own Build-time baseline lookup.
         var save = Resolve("Linked Ability Save Model");
 
-        save.IsCaveated.Should().BeFalse();
-        save.OriginalValue.MeleeInSv.Should().Be(0);
+        save.IsCaveated.Should().BeTrue();
+        save.OriginalValue.MeleeInSv.Should().Be(5);
         save.OriginalValue.RangedInSv.Should().Be(5);
-        save.Value.MeleeInSv.Should().Be(0);
-        save.Value.RangedInSv.Should().Be(5);
-        save.ContributingAbilities.Should().BeEmpty();
+        save.ContributingAbilities.Should().ContainSingle();
+        save.ContributingAbilities[0].Name.Should().Be("Invulnerable Save (5+*)");
+        save.ContributingAbilities[0].Text.Should()
+            .Be("This model has a 5+ invulnerable save against ranged attacks.");
     }
 
     [Fact]
-    public void Split_with_one_footnoted_side_resolves_via_a_known_template()
+    public void Split_with_one_footnoted_side_stays_caveated_pending_build_time_resolution()
     {
-        // Howling Banshee's shape: "4+* / 5+" - the footnoted side's linked ability text is an
-        // exact known-template match ("Models in this unit have a 4+ invulnerable save against
-        // melee attacks."), consistent with the footnoted digit (4), so it resolves to a real
-        // melee=4/ranged=5 split rather than staying caveated.
+        // Howling Banshee's shape: "4+* / 5+" - the mapper no longer interprets the footnoted
+        // side's linked ability text itself; it always stays caveated, with a uniform fallback of
+        // the plain (non-footnoted) digit on both sides, deferring real resolution to
+        // AttachedUnitAggregator's own Build-time baseline lookup.
         var save = Resolve("Split Save Model");
 
-        save.IsCaveated.Should().BeFalse();
-        save.OriginalValue.MeleeInSv.Should().Be(4);
+        save.IsCaveated.Should().BeTrue();
+        save.OriginalValue.MeleeInSv.Should().Be(5);
         save.OriginalValue.RangedInSv.Should().Be(5);
-        save.Value.MeleeInSv.Should().Be(4);
-        save.Value.RangedInSv.Should().Be(5);
-        save.ContributingAbilities.Should().BeEmpty();
+        save.ContributingAbilities.Should().ContainSingle();
+        save.ContributingAbilities[0].Name.Should().Be("Invulnerable Save (4+*)");
+        save.ContributingAbilities[0].Text.Should()
+            .Be("Models in this unit have a 4+ invulnerable save against melee attacks.");
     }
 
     [Fact]
@@ -102,24 +106,25 @@ public class InvulnerableSaveResolutionTests
         // two different entries, each with its own infoLink targeting a different id. A name-only
         // lookup against a flattened, name-deduped ability list would resolve both entries to
         // whichever profile happened to be seen first; resolving by the specific infoLink's own
-        // targetId must not. Both linked texts are exact known-template matches, so each entry
-        // resolves to a real, non-caveated, opposite-attack-type split - still demonstrating
-        // by-id disambiguation, now via the resolved values themselves rather than a contributing
-        // ability.
+        // targetId must not. Both entries stay caveated (the mapper no longer classifies either
+        // text - unify-characteristic-effect-resolution), but each carries its own distinct linked
+        // ability text - still demonstrating by-id disambiguation.
         var saveA = Resolve("Collision Model A");
         var saveB = Resolve("Collision Model B");
 
-        saveA.IsCaveated.Should().BeFalse();
+        saveA.IsCaveated.Should().BeTrue();
+        saveA.OriginalValue.MeleeInSv.Should().Be(4);
         saveA.OriginalValue.RangedInSv.Should().Be(4);
-        saveA.OriginalValue.MeleeInSv.Should().Be(0);
-        saveA.Value.RangedInSv.Should().Be(4);
-        saveA.Value.MeleeInSv.Should().Be(0);
+        saveA.ContributingAbilities.Should().ContainSingle();
+        saveA.ContributingAbilities[0].Text.Should()
+            .Be("This model has a 4+ invulnerable save against ranged attacks.");
 
-        saveB.IsCaveated.Should().BeFalse();
+        saveB.IsCaveated.Should().BeTrue();
         saveB.OriginalValue.MeleeInSv.Should().Be(4);
-        saveB.OriginalValue.RangedInSv.Should().Be(0);
-        saveB.Value.MeleeInSv.Should().Be(4);
-        saveB.Value.RangedInSv.Should().Be(0);
+        saveB.OriginalValue.RangedInSv.Should().Be(4);
+        saveB.ContributingAbilities.Should().ContainSingle();
+        saveB.ContributingAbilities[0].Text.Should()
+            .Be("This model has a 4+ invulnerable save against melee attacks.");
     }
 
     [Fact]

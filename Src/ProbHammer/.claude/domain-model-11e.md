@@ -393,6 +393,14 @@ covering both, not per-pipeline duplication. A corpus-scan test
 names across the live BSData clone (849 on the first run) genuinely mentions attachment/"attach" in
 its own text — no same-named ability with different intent found.
 
+Since `unify-characteristic-effect-resolution`, the same constructor filter
+(`Datasheet.IsExcludedFromGeneralAbilityWalk`, wrapping `ExcludedAttachmentAbilityNames` plus a new
+InSv-caveat-internal check) also excludes the two ability-name conventions
+`BsdataDatasheetMapper.ResolveCaveatAbility` looks for by id ("Invulnerable Save ({N}+*)",
+"*Invulnerable Save") — see "BSData JSON Ingestion" above for the resolution-scope bug this fixes,
+and its own corpus-scan regression test (`InvulnerableSaveCaveatAbilityNameScanTests`, mirroring
+`LeaderSupportAttachedUnitNameScanTests` exactly).
+
 **Core Rule Ability Extraction** (`resolve-core-rule-abilities`): a fourth ability-sourcing shape —
 an `infoLink` with `"type": "rule"` (real: Impulsor's "Oath of Moment"/"Deadly Demise"/"Firing
 Deck"; every Black Templars datasheet's "Templar Vows"). GW's app shows these as "Core"/"Faction
@@ -498,19 +506,18 @@ InvulnerableSaveCharacteristicView(OriginalValue, DerivedValue, ContributingAbil
                                        // site (both mappers, Statline.InSv's own default) uses this.
 
 BsdataDatasheetMapper.ResolveInvulnerableSave(text, ancestry, ctx) -> InvulnerableSaveCharacteristicView
-                                       // Resolves a Unit profile's raw InSv text into plain,
-                                       // attack-type-restricted, footnoted-caveated, or - since
-                                       // resolve-known-ability-effects - footnoted-and-resolved
-                                       // shapes, packaged as a view at the method's return point
-                                       // only (unify-invulnerable-save-characteristic-view) - no
-                                       // change to the resolution logic itself. A footnoted value's
-                                       // linked ability is still resolved by id only, never
-                                       // interpreted inline here; the resulting Ability's own Text is
-                                       // then handed to InvulnerableSaveCaveatClassifier (below),
-                                       // using its resolved melee/ranged split only when it returns a
-                                       // match - otherwise falling back to today's caveated result
-                                       // unchanged. See the method's own doc comment for the exact
-                                       // shapes recognized and real examples.
+                                       // Resolves a Unit profile's raw InSv text into a plain,
+                                       // attack-type-restricted, or footnoted-caveated shape.
+                                       // Since unify-characteristic-effect-resolution, a footnoted/
+                                       // split value ALWAYS resolves to Caveated(fallbackValue,
+                                       // ability) here - this method no longer attempts to interpret
+                                       // the linked ability's own Text against anything (the retired
+                                       // InvulnerableSaveCaveatClassifier used to do that inline; see
+                                       // "Statline-Flag Rules" below for where that resolution now
+                                       // happens instead, at roster-Build time). The linked ability
+                                       // is still resolved by id only, never by name. See the
+                                       // method's own doc comment for the exact shapes recognized and
+                                       // real examples.
 
 BsdataDatasheetMapper.ResolveCaveatAbility(digit, ancestry, ctx, rawText) -> Ability
                                        // Resolves the specific Ability a footnoted InSv is linked
@@ -522,35 +529,21 @@ BsdataDatasheetMapper.ResolveCaveatAbility(digit, ancestry, ctx, rawText) -> Abi
                                        // the two recognized naming conventions (see the method's own
                                        // doc comment) - Aeldari's Archon/Ynnari Archon is a confirmed
                                        // real BSData data anomaly with no ability anywhere in the
-                                       // entry, allowlisted rather than special-cased.
-
-InvulnerableSaveCaveatClassifier.TryResolveBare(abilityText) -> (Melee, Ranged)?
-InvulnerableSaveCaveatClassifier.TryResolveSplit(abilityText, footnotedDigit, plainDigit) -> (Melee, Ranged)?
-                                       // Domain.Catalogue (not Bsdata - the BattleScribe pipeline,
-                                       // below, needs it too and must not depend on the Bsdata
-                                       // namespace). Matches abilityText as an exact, anchored,
-                                       // whole-string match against a fixed set of four known
-                                       // templates ("This model has a {N}+ invulnerable save
-                                       // against {ranged|melee} attacks." / "Models in this unit
-                                       // have a {N}+ invulnerable save against {ranged|melee}
-                                       // attacks.") - a real BSData authoring quirk (Space Marines'
-                                       // Judiciar) uses a U+00A0 no-break space in place of one
-                                       // plain space mid-template, normalized away before matching
-                                       // rather than left to silently miss resolution. TryResolveBare
-                                       // (a single footnoted value, e.g. "5+*") has no digit to
-                                       // compare against, so a template match always wins.
-                                       // TryResolveSplit (a melee/ranged pair with one footnoted
-                                       // side) additionally requires the template's own named value
-                                       // to equal footnotedDigit - a real mismatch (confirmed:
-                                       // Judiciar's own footnoted "4+*" side links to an ability
-                                       // naming a different digit) correctly stays caveated rather
-                                       // than trusting either value. Both called from the exact
-                                       // point each pipeline's own resolver already computes
-                                       // today's fallback, using the result only when non-null.
-                                       // Orks' Makari (a re-roll restriction, not an attack-type
-                                       // split) is the one confirmed real anomaly that correctly
-                                       // never matches any template - see
-                                       // InvulnerableSaveCaveatResolutionScanTests.
+                                       // entry, allowlisted rather than special-cased. Since
+                                       // unify-characteristic-effect-resolution, both recognized
+                                       // naming conventions ("Invulnerable Save ({N}+*)",
+                                       // "*Invulnerable Save") are excluded from Datasheet's general
+                                       // Abilities/OptionalAbilityNames walk (Datasheet's own
+                                       // IsExcludedFromGeneralAbilityWalk, alongside
+                                       // ExcludedAttachmentAbilityNames) - the resolved ability is
+                                       // reachable ONLY via Statline.InSv.ContributingAbilities, its
+                                       // one correct scope, never independently rediscovered at
+                                       // component-wide scope by the ordinary ability walk. Confirmed
+                                       // by a corpus-scan regression test
+                                       // (InvulnerableSaveCaveatAbilityNameScanTests, mirroring
+                                       // LeaderSupportAttachedUnitNameScanTests) that every real
+                                       // occurrence of either name pattern genuinely is this internal
+                                       // mechanism.
 
 WeaponKeywordParser.Apply(weapon, keywordsText) -> WeaponProfile
                                        // splits Keywords text (e.g. "Anti-infantry 4+, Devastating
@@ -1174,10 +1167,12 @@ uses. Plain-int/threshold/measurement parsing carries small, functionally-identi
 equivalents rather than reusing `BsdataDatasheetMapper`'s own private (inaccessible) helpers.
 Invulnerable-save caveat resolution is this format's own simpler resolution (no BSData-style
 entryLink ancestry chain to walk) — UNVERIFIED, since the one real sample analyzed has no caveated
-InSv at all. It calls the same shared `InvulnerableSaveCaveatClassifier` (`Domain.Catalogue`, above)
-at the exact point it computes today's caveated fallback, exactly mirroring the BSData pipeline's
-own wiring (invulnerable-save's "This resolution behavior SHALL be identical regardless of which
-import pipeline produced the Ability being matched").
+InSv at all. Since unify-characteristic-effect-resolution, it never attempts to interpret the
+linked ability's own Text either (mirroring `BsdataDatasheetMapper.ResolveInvulnerableSave`'s
+identical simplification) — a footnoted/split value always resolves to `Caveated(fallbackValue,
+ability)`, deferring real resolution to `AttachedUnitAggregator`'s own Build-time baseline lookup,
+exactly mirroring the BSData pipeline's own wiring (invulnerable-save's "This resolution behavior
+SHALL be identical regardless of which import pipeline produced the Ability being matched").
 
 This pipeline's own ability extraction (Statline/Weapon/Ability Extraction above and Core Rule
 Extraction below) is subject to the same "Leader"/"Support"/"Attached Unit" exclusion as the BSData
@@ -1436,6 +1431,33 @@ ApplyScalarEffect(statline, effect, sourceAbility) -> Statline
                                        // baseline matches: the first applied wins, the second is
                                        // skipped, no accumulate logic (no real corpus example needs
                                        // it - checked against the full 41-entry baseline).
+
+AttachedUnitAggregator.ResolveCaveatedInvulnerableSaves(statlines, baseline)
+                                       // unify-characteristic-effect-resolution: a companion step,
+                                       // run separately from ApplyStatlineFlagRules (different input
+                                       // shape, different iteration - walks statlines directly, not
+                                       // present abilities). For every AggregateStatlineEntry whose
+                                       // Statline.InSv is still caveated (set by
+                                       // ResolveInvulnerableSave/BattleScribeRosterMapper's own
+                                       // mirrored resolver at parse time - see "BSData JSON
+                                       // Ingestion"), normalizes its single ContributingAbilities[0]
+                                       // Text and looks it up against the same baseline, applying an
+                                       // InvulnerableSaveCharacteristicEffect via the same
+                                       // InvulnerableSaveEffectResolver ApplyInvulnerableSaveEffect
+                                       // uses. No presence/collision guard needed here (unlike
+                                       // ApplyStatlineFlagRules/ApplyScalarEffect's "skip if already
+                                       // touched") - Datasheet's own exclusion of the two InSv-
+                                       // caveat-internal ability-name conventions from the general
+                                       // ability walk (see "BSData JSON Ingestion") means this
+                                       // ability is never independently "present" for
+                                       // ApplyStatlineFlagRules to also match, so there is nothing
+                                       // left to collide over. An unresolved caveat (no baseline
+                                       // match) is left exactly as before. Called from
+                                       // AttachedUnitAggregator.Build right after BuildStatlines,
+                                       // before ApplyStatlineFlagRules - ordering doesn't matter for
+                                       // correctness, this placement just reads most naturally
+                                       // ("resolve what's already known to need resolving, then
+                                       // apply presence-driven flags").
 ```
 
 **Wiring** (`AttachedUnitAggregator.Build`, which now takes a `RuleClassificationBaseline` parameter
@@ -1477,40 +1499,53 @@ single shared location.
 
 ## Characteristic-Modifier Caveats
 
-Full requirements: `openspec/changes/classify-characteristic-modifier-caveats/`. The data-derived
-counterpart to Statline-Flag Rules above: recognizes when BSData's own structured `BsModifier` data
-(`Type`/`Field`/`Value`/`Conditions`, already read for `IsGameModeGated` hidden-gating — see "BSData
-JSON Ingestion") deterministically modifies a specific `Statline` characteristic, and surfaces that
-fact as a caveated `CharacteristicView` (`IsCaveated: true`, `ContributingAbilities` populated,
-`DerivedValue` absent) on a specific resolved unit — reusing the exact `IsCaveated`/
-`ContributingAbilities` vocabulary Statline-Flag Rules and InSv resolution already established, with
-**no computed resulting value** (a deliberately separate, not-yet-built "resolve" step — see
-`.claude/vnext-ideas.md`).
+Full requirements: `openspec/changes/classify-characteristic-modifier-caveats/` (original,
+retired — see below) and `openspec/changes/unify-characteristic-effect-resolution/` (current
+state). `CharacteristicModifierCandidate` is a data-derived classification: recognizes when
+BSData's own structured `BsModifier` data (`Type`/`Field`/`Value`/`Conditions`, already read for
+`IsGameModeGated` hidden-gating — see "BSData JSON Ingestion") deterministically modifies a
+specific `Statline` characteristic for a given granting entry. **As a live, Build-time mechanism
+this capability is retired outright** (`unify-characteristic-effect-resolution`, 2026-09-09):
+`AttachedUnitAggregator.ApplyCharacteristicModifierCandidates` — the step that used to always
+caveat a present classified candidate, described in the now-superseded paragraphs this section
+used to carry — is deleted, with no replacement of its own. `CharacteristicModifierCandidate`
+itself, and its classifier, are unchanged and still exist as classification-only data — exposed
+via `Datasheet.CharacteristicModifierCandidates`, and still consumed by the offline
+`RuleEffectClassificationReport` tool's own structural-derivation/cross-validation path (see "Rule
+Effect Classification (Text-Only)" below) — but nothing in the live `/LivePlay` roster-resolution
+path reads it anymore.
 
-**Supersedes a reverted first attempt** (`resolve-structured-characteristic-modifiers`, built then
-reverted 2026-09-07 — see `project_resolve_structured_characteristic_modifiers_change` memory) that
-tried to reach a fully-resolved displayed value in one pass and shipped two real classification bugs
-found only by a manual NewRecruit cross-check, not by 515+ automated tests or full-corpus scans: a
-condition-tree check that silently treated an unrecognized condition shape as "safe to bake in
-unconditionally," and an "is this optional" heuristic (`entry.Type == "upgrade"`) defeated by a real,
-capped, player-chosen squad slot typed `"model"` (Adeptus Custodes' "Allarus Custodian (Vexilla &
-Misericordia)"). This change structurally excludes both: there is no "provably unconditional"
-bake-in path of any kind — every candidate, regardless of its own granting entry's structural type,
-goes through the same presence check before it can ever apply.
+**Why retiring it is safe, not a regression**: a present ability whose granting selection also
+happens to classify as a `CharacteristicModifierCandidate` now resolves (or doesn't) purely through
+`statline-flag-rules`' own `ApplyStatlineFlagRules` pass — the exact same present-ability,
+baseline-Text-match mechanism every other characteristic-affecting ability already goes through.
+`unify-characteristic-effect-resolution`'s own corpus check confirmed every real tier-1
+characteristic-modifier candidate in the live BSData clone has real ability text reachable through
+the ordinary present-ability walk (a local profile or an infoLink) — none depended on a
+raw-value-only resolution path that only `CharacteristicModifierCandidate`'s own application step
+could reach. The one confirmed real overlap this retirement had to get right — Adeptus Custodes'
+"Vexilla," whose own wargear entry carries both a tier-1 structural Oc-increment modifier *and* is
+matched by the baseline's own fully-resolving Effect — now lands on the correct, resolved value
+because `ApplyStatlineFlagRules` is the only thing touching it at all, not because of an ordering
+accident between two coordinating mechanisms (the retired guard's original job). A present
+candidate with no matching baseline entry now produces no flagged value at all, rather than the
+old mechanism's always-caveated fallback.
 
 ```
-CharacteristicModifierCandidate(EntryName, Characteristic, RawValue)   // Domain/Catalogue - a
-                                       // classified, data-derived candidate: "EntryName, if actually
-                                       // selected on a resolved unit, structurally modifies
-                                       // Characteristic." Characteristic is one of "M"/"T"/"Sv"/"W"/
-                                       // "Ld"/"Oc" (Statline's own scalar property names) - the only
-                                       // fields the classifier's closed Field allowlist recognizes
-                                       // (see below for what's deliberately excluded and why).
-                                       // RawValue is the source BsModifier's own unparsed Value text,
-                                       // carried for a future DerivedValue-computing step - unused by
-                                       // this change's own caveat-only application. Never applied to
-                                       // a Datasheet's own Statline fields - selection-blind catalog
-                                       // data, identical for every roster resolving that Datasheet.
+CharacteristicModifierCandidate(EntryName, Characteristic, RawValue, RawType)   // Domain/Catalogue
+                                       // - a classified, data-derived candidate: "EntryName, if
+                                       // actually selected on a resolved unit, structurally
+                                       // modifies Characteristic." Characteristic is one of
+                                       // "M"/"T"/"Sv"/"W"/"Ld"/"Oc"/"InSv" (Statline's own scalar
+                                       // property names) - the only fields the classifier's closed
+                                       // Field allowlist recognizes (see below for the one
+                                       // remaining exclusion and why). RawValue/RawType are the
+                                       // source BsModifier's own unparsed Value/Type text - not
+                                       // read by anything at Build time (see above); RawType feeds
+                                       // only the offline report tool's own structural-derivation
+                                       // path. Never applied to a Datasheet's own Statline fields -
+                                       // selection-blind catalog data, identical for every roster
+                                       // resolving that Datasheet.
 
 Datasheet.CharacteristicModifierCandidates: IReadOnlyList<CharacteristicModifierCandidate>
                                        // on-demand exposure, mirroring OptionalAbilityNames/
@@ -1539,16 +1574,16 @@ BsdataDatasheetMapper.IsTier1OrTier2(modifier, entryId) -> bool
                                        // left unclassified, never guessed as safe.
 ```
 
-**Closed Field allowlist covers only the six Statline scalars (M/T/Sv/W/Ld/Oc)** — built from a
-full-corpus scan of the live BSData clone's real `BsModifier.Field` values (resolved against the
-game system's own `profileTypes["Unit"].characteristicTypes` id table), not guessed. Two exclusions,
-both deliberate and confirmed by that same scan:
-- **InSv** (`55a7-5b54-c60d-11dc`) is excluded despite real corpus evidence a modifier targets it
-  (e.g. Black Templars' "Consecrating Aura" Enhancement, tier 1, no condition) — InSv already has its
-  own dedicated, more precise `ResolveInvulnerableSave`/`ShieldDomeStatlineFlagRule`-based
-  resolution, a different `CharacteristicView` shape entirely (melee/ranged pair, not a plain
-  scalar). Covering it is a real, confirmed-real, tracked follow-up (`.claude/vnext-ideas.md`), not
-  attempted here.
+**Closed Field allowlist covers the six Statline scalars plus InSv (M/T/Sv/W/Ld/Oc/InSv)** — built
+from a full-corpus scan of the live BSData clone's real `BsModifier.Field` values (resolved against
+the game system's own `profileTypes["Unit"].characteristicTypes` id table), not guessed. InSv
+(`55a7-5b54-c60d-11dc`) rejoined this allowlist via `unify-characteristic-effect-resolution` — it
+was excluded originally only because no downstream consumer could resolve a structurally-derived
+InSv candidate safely; that reason no longer holds now that `AttachedUnitAggregator`'s
+`ResolveCaveatedInvulnerableSaves` step (see "Invulnerable Save Resolution" below) is a single,
+safe consumer for every characteristic-affecting present ability, InSv included. Real corpus case
+this unlocks: Black Templars' "Consecrating Aura" Enhancement (tier 1, unconditional, previously
+discarded entirely). One exclusion remains, confirmed by the same scan:
 - **Every `WeaponProfile` characteristic** (Ranged/Melee Weapons' own A/S/AP/D/BS/WS/Range/Keywords
   ids) is excluded — the scan confirmed zero real `entry.Modifiers`/`group.Modifiers` anywhere in the
   corpus target a `WeaponProfile` field; every real occurrence of those ids lives inside a
@@ -1563,58 +1598,21 @@ at all (Astra Militarum's "Deficiency" Battle Scar) uses `scope: "roster"` with 
 `affects` path and is Crusade-mode-only content, correctly excluded by requiring a recognized tier-2
 condition's own `scope` be "self" or "parent" only.
 
-**Application** (`AttachedUnitAggregator.Build`, a step run after `ApplyStatlineFlagRules`, not
-folded into it — the two operate on different candidate sources with different match keys): for each
-present component, every classified candidate's `EntryName` is looked up against that component's
-own present `AggregateAbilityEntry` names (the same resolved-Ability-name presence
-`StatlineFlagRule.Matches` already relies on, generalized from exact-text to exact-name matching) —
-**no new "is this candidate present" concept**, and deliberately no weapon-name presence branch,
-since every real Statline-field candidate that resolves to anything resolves to an Ability, never a
-bare weapon name with no ability (confirmed by the corpus scan; would otherwise be an untested,
-unreachable path). A present match mutates the targeted field's `ScalarCharacteristicView` to
-`Caveated(currentValue, sourceAbility)` — **unless that field already carries a
-`ContributingAbilities` entry from an earlier step** (a hand-authored `StatlineFlagRule` match, or an
-earlier candidate this same pass), in which case it's left untouched. This guard is not speculative:
-a real corpus overlap exists (Adeptus Custodes' "Vexilla," whose own wargear entry carries both a
-tier-1 structural Oc-increment modifier *and* is matched by the existing hand-authored
-`VexillaStatlineFlagRule`, which already fully resolves Oc to a real derived value) — applying this
-coarser, caveat-only mechanism on top would otherwise regress a correct, resolved value back to
-merely caveated. Targeting scope mirrors `StatlineFlagRuleScope.Bearer` exactly (one specific
-model-line when the matched ability's own `StatlineName` is set, the whole owning component when
-it's a component-wide ability) — no candidate has an observed `WholeUnit`-scope need, unlike
-Vexilla's own hand-authored text.
-
-**`/LivePlay` rendering needed one small correction, caught live** — confirmed by running a real
-export through `dotnet run` (not just assumed from the prior scalar-retyping work's own test
-coverage): the footnote marker, legend line, popover, and normal ability-listing rendering all
-already generalized to this mechanism's own candidates with no change. The tile's own amber
-`.stat-tile-flagged` background did not — before this change, nothing had ever produced a
-**caveated** Scalar characteristic (only `StatlineFlagRule`'s always-*resolved* matches), so
-`_UnitBlock.cshtml`'s existing `marker is null ? plain : amber` rule had never been exercised against
-a caveated run and silently assumed "has a marker" always meant "shows a computed value." Direct user
-review of the live "Auric Mantle" W tile caught this: painting a still-caveated tile (showing the
-plain, unmutated catalogue `Value`) amber falsely read as "already adjusted for you." Fixed by
-switching the amber condition to `marker is not null && !view.IsCaveated` in `RenderScalarTile`, the
-OC bespoke branch, and — for the identical latent reason — the pre-existing caveated-InSv branch
-(which had the same bug, just never noticed since design-tokens.md's own prior wording had
-documented the wrong behavior deliberately). See `.claude/design-tokens.md`'s "Flagged Statline
-Legend" for the corrected visual rule.
-
 **Full-Corpus Scan** (`CharacteristicModifierClassificationScanTests.cs`, same permanent
 `[Fact(Explicit = true)]` pattern as the other CorpusScan tests): reuses the real, public
 `BuildDatasheet` as its own classification oracle (each interesting entry re-rooted as its own
 Datasheet's starting entry) rather than re-deriving a second copy of the classifier's own predicate,
 so the scan can never share an undetected bug with the classifier it checks. Only unclassified
 occurrences are collected into the allowlist-checked results (`CharacteristicModifierClassificationAllowlist.cs`
-— the InSv exclusion and the "condition present" tier-3+ bucket, matching the two exclusions
-above); a separate sanity assertion confirms real tier-1 classifications are still found (never
-silently zero).
+— now just the "condition present" tier-3+ bucket, since InSv's own allowlist entry was removed
+once it started classifying successfully like any other recognized field); a separate sanity
+assertion confirms real tier-1 classifications are still found (never silently zero).
 
-**Explicitly deferred, not part of this change** (tracked in `.claude/vnext-ideas.md`): computing an
-actual `DerivedValue` for any caveat this surfaces; tier 3+ conditions (a sibling selection, live
-attachment state, or a different unit entirely); prose-only classification (an ability whose text
-describes a characteristic change with no backing `BsModifier` at all, e.g. Darnath Lysander's
-"Inspiring Commander").
+**Explicitly deferred, not part of any change to date** (tracked in `.claude/vnext-ideas.md`):
+computing an actual `DerivedValue` for any caveat a future mechanism surfaces; tier 3+ conditions (a
+sibling selection, live attachment state, or a different unit entirely); prose-only classification
+(an ability whose text describes a characteristic change with no backing `BsModifier` at all, e.g.
+Darnath Lysander's "Inspiring Commander").
 
 ---
 
@@ -1702,8 +1700,10 @@ RuleClassification(RuleTarget Target, IReadOnlyList<CharacteristicEffect> Effect
 
 RuleEffectClassifier.Classify(string name, string text) -> RuleClassification
                                        // Domain/Catalogue/RuleEffectClassifier.cs - anchored/
-                                       // template regex matching, same rigor as
-                                       // InvulnerableSaveCaveatClassifier, but searches within
+                                       // template regex matching, same rigor as the now-retired
+                                       // InvulnerableSaveCaveatClassifier (superseded by
+                                       // unify-characteristic-effect-resolution's baseline-driven
+                                       // Build-time resolution), but searches within
                                        // arbitrary-length prose rather than matching a whole string
                                        // (a Detachment/Core rule's own Text is rarely one sentence) -
                                        // an accepted brittleness trade-off (see design.md's Risks),

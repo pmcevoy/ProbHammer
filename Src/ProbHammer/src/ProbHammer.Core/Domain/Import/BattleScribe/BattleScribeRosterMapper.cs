@@ -344,10 +344,7 @@ public static partial class BattleScribeRosterMapper
             var footnotedDigit = int.Parse((leftFootnoted ? left : right).Groups[1].Value);
             var plainDigit = int.Parse((leftFootnoted ? right : left).Groups[1].Value);
             var ability = ResolveCaveatAbility(footnotedDigit, node, top, text);
-            var resolved = InvulnerableSaveCaveatClassifier.TryResolveSplit(ability.Text, footnotedDigit, plainDigit);
-            return resolved is { } r
-                ? InvulnerableSaveCharacteristicView.Resolved(r.Melee, r.Ranged)
-                : InvulnerableSaveCharacteristicView.Caveated(plainDigit, plainDigit, ability);
+            return InvulnerableSaveCharacteristicView.Caveated(plainDigit, plainDigit, ability);
         }
 
         var bareMatch = InSvBareValueRegex().Match(text);
@@ -359,10 +356,7 @@ public static partial class BattleScribeRosterMapper
             return InvulnerableSaveCharacteristicView.Resolved(digit, digit);
 
         var caveatAbility = ResolveCaveatAbility(digit, node, top, text);
-        var bareResolved = InvulnerableSaveCaveatClassifier.TryResolveBare(caveatAbility.Text);
-        return bareResolved is { } br
-            ? InvulnerableSaveCharacteristicView.Resolved(br.Melee, br.Ranged)
-            : InvulnerableSaveCharacteristicView.Caveated(digit, digit, caveatAbility);
+        return InvulnerableSaveCharacteristicView.Caveated(digit, digit, caveatAbility);
     }
 
     private static Ability ResolveCaveatAbility(int digit, BsRosterSelection node, BsRosterSelection top,

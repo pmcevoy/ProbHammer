@@ -1,0 +1,93 @@
+using System.Runtime.CompilerServices;
+using FluentAssertions;
+using ProbHammer.Core.Domain.Catalogue;
+using ProbHammer.Core.Domain.Catalogue.Bsdata;
+using ProbHammer.Core.Domain.Import;
+using ProbHammer.Core.Domain.Roster;
+
+namespace ProbHammer.Tests.Domain.Roster;
+
+/// <summary>Real-corpus verification for unify-characteristic-effect-resolution (tasks 6.2/6.3) -
+/// drives the full production pipeline (BsdataFactionResolver -> ResolvedBsdataCatalogue ->
+/// ArmyRosterEnricher.Enrich -> AttachedUnitAggregator.Build) against the real bundled BSData
+/// snapshot (`src/ProbHammer.Web/BsData/`, the same data the running app reads) and the real
+/// checked-in `RuleClassificationBaseline` (`src/ProbHammer.Web/Data/RuleEffectClassifications.json`),
+/// not a hand-built fixture or a mocked baseline - the same production inputs `/LivePlay` uses.
+///
+/// Covers the two real scenarios this change's design.md explicitly calls out as needing hard,
+/// non-optional real-corpus confirmation: an InSv-footnote unit (Space Marines' Judiciar - a
+/// melee-only invulnerable-save grant, previously mapper-time-classified, now deferred to
+/// AttachedUnitAggregator's Build-time baseline resolution) and an Auric-Mantle-shaped Enhancement
+/// (Adeptus Custodes' Shield-Captain, structurally classified as a CharacteristicModifierCandidate
+/// AND baseline-matched by its own Ability text - the retired ApplyCharacteristicModifierCandidates'
+/// one confirmed real overlap with ApplyStatlineFlagRules, now resolved through the single unified
+/// pass with no separate mechanism involved).</summary>
+public class UnifiedCharacteristicEffectResolutionRegressionTests
+{
+    private static string BundledBsDataRoot([CallerFilePath] string here = "") =>
+        Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "..", "..", "src", "ProbHammer.Web", "BsData"));
+
+    private static string BundledBaselinePath([CallerFilePath] string here = "") =>
+        Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "..", "..", "src", "ProbHammer.Web",
+            "Data", "RuleEffectClassifications.json"));
+
+    private static ArmyRoster EnrichStandaloneUnit(
+        IReadOnlyList<string> faction, string unitName, IReadOnlyList<string> weapons,
+        IReadOnlyList<string> enhancements)
+    {
+        var parsed = new ParsedArmyList(
+            Name: "Test Army", PointsSpent: 0, Faction: faction, Detachments: [], ForceDisposition: "Test",
+            BattleSize: "Incursion", PointsLimit: 1000, AttachmentGroups: [],
+            StandaloneUnits: [new ParsedUnit(unitName, [new ParsedModelGroup(unitName, 1, weapons)], enhancements)]);
+
+        var source = new LocalDiskBsdataCatalogueSource(BundledBsDataRoot());
+        var fileName = BsdataFactionResolver.ResolveStartingFileName(faction, source.ListFileNames());
+        var catalogue = ResolvedBsdataCatalogue.Build(source, fileName);
+        return ArmyRosterEnricher.Enrich(parsed, catalogue);
+    }
+
+    [Fact]
+    public void Judiciar_MeleeOnlyInvulnerableSaveFootnote_ResolvesViaTheRealCheckedInBaseline()
+    {
+        // Judiciar's own raw InSv text ("4+*") is a bare footnote naming a linked ability whose
+        // real text ("This model has a 4+ invulnerable save against melee attacks.") the mapper no
+        // longer interprets itself - it stays caveated at parse time (task 3.1) and gets exactly
+        // one resolution attempt against the baseline during roster aggregation (task 4.1). The
+        // real checked-in baseline already carries this exact text (resolve-invulnerable-save-
+        // effects), so this must resolve to a real melee=4/ranged=0 split, not stay caveated.
+        var roster = EnrichStandaloneUnit(["Space Marines"], "Judiciar", weapons: [], enhancements: []);
+        var judiciar = roster.Units.Single();
+        var baseline = RuleClassificationBaseline.Load(BundledBaselinePath());
+
+        var view = AttachedUnitAggregator.Build(judiciar, baseline);
+
+        var entry = view.Statlines.Should().ContainSingle().Subject;
+        entry.Statline.InSv.IsCaveated.Should().BeFalse();
+        entry.Statline.InSv.Value.MeleeInSv.Should().Be(4);
+        entry.Statline.InSv.Value.RangedInSv.Should().Be(0);
+    }
+
+    [Fact]
+    public void ShieldCaptainWithAuricMantle_ResolvesWoundsThroughTheUnifiedPassAlone()
+    {
+        // Auric Mantle is both a real, tier-1 CharacteristicModifierCandidate (Improve W by 2,
+        // structurally classified from BSData's own modifiers) AND a baseline-matched Ability text
+        // ("Add 2 to the bearer's Wounds characteristic.") - the one confirmed real overlap the
+        // now-retired ApplyCharacteristicModifierCandidates used to coordinate against via a "skip
+        // if already touched" guard. With that mechanism deleted (task 4.3), only
+        // ApplyStatlineFlagRules resolves this now - confirms it still lands on the correct,
+        // resolved (not caveated) value with no separate mechanism involved (task 4.4).
+        var roster = EnrichStandaloneUnit(
+            ["Imperium", "Adeptus Custodes"], "Shield-Captain", weapons: [], enhancements: ["Auric Mantle"]);
+        var shieldCaptain = roster.Units.Single();
+        var baseline = RuleClassificationBaseline.Load(BundledBaselinePath());
+
+        var view = AttachedUnitAggregator.Build(shieldCaptain, baseline);
+
+        var entry = view.Statlines.Should().ContainSingle().Subject;
+        var baseWounds = ((NumericCharacteristicValue)entry.Statline.W.OriginalValue).Value;
+        entry.Statline.W.IsCaveated.Should().BeFalse();
+        ((NumericCharacteristicValue)entry.Statline.W.Value).Value.Should().Be(baseWounds + 2);
+        entry.Statline.W.ContributingAbilities.Should().ContainSingle(a => a.Name == "Auric Mantle");
+    }
+}
