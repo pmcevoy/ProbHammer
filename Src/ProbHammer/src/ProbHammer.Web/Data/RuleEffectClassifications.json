@@ -143,6 +143,80 @@
       ]
     },
     {
+      "text": "Add 1 to the Attacks characteristic of melee weapons equipped by this model.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "A",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Scorpion Tail",
+        "Writhing Tentacles"
+      ]
+    },
+    {
+      "text": "Add 1 to the Attacks characteristic of melee weapons equipped by this model. If this model destroys eight or more models during a battle, at the end of the battle, it gains 1 bonus Skull point.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "A",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "The trailing sentence (a Crusade-campaign resource grant, 'bonus Skull point') is not a characteristic mutation at all - out of this classifier's Effect vocabulary entirely, not an extraction gap.",
+      "names": [
+        "Tearing Claws"
+      ]
+    },
+    {
+      "text": "Add 1 to the Attacks characteristic of melee weapons equipped by this model. If this model destroys one or more **^^Chaos^^** units with a melee attack during a battle, then at the end of that battle you gain 1 Infusion of Traitor's Blood.",
+      "target": {
+        "kind": "Keyword",
+        "keyword": "CHAOS"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "A",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "The trailing sentence (a Crusade-campaign resource grant, 'Infusion of Traitor's Blood') is not a characteristic mutation at all - out of this classifier's Effect vocabulary entirely, not an extraction gap.",
+      "names": [
+        "Betentacled Limbs"
+      ]
+    },
+    {
       "text": "Add 1 to the Leadership characteristic of models in this unit and you can re-roll Battle-shock and Leadership tests taken for this unit.",
       "target": {
         "kind": "AttachedUnit"
@@ -159,7 +233,7 @@
       "fullyHandled": true,
       "note": "Leadership improvement is correctly extracted, but the text also grants a re-roll ability (Battle-shock and Leadership tests), which the classifier has no vocabulary to extract.",
       "names": [
-        "Lesk’s Heroes"
+        "Lesk\u2019s Heroes"
       ]
     },
     {
@@ -432,6 +506,40 @@
       ]
     },
     {
+      "text": "Each time this model's unit ends a Charge move, until the end of the turn, add 1 to the Strength characteristic of melee weapons equipped by this model and improve the Armour Penetration characteristic of those weapons by 1.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "S",
+          "verb": "Improve",
+          "amount": 1
+        },
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "AP",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Brutal Raider"
+      ]
+    },
+    {
       "text": "Friendly SWORD BRETHREN SQUAD units have +1 OC.\n\n\nRestrictions: Your army can include BLACK TEMPLARS units, but it cannot include any ADEPTUS ASTARTES units drawn from any other Chapter.",
       "target": {
         "kind": "Keyword",
@@ -450,6 +558,138 @@
       "note": "Objective Control improvement is correctly and completely extracted. The trailing Restrictions paragraph is army-composition eligibility text (which sub-Chapters may be included alongside Black Templars), not a game effect - the same kind of content an already-excluded LEADING restriction (e.g. 'Imperial Knights model only.') already isn't caveated for, just trailing instead of leading here. Confirmed real and recurring: 12 Space Marines chapter-Detachment rules share this exact 'Restrictions:' shape, though this is currently the only one that also produces an extracted Effect. Marked fullyHandled rather than fixing the classifier itself, since only one entry is affected today - see widen-rule-effect-classification-coverage's own follow-up notes and .claude/vnext-ideas.md for the deferred general fix (recognizing a trailing 'Restrictions:' section structurally, mirroring the existing leading-restriction exclusion) if more Detachment-rule Effects surface this shape later.",
       "names": [
         "Faith-Fuelled Resolve"
+      ]
+    },
+    {
+      "text": "Improve the Armour Penetration characteristic of melee weapons equipped by this model by 1.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "AP",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Iron-hard Talons",
+        "Touch of Rot"
+      ]
+    },
+    {
+      "text": "Improve the Armour Penetration characteristic of melee weapons equipped by this model by 1. If this model destroys one or more units with a melee attack during a battle (excluding **^^Imperium^^** and **^^Chaos^^** units), then at the end of that battle you gain 1 Extract of Xeno-matter.",
+      "target": {
+        "kind": "Keyword",
+        "keyword": "CHAOS"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "AP",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "The trailing sentence (a Crusade-campaign resource grant, 'Extract of Xeno-matter') is not a characteristic mutation at all - out of this classifier's Effect vocabulary entirely, not an extraction gap.",
+      "names": [
+        "Razor Claws"
+      ]
+    },
+    {
+      "text": "Improve the Strength and Armour Penetration characteristics of ranged weapons equipped by this model by 1.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 0
+          },
+          "characteristic": "S",
+          "verb": "Improve",
+          "amount": 1
+        },
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 0
+          },
+          "characteristic": "AP",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Conversion Eradicator"
+      ]
+    },
+    {
+      "text": "Improve the Strength characteristic of melee weapons equipped by this model by 2.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "S",
+          "verb": "Improve",
+          "amount": 2
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Whipcord Sinews"
+      ]
+    },
+    {
+      "text": "Improve the Strength characteristic of melee weapons equipped by this model by 2. If this model destroys one or more **^^Monster^^** models and/or one or more **^^Character^^** models during a battle, at the end of the battle, it gains 1 bonus Skull point.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "S",
+          "verb": "Improve",
+          "amount": 2
+        }
+      ],
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "The trailing sentence (a Crusade-campaign resource grant, 'bonus Skull point') is not a characteristic mutation at all - out of this classifier's Effect vocabulary entirely, not an extraction gap.",
+      "names": [
+        "Warp Strength"
       ]
     },
     {
@@ -492,6 +732,347 @@
       "note": null,
       "names": [
         "Invulnerable Save (5+*)"
+      ]
+    },
+    {
+      "text": "Once per battle, at the start of a phase, this model can use this ability. If it does, until the end of the phase, add 3 to the Attacks and Strength characteristics of melee weapons equipped by this model.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "A",
+          "verb": "Improve",
+          "amount": 3
+        },
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "S",
+          "verb": "Improve",
+          "amount": 3
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Might of Titan"
+      ]
+    },
+    {
+      "text": "Once per battle, at the start of the Fight phase, this model can use this ability. If it does so, until the end of the phase, add 3 to the Attacks characteristic of melee weapons equipped by this model and improve the Armour Penetration characteristic of those weapons by 1.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "A",
+          "verb": "Improve",
+          "amount": 3
+        },
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "AP",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Euphoric Strikes"
+      ]
+    },
+    {
+      "text": "Once per battle, at the start of the Fight phase, this model can use this ability. If it does, until the end of the phase, add 2 to the Attacks, Strength and Damage characteristics of melee weapons equipped by this model.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "A",
+          "verb": "Improve",
+          "amount": 2
+        },
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "S",
+          "verb": "Improve",
+          "amount": 2
+        },
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "D",
+          "verb": "Improve",
+          "amount": 2
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Mantra of Strength"
+      ]
+    },
+    {
+      "text": "Once per battle, at the start of the Fight phase, this model can use this ability. If it does, until the end of the phase, add 3 to the Attacks and Strength characteristics of melee weapons equipped by this model.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "A",
+          "verb": "Improve",
+          "amount": 3
+        },
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "S",
+          "verb": "Improve",
+          "amount": 3
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Might of Titan (Psychic)"
+      ]
+    },
+    {
+      "text": "Once per battle, at the start of the Fight phase, this model can use this ability. If it does, until the end of the phase, add 3 to the Attacks characteristic of melee weapons equipped by this model and improve the Armour Penetration characteristic of those weapons by 1.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "A",
+          "verb": "Improve",
+          "amount": 3
+        },
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "AP",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Euphoric Strikes"
+      ]
+    },
+    {
+      "text": "Once per battle, at the start of the Fight phase, this model can use this ability. If it does, until the end of the phase, add 3 to the Attacks characteristic of melee weapons equipped by this model and those weapons have the [DEVASTATING WOUNDS] ability.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "A",
+          "verb": "Improve",
+          "amount": 3
+        }
+      ],
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "A confirmed, known extraction gap: 'and those weapons have the [DEVASTATING WOUNDS] ability' is a real, unextracted keyword-ability grant on the same weapons the Attacks Effect already targets - this classifier has no KeywordEffect vocabulary yet (see .claude/vnext-ideas.md's 'KeywordEffect/AbilityEffect' idea). The Attacks Effect itself is correctly extracted; only the keyword grant is missed.",
+      "names": [
+        "Finest Hour",
+        "Instrument of the Emperor's Wrath"
+      ]
+    },
+    {
+      "text": "Once per battle, at the start of the Fight phase, this model can use this ability. If it does, until the end of the phase, add 3 to the Attacks characteristic of melee weapons equipped by this model and those weapons have the [Devastating Wounds] ability.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "A",
+          "verb": "Improve",
+          "amount": 3
+        }
+      ],
+      "isCaveated": true,
+      "fullyHandled": false,
+      "note": "Same confirmed gap as Finest Hour/Instrument of the Emperor's Wrath (identical shape, lowercase-bracket keyword spelling variant): 'and those weapons have the [Devastating Wounds] ability' is a real, unextracted keyword-ability grant - see .claude/vnext-ideas.md's 'KeywordEffect/AbilityEffect' idea. The Attacks Effect itself is correctly extracted.",
+      "names": [
+        "Possessed Lord"
+      ]
+    },
+    {
+      "text": "Once per battle, at the start of the Fight phase, this model can use this ability. If it does, until the end of the phase, improve the Strength, Attacks, Armour Penetration and Damage characteristics of melee weapons equipped by this model by 1.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "S",
+          "verb": "Improve",
+          "amount": 1
+        },
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "A",
+          "verb": "Improve",
+          "amount": 1
+        },
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "AP",
+          "verb": "Improve",
+          "amount": 1
+        },
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "D",
+          "verb": "Improve",
+          "amount": 1
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Chance for Glory"
+      ]
+    },
+    {
+      "text": "Once per battle, in the Fight phase, this model can use this ability. If it does, until the end of the phase, improve the Strength and Attacks characteristics of melee weapons equipped by this model by 3.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "S",
+          "verb": "Improve",
+          "amount": 3
+        },
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "WeaponClass",
+            "type": 1
+          },
+          "characteristic": "A",
+          "verb": "Improve",
+          "amount": 3
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Moment of Glory",
+        "Zealot"
+      ]
+    },
+    {
+      "text": "Once per battle, in your Command phase, this model can use this ability. If it does, until the end of the turn, add 2 to the Damage characteristic of weapons equipped by this model.",
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "kind": "Weapon",
+          "selector": {
+            "kind": "AllWeapons"
+          },
+          "characteristic": "D",
+          "verb": "Improve",
+          "amount": 2
+        }
+      ],
+      "isCaveated": false,
+      "fullyHandled": false,
+      "note": null,
+      "names": [
+        "Master of Combat"
       ]
     },
     {

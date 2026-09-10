@@ -28,10 +28,11 @@ Explored in depth 2026-09-10 (sibling to the already-shipped Statline characteri
 resolution work — `RuleEffectClassifier`/`CharacteristicEffect`/`CharacteristicModificationResolver`/
 `RuleClassificationBaseline`). Six phases, in dependency order. Phase 0 shipped as
 `name-weapon-group-contributions` (archived) — `WeaponContribution`/`AggregateWeaponEntry` now carry
-a real weapon Name and a computed composite display Name. Phase 1 is now done (informal spike, no
-OpenSpec change — see below for why). Phase 2 is next ready to scope as a real OpenSpec change; the
-rest stay here until their turn. Don't re-litigate the decisions already made below without new
-evidence.
+a real weapon Name and a computed composite display Name. Phase 1 is done (informal spike, no
+OpenSpec change — see below for why). **Phase 2 is done** (`classify-weapon-characteristic-effects`,
+2026-09-10 — see below). Phase 3 is next ready to scope as a real OpenSpec change, now that Phase
+2's own `WeaponCharacteristicEffect`/`WeaponSelector` shape is real rather than speculative; the rest
+stay here until their turn. Don't re-litigate the decisions already made below without new evidence.
 
 - **Phase 1 (done 2026-09-10, informal spike, no OpenSpec change)**: pulled real weapon-effect
   ability text from the live BSData clone via an ad hoc `jq` dump (every `Abilities`/`sharedRules`
@@ -60,23 +61,44 @@ evidence.
     one Name+Text pair — an import-chunking question (should each named bullet become its own
     Name+Text pair before classification?) for whoever eventually handles those specific abilities,
     not evidence `RuleClassification`/`WeaponCharacteristicEffect` need a per-effect selector.
-- **Phase 2**: new `WeaponCharacteristicEffect(WeaponSelector, Characteristic, Verb, Amount)` +
-  `WeaponSelector` (`NamedWeapon`/`WeaponClass`/`AllWeapons`) as a sibling `CharacteristicEffect`
-  subtype — one shape covers both Attacks and Damage at classification time (they diverge only at
-  resolution time, see Phase 3/4). Given Phase 1's findings, the classifier's job for a coordinate
-  list is to split it into N atomic `WeaponCharacteristicEffect`s (one per named characteristic)
-  sharing an identical `WeaponSelector`/`Verb`/`Amount` — never a single effect record holding a
-  list of characteristics, and never a case (found so far) of differing amounts per characteristic
-  in one sentence; the rarer two-verb "and"-joined shape (Brutal Raider/Euphoric Strikes) needs
-  separate handling since its two clauses have independent verbs, still sharing one selector via
-  anaphora. Widen `RuleEffectClassifier` for weapon phrasing — budget for a real live-review pass,
-  the same as the original Statline classifier work found 6 real bugs beyond its own passing tests.
-  Extend `CharacteristicModificationKind`/`Resolver` to cover Damage (excluded today) — likely
-  `Plain` kind, dice-aware arithmetic via `DiceExpression.Add` (already exists) instead of the
-  resolver's current plain-int math; `WS`/`BS`/`AP`/`S` are already in `CharacteristicModificationKinds`'
-  lookup table, unconsumed, just needing real weapon data to prove them against for the first time.
-  Retype `WeaponProfile.D` to `ScalarCharacteristicView`, mirroring `S`/`Ap`/`Bs`/`Ws` (all
-  `EqualityKey` members already).
+- **Phase 2 (done 2026-09-10, `classify-weapon-characteristic-effects`)**: shipped exactly as
+  scoped below, plus one real, evidence-driven deviation and several new corpus findings deferred
+  rather than folded in — see the "Phase 2 findings" bullet below for both. `WeaponCharacteristicEffect(WeaponSelector,
+  Characteristic, Verb, Amount)` + `WeaponSelector` (`NamedWeapon`/`WeaponClass`/`AllWeapons`) landed
+  as a sibling `CharacteristicEffect` subtype, one shape covering both Attacks and Damage at
+  classification time. `RuleEffectClassifier` widened for both real shapes (dominant coordinate-list,
+  two-verb anaphora) via two new patterns plus a new `WeaponEffectStart` anchor (see below). A live
+  corpus review found 19 real weapon-characteristic Effect results, all confirmed correct (zero bugs,
+  unlike the original Statline work's 6) — all 19 baselined. `CharacteristicModificationKind`/
+  `Resolver`/`Clamp` extended to cover Damage (`Plain` kind, dice-aware arithmetic via
+  `DiceExpression`'s existing `+` operator plus a new `ApplyToDice` guaranteed-minimum clamp path);
+  `S`/`AP` got their first real proving example against genuine weapon data, `WS`/`BS` did not (see
+  below - out of this change's own weapon-characteristic vocabulary). `WeaponProfile.D` retyped to
+  `ScalarCharacteristicView`, mirroring `S`/`Ap`/`Bs`/`Ws`.
+  - **Real deviation found during implementation**: the plain `SentenceStart` anchor does not work
+    for this family at all — every real ground-truth text (Zealot, Chance for Glory, Brutal Raider,
+    Euphoric Strikes ×2) states its mutation clause immediately after a ", until the end of the
+    phase/turn," temporal-scope clause that is itself not at a true sentence start, so
+    `SentenceStart` applied unmodified would reject all five. Added `WeaponEffectStart`, a second,
+    narrower anchor scoped only to the two dominant-shape weapon patterns (see
+    `.claude/domain-model/rule-effect-classification.md`'s own "Weapon-characteristic Effects"
+    section for the structural reasoning) — `SentenceStart` itself and every Statline/InSv pattern
+    are untouched.
+  - **New corpus findings deferred to a future phase, not folded into Phase 2's own scope**
+    (`classify-weapon-characteristic-effects` tasks.md task 1.2): a real `Set`-verb-shaped weapon
+    effect ("...change the Attacks characteristic of melee weapons equipped by this model to 12.");
+    a real dice-valued amount ("add D3 to the Strength characteristic..." — `WeaponCharacteristicEffect.Amount`
+    is `int`); two further real weapon-selector shapes beyond `WeaponClass`/`AllWeapons` (an
+    ability-flag-qualified selector - "Psychic weapons", "Lethal Hits weapons" - and a
+    whole-unit-scoped variant - "weapons equipped by models in this unit" / "the bearer's melee
+    weapons" / "this model's {named weapon}", no "equipped by" at all); two further real weapon
+    characteristics beyond the four this change's own vocabulary covers (Weapon Skill/Ballistic
+    Skill - `CharacteristicModificationKinds` already has `WS`/`BS` entries from an earlier change,
+    unconsumed by any real weapon data still); and two real "...and those weapons have the [KEYWORD]
+    ability" anaphora continuations (Finest Hour/Instrument of the Emperor's Wrath, Possessed Lord) -
+    correctly extract only the real characteristic Effect and correctly flag `IsCaveated`, but the
+    keyword grant itself is unextracted (feeds the existing `KeywordEffect`/`AbilityEffect` idea
+    below).
 - **Phase 3**: the aggregation mechanism — mutate the relevant `WeaponProfile`(s) with a resolved
   `WeaponCharacteristicEffect` before/at `BuildWeapons`' own grouping, and let
   `WeaponProfileEqualityKey` do group split/merge for free (an ability reaching every current
@@ -85,8 +107,9 @@ evidence.
   already has, no new grouping logic needed). Provable in isolation against hand-built fixtures
   first, same sequencing `InvulnerableSaveEffectResolver` used. Weapon-selector-to-contribution
   resolution (named-weapon matching needs Phase 0's Name field; class matching already trivial via
-  `WeaponProfile.Type`). The "does this ability reach every current contributor" evaluation that
-  Phase 4's row-placement tiers depend on.
+  `WeaponProfile.Type` — confirmed real corpus data only ever produces `WeaponClass`/`AllWeapons`
+  today, never `NamedWeapon`, per Phase 2's own 19-result corpus review). The "does this ability
+  reach every current contributor" evaluation that Phase 4's row-placement tiers depend on.
 - **Phase 4 (rendering)**: widen `ShowsBreakdownTrigger` to fire on any weapon-effect ability
   contribution, not just >1 model line. New ability-contribution row (ability-name popover trigger
   + optional resolved delta, e.g. "+1") placed via three tiers mirroring `AggregateAbilityEntry`'s

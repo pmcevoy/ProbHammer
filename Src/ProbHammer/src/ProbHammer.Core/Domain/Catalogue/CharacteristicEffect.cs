@@ -16,6 +16,7 @@ namespace ProbHammer.Core.Domain.Catalogue;
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
 [JsonDerivedType(typeof(ScalarCharacteristicEffect), "Scalar")]
 [JsonDerivedType(typeof(InvulnerableSaveCharacteristicEffect), "InvulnerableSave")]
+[JsonDerivedType(typeof(WeaponCharacteristicEffect), "Weapon")]
 public abstract record CharacteristicEffect;
 
 /// <summary>One atomic, unconditional mutation a rule/ability's text states against exactly one
@@ -34,3 +35,20 @@ public sealed record ScalarCharacteristicEffect(string Characteristic, EffectVer
 /// <c>0</c> on that side (reuses <see cref="InvulnerableSave.None"/>'s own sentinel convention; no
 /// real 11e invulnerable save is ever stated as "0+"/"1+").</summary>
 public sealed record InvulnerableSaveCharacteristicEffect(InvulnerableSave Value) : CharacteristicEffect;
+
+/// <summary>One atomic, unconditional mutation a rule/ability's text states against exactly one
+/// named <see cref="WeaponProfile"/> characteristic ("S"/"A"/"AP"/"D"), scoped to a
+/// <see cref="WeaponSelector"/> naming which of the bearer's weapons it applies to. A coordinate
+/// characteristic list in the source text (e.g. "improve the Strength and Attacks characteristics
+/// ... by 3") always splits into one <see cref="WeaponCharacteristicEffect"/> per named
+/// characteristic, every one sharing an identical Selector/Verb/Amount - never a single record
+/// holding more than one characteristic (see <c>RuleEffectClassifier</c>'s own extraction
+/// decision). <see cref="Characteristic"/> is a plain string, the same "not a new enum" convention
+/// <see cref="ScalarCharacteristicEffect.Characteristic"/> already uses, drawn from a disjoint
+/// vocabulary (weapon codes never collide with the Statline codes, since callers already know
+/// which list applies to which Effect subtype).</summary>
+public sealed record WeaponCharacteristicEffect(
+    WeaponSelector Selector,
+    string Characteristic,
+    EffectVerb Verb,
+    int Amount) : CharacteristicEffect;

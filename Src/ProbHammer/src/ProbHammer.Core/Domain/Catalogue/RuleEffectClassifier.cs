@@ -25,6 +25,22 @@ public static partial class RuleEffectClassifier
             ["Objective Control"] = "Oc"
         };
 
+    /// <summary>Weapon-characteristic Effect name -> code lookup, disjoint from
+    /// <see cref="CharacteristicNames"/> - a <see cref="WeaponCharacteristicEffect.Characteristic"/>
+    /// draws from this vocabulary instead. Deliberately scoped to exactly the four characteristics
+    /// real Phase 1 corpus text mutates (Strength/Attacks/Armour Penetration/Damage) - Weapon
+    /// Skill/Ballistic Skill occur in real corpus weapon-effect text too (see this change's own
+    /// tasks.md task 1.2 finding) but are out of this change's scope. Case-insensitive per this
+    /// classifier's existing convention.</summary>
+    private static readonly Dictionary<string, string> WeaponCharacteristicNames =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Strength"] = "S",
+            ["Attacks"] = "A",
+            ["Armour Penetration"] = "AP",
+            ["Damage"] = "D"
+        };
+
     /// <summary>The six Statline scalar codes as they appear written bare (not spelled out) in a
     /// shorthand "+N Code" grant, e.g. Marshal's Household's "+1 OC" - keyed case-insensitively since
     /// real corpus text capitalizes these inconsistently, same as every other word-literal pattern in
@@ -60,6 +76,22 @@ public static partial class RuleEffectClassifier
     /// which option is chosen, same as any other conditional preamble. A period is the only boundary
     /// that reliably means "this is not itself part of a menu of alternatives."</summary>
     private const string SentenceStart = @"(?<=^|\.\s*)";
+
+    /// <summary>Widens <see cref="SentenceStart"/> for the weapon-characteristic Effect patterns
+    /// only - never touches <see cref="SentenceStart"/> itself or any Statline/InSv pattern.
+    /// Ground-truth verification (this change's own tasks.md task 1.1) found every real corpus
+    /// weapon-characteristic mutation stated as an activated/triggered ability whose actual
+    /// mutation clause sits immediately after a ", until the end of the phase," / ", until the end
+    /// of the turn," temporal-scope clause - itself preceded by an activation preamble ("Once per
+    /// battle... If it does," / "Each time this model's unit ends a Charge move,") that is NOT at
+    /// a true sentence start, so the plain <see cref="SentenceStart"/> anchor would reject every
+    /// one of them (zero real ground-truth example would ever extract). A structural widening (any
+    /// text immediately preceded by that exact temporal-scope clause), not a phrase denylist naming
+    /// each ability - the same "structural anchor over phrase list" preference
+    /// <see cref="SentenceStart"/>'s own doc comment states, recognizing a second real boundary
+    /// shape this specific ability family consistently uses.</summary>
+    private const string WeaponEffectStart =
+        @"(?<=^|\.\s*|, until the end of the (?:phase|turn),\s*)";
 
     // IgnoreCase on every pattern below EXCEPT AllCapsKeywordPhrase: real corpus text carries
     // inconsistent capitalization of the same plain-English phrasing (e.g. "The bearer has a
@@ -153,6 +185,44 @@ public static partial class RuleEffectClassifier
         SentenceStart + @"[A-Za-z][A-Za-z''\- ]{0,80} (?:have|has) \+(\d+)(?:\s+to)?\s+(M|T|Sv|W|Ld|Oc)\b",
         RegexOptions.IgnoreCase)]
     private static partial Regex ShorthandCharacteristicPlus();
+
+    /// <summary>The dominant weapon-characteristic shape's "Add N to the X[, Y and Z] characteristic(s)"
+    /// phrasing (amount stated immediately after "Add", mirroring <see cref="AddCharacteristic"/>'s
+    /// own Statline convention) - e.g. "Add 1 to the Strength characteristic of melee weapons
+    /// equipped by this model." Group 1: amount. Group 2: the raw comma/and-joined characteristic-
+    /// list substring, split and mapped via <see cref="WeaponCharacteristicNames"/> by the caller.
+    /// Group 3: the weapon-selector qualifier text between "of" and "weapons equipped by this
+    /// model" ("melee"/"ranged"/empty for "all weapons"/anything else, resolved by the caller -
+    /// see <see cref="ResolveWeaponSelector"/>).</summary>
+    [GeneratedRegex(
+        WeaponEffectStart +
+        @"Add (\d+) to the ([A-Za-z][A-Za-z, ]*?) characteristics? of ([A-Za-z]*)\s*weapons equipped by this model\b",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex WeaponCharacteristicAdd();
+
+    /// <summary>The dominant weapon-characteristic shape's "Improve/Worsen the X[, Y and Z]
+    /// characteristic(s) ... by N" phrasing (amount trails at the end) - e.g. Zealot's "improve the
+    /// Strength and Attacks characteristics of melee weapons equipped by this model by 3." Group 1:
+    /// the verb word itself. Groups 2/3: same as <see cref="WeaponCharacteristicAdd"/>. Group 4:
+    /// amount.</summary>
+    [GeneratedRegex(
+        WeaponEffectStart +
+        @"(Improve|Worsen) the ([A-Za-z][A-Za-z, ]*?) characteristics? of ([A-Za-z]*)\s*weapons equipped by this model by (\d+)\b",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex WeaponCharacteristicImproveWorsen();
+
+    /// <summary>The rarer two-verb anaphora-joined shape's second clause (e.g. Brutal Raider's
+    /// "...and improve the Armour Penetration characteristic of those weapons by 1.") - a plain
+    /// continuation match, not <see cref="WeaponEffectStart"/>-anchored, since it always follows
+    /// directly on from a first clause <see cref="WeaponCharacteristicAdd"/>/
+    /// <see cref="WeaponCharacteristicImproveWorsen"/> already matched; the caller infers this
+    /// clause's selector as identical to that first clause's own (the anaphora resolution), never
+    /// re-extracting it. Group 1: verb. Group 2: the single named characteristic (never a
+    /// coordinate list in any real example). Group 3: amount.</summary>
+    [GeneratedRegex(
+        @" and (Improve|Worsen) the ([A-Za-z ]+?) characteristic of those weapons by (\d+)\b",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex WeaponCharacteristicAnaphoraContinuation();
 
     public static RuleClassification Classify(string name, string text)
     {
@@ -287,6 +357,91 @@ public static partial class RuleEffectClassifier
             matches.Add(shorthandMatch);
         }
 
+        // Weapon-characteristic Effects: dominant coordinate-list shape (both amount-position
+        // variants), then the rarer two-verb anaphora continuation - which needs at least one
+        // dominant-shape Effect already extracted above to source its shared selector from (see
+        // WeaponCharacteristicAnaphoraContinuation's own doc comment).
+        var weaponEffects = new List<WeaponCharacteristicEffect>();
+
+        foreach (Match match in WeaponCharacteristicAdd().Matches(text))
+            TryExtractWeaponCoordinateList(match, EffectVerb.Improve, characteristicListGroup: 2,
+                qualifierGroup: 3, amountGroup: 1, effects, matches, weaponEffects);
+
+        foreach (Match match in WeaponCharacteristicImproveWorsen().Matches(text))
+            TryExtractWeaponCoordinateList(match, ParseVerb(match.Groups[1].Value), characteristicListGroup: 2,
+                qualifierGroup: 3, amountGroup: 4, effects, matches, weaponEffects);
+
+        if (weaponEffects.Count > 0)
+        {
+            var anaphoraMatch = WeaponCharacteristicAnaphoraContinuation().Match(text);
+            if (anaphoraMatch.Success &&
+                WeaponCharacteristicNames.TryGetValue(anaphoraMatch.Groups[2].Value.Trim(),
+                    out var anaphoraCharacteristic))
+            {
+                effects.Add(new WeaponCharacteristicEffect(weaponEffects[0].Selector, anaphoraCharacteristic,
+                    ParseVerb(anaphoraMatch.Groups[1].Value), int.Parse(anaphoraMatch.Groups[3].Value)));
+                matches.Add(anaphoraMatch);
+            }
+        }
+
         return (effects, matches);
     }
+
+    /// <summary>Extracts zero or more <see cref="WeaponCharacteristicEffect"/>s from one dominant-
+    /// shape match - one per characteristic recognized in the match's coordinate-list group,
+    /// skipping any unrecognized token (mirrors <see cref="AddCharacteristic"/>'s own per-token
+    /// skip convention above). Adds nothing to <paramref name="effects"/>/<paramref name="matches"/>
+    /// - and resolves no selector at all - when the weapon-selector qualifier is unrecognized (see
+    /// <see cref="ResolveWeaponSelector"/>) or every characteristic in the list is unrecognized:
+    /// this is this classifier's fail-closed guarantee for weapon-effect-shaped text (task 3.4).</summary>
+    private static void TryExtractWeaponCoordinateList(
+        Match match, EffectVerb verb, int characteristicListGroup, int qualifierGroup, int amountGroup,
+        List<CharacteristicEffect> effects, List<Match> matches, List<WeaponCharacteristicEffect> weaponEffects)
+    {
+        var selector = ResolveWeaponSelector(match.Groups[qualifierGroup].Value);
+        if (selector is null)
+            return;
+
+        var amount = int.Parse(match.Groups[amountGroup].Value);
+        var tokens = match.Groups[characteristicListGroup].Value
+            .Replace(" and ", ",")
+            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+        var addedAny = false;
+        foreach (var token in tokens)
+        {
+            if (!WeaponCharacteristicNames.TryGetValue(token, out var characteristic))
+                continue;
+
+            var effect = new WeaponCharacteristicEffect(selector, characteristic, verb, amount);
+            effects.Add(effect);
+            weaponEffects.Add(effect);
+            addedAny = true;
+        }
+
+        if (addedAny)
+            matches.Add(match);
+    }
+
+    /// <summary>Resolves a weapon-characteristic pattern's captured selector-qualifier text into a
+    /// <see cref="WeaponSelector"/> - empty for <see cref="AllWeapons"/> ("weapons equipped by this
+    /// model", no qualifier), "melee"/"ranged" for <see cref="WeaponClass"/>, or <c>null</c> for
+    /// anything else (fail closed - e.g. real corpus text also carries an ability-flag-qualified
+    /// selector like "Psychic weapons"/"Lethal Hits weapons", out of this classifier's scope; see
+    /// this change's own tasks.md task 1.2 finding). Never <see cref="NamedWeapon"/> - no real
+    /// corpus example for this pattern family names a specific weapon.</summary>
+    private static WeaponSelector? ResolveWeaponSelector(string qualifierText)
+    {
+        var qualifier = qualifierText.Trim();
+        if (qualifier.Length == 0)
+            return new AllWeapons();
+        if (string.Equals(qualifier, "melee", StringComparison.OrdinalIgnoreCase))
+            return new WeaponClass(WeaponType.Melee);
+        if (string.Equals(qualifier, "ranged", StringComparison.OrdinalIgnoreCase))
+            return new WeaponClass(WeaponType.Ranged);
+        return null;
+    }
+
+    private static EffectVerb ParseVerb(string verbText) =>
+        string.Equals(verbText, "Improve", StringComparison.OrdinalIgnoreCase) ? EffectVerb.Improve : EffectVerb.Worsen;
 }

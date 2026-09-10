@@ -22,7 +22,10 @@ public static class CharacteristicModificationClamp
             ["M"] = new Bound(Floor: 1, Ceiling: null),
             ["T"] = new Bound(Floor: 1, Ceiling: null),
             ["S"] = new Bound(Floor: 1, Ceiling: null),
-            ["Range"] = new Bound(Floor: 1, Ceiling: null)
+            ["Range"] = new Bound(Floor: 1, Ceiling: null),
+            // A fixed (non-dice-rolling) Damage value clamps through this same table via
+            // ApplyToDice's own Count == 0 branch below - see that method's own doc comment.
+            ["D"] = new Bound(Floor: 1, Ceiling: null)
         };
 
     /// <summary>Silently caps rather than throwing - a resolved value outside its legal bound is an
@@ -37,5 +40,30 @@ public static class CharacteristicModificationClamp
         if (bound.Floor is { } floor && value < floor) value = floor;
         if (bound.Ceiling is { } ceiling && value > ceiling) value = ceiling;
         return value;
+    }
+
+    /// <summary>The dice-shaped counterpart to <see cref="Apply"/>, for Damage
+    /// (`classify-weapon-characteristic-effects` design.md's "Damage's clamp floor" decision) - not
+    /// a lookup against <see cref="Bounds"/> (that table assumes its value IS the resolved value
+    /// itself, not a derived quantity), since a dice value's own legal bound is enforced against its
+    /// GUARANTEED MINIMUM (<c>Count + Modifier</c> when it rolls one or more dice, else the bare
+    /// <c>Modifier</c>), not its literal <see cref="DiceExpression.Modifier"/> value directly. A
+    /// fixed (<c>Count == 0</c>) value clamps exactly like <see cref="Apply"/> already does for any
+    /// other Plain-family scalar (floor of 1, mirroring M/T/S/Range). A dice-rolling value whose
+    /// guaranteed minimum would fall below 1 has its <see cref="DiceExpression.Modifier"/> raised
+    /// just enough to bring the guaranteed minimum back to 1 - e.g. "D6" worsened by 8 clamps to a
+    /// modifier of -5 ("D6-5", guaranteed minimum 1), not "D6-8" (guaranteed minimum -7).</summary>
+    public static DiceExpression ApplyToDice(string characteristic, DiceExpression value)
+    {
+        if (characteristic != "D")
+            return value;
+
+        if (value.Count == 0)
+            return DiceExpression.Fixed(Apply(characteristic, value.Modifier));
+
+        var guaranteedMinimum = value.Count + value.Modifier;
+        return guaranteedMinimum < 1
+            ? value with { Modifier = value.Modifier + (1 - guaranteedMinimum) }
+            : value;
     }
 }

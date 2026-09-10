@@ -7,7 +7,7 @@ public sealed record RangedWeapon(
     ScalarCharacteristicView Bs,
     ScalarCharacteristicView S,
     ScalarCharacteristicView Ap,
-    DiceExpression D) : WeaponProfile(Name, WeaponType.Ranged, Range, A, S, Ap, D)
+    ScalarCharacteristicView D) : WeaponProfile(Name, WeaponType.Ranged, Range, A, S, Ap, D)
 {
     public override ScalarCharacteristicView Skill => Bs;
 }
@@ -18,7 +18,7 @@ public sealed record MeleeWeapon(
     ScalarCharacteristicView Ws,
     ScalarCharacteristicView S,
     ScalarCharacteristicView Ap,
-    DiceExpression D) : WeaponProfile(Name, WeaponType.Melee, 0, A, S, Ap, D)
+    ScalarCharacteristicView D) : WeaponProfile(Name, WeaponType.Melee, 0, A, S, Ap, D)
 {
     public override ScalarCharacteristicView Skill => Ws;
 }
@@ -33,7 +33,7 @@ public abstract record WeaponProfile(
     DiceExpression A,
     ScalarCharacteristicView S,
     ScalarCharacteristicView Ap,
-    DiceExpression D)
+    ScalarCharacteristicView D)
 {
     /// <summary>Computed per subtype (<see cref="RangedWeapon.Skill"/> => Bs, <see
     /// cref="MeleeWeapon.Skill"/> => Ws) rather than a stored/init value here, so Bs/Ws stay the
@@ -100,7 +100,7 @@ public sealed record WeaponProfileEqualityKey(
     ScalarCharacteristicView Skill,
     ScalarCharacteristicView S,
     ScalarCharacteristicView Ap,
-    DiceExpression D,
+    ScalarCharacteristicView D,
     bool Torrent,
     bool Blast,
     int Melta,

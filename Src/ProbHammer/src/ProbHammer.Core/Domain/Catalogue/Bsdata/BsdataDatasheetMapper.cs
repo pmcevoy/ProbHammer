@@ -694,7 +694,7 @@ public static partial class BsdataDatasheetMapper
             ParseThreshold(profile.CharacteristicText("BS"), CharacteristicPattern.Bs),
             ParsePlainInt(profile.CharacteristicText("S")),
             ParsePlainInt(profile.CharacteristicText("AP")),
-            DiceExpression.Parse(profile.CharacteristicText("D") ?? "0"));
+            ParseDamage(profile.CharacteristicText("D")));
 
         return WeaponKeywordParser.Apply(weapon, profile.CharacteristicText("Keywords") ?? "-");
     }
@@ -707,7 +707,7 @@ public static partial class BsdataDatasheetMapper
             ParseThreshold(profile.CharacteristicText("WS"), CharacteristicPattern.Ws),
             ParsePlainInt(profile.CharacteristicText("S")),
             ParsePlainInt(profile.CharacteristicText("AP")),
-            DiceExpression.Parse(profile.CharacteristicText("D") ?? "0"));
+            ParseDamage(profile.CharacteristicText("D")));
 
         return WeaponKeywordParser.Apply(weapon, profile.CharacteristicText("Keywords") ?? "-");
     }
@@ -777,6 +777,16 @@ public static partial class BsdataDatasheetMapper
         if (string.IsNullOrWhiteSpace(text)) return 0;
         text = text.Trim();
         return IsNotApplicable(text) ? 0 : int.Parse(text.TrimEnd('+'));
+    }
+
+    /// <summary>Parses a weapon's Damage characteristic text into a fully-resolved (uncaveated,
+    /// no contributing abilities) <see cref="ScalarCharacteristicView"/>, mirroring how every
+    /// other <see cref="WeaponProfile"/> characteristic is already constructed at this call
+    /// site.</summary>
+    private static ScalarCharacteristicView ParseDamage(string? text)
+    {
+        var dice = DiceExpression.Parse(text ?? "0");
+        return ScalarCharacteristicView.Resolved(dice, dice, []);
     }
 }
 

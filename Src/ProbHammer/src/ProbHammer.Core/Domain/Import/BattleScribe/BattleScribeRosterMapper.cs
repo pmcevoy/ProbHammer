@@ -390,14 +390,14 @@ public static partial class BattleScribeRosterMapper
                 ParseThreshold(profile.CharacteristicText("BS")),
                 ParsePlainInt(profile.CharacteristicText("S")),
                 ParsePlainInt(profile.CharacteristicText("AP")),
-                DiceExpression.Parse(profile.CharacteristicText("D") is { Length: > 0 } d ? d : "0"))
+                ParseDamage(profile.CharacteristicText("D")))
             : new MeleeWeapon(
                 profile.Name,
                 DiceExpression.Parse(profile.CharacteristicText("A") is { Length: > 0 } a2 ? a2 : "0"),
                 ParseThreshold(profile.CharacteristicText("WS")),
                 ParsePlainInt(profile.CharacteristicText("S")),
                 ParsePlainInt(profile.CharacteristicText("AP")),
-                DiceExpression.Parse(profile.CharacteristicText("D") is { Length: > 0 } d2 ? d2 : "0"));
+                ParseDamage(profile.CharacteristicText("D")));
 
         return WeaponKeywordParser.Apply(weapon, profile.CharacteristicText("Keywords") is { Length: > 0 } k ? k : "-");
     }
@@ -443,5 +443,15 @@ public static partial class BattleScribeRosterMapper
         if (string.IsNullOrWhiteSpace(text)) return 0;
         text = text.Trim();
         return IsNotApplicable(text) ? 0 : int.Parse(text.TrimEnd('+'));
+    }
+
+    /// <summary>Parses a weapon's Damage characteristic text into a fully-resolved (uncaveated,
+    /// no contributing abilities) <see cref="ScalarCharacteristicView"/>, mirroring how every
+    /// other <see cref="WeaponProfile"/> characteristic is already constructed at this call
+    /// site.</summary>
+    private static ScalarCharacteristicView ParseDamage(string? text)
+    {
+        var dice = DiceExpression.Parse(text is { Length: > 0 } d ? d : "0");
+        return ScalarCharacteristicView.Resolved(dice, dice, []);
     }
 }

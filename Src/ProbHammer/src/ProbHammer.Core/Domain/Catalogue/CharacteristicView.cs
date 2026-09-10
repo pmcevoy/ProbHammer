@@ -60,6 +60,19 @@ public sealed record ScalarCharacteristicView(
     public static implicit operator ScalarCharacteristicView(int uniformValue) =>
         Resolved(uniformValue, uniformValue, []);
 
+    /// <summary>The dice-shaped counterpart to the <c>int</c> conversion above - <see
+    /// cref="WeaponProfile.D"/> (`classify-weapon-characteristic-effects`'s retype) is this
+    /// codebase's one real consumer, letting a call site pass a plain <see cref="DiceExpression"/>
+    /// (e.g. <see cref="DiceExpression.D6"/>) the same uniform, non-caveated, no-contributing-
+    /// abilities way the <c>int</c> operator already lets a plain scalar be passed. Does not widen
+    /// the bare-<c>int</c> conversion above - <c>int</c> still resolves through that single-step
+    /// conversion directly to a <see cref="NumericCharacteristicValue"/> (a two-step
+    /// <c>int</c>-via-<see cref="DiceExpression"/> chain is never attempted, since C# only ever
+    /// applies one user-defined implicit conversion per expression), so an existing bare-int D
+    /// construction site is unaffected by this operator's addition.</summary>
+    public static implicit operator ScalarCharacteristicView(DiceExpression uniformValue) =>
+        Resolved(uniformValue, uniformValue, []);
+
     /// <summary>A matched, fully-understood baseline Effect mutating an existing value uses this
     /// overload - <paramref name="originalValue"/> is the value's own pre-mutation
     /// <c>OriginalValue</c> (never its effective <c>Value</c>, which may already reflect an earlier

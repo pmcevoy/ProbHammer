@@ -187,6 +187,75 @@ units' footnoted "*Invulnerable Save"/"Invulnerable Save (N+*)" profiles; Space 
 melee-only) - all five manually reviewed and added to the baseline, which now tracks 41 entries, all
 unchanged on the next run.
 
+**Weapon-characteristic Effects** (`classify-weapon-characteristic-effects`): alongside the Statline-
+scalar and InSv shapes above, the classifier now also recognizes an unconditional mutation of a
+*weapon's* own characteristic (Strength/Attacks/Armour Penetration/Damage — `"S"`/`"A"`/`"AP"`/`"D"`,
+disjoint from `CharacteristicNames`' Statline vocabulary), scoped to a `WeaponSelector`
+(`AllWeapons`/`WeaponClass(WeaponType)`/`NamedWeapon(string)`, mirroring `RuleTarget`'s own
+abstract-base/sealed-subtype/`[JsonPolymorphic]` shape) naming which of the bearer's weapons it
+applies to:
+
+```
+WeaponSelector                          // Domain/Catalogue/WeaponSelector.cs - see class's own doc
+                                         // comment
+AllWeapons : WeaponSelector             // every weapon, unqualified
+WeaponClass(WeaponType Type) : WeaponSelector   // every weapon of one class (melee/ranged)
+NamedWeapon(string Name) : WeaponSelector       // one specifically named weapon - no real corpus
+                                         // example yet, kept for completeness
+
+WeaponCharacteristicEffect(WeaponSelector Selector, string Characteristic, EffectVerb Verb,
+                            int Amount) : CharacteristicEffect
+                                         // Domain/Catalogue/CharacteristicEffect.cs - the third
+                                         // sealed CharacteristicEffect subtype
+```
+
+Two extraction shapes, mirroring the InSv family's own multi-pattern precedent rather than one
+general grammar: a **dominant coordinate-list shape** ("Add N to the X[, Y and Z] characteristic(s)
+of {selector} weapons equipped by this model[ by N]" — two amount-position variants,
+`WeaponCharacteristicAdd`/`WeaponCharacteristicImproveWorsen`, since real corpus text uses both "Add
+N to..." and "...by N" phrasing) splits a comma/and-joined characteristic list into N atomic
+`WeaponCharacteristicEffect`s sharing one selector/verb/amount, never a single Effect holding more
+than one characteristic; and a rarer **two-verb anaphora shape** ("...add 1 to the Strength
+characteristic of melee weapons equipped by this model and improve the Armour Penetration
+characteristic of those weapons by 1") where `WeaponCharacteristicAnaphoraContinuation` recognizes
+the second, independently-verbed clause and infers its selector as identical to the first clause's
+own, rather than re-extracting it.
+
+The weapon-selector qualifier (the text between "of" and "weapons equipped by this model") is
+resolved structurally, not via a phrase list: empty → `AllWeapons`, "melee"/"ranged" →
+`WeaponClass`, anything else (a real corpus example: "Psychic weapons", "Lethal Hits weapons" —
+ability-flag-qualified selectors out of scope for this classifier) → no selector at all, which fails
+the whole match closed (zero Effects), per this classifier's existing "fail closed on the
+unrecognized case" convention.
+
+**`WeaponEffectStart`, a widened anchor scoped only to these two patterns**: every real corpus
+weapon-characteristic mutation (re-verified directly against five named ground-truth examples -
+Zealot, Chance for Glory, Brutal Raider, Euphoric Strikes ×2 - see
+`openspec/changes/classify-weapon-characteristic-effects/tasks.md`'s task 1.1) states its actual
+mutation clause immediately after a ", until the end of the phase," / ", until the end of the
+turn," temporal-scope clause, itself preceded by an activation preamble not at a true sentence
+start - so the plain `SentenceStart` anchor, applied unmodified, would reject every one of them.
+`WeaponEffectStart` widens `SentenceStart`'s own `^`/`\.\s*` cases with a third, equally structural
+case: immediately after that exact temporal-scope clause. `SentenceStart` itself, and every
+existing Statline/InSv pattern, are untouched.
+
+**Corpus review** (`classify-weapon-characteristic-effects` tasks.md task 6): a live run found 19
+distinct weapon-characteristic Effect results (0 false negatives found via a targeted grep of the
+Target-only bucket for any further "weapons equipped by this model" occurrence) — **all 19 manually
+reviewed and confirmed correct**, zero bugs found. All 19 added to the checked-in baseline (below),
+6 carrying a `note`: two document a real, confirmed extraction gap (a real "...and those weapons
+have the [KEYWORD] ability" continuation this classifier has no `KeywordEffect` vocabulary for yet —
+see `.claude/vnext-ideas.md`'s "`KeywordEffect`/`AbilityEffect`" idea), four document that their
+trailing content is a Crusade-campaign resource grant, not a characteristic mutation at all and so
+out of this classifier's vocabulary entirely, not a gap. The wider corpus grep (beyond the exact
+"weapons equipped by this model" anchor phrase) surfaced real phrasing this change deliberately
+does not implement — a real `Set`-verb-shaped weapon effect, a dice-valued amount ("D3"), two further
+real weapon-selector shapes (ability-flag-qualified, whole-unit-scoped), and two more real weapon
+characteristics (Weapon Skill/Ballistic Skill) — all recorded in `.claude/vnext-ideas.md` rather
+than folded into this change's own scope; see tasks.md task 1.2's own finding for the full detail.
+The checked-in baseline now tracks 62 entries (19 new weapon-characteristic entries added on top of
+whatever it tracked immediately before this change), all unchanged on the next run.
+
 **A related, real, NOT-yet-built idea surfaced by this same review**: several Effect results correctly
 extract their `CharacteristicEffect` but the source text also states content
 `RuleClassification` has no vocabulary for at all (a keyword grant/removal, another ability grant, a

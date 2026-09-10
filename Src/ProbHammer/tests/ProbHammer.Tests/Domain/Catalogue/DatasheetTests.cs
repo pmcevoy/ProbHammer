@@ -60,7 +60,13 @@ public class DatasheetTests
         profile.Skill.Value.Should().Be(new NumericCharacteristicValue(3));
         profile.S.Value.Should().Be(new NumericCharacteristicValue(4));
         profile.Ap.Value.Should().Be(new NumericCharacteristicValue(-1));
-        profile.D.Should().Be(DiceExpression.Fixed(1));
+        // A bare int literal at a WeaponProfile.D construction site (WeaponFixtures.ChainSword's
+        // own convention) resolves via ScalarCharacteristicView's plain-int implicit conversion,
+        // producing NumericCharacteristicValue - not DiceCharacteristicValue, which only a real
+        // DiceExpression-typed construction site (e.g. BsdataDatasheetMapper's own ParseDamage;
+        // see BsdataDatasheetMapperTests) produces. Both render/resolve identically for a fixed
+        // value - see classify-weapon-characteristic-effects tasks.md task 5.3's own note.
+        profile.D.Value.Should().Be(new NumericCharacteristicValue(1));
     }
 
     [Fact]

@@ -429,4 +429,160 @@ public class RuleEffectClassifierTests
         result.Effects.Should().BeEmpty();
         result.IsCaveated.Should().BeFalse();
     }
+
+    // Weapon-characteristic Effect ground truth (classify-weapon-characteristic-effects task 1.1) -
+    // all five texts re-confirmed verbatim against the live BSData clone.
+
+    [Fact]
+    public void Zealot_SharedAmountTwoItemCoordinateList_SplitsIntoTwoImproveEffects()
+    {
+        var result = RuleEffectClassifier.Classify("Zealot",
+            "Once per battle, in the Fight phase, this model can use this ability. If it does, until the end of the phase, improve the Strength and Attacks characteristics of melee weapons equipped by this model by 3.");
+
+        result.Effects.Should().Equal(
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 3),
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "A", EffectVerb.Improve, 3));
+        result.IsCaveated.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ChanceForGlory_SharedAmountFourItemCoordinateList_SplitsIntoFourImproveEffects()
+    {
+        var result = RuleEffectClassifier.Classify("Chance for Glory",
+            "Once per battle, at the start of the Fight phase, this model can use this ability. If it does, until the end of the phase, improve the Strength, Attacks, Armour Penetration and Damage characteristics of melee weapons equipped by this model by 1.");
+
+        result.Effects.Should().Equal(
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 1),
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "A", EffectVerb.Improve, 1),
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "AP", EffectVerb.Improve, 1),
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "D", EffectVerb.Improve, 1));
+        result.IsCaveated.Should().BeFalse();
+    }
+
+    [Fact]
+    public void BrutalRaider_TwoVerbAnaphoraJoinedPair_ExtractsTwoIndependentlyVerbedEffects()
+    {
+        var result = RuleEffectClassifier.Classify("Brutal Raider",
+            "Each time this model's unit ends a Charge move, until the end of the turn, add 1 to the Strength characteristic of melee weapons equipped by this model and improve the Armour Penetration characteristic of those weapons by 1.");
+
+        result.Effects.Should().Equal(
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 1),
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "AP", EffectVerb.Improve, 1));
+        result.IsCaveated.Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData(
+        "Once per battle, at the start of the Fight phase, this model can use this ability. If it does so, until the end of the phase, add 3 to the Attacks characteristic of melee weapons equipped by this model and improve the Armour Penetration characteristic of those weapons by 1.")]
+    [InlineData(
+        "Once per battle, at the start of the Fight phase, this model can use this ability. If it does, until the end of the phase, add 3 to the Attacks characteristic of melee weapons equipped by this model and improve the Armour Penetration characteristic of those weapons by 1.")]
+    public void EuphoricStrikes_BothRealVariants_ExtractTheSameTwoEffects(string text)
+    {
+        // Two real datasheets carry this ability with near-identical text - "does so" vs. "does" -
+        // both must classify identically.
+        var result = RuleEffectClassifier.Classify("Euphoric Strikes", text);
+
+        result.Effects.Should().Equal(
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "A", EffectVerb.Improve, 3),
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "AP", EffectVerb.Improve, 1));
+    }
+
+    [Fact]
+    public void WeaponCharacteristic_SingleMutation_ExtractsOneEffect()
+    {
+        // Real corpus text (Chaos Space Marines' "Scorpion Tail", Death Guard's "Writhing
+        // Tentacles" - identical standalone sentence on both).
+        var result = RuleEffectClassifier.Classify("Scorpion Tail",
+            "Add 1 to the Attacks characteristic of melee weapons equipped by this model.");
+
+        result.Effects.Should().Equal(
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "A", EffectVerb.Improve, 1));
+    }
+
+    [Fact]
+    public void WeaponCharacteristic_BareWeaponsQualifier_ResolvesToAllWeaponsSelector()
+    {
+        // Real corpus text (a once-per-battle Command phase ability) - no "melee"/"ranged"
+        // qualifier at all.
+        var result = RuleEffectClassifier.Classify("Test Ability",
+            "Once per battle, in your Command phase, this model can use this ability. If it does, until the end of the turn, add 2 to the Damage characteristic of weapons equipped by this model.");
+
+        result.Effects.Should().Equal(
+            new WeaponCharacteristicEffect(new AllWeapons(), "D", EffectVerb.Improve, 2));
+    }
+
+    [Fact]
+    public void WeaponCharacteristic_RangedQualifier_ResolvesToRangedWeaponClassSelector()
+    {
+        // Real corpus text (Imperium - Space Marines.json).
+        var result = RuleEffectClassifier.Classify("Test Ability",
+            "Improve the Strength and Armour Penetration characteristics of ranged weapons equipped by this model by 1.");
+
+        result.Effects.Should().Equal(
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Ranged), "S", EffectVerb.Improve, 1),
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Ranged), "AP", EffectVerb.Improve, 1));
+    }
+
+    [Fact]
+    public void WeaponCharacteristic_AddFormThreeItemCoordinateList_SplitsIntoThreeEffects()
+    {
+        // Real corpus text (a once-per-battle Fight phase ability) - the Add-amount-first phrasing
+        // with a three-item list, confirming the split logic isn't hardcoded to two/four items.
+        var result = RuleEffectClassifier.Classify("Test Ability",
+            "Once per battle, at the start of the Fight phase, this model can use this ability. If it does, until the end of the phase, add 2 to the Attacks, Strength and Damage characteristics of melee weapons equipped by this model.");
+
+        result.Effects.Should().Equal(
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "A", EffectVerb.Improve, 2),
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 2),
+            new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "D", EffectVerb.Improve, 2));
+    }
+
+    [Fact]
+    public void WeaponCharacteristic_UnrecognizedSelectorQualifier_ExtractsNoEffect()
+    {
+        // Real corpus text (Chaos - Thousand Sons.json) - "Psychic weapons" is an ability-flag-
+        // qualified selector out of this classifier's scope (see design.md's Non-Goals); must fail
+        // closed rather than misread as an AllWeapons/WeaponClass selector.
+        var result = RuleEffectClassifier.Classify("Arcane Might",
+            "Add 1 to the Strength characteristic of Psychic weapons equipped by models in the bearer's unit.");
+
+        result.Effects.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void WeaponCharacteristic_UnrecognizedCharacteristicList_ExtractsNoEffect()
+    {
+        // Real corpus text (Aeldari - Aeldari Library.json). Weapon Skill/Ballistic Skill are out
+        // of this classifier's own vocabulary (see WeaponCharacteristicNames' own doc comment) -
+        // must fail closed, not throw or guess.
+        var result = RuleEffectClassifier.Classify("Test Ability",
+            "Improve the Ballistic Skill and Weapon Skill characteristics of weapons equipped by this model by 1.");
+
+        result.Effects.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("Melee weapons equipped by this model have the **[DEVASTATING WOUNDS]** ability.")]
+    [InlineData("Ranged weapons equipped by this model have the **[IGNORES COVER]** ability.")]
+    public void WeaponCharacteristic_PlainKeywordGrantProse_ExtractsNoEffect(string text)
+    {
+        // Real corpus shapes naming "weapons equipped by this model" with no characteristic-
+        // mutation language at all (a keyword-ability grant, a different Effect family entirely
+        // this classifier doesn't model) - must classify to zero Effects, not throw.
+        var result = RuleEffectClassifier.Classify("Test Ability", text);
+
+        result.Effects.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void WeaponCharacteristic_EmbeddedInAnUnrelatedConditionalClause_ExtractsNoEffect()
+    {
+        // Not preceded by a true sentence start or the recognized ", until the end of the
+        // phase/turn," temporal-scope clause - WeaponEffectStart must still reject this the same
+        // way SentenceStart rejects its own conditional-clause negative tests above.
+        var result = RuleEffectClassifier.Classify("Test Ability",
+            "If this model is equipped with a thundershock spear and a bellatus reaper chainsword, add 2 to the Attacks characteristic of melee weapons equipped by this model.");
+
+        result.Effects.Should().BeEmpty();
+    }
 }

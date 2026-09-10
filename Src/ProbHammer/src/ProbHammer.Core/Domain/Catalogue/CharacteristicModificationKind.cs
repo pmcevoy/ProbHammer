@@ -23,10 +23,13 @@ public enum CharacteristicModificationKind
 }
 
 /// <summary>Closed characteristic-name -> <see cref="CharacteristicModificationKind"/> lookup,
-/// keyed by the same plain characteristic-name strings <see cref="CharacteristicEffect.Characteristic"/>
-/// already uses. Deliberately excludes InSv and WeaponProfile's Attacks/Damage: InSv is a compound
-/// melee/ranged <see cref="InvulnerableSave"/>, not a plain scalar, and Attacks/Damage are
-/// <see cref="DiceExpression"/>, never a plain scalar, in this codebase today.</summary>
+/// keyed by the same plain characteristic-name strings <see cref="ScalarCharacteristicEffect.Characteristic"/>
+/// already uses. Deliberately excludes InSv and WeaponProfile's Attacks: InSv is a compound
+/// melee/ranged <see cref="InvulnerableSave"/>, not a plain scalar; Attacks is a bare
+/// <see cref="DiceExpression"/> with no resolver/clamp path yet (see
+/// `classify-weapon-characteristic-effects` design.md's own Non-Goals - classification-only for
+/// Attacks, deliberately deferred). Damage ("D") IS covered, despite being dice-shaped too - see
+/// <see cref="CharacteristicModificationResolver.Resolve"/>'s own dice-aware branch.</summary>
 public static class CharacteristicModificationKinds
 {
     private static readonly Dictionary<string, CharacteristicModificationKind> Kinds =
@@ -42,11 +45,12 @@ public static class CharacteristicModificationKinds
             ["W"] = CharacteristicModificationKind.Plain,
             ["Oc"] = CharacteristicModificationKind.Plain,
             ["S"] = CharacteristicModificationKind.Plain,
-            ["Range"] = CharacteristicModificationKind.Plain
+            ["Range"] = CharacteristicModificationKind.Plain,
+            ["D"] = CharacteristicModificationKind.Plain
         };
 
     /// <summary>Throws for a characteristic name this component doesn't cover (including InSv and
-    /// Attacks/Damage) rather than guessing - see this type's own doc comment for why those are
+    /// Attacks) rather than guessing - see this type's own doc comment for why those are
     /// excluded.</summary>
     public static CharacteristicModificationKind Of(string characteristic) =>
         Kinds.TryGetValue(characteristic, out var kind)

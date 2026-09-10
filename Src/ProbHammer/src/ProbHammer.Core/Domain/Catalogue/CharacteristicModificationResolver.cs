@@ -50,10 +50,31 @@ public static class CharacteristicModificationResolver
 
     /// <summary>Applies an effect to a characteristic's current <see cref="CharacteristicValue"/>,
     /// returning the resolved value. A symbolic current value ("-", "*", "N/A") is returned unchanged
-    /// regardless of verb/characteristic/amount. Not yet consumed by any caller.</summary>
+    /// regardless of verb/characteristic/amount. A <see cref="DiceCharacteristicValue"/> (Damage, the
+    /// first dice-shaped characteristic this resolves) takes its own branch, per
+    /// `classify-weapon-characteristic-effects` design.md's "Damage resolves through the Plain
+    /// family" decision: <see cref="EffectVerb.Improve"/>/<see cref="EffectVerb.Worsen"/> apply the
+    /// resolved signed delta to the value's own flat modifier via <see cref="DiceExpression"/>'s
+    /// existing <c>+</c> operator, preserving its dice component (count/sides) unchanged; a
+    /// <see cref="EffectVerb.Set"/> replaces the value outright with a fixed
+    /// <see cref="DiceExpression"/>, discarding any prior dice component - consistent with how Set
+    /// already discards a prior value's history for every other characteristic. Not yet consumed by
+    /// any caller.</summary>
     public static CharacteristicValue Resolve(
         string characteristic, CharacteristicValue current, EffectVerb verb, int amount)
     {
+        if (current is DiceCharacteristicValue dice)
+        {
+            if (verb == EffectVerb.Set)
+                return new DiceCharacteristicValue(
+                    CharacteristicModificationClamp.ApplyToDice(characteristic, DiceExpression.Fixed(amount)));
+
+            var delta = ResolveDelta(CharacteristicModificationKinds.Of(characteristic), verb, amount);
+            var resolvedDice = dice.Value + delta;
+            return new DiceCharacteristicValue(
+                CharacteristicModificationClamp.ApplyToDice(characteristic, resolvedDice));
+        }
+
         if (current is not NumericCharacteristicValue numeric)
             return current;
 

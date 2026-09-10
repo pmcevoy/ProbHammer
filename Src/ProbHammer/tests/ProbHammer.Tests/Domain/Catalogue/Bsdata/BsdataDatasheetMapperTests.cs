@@ -40,7 +40,9 @@ public class BsdataDatasheetMapperTests
         fistOfDorn.Skill.Value.Should().Be(new ProbHammer.Core.Domain.Catalogue.NumericCharacteristicValue(2));
         fistOfDorn.S.Value.Should().Be(new ProbHammer.Core.Domain.Catalogue.NumericCharacteristicValue(10));
         fistOfDorn.Ap.Value.Should().Be(new ProbHammer.Core.Domain.Catalogue.NumericCharacteristicValue(-3));
-        fistOfDorn.D.Should().Be(ProbHammer.Core.Domain.Catalogue.DiceExpression.Fixed(3));
+        fistOfDorn.D.Value.Should().Be(
+            new ProbHammer.Core.Domain.Catalogue.DiceCharacteristicValue(ProbHammer.Core.Domain.Catalogue.DiceExpression
+                .Fixed(3)));
         fistOfDorn.DevastatingWounds.Should().BeTrue();
         fistOfDorn.KeywordsText.Should().Equal("Devastating Wounds");
 

@@ -139,6 +139,123 @@ public class CharacteristicModificationResolverTests
         resolved.Should().Be(current);
     }
 
+    // Damage (dice-shaped) coverage - classify-weapon-characteristic-effects.
+
+    [Fact]
+    public void Clamp_DamageIsClassifiedAsPlain()
+    {
+        CharacteristicModificationKinds.Of("D").Should().Be(CharacteristicModificationKind.Plain);
+    }
+
+    [Fact]
+    public void Resolve_ImprovingADiceShapedDamage_AddsToItsFlatModifier()
+    {
+        var resolved = CharacteristicModificationResolver.Resolve("D", new DiceCharacteristicValue(DiceExpression.D6),
+            EffectVerb.Improve, 1);
+
+        resolved.Should().Be(new DiceCharacteristicValue(DiceExpression.D6 + 1));
+    }
+
+    [Fact]
+    public void Resolve_WorseningADiceShapedDamage_SubtractsFromItsFlatModifier()
+    {
+        var resolved = CharacteristicModificationResolver.Resolve("D",
+            new DiceCharacteristicValue(DiceExpression.D6 + 2), EffectVerb.Worsen, 1);
+
+        resolved.Should().Be(new DiceCharacteristicValue(DiceExpression.D6 + 1));
+    }
+
+    [Fact]
+    public void Resolve_ImprovingAFixedDamage_BehavesIdenticallyToAPlainScalar()
+    {
+        var resolved = CharacteristicModificationResolver.Resolve("D",
+            new DiceCharacteristicValue(DiceExpression.Fixed(2)),
+            EffectVerb.Improve, 1);
+
+        resolved.Should().Be(new DiceCharacteristicValue(DiceExpression.Fixed(3)));
+    }
+
+    [Fact]
+    public void Resolve_SettingADiceShapedDamage_ReplacesItWithAFixedValue()
+    {
+        var resolved = CharacteristicModificationResolver.Resolve("D", new DiceCharacteristicValue(DiceExpression.D6),
+            EffectVerb.Set, 3);
+
+        resolved.Should().Be(new DiceCharacteristicValue(DiceExpression.Fixed(3)));
+    }
+
+    [Fact]
+    public void Resolve_WorseningADiceShapedDamagePastItsFloor_ClampsItsModifierToAGuaranteedMinimumOf1()
+    {
+        // Unclamped, "D6" worsened by 8 would resolve to "D6-8" (guaranteed minimum
+        // Count + Modifier = 1 + -8 = -7, per spec.md's own "flat modifier, plus one for each die
+        // it rolls" definition). Clamped, the modifier is raised just enough that the guaranteed
+        // minimum comes back to exactly 1: Modifier = 1 - Count = 1 - 1 = 0, i.e. plain "D6" - see
+        // tasks.md task 4.4's note on design.md's own worked example (which states -5, an
+        // arithmetic slip design.md has since been corrected to match this).
+        var resolved = CharacteristicModificationResolver.Resolve("D", new DiceCharacteristicValue(DiceExpression.D6),
+            EffectVerb.Worsen, 8);
+
+        resolved.Should().Be(new DiceCharacteristicValue(DiceExpression.D6));
+    }
+
+    [Fact]
+    public void Resolve_WorseningATwoDiceShapedDamagePastItsFloor_ClampsToANegativeModifier()
+    {
+        // A genuine negative-modifier clamp result (unlike the single-die case above, where
+        // 1 - Count happens to be 0): 2D6 (guaranteed minimum 2) worsened by 5 would unclamp to
+        // "2D6-5" (guaranteed minimum 2 + -5 = -3); clamped, Modifier = 1 - Count = 1 - 2 = -1,
+        // i.e. "2D6-1" (guaranteed minimum 1).
+        var twoD6 = DiceExpression.D6 with { Count = 2 };
+
+        var resolved = CharacteristicModificationResolver.Resolve("D", new DiceCharacteristicValue(twoD6),
+            EffectVerb.Worsen, 5);
+
+        resolved.Should().Be(new DiceCharacteristicValue(twoD6 with { Modifier = -1 }));
+    }
+
+    [Fact]
+    public void Resolve_WorseningADiceShapedDamageWithinItsFloor_LeavesItUnclamped()
+    {
+        // spec.md's own scenario: "D6" (guaranteed minimum 1) worsened by 3 clamps its flat
+        // modifier so the guaranteed minimum stays 1, rather than resolving to "D6-3" (a
+        // guaranteed minimum of -2) - the boundary case where the clamped-back modifier happens to
+        // land exactly on 0 ("D6" itself), distinct from the amount-8 case above where it lands on
+        // a real negative modifier.
+        var resolved = CharacteristicModificationResolver.Resolve("D", new DiceCharacteristicValue(DiceExpression.D6),
+            EffectVerb.Worsen, 3);
+
+        resolved.Should().Be(new DiceCharacteristicValue(DiceExpression.D6));
+    }
+
+    [Fact]
+    public void Resolve_WorseningAFixedDamagePastItsFloor_ClampsTo1()
+    {
+        var resolved = CharacteristicModificationResolver.Resolve("D",
+            new DiceCharacteristicValue(DiceExpression.Fixed(2)),
+            EffectVerb.Worsen, 5);
+
+        resolved.Should().Be(new DiceCharacteristicValue(DiceExpression.Fixed(1)));
+    }
+
+    [Theory]
+    [InlineData("S", -1, 1)] // improving S (Plain) past its floor of 1" clamps to 1" - the first
+    // real weapon-characteristic proving example for S (task 4.5)
+    [InlineData("AP", 1, 0)] // worsening a weapon's own AP past its cap of 0 clamps to 0 - the
+    // first real weapon-characteristic proving example for AP (task 4.5)
+    public void Clamp_WeaponCharacteristicsProveTheirExistingBounds(string characteristic, int value, int expected)
+    {
+        // S and AP were already in CharacteristicModificationKinds/CharacteristicModificationClamp's
+        // lookup tables before this change (proven only against Statline values so far) - this is
+        // their first real proving example against a genuine WeaponProfile-targeting Effect
+        // (Chance for Glory/the ranged-Improve test above both classify real S/AP weapon Effects).
+        // Design.md's Goals also names WS/BS, but this change's own weapon-characteristic vocabulary
+        // (task 3.1) deliberately excludes Weapon Skill/Ballistic Skill - see tasks.md task 1.2's
+        // finding - so they stay unproven by a real weapon Effect until a future phase widens that
+        // vocabulary.
+        CharacteristicModificationClamp.Apply(characteristic, value).Should().Be(expected);
+    }
+
     [Fact]
     public void Resolve_ReproducesVexillaStatlineFlagRulesResolvedObjectiveControl()
     {
