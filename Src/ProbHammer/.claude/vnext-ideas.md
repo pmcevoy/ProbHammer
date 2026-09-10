@@ -11,15 +11,12 @@ record, not this file).
 
 - **Per-ability Model/Unit scope marker.** A prefix/symbol on the ability name (mirroring the
   Enhancement `✦` prefix) to show whether an ability is model- or unit-scoped.
-- **Core/Faction/Psychic ability source tagging** — distinguish where an ability comes from, not
-  just its name/scope.
-- **Per-`ModelLine` keywords.** So a leader's personal keyword leaves the unit's effective keyword
-  union when that specific model is removed as a casualty — keywords are currently only tracked at
-  the `Datasheet` level.
+- **Psychic ability source tagging** — `AbilityOrigin` already distinguishes Core rules from
+  Faction-wide ones (`CoreRule`/`ArmyRule`); a Psychic-specific tag doesn't exist yet.
 - **Multi-profile-weapon "select one profile" disclaimer** — some weapons have multiple firing
   profiles the player picks between; not flagged today.
 - **Ability-driven attack modifiers** — e.g. a unit-wide "+1 Attack" ability changing a printed
-  total. Depends on the ability-text interpretation pass below.
+  total. Depends on the `WeaponProfile`-targeting rule effects idea below.
 - **Split `Keywords` into unit-wide-union vs. per-component, or add `FactionKeywords`** — currently
   one unioned set.
 - **Split `wwwroot/css/site.css` into a `/LivePlay`-only stylesheet** — it still ships dead 10e
@@ -27,10 +24,11 @@ record, not this file).
 
 ## Domain / data pipeline
 
-- **Ability-text interpretation pass.** Classify an ability's Description against a small closed
-  vocabulary of known fixed phrasings (never general NLU — that stays permanently out of scope).
-  Should also resolve Model-vs-Unit scope for Enhancements, which always render at Unit scope
-  today regardless of what the text actually says.
+- **Enhancement Model/Unit scope classification.** Every Enhancement renders at Unit scope
+  unconditionally today, even though real rules text sometimes signals Model scope instead (e.g.
+  "this model's Objective Control"). The closed-vocabulary text-classification approach this would
+  build on already exists (`RuleEffectClassifier`, `InvulnerableSaveCaveatClassifier`) — this
+  specific classification hasn't been.
 - **Characteristic modification engine.** A real engine for stacking multiple rules on one
   characteristic (Set→Multiply→Add→Divide→Subtract order, per-characteristic clamp bounds) and
   applying Improve/Worsen verbs. The sign/clamp resolver exists; the modifier/engine/mutator-rule
@@ -41,8 +39,9 @@ record, not this file).
   (needs each applied modifier tracked as a discrete, toggleable item).
 - **Fallback "known-affected, unresolved" effect marker.** When text clearly touches a
   characteristic but matches no specific extraction pattern, emit an unresolved/caveated marker
-  instead of silently extracting nothing. Piloted for InSv; extending to the six Statline scalars
-  needs an equivalent detection gate built first.
+  instead of silently extracting nothing. A detection gate for "text mentions invulnerable save"
+  exists (`RuleEffectClassifier.MayStateInvulnerableSave`) but the marker type itself doesn't;
+  extending this to the six Statline scalars needs an equivalent gate for each first.
 - **`WeaponProfile`-targeting rule effects** (attack/weapon-stat buffs) and **Multiply/Divide
   verbs** — not yet recognized by the rule-effect classifier.
 - **`KeywordEffect`/`AbilityEffect`** — sibling types to `CharacteristicEffect` for rules that
