@@ -116,6 +116,23 @@ public class BattleScribeRosterMapperTests
     }
 
     [Fact]
+    public void PreSplitModelGroup_CarriesEachLoadoutsOwnRawSelectionName_AsDisplayName()
+    {
+        // The roster JSON's own per-node "name" ("Initiate w/Power Fist & Heavy Bolt Pistol") is
+        // distinct from the resolved catalogue StatlineName ("Initiate") both Initiate ModelLines
+        // share - DisplayName should carry that raw name through, not collapse to StatlineName.
+        var army = BuildRoster();
+        var crusaderSquad = FindUnit(army, "Crusader Squad");
+
+        var chainswordInitiates =
+            crusaderSquad.ModelLines.First(ml => ml.Weapons.Contains("Astartes Chainsword"));
+        chainswordInitiates.DisplayName.Should().Be("Initiate w/Chainsword & Heavy Bolt Pistol");
+
+        var powerFistInitiates = crusaderSquad.ModelLines.First(ml => ml.Weapons.Contains("Power fist"));
+        powerFistInitiates.DisplayName.Should().Be("Initiate w/Power Fist & Heavy Bolt Pistol");
+    }
+
+    [Fact]
     public void MultiProfileWeaponSelection_RetainsEveryResolvedProfile()
     {
         var army = BuildRoster();

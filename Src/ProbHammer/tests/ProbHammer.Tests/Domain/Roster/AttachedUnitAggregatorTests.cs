@@ -91,6 +91,75 @@ public class AttachedUnitAggregatorTests
     }
 
     [Fact]
+    public void StatlineView_LoadoutCarriesItsOwnWargearGrantedAbilityNames()
+    {
+        // Mirrors the real Custodian Warden/Vexilla shape: two ModelLines sharing one statline
+        // name, one carrying a wargear-granted ability the other doesn't.
+        var statline = new Statline(6, 6, 2, 3, 6, 4);
+        var vexilla = new Ability
+        {
+            Name = "Vexilla", Text = "Add 1 to the Objective Control characteristic of models in the bearer's unit.",
+            Scope = AbilityScope.Unit, Origin = AbilityOrigin.OptionalGrant
+        };
+        var datasheet = new Datasheet(
+            "Custodian Wardens", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Custodian Warden", statline)], weaponProfiles: []);
+        var unit = new Unit(
+            datasheet, [],
+            [
+                new ModelLine("Custodian Warden", [], count: 4),
+                new ModelLine("Custodian Warden", [], count: 1, abilities: [vexilla])
+            ]);
+
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+
+        var entry = view.Statlines.Single(s => s.StatlineName == "Custodian Warden");
+        entry.Loadouts.Should().HaveCount(2);
+        entry.Loadouts.Single(l => l.InitialCount == 4).Abilities.Should().BeEmpty();
+        entry.Loadouts.Single(l => l.InitialCount == 1).Abilities.Should().Equal("Vexilla");
+    }
+
+    [Fact]
+    public void StatlineView_LoadoutCarriesItsOwnImportSideDisplayName()
+    {
+        // Mirrors the real Death Guard shape: two ModelLines sharing one statline name
+        // ("Plague Marine"), each carrying the import's own raw per-loadout name ("Plague Champion"
+        // vs "Plague Marine w/ boltgun") distinct from that shared StatlineName - and, unlike the
+        // Vexilla case above, with byte-identical weapons/abilities on both, so DisplayName is the
+        // only thing that will end up distinguishing them once rendered.
+        var statline = new Statline(5, 6, 3, 2, 6, 2);
+        var plagueKnives = new MeleeWeapon("Plague knives", 3, 3, 4, 0, 1);
+        var datasheet = new Datasheet(
+            "Plague Marines", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Plague Marine", statline)], weaponProfiles: [plagueKnives]);
+        var unit = new Unit(
+            datasheet, [],
+            [
+                new ModelLine("Plague Marine", [plagueKnives.Name], count: 1, displayName: "Plague Champion"),
+                new ModelLine("Plague Marine", [plagueKnives.Name], count: 4,
+                    displayName: "Plague Marine w/ boltgun")
+            ]);
+
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+
+        var entry = view.Statlines.Single(s => s.StatlineName == "Plague Marine");
+        entry.Loadouts.Should().HaveCount(2);
+        entry.Loadouts.Single(l => l.InitialCount == 1).DisplayName.Should().Be("Plague Champion");
+        entry.Loadouts.Single(l => l.InitialCount == 4).DisplayName.Should().Be("Plague Marine w/ boltgun");
+    }
+
+    [Fact]
+    public void StatlineView_LoadoutDisplayNameDefaultsToTheStatlineName_WhenNoImportSideNameIsGiven()
+    {
+        var unit = UnitFixtures.CrusaderSquadMixedLoadout();
+
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+
+        var initiate = view.Statlines.Single(s => s.StatlineName == "Initiate");
+        initiate.Loadouts.Should().OnlyContain(l => l.DisplayName == "Initiate");
+    }
+
+    [Fact]
     public void StatlineView_PersistsAtZero_OnceEveryModelLineSharingItIsGone()
     {
         var unit = UnitFixtures.CrusaderSquadMixedLoadout();
@@ -282,7 +351,7 @@ public class AttachedUnitAggregatorTests
         var plainCopy = view.Weapons.Single(w => !w.Profile.LethalHits);
 
         lethalHitsCopy.TotalAttacks.Should().Be(DiceExpression.Fixed(12)); // 4 x A3
-        plainCopy.TotalAttacks.Should().Be(DiceExpression.Fixed(7));      // 1 x A7
+        plainCopy.TotalAttacks.Should().Be(DiceExpression.Fixed(7)); // 1 x A7
     }
 
     [Fact]
@@ -311,9 +380,12 @@ public class AttachedUnitAggregatorTests
         var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
 
         view.Weapons.Should().HaveCount(3);
-        view.Weapons.Should().ContainSingle(w => w.Profile.Name == "Bolt pistol" && w.TotalAttacks == DiceExpression.Fixed(1));
-        view.Weapons.Should().ContainSingle(w => w.Profile.Name == "Astartes shotgun" && w.TotalAttacks == DiceExpression.Fixed(2));
-        view.Weapons.Should().ContainSingle(w => w.Profile.Name == "Suppressive carbine" && w.TotalAttacks == DiceExpression.Fixed(1));
+        view.Weapons.Should()
+            .ContainSingle(w => w.Profile.Name == "Bolt pistol" && w.TotalAttacks == DiceExpression.Fixed(1));
+        view.Weapons.Should().ContainSingle(w =>
+            w.Profile.Name == "Astartes shotgun" && w.TotalAttacks == DiceExpression.Fixed(2));
+        view.Weapons.Should().ContainSingle(w =>
+            w.Profile.Name == "Suppressive carbine" && w.TotalAttacks == DiceExpression.Fixed(1));
     }
 
     [Fact]
@@ -356,13 +428,25 @@ public class AttachedUnitAggregatorTests
     {
         var bodyguardDatasheet = new Datasheet(
             "Crusader Squad", factionKeywords: [], keywords: [],
-            abilities: [new Ability { Name = "Shared Name", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic }],
+            abilities:
+            [
+                new Ability
+                {
+                    Name = "Shared Name", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic
+                }
+            ],
             statlines: [("Guardian", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
         var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Guardian", [], count: 3)]);
 
         var leaderDatasheet = new Datasheet(
             "Ancient", factionKeywords: [], keywords: [],
-            abilities: [new Ability { Name = "Shared Name", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic }],
+            abilities:
+            [
+                new Ability
+                {
+                    Name = "Shared Name", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic
+                }
+            ],
             statlines: [("Ancient", new Statline(6, 5, 3, 4, 6, 1))], weaponProfiles: []);
         var leader = new Unit(leaderDatasheet, [], [new ModelLine("Ancient", [], count: 1)]);
 
@@ -371,7 +455,8 @@ public class AttachedUnitAggregatorTests
         var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
 
         view.Abilities.Where(e => e.Ability.Name == "Shared Name").Should().HaveCount(2);
-        view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Shared Name" && e.ComponentName == "Crusader Squad");
+        view.Abilities.Should()
+            .ContainSingle(e => e.Ability.Name == "Shared Name" && e.ComponentName == "Crusader Squad");
         view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Shared Name" && e.ComponentName == "Ancient");
     }
 
@@ -380,13 +465,19 @@ public class AttachedUnitAggregatorTests
     {
         var datasheet = new Datasheet(
             "Crusader Squad", factionKeywords: [], keywords: [],
-            abilities: [new Ability { Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic }],
+            abilities:
+            [
+                new Ability
+                {
+                    Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic
+                }
+            ],
             statlines: [("Initiate", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
         var unit = new Unit(datasheet, [],
-            [
-                new ModelLine("Initiate", [], count: 2),
-                new ModelLine("Initiate", [], count: 3)
-            ]);
+        [
+            new ModelLine("Initiate", [], count: 2),
+            new ModelLine("Initiate", [], count: 3)
+        ]);
         unit.ModelLines[0].RemoveCasualties(2); // first line fully removed, second still has 3
 
         var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
@@ -397,7 +488,10 @@ public class AttachedUnitAggregatorTests
     [Fact]
     public void AbilityView_ReportsAResolvedEnhancementWithoutAStatlineName()
     {
-        var enhancement = new Ability { Name = "Oathbound Exemplar", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Enhancement };
+        var enhancement = new Ability
+        {
+            Name = "Oathbound Exemplar", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Enhancement
+        };
         var datasheet = new Datasheet(
             "Marshal", factionKeywords: [], keywords: [], abilities: [],
             statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: []);
@@ -412,7 +506,10 @@ public class AttachedUnitAggregatorTests
     [Fact]
     public void AbilityView_EnhancementDisappearsOnceItsComponentIsNoLongerPresent()
     {
-        var enhancement = new Ability { Name = "Oathbound Exemplar", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Enhancement };
+        var enhancement = new Ability
+        {
+            Name = "Oathbound Exemplar", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Enhancement
+        };
         var datasheet = new Datasheet(
             "Marshal", factionKeywords: [], keywords: [], abilities: [],
             statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: []);
@@ -440,7 +537,8 @@ public class AttachedUnitAggregatorTests
     [Fact]
     public void AbilityView_ACoreRuleAbilitySharedByEveryComponent_IsReportedOnce()
     {
-        var vow = new Ability { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
+        var vow = new Ability
+            { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
         var bodyguardDatasheet = new Datasheet(
             "Crusader Squad", factionKeywords: [], keywords: [], abilities: [vow],
             statlines: [("Guardian", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
@@ -456,13 +554,15 @@ public class AttachedUnitAggregatorTests
         var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
 
         view.Abilities.Where(e => e.Ability.Name == "Templar Vows").Should().ContainSingle();
-        view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Templar Vows" && e.ComponentName == null && e.StatlineName == null);
+        view.Abilities.Should().ContainSingle(e =>
+            e.Ability.Name == "Templar Vows" && e.ComponentName == null && e.StatlineName == null);
     }
 
     [Fact]
     public void AbilityView_ACoreRuleAbilitySharedByOnlySomeComponents_IsStillReportedOnce()
     {
-        var vow = new Ability { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
+        var vow = new Ability
+            { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
         var bodyguardDatasheet = new Datasheet(
             "Crusader Squad", factionKeywords: [], keywords: [], abilities: [vow],
             statlines: [("Guardian", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
@@ -489,7 +589,8 @@ public class AttachedUnitAggregatorTests
     [Fact]
     public void AbilityView_ASharedCoreRuleAbility_PersistsWhileAnyContributingComponentRemains()
     {
-        var vow = new Ability { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
+        var vow = new Ability
+            { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
         var bodyguardDatasheet = new Datasheet(
             "Crusader Squad", factionKeywords: [], keywords: [], abilities: [vow],
             statlines: [("Guardian", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
@@ -521,7 +622,13 @@ public class AttachedUnitAggregatorTests
         // fact is just as much one there.
         var datasheet = new Datasheet(
             "Impulsor", factionKeywords: [], keywords: [],
-            abilities: [new Ability { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule }],
+            abilities:
+            [
+                new Ability
+                {
+                    Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule
+                }
+            ],
             statlines: [("Black Templars Impulsor", new Statline(12, 9, 3, 11, 6, 2))], weaponProfiles: []);
         var unit = new Unit(datasheet, [], [new ModelLine("Black Templars Impulsor", [], count: 1)]);
 
@@ -535,7 +642,8 @@ public class AttachedUnitAggregatorTests
     [Fact]
     public void AbilityView_ASharedCoreRuleAbility_DisappearsOnceEveryContributingComponentIsGone()
     {
-        var vow = new Ability { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
+        var vow = new Ability
+            { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
         var bodyguardDatasheet = new Datasheet(
             "Crusader Squad", factionKeywords: [], keywords: [], abilities: [vow],
             statlines: [("Guardian", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);

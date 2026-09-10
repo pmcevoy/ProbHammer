@@ -218,7 +218,9 @@ public static class AttachedUnitAggregator
                         WeaponsLabel: string.Join(", ", ml.Weapons),
                         Weapons: ml.Weapons,
                         RemainingCount: ml.RemainingCount,
-                        InitialCount: ml.Count))
+                        InitialCount: ml.Count,
+                        Abilities: ml.Abilities.Select(a => a.Name).ToList(),
+                        DisplayName: ml.DisplayName))
                     .ToList();
 
                 entries.Add(new AggregateStatlineEntry(

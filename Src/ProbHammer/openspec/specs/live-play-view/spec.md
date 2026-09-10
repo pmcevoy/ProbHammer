@@ -132,11 +132,19 @@ entry in the run — showing that entry's own name and remaining/initial model c
 distinct element, never concatenated with another entry's header — above the shared stat-tile, in
 the run's order. Each entry's header line SHALL render its own nested loadout breakdown listing
 every entry in that statline's `Loadouts`, showing each loadout's own remaining/initial count and a
-weapon label computed as that loadout's weapon list with the multiset (bag) intersection of weapons
-shared by every loadout in that same statline entry's `Loadouts` subtracted out — i.e. only the
-weapons that distinguish this loadout from its siblings under the same entry. This statline
-rendering occupies the first of three columns in the unit block's Statline area — see "Statline
-Ability Column Rendering" for the other two.
+label computed from that loadout's own weapon list and ability-name list, each independently
+reduced by subtracting the multiset (bag) intersection shared by every loadout in that same
+statline entry's `Loadouts` — i.e. only the weapons and ability names that distinguish this loadout
+from its siblings under the same entry, joined together into one label (distinguishing weapons
+before distinguishing ability names). A loadout distinguished from its siblings by neither its
+weapons nor its ability names SHALL instead render its own `DisplayName` as its label — the loadout's
+own name as recorded by whichever import produced it, distinct from the shared `StatlineName` when
+the source data offers something more specific (e.g. "Plague Champion", "Custodian Warden w/
+Vexilla"), and equal to the bare `StatlineName` when it does not — so every loadout line always
+shows readable, and where available maximally distinguishing, text rather than appearing to be a
+rendering gap or repeating an identical label across every tied sibling. This statline rendering
+occupies the first of three columns in the unit block's Statline area — see "Statline Ability Column
+Rendering" for the other two.
 
 A run's shared invulnerable save, when present, SHALL render as its own tile in the same visual
 family as the M/T/Sv/W/Ld/Oc tiles (a label above its value, inside one bordered box), positioned
@@ -242,6 +250,37 @@ requirement already govern.
 - **THEN** the shared multiset subtracted from each loadout's label contains only one copy of that
   weapon, so the loadout carrying two copies still shows one remaining copy in its label; the
   subtraction never removes more copies of a weapon than a loadout's siblings collectively share
+
+#### Scenario: Loadout label falls back to a distinguishing ability when weapons don't distinguish
+- **WHEN** a statline entry's `Loadouts` contains two entries whose weapon lists are identical
+  (e.g. both carry `[Guardian Spear, Guardian Spear]`) but one loadout's `ModelLine` carries an
+  ability the other's does not (e.g. one carries a "Vexilla" ability granted by its own wargear
+  selection, the other carries none), and neither loadout's `DisplayName` differs from the entry's
+  own `StatlineName`
+- **THEN** the weapon-only subtraction leaves both loadouts with nothing distinguishing, so the
+  label falls to the ability-name subtraction instead: the loadout with no distinguishing ability
+  renders its own `DisplayName` (here, equal to the bare `StatlineName`, per the
+  no-distinguishing-feature fallback below), and the loadout carrying the extra ability renders that
+  ability's own name (`"Vexilla"`) as its label — never leaving both loadouts' labels blank the way
+  a weapons-only computation would
+
+#### Scenario: A loadout with nothing distinguishing it in either weapons or abilities falls back to its own DisplayName
+- **WHEN** a statline entry's `Loadouts` contains two entries whose weapon lists and ability-name
+  lists are both fully shared (nothing left after either subtraction), and the import that produced
+  them gave each loadout its own distinct `DisplayName` (e.g. `"Plague Champion"` and `"Plague
+  Marine w/ boltgun"`, both resolving to the shared catalogue statline `"Plague Marine"`)
+- **THEN** each loadout renders its own `DisplayName` as its label — `"Plague Champion"` and
+  `"Plague Marine w/ boltgun"` respectively — rather than both rendering the identical bare
+  `StatlineName` `"Plague Marine"`, which would leave the reader with no way to tell the two
+  loadouts apart despite the source import distinguishing them clearly
+
+#### Scenario: A loadout with no DisplayName of its own falls back to the bare statline name
+- **WHEN** a statline entry's `Loadouts` contains two entries whose weapon lists, ability-name
+  lists, and `DisplayName`s are all identical to (or absent and therefore defaulted from) the
+  entry's own `StatlineName`
+- **THEN** both loadouts render that bare `StatlineName` as their label, rather than an empty one —
+  the same outcome this fallback originally specified, now reached as `DisplayName`'s own default
+  rather than a separate code path
 
 #### Scenario: Single-loadout entry has no redundant breakdown row
 - **WHEN** a statline entry's `Loadouts` contains exactly one entry

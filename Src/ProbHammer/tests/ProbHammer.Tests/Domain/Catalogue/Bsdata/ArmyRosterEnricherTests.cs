@@ -189,6 +189,29 @@ public class ArmyRosterEnricherTests
     }
 
     [Fact]
+    public void ModelLine_CarriesItsOwnRawGroupNameAsDisplayName_DistinctFromTheResolvedStatlineName()
+    {
+        // Two raw group names that both resolve to the same sole-statline datasheet via the
+        // fallback above ("Champion"/"Trooper" -> "Sword Brother") - DisplayName should retain each
+        // group's own original text rather than collapsing to the shared resolved StatlineName, the
+        // same gap this class's real Death Guard/Custodes imports hit live (two loadouts sharing one
+        // catalogue statline name, distinguished only by their own raw import-side text).
+        var modelGroups = new ParsedModelGroup[]
+        {
+            new("Champion", 1, []),
+            new("Trooper", 4, [])
+        };
+        var parsed = ArmyListWith(standaloneUnits: [new ParsedUnit("Crusader Squad", modelGroups, [])]);
+
+        var roster = ArmyRosterEnricher.Enrich(parsed, MultiProfileWeaponCatalogue());
+
+        var unit = (Unit)roster.Units[0];
+        unit.ModelLines.Should().OnlyContain(ml => ml.StatlineName == "Sword Brother");
+        unit.ModelLines.Single(ml => ml.Count == 1).DisplayName.Should().Be("Champion");
+        unit.ModelLines.Single(ml => ml.Count == 4).DisplayName.Should().Be("Trooper");
+    }
+
+    [Fact]
     public void MultiProfileWeapon_ExpandsToEveryModeProfile()
     {
         // Mirrors a real, confirmed shape (High Marshal Helbrecht's "Sword of the High Marshals"

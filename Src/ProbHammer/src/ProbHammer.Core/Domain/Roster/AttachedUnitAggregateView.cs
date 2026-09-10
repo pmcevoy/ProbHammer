@@ -6,7 +6,9 @@ public sealed record ModelLineLoadout(
     string WeaponsLabel,
     IReadOnlyList<string> Weapons,
     int RemainingCount,
-    int InitialCount);
+    int InitialCount,
+    IReadOnlyList<string> Abilities,
+    string DisplayName);
 
 public sealed record AggregateStatlineEntry(
     string ComponentName,

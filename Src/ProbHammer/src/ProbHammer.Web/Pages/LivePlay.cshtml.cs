@@ -301,14 +301,20 @@ public class LivePlayModel(
     // One label per (ComponentName, StatlineName, LoadoutIndex) across the whole unit, used by
     // weapon-breakdown raw rows. For a single-loadout statline (LoadoutIndex -1) the label is just
     // the StatlineName itself, matching the existing (unmodified) single-contributor breakdown-row
-    // convention (e.g. "Neophyte", "Crusade Ancient"). For a loadout under a multi-loadout statline,
-    // the label is "{StatlineName} w/ {compressed label}" (e.g. "Initiate w/ Astartes chainsword") -
-    // in the Statline section the compressed label alone reads fine because it's visually nested
-    // under its statline's own header line, but a weapon breakdown row has no such nesting (it's a
-    // flat list under the weapon's name), so the compressed label alone there would read as if the
-    // weapon itself were the contributor rather than a specific squad member. This lookup is only
-    // consumed by BuildContributionBreakdown - GroupStatlines computes the Statline section's own
-    // (unprefixed) loadout labels separately via CompressLoadoutLabels directly.
+    // convention (e.g. "Neophyte", "Crusade Ancient"). For a loadout under a multi-loadout statline
+    // whose weapons/abilities genuinely distinguish it from its siblings, the label is
+    // "{StatlineName} w/ {distinguishing label}" (e.g. "Initiate w/ Astartes chainsword") - in the
+    // Statline section the distinguishing label alone reads fine because it's visually nested under
+    // its statline's own header line, but a weapon breakdown row has no such nesting (it's a flat
+    // list under the weapon's name), so the label alone there would read as if the weapon itself
+    // were the contributor rather than a specific squad member. A loadout with nothing distinguishing
+    // it in weapons/abilities instead uses its own DisplayName directly, with no "{StatlineName} w/"
+    // wrapping - DisplayName is already a complete, self-sufficient identity (e.g. "Plague Champion"
+    // or, when a pipeline has nothing extra to offer, the bare StatlineName itself), not an attribute
+    // of one, so wrapping it would read as the redundant "Plague Marine w/ Plague Champion" rather
+    // than the plain "Plague Champion" NewRecruit itself shows. This lookup is only consumed by
+    // BuildContributionBreakdown - GroupStatlines computes the Statline section's own (unprefixed)
+    // loadout labels separately via CompressLoadoutLabels directly, sharing DistinguishingLabels.
     internal static Dictionary<(string ComponentName, string StatlineName, int LoadoutIndex), string>
         BuildLoadoutLabelLookup(
             IReadOnlyList<AggregateStatlineEntry> statlines)
@@ -322,9 +328,11 @@ public class LivePlayModel(
                 continue;
             }
 
-            var compressed = CompressLoadoutLabels(entry.Loadouts);
+            var distinguishing = DistinguishingLabels(entry.Loadouts);
             for (var i = 0; i < entry.Loadouts.Count; i++)
-                lookup[(entry.ComponentName, entry.StatlineName, i)] = $"{entry.StatlineName} w/ {compressed[i]}";
+                lookup[(entry.ComponentName, entry.StatlineName, i)] = distinguishing[i].Length > 0
+                    ? $"{entry.StatlineName} w/ {distinguishing[i]}"
+                    : entry.Loadouts[i].DisplayName;
         }
 
         return lookup;
@@ -509,50 +517,88 @@ public class LivePlayModel(
     }
 
     // Multiset (bag) intersection across every loadout under one statline entry, then per-loadout
-    // multiset subtraction - a loadout's compressed label is only the weapons that distinguish it
-    // from its siblings. Must be a true multiset operation, not a common-prefix strip: shared
-    // weapons need not appear at the same list position in each loadout, and a loadout carrying an
-    // extra copy of an otherwise-shared weapon must keep that one extra copy visible. A statline
-    // with exactly one loadout has nothing to compress against, so its full WeaponsLabel passes
-    // through unchanged (matches the existing Loadouts.Count > 1 render guard in LivePlay.cshtml -
-    // this function's result is only ever read when there's more than one loadout to distinguish).
+    // multiset subtraction - a loadout's distinguishing label is only the weapons and ability names
+    // that distinguish it from its siblings, empty when nothing in either pool does. Must be a true
+    // multiset operation, not a common-prefix strip: shared weapons/abilities need not appear at the
+    // same list position in each loadout, and a loadout carrying an extra copy of an otherwise-shared
+    // weapon must keep that one extra copy visible. Weapons and ability names are reduced as two
+    // independent multisets (never merged into one pool - a weapon and an ability could
+    // coincidentally share a name) and their distinguishing results joined into one label, weapons
+    // first. This is the raw signal before any DisplayName/StatlineName fallback is applied - shared
+    // by CompressLoadoutLabels (which applies the fallback) and BuildLoadoutLabelLookup (which needs
+    // to tell a genuine weapon/ability attribute apart from a fallback identity name to decide its
+    // own "{StatlineName} w/ ..." wrapping).
+    private static IReadOnlyList<string> DistinguishingLabels(IReadOnlyList<ModelLineLoadout> loadouts)
+    {
+        var sharedWeapons = SharedCounts(loadouts.Select(l => l.Weapons));
+        var sharedAbilities = SharedCounts(loadouts.Select(l => l.Abilities));
+
+        return loadouts.Select(loadout => string.Join(", ",
+                DistinguishingItems(loadout.Weapons, sharedWeapons)
+                    .Concat(DistinguishingItems(loadout.Abilities, sharedAbilities))))
+            .ToList();
+    }
+
+    // A loadout left with nothing distinguishing it in weapons/abilities (per DistinguishingLabels)
+    // renders its own DisplayName instead of an empty label, so a loadout line never looks like a
+    // rendering gap - DisplayName already carries the import's own per-loadout name when the source
+    // pipeline offers one distinct from the bare StatlineName (e.g. "Plague Champion", "Custodian
+    // Warden w/ Vexilla" - see ModelLine.DisplayName's own doc comment), and falls back to the bare
+    // StatlineName itself otherwise, so no separate statlineName parameter is needed here. A
+    // statline with exactly one loadout has nothing to compress against, so its full WeaponsLabel
+    // passes through unchanged (matches the existing Loadouts.Count > 1 render guard in
+    // LivePlay.cshtml - this function's result is only ever read when there's more than one loadout
+    // to distinguish).
     internal static IReadOnlyList<string> CompressLoadoutLabels(IReadOnlyList<ModelLineLoadout> loadouts)
     {
         if (loadouts.Count <= 1)
             return loadouts.Select(l => l.WeaponsLabel).ToList();
 
-        var shared = CountWeapons(loadouts[0].Weapons);
-        foreach (var loadout in loadouts.Skip(1))
-        {
-            var counts = CountWeapons(loadout.Weapons);
-            foreach (var weapon in shared.Keys.ToList())
-                shared[weapon] = Math.Min(shared[weapon], counts.GetValueOrDefault(weapon));
-        }
-
-        return loadouts.Select(loadout => string.Join(", ", DistinguishingWeapons(loadout.Weapons, shared))).ToList();
+        var distinguishing = DistinguishingLabels(loadouts);
+        return loadouts.Zip(distinguishing, (loadout, label) => label.Length > 0 ? label : loadout.DisplayName)
+            .ToList();
     }
 
-    private static Dictionary<string, int> CountWeapons(IReadOnlyList<string> weapons)
+    private static Dictionary<string, int> SharedCounts(IEnumerable<IReadOnlyList<string>> perLoadoutItems)
+    {
+        Dictionary<string, int>? shared = null;
+        foreach (var items in perLoadoutItems)
+        {
+            var counts = CountItems(items);
+            if (shared is null)
+            {
+                shared = counts;
+                continue;
+            }
+
+            foreach (var item in shared.Keys.ToList())
+                shared[item] = Math.Min(shared[item], counts.GetValueOrDefault(item));
+        }
+
+        return shared ?? [];
+    }
+
+    private static Dictionary<string, int> CountItems(IReadOnlyList<string> items)
     {
         var counts = new Dictionary<string, int>();
-        foreach (var weapon in weapons)
-            counts[weapon] = counts.GetValueOrDefault(weapon) + 1;
+        foreach (var item in items)
+            counts[item] = counts.GetValueOrDefault(item) + 1;
         return counts;
     }
 
-    // Walks a loadout's own weapon list in order, consuming one shared-multiset copy per matching
-    // weapon before falling back to yielding it as distinguishing - so only weapons beyond what's
-    // actually shared across every sibling loadout are kept.
-    private static IEnumerable<string> DistinguishingWeapons(IReadOnlyList<string> weapons,
+    // Walks a loadout's own item list (weapons or ability names) in order, consuming one
+    // shared-multiset copy per matching item before falling back to yielding it as distinguishing -
+    // so only items beyond what's actually shared across every sibling loadout are kept.
+    private static IEnumerable<string> DistinguishingItems(IReadOnlyList<string> items,
         Dictionary<string, int> shared)
     {
         var remaining = new Dictionary<string, int>(shared);
-        foreach (var weapon in weapons)
+        foreach (var item in items)
         {
-            if (remaining.TryGetValue(weapon, out var count) && count > 0)
-                remaining[weapon] = count - 1;
+            if (remaining.TryGetValue(item, out var count) && count > 0)
+                remaining[item] = count - 1;
             else
-                yield return weapon;
+                yield return item;
         }
     }
 

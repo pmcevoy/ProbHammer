@@ -127,7 +127,8 @@ public class LivePlayModelTests
         // per-loadout rows (SelectKey set, Label the compressed distinguishing weapon) - the raw
         // rows exist for live-play.js's selection filtering even though they stay hidden by default
         // whenever the group's loadouts currently agree (see live-play.js recomputeWeaponRow).
-        var view = AttachedUnitAggregator.Build(Units.CrusaderSquad_Helbrecht_Ancient(), RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(Units.CrusaderSquad_Helbrecht_Ancient(),
+            RuleClassificationBaseline.Empty);
         var boltPistol = view.Weapons.Single(w =>
             w.Profile.Name.Equals("Bolt pistol", StringComparison.OrdinalIgnoreCase));
         var loadoutLabels = LivePlayModel.BuildLoadoutLabelLookup(view.Statlines);
@@ -263,7 +264,8 @@ public class LivePlayModelTests
     {
         // Real fixture: both Initiate loadouts also carry Bolt pistol and Heavy Bolt pistol, so
         // only the weapon that actually differs (Power fist / Astartes chainsword) should render.
-        var view = AttachedUnitAggregator.Build(Units.CrusaderSquad_Helbrecht_Ancient(), RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(Units.CrusaderSquad_Helbrecht_Ancient(),
+            RuleClassificationBaseline.Empty);
         var initiate = view.Statlines.Single(s => s.StatlineName == "Initiate");
 
         var labels = LivePlayModel.CompressLoadoutLabels(initiate.Loadouts);
@@ -278,8 +280,8 @@ public class LivePlayModelTests
         // loadout's list - proves a true multiset intersection, not a common-prefix strip.
         var loadouts = new[]
         {
-            new ModelLineLoadout("", ["Bolt pistol", "Chainsword", "Frag grenades"], 1, 1),
-            new ModelLineLoadout("", ["Chainsword", "Plasma pistol", "Frag grenades"], 1, 1)
+            new ModelLineLoadout("", ["Bolt pistol", "Chainsword", "Frag grenades"], 1, 1, [], "Squad Member"),
+            new ModelLineLoadout("", ["Chainsword", "Plasma pistol", "Frag grenades"], 1, 1, [], "Squad Member")
         };
 
         var labels = LivePlayModel.CompressLoadoutLabels(loadouts);
@@ -291,26 +293,119 @@ public class LivePlayModelTests
     public void CompressLoadoutLabels_KeepsAGenuinelyExtraCopy_OfAnOtherwiseSharedWeapon()
     {
         // Loadout A carries two Chainswords, loadout B carries one - the shared multiset only
-        // covers one copy, so A's second copy is genuinely distinguishing and must survive.
+        // covers one copy, so A's second copy is genuinely distinguishing and must survive. B has
+        // nothing left distinguishing it, so it falls back to its own DisplayName (here, the plain
+        // statline name - no extra import-side info to offer).
         var loadouts = new[]
         {
-            new ModelLineLoadout("", ["Chainsword", "Chainsword"], 1, 1),
-            new ModelLineLoadout("", ["Chainsword"], 1, 1)
+            new ModelLineLoadout("", ["Chainsword", "Chainsword"], 1, 1, [], "Squad Member"),
+            new ModelLineLoadout("", ["Chainsword"], 1, 1, [], "Squad Member")
         };
 
         var labels = LivePlayModel.CompressLoadoutLabels(loadouts);
 
-        labels.Should().Equal("Chainsword", "");
+        labels.Should().Equal("Chainsword", "Squad Member");
     }
 
     [Fact]
     public void CompressLoadoutLabels_LeavesASingleLoadoutStatlineUnaffected()
     {
-        var loadouts = new[] { new ModelLineLoadout("Bolt pistol, Chainsword", ["Bolt pistol", "Chainsword"], 1, 1) };
+        var loadouts = new[]
+        {
+            new ModelLineLoadout("Bolt pistol, Chainsword", ["Bolt pistol", "Chainsword"], 1, 1, [],
+                "Squad Member")
+        };
 
         var labels = LivePlayModel.CompressLoadoutLabels(loadouts);
 
         labels.Should().Equal("Bolt pistol, Chainsword");
+    }
+
+    [Fact]
+    public void CompressLoadoutLabels_FallsBackToADistinguishingAbility_WhenWeaponsDontDistinguish()
+    {
+        // Both loadouts carry the identical weapon list (Guardian Spear x2) - the weapon-only
+        // subtraction leaves nothing, so the label falls to the ability-name subtraction instead.
+        // Reproduces the real Custodian Warden/Vexilla bug reported live.
+        var loadouts = new[]
+        {
+            new ModelLineLoadout("", ["Guardian Spear", "Guardian Spear"], 4, 4, [], "Custodian Warden"),
+            new ModelLineLoadout("", ["Guardian Spear", "Guardian Spear"], 1, 1, ["Vexilla"], "Custodian Warden")
+        };
+
+        var labels = LivePlayModel.CompressLoadoutLabels(loadouts);
+
+        labels.Should().Equal("Custodian Warden", "Vexilla");
+    }
+
+    [Fact]
+    public void CompressLoadoutLabels_FallsBackToTheStatlineName_WhenNeitherWeaponsNorAbilitiesDistinguish()
+    {
+        // Both loadouts' DisplayName is just the plain statline name - no import-side extra info to
+        // offer, so the deepest fallback tier (bare statline name) is what survives.
+        var loadouts = new[]
+        {
+            new ModelLineLoadout("", ["Guardian Spear"], 1, 1, [], "Custodian Warden"),
+            new ModelLineLoadout("", ["Guardian Spear"], 1, 1, [], "Custodian Warden")
+        };
+
+        var labels = LivePlayModel.CompressLoadoutLabels(loadouts);
+
+        labels.Should().Equal("Custodian Warden", "Custodian Warden");
+    }
+
+    [Fact]
+    public void CompressLoadoutLabels_FallsBackToEachLoadoutsOwnDisplayName_WhenWeaponsAndAbilitiesAreIdentical()
+    {
+        // Reproduces the real Death Guard bug: "Plague Champion" and "Plague Marine w/ boltgun" carry
+        // byte-identical weapons (Boltgun, Plague knives) and no abilities - nothing in either
+        // multiset distinguishes them, so each one's own import-side DisplayName is what survives,
+        // matching NewRecruit's own rendering of the same roster.
+        var loadouts = new[]
+        {
+            new ModelLineLoadout("", ["Boltgun", "Plague knives"], 1, 1, [], "Plague Champion"),
+            new ModelLineLoadout("", ["Boltgun", "Plague knives"], 4, 4, [], "Plague Marine w/ boltgun")
+        };
+
+        var labels = LivePlayModel.CompressLoadoutLabels(loadouts);
+
+        labels.Should().Equal("Plague Champion", "Plague Marine w/ boltgun");
+    }
+
+    [Fact]
+    public void BuildLoadoutLabelLookup_UsesTheBareDisplayName_ForAFallbackLoadout_NotARedundantWSuffix()
+    {
+        var statline = new Statline(6, 6, 2, 3, 6, 4);
+        var entry = new AggregateStatlineEntry("Custodian Wardens", "Custodian Warden", statline, 5, 5,
+        [
+            new ModelLineLoadout("", ["Guardian Spear", "Guardian Spear"], 4, 4, [], "Custodian Warden"),
+            new ModelLineLoadout("", ["Guardian Spear", "Guardian Spear"], 1, 1, ["Vexilla"], "Custodian Warden")
+        ]);
+
+        var lookup = LivePlayModel.BuildLoadoutLabelLookup([entry]);
+
+        lookup[("Custodian Wardens", "Custodian Warden", 0)].Should().Be("Custodian Warden");
+        lookup[("Custodian Wardens", "Custodian Warden", 1)].Should().Be("Custodian Warden w/ Vexilla");
+    }
+
+    [Fact]
+    public void BuildLoadoutLabelLookup_UsesEachLoadoutsOwnDisplayNameStandalone_WhenNothingDistinguishesEither()
+    {
+        // Reproduces the real Death Guard bug at the weapon-breakdown-row layer: neither loadout's
+        // weapons/abilities distinguish it, so each row must read its own DisplayName plainly - never
+        // "Plague Marine w/ Plague Champion", since DisplayName is already a complete identity, not
+        // an attribute of the bare statline name.
+        var statline = new Statline(5, 6, 3, 2, 6, 2);
+        var entry = new AggregateStatlineEntry("Plague Marines", "Plague Marine", statline, 5, 5,
+        [
+            new ModelLineLoadout("", ["Boltgun", "Plague knives"], 1, 1, [], "Plague Champion"),
+            new ModelLineLoadout("", ["Boltgun", "Plague knives"], 4, 4, [], "Plague Marine w/ boltgun")
+        ]);
+
+        var lookup = LivePlayModel.BuildLoadoutLabelLookup([entry]);
+
+        lookup[("Plague Marines", "Plague Marine", 0)].Should().Be("Plague Champion");
+        lookup[("Plague Marines", "Plague Marine", 1)].Should().Be("Plague Marine w/ boltgun");
     }
 
     [Fact]
@@ -332,7 +427,8 @@ public class LivePlayModelTests
     [Fact]
     public void RebuildRoster_WithNoAdjustments_MatchesThePristineSortedRoster()
     {
-        var pristine = LivePlayModel.SortRoster(View.MyArmyRoster(), RuleClassificationBaseline.Empty).Select(u => AttachedUnitAggregator.Build(u, RuleClassificationBaseline.Empty)).ToList();
+        var pristine = LivePlayModel.SortRoster(View.MyArmyRoster(), RuleClassificationBaseline.Empty)
+            .Select(u => AttachedUnitAggregator.Build(u, RuleClassificationBaseline.Empty)).ToList();
 
         var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), [], RuleClassificationBaseline.Empty);
 
@@ -394,10 +490,12 @@ public class LivePlayModelTests
         var adjustment = new CasualtyAdjustment(
             new CasualtyCoordinate(unitIndex, componentName, statlineName, loadoutIndex), RemainingCount: 0);
 
-        var act = () => LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment], RuleClassificationBaseline.Empty);
+        var act = () =>
+            LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment], RuleClassificationBaseline.Empty);
 
         act.Should().NotThrow();
-        var pristine = LivePlayModel.SortRoster(View.MyArmyRoster(), RuleClassificationBaseline.Empty).Select(u => AttachedUnitAggregator.Build(u, RuleClassificationBaseline.Empty)).ToList();
+        var pristine = LivePlayModel.SortRoster(View.MyArmyRoster(), RuleClassificationBaseline.Empty)
+            .Select(u => AttachedUnitAggregator.Build(u, RuleClassificationBaseline.Empty)).ToList();
         act().Select(v => v.Statlines.Sum(s => s.RemainingCount))
             .Should().Equal(pristine.Select(v => v.Statlines.Sum(s => s.RemainingCount)));
     }
@@ -435,7 +533,8 @@ public class LivePlayModelTests
     {
         var statusAdjustment = new UnitStatusAdjustment(0, IsHalfStrength: false, IsBattleShocked: true);
 
-        var rebuilt = LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [], [statusAdjustment], RuleClassificationBaseline.Empty);
+        var rebuilt = LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [], [statusAdjustment],
+            RuleClassificationBaseline.Empty);
 
         rebuilt[0].Unit.IsBattleShocked.Should().BeTrue();
         rebuilt.Skip(1).Should().OnlyContain(x => !x.Unit.IsBattleShocked);
@@ -444,7 +543,8 @@ public class LivePlayModelTests
     [Fact]
     public void RebuildRosterWithStatus_LeavesStatusUnset_WhenNoAdjustmentAddressesAnyUnit()
     {
-        var rebuilt = LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [], [], RuleClassificationBaseline.Empty);
+        var rebuilt =
+            LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [], [], RuleClassificationBaseline.Empty);
 
         rebuilt.Should().OnlyContain(x => !x.Unit.IsBattleShocked && !x.Unit.IsHalfStrengthOverride);
     }
@@ -457,7 +557,8 @@ public class LivePlayModelTests
         var statusAdjustment = new UnitStatusAdjustment(0, IsHalfStrength: false, IsBattleShocked: true);
 
         var rebuilt =
-            LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [casualtyAdjustment], [statusAdjustment], RuleClassificationBaseline.Empty);
+            LivePlayModel.RebuildRosterWithStatus(View.MyArmyRoster(), [casualtyAdjustment], [statusAdjustment],
+                RuleClassificationBaseline.Empty);
 
         rebuilt[0].View.Statlines.Single(s => s.StatlineName == "Neophyte").RemainingCount.Should().Be(2);
         rebuilt[0].Unit.IsBattleShocked.Should().BeTrue();

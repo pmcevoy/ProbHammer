@@ -195,7 +195,7 @@ public static partial class BattleScribeRosterMapper
 
             var (lineWeapons, lineAbilities) = CollectWeaponsAndAbilities(node, node.Number, addWeaponProfile);
             modelLines.Add(new ModelLine(statlineProfile.Name, lineWeapons, node.Number, lineAbilities,
-                MapCategories(node.Categories)));
+                MapCategories(node.Categories), displayName: node.Name));
         }
 
         return modelLines;

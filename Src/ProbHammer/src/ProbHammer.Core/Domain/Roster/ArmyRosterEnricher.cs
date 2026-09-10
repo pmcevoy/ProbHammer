@@ -88,7 +88,8 @@ public static class ArmyRosterEnricher
         foreach (var itemName in group.Weapons.Select(BsdataNameNormalization.Normalize))
             ResolveWargearItem(itemName, datasheet, weapons, abilities);
 
-        return new ModelLine(statlineName, weapons, group.Count, abilities, datasheet.GetModelKeywords(statlineName));
+        return new ModelLine(statlineName, weapons, group.Count, abilities, datasheet.GetModelKeywords(statlineName),
+            displayName: group.ModelName);
     }
 
     /// <summary>Resolves a parsed model sub-group's own name to one of the Datasheet's actual
