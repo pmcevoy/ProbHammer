@@ -37,7 +37,11 @@ made below without new evidence.
   which deliberately excludes Name, so two differently-named weapons sharing an identical profile
   already silently merge under one arbitrary name; once Name is tracked per contribution, a merged
   group should render every distinct name it merged, joined ("Bolt rifle and Combat Rifle";
-  Oxford-comma for 3+, mirroring `DetachmentNameResolver`'s existing joining convention).
+  Oxford-comma for 3+, mirroring `AttachedUnit.Name`'s existing joining convention — NOT
+  `DetachmentNameResolver`, which was floated during exploration but turned out to run the
+  opposite direction: it parses one blob of text into separate names, with no join/format logic
+  of its own). **Now proposed** as `openspec/changes/name-weapon-group-contributions/` — read that
+  change's own design.md rather than re-deriving this from scratch.
 - **Phase 1 (do the corpus spike first)**: pull real weapon-effect ability text from the live
   BSData clone before deciding anything further — same discipline as the original four-ground-
   truth-example start of `classify-rule-effects-from-text`. Settles: whether/how to handle one
