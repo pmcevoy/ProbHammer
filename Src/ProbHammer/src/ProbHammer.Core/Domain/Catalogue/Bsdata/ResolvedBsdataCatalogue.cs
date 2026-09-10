@@ -6,7 +6,7 @@ namespace ProbHammer.Core.Domain.Catalogue.Bsdata;
 /// A resolved closure bundled with the id/group/profile indices built over it - everything
 /// <see cref="BsdataNameResolver"/>/<see cref="BsdataDatasheetMapper"/> need to resolve names and
 /// build Datasheets, in one value. This is the expensive-to-build, per-starting-file-static unit
-/// army-roster-enrichment's app-wide catalogue cache (ProbHammer.Web) keys its cache by - this type
+/// ProbHammer.Web's app-wide catalogue cache keys its cache by - this type
 /// itself has no caching behavior, it's just what gets cached.
 /// </summary>
 public sealed class ResolvedBsdataCatalogue(
@@ -81,8 +81,7 @@ public sealed class ResolvedBsdataCatalogue(
 }
 
 /// <summary>Thrown when a name (unit or weapon) fails to resolve against a
-/// <see cref="ResolvedBsdataCatalogue"/> - see army-roster-enrichment's "Unit and Weapon Name
-/// Resolution" requirement. Carries the offending text as a property, mirroring
+/// <see cref="ResolvedBsdataCatalogue"/>. Carries the offending text as a property, mirroring
 /// <see cref="AmbiguousCharacteristicException"/>'s existing convention.</summary>
 public sealed class BsdataNameResolutionException(string text, string message) : Exception(message)
 {

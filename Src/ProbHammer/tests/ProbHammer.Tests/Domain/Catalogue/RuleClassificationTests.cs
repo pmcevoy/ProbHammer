@@ -33,9 +33,8 @@ public class RuleClassificationTests
     [Fact]
     public void RuleClassification_ConstructedWithoutIsCaveated_DefaultsToFalse()
     {
-        // The "boring default" RuleClassificationDiff.DefaultClassification reads off this type's own
-        // serialization for schema-growth backfill - see widen-rule-effect-classification-coverage
-        // design.md.
+        // The "boring default" RuleClassificationDiff.DefaultClassification reads off this type's
+        // own serialization for schema-growth backfill.
         var classification = new RuleClassification(new SelfRuleTarget(), []);
 
         classification.IsCaveated.Should().BeFalse();

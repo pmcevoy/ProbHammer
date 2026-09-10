@@ -2,7 +2,7 @@ namespace ProbHammer.Core.Domain.Roster;
 
 /// <summary>
 /// Domain-level computation of the Toughness resolution rule for attacks against an AttachedUnit.
-/// Not wired to Simulation/* in this change - Simulation is paused pending a later reconciliation.
+/// Not wired to Simulation/* - Simulation is paused pending a later reconciliation.
 /// </summary>
 public static class ToughnessResolution
 {

@@ -3,9 +3,7 @@ using ProbHammer.Core.Domain.Catalogue;
 
 namespace ProbHammer.Tests.Domain.Catalogue;
 
-/// <summary>Ground-truth texts below were confirmed verbatim against the live BSData clone during
-/// classify-rule-effects-from-text/tasks.md's task 1 - see that file's own notes for the exact
-/// source location of each.</summary>
+/// <summary>Ground-truth texts below were confirmed verbatim against the live BSData clone.</summary>
 public class RuleEffectClassifierTests
 {
     [Fact]
@@ -35,9 +33,7 @@ public class RuleEffectClassifierTests
     {
         // Real corpus text (Chaos Knights Library.json - "**Ensorcelled Shield", a War Dog
         // Executioner optional ability). Ranged-only restricted grant, plus trailing content
-        // (the Feel No Pain clause) beyond the matched invulnerable-save clause - marked caveated,
-        // matching invulnerable-save-effect-resolution/rule-effect-classification's own scenario for
-        // this exact real example.
+        // (the Feel No Pain clause) beyond the matched invulnerable-save clause - marked caveated.
         var result = RuleEffectClassifier.Classify("Ensorcelled Shield",
             "This model has a 4+ invulnerable save against ranged attacks, and the Feel No Pain 6+ ability.");
 
@@ -65,8 +61,7 @@ public class RuleEffectClassifierTests
         // Real corpus text (Warhammer 40,000.json's shared "Invulnerable Save (5+*)" profile - a
         // War Dog units' own footnoted ranged-only grant). The plural, whole-unit-perspective
         // counterpart to InvulnerableSaveGrant_OneSidedRestricted_ExtractsRangedOnlyEffect's singular
-        // form, mirroring InvulnerableSaveCaveatClassifier's own bare/unit template pairing -
-        // widen-baseline-generation-coverage.
+        // form.
         var result = RuleEffectClassifier.Classify("Invulnerable Save (5+*)",
             "Models in this unit have a 5+ invulnerable save against ranged attacks.");
 
@@ -104,10 +99,9 @@ public class RuleEffectClassifierTests
     public void InvulnerableSaveGrant_RestrictedByANonMeleeRangedQualifier_ExtractsNoEffect()
     {
         // Real corpus text (Imperium - Agents of the Imperium.json). The Psychic-Attacks restriction
-        // axis is explicitly out of scope (resolve-invulnerable-save-effects proposal.md's Non-Goals)
-        // - this extraction is scoped to the melee/ranged attack-type axis only, and this text names
-        // neither, so it must classify exactly as unrecognized text does: zero Effects, not a
-        // uniform/ranged/melee grant of any shape.
+        // axis is out of scope - this extraction is scoped to the melee/ranged attack-type axis
+        // only, and this text names neither, so it must classify exactly as unrecognized text does:
+        // zero Effects, not a uniform/ranged/melee grant of any shape.
         var result = RuleEffectClassifier.Classify("Test Ability",
             "The bearer's unit has a 4+ invulnerable save against Psychic Attacks.");
 
@@ -123,8 +117,7 @@ public class RuleEffectClassifierTests
         // save-granting clause is NOT at its own sentence's true start - it's preceded by a comma-
         // joined conditional preamble within the same sentence - so SentenceStart's anchor rejects it,
         // the same structural signal that rejects "if it does"/"while X"/"each time X" generally
-        // rather than denylisting each trigger phrase. Confirmed real false positive before this
-        // anchor - caught live reviewing corpus-report output (2026-09-08), not by any test.
+        // rather than denylisting each trigger phrase.
         var result = RuleEffectClassifier.Classify("Test Ability", text);
 
         result.Effects.Should().BeEmpty();
@@ -134,9 +127,7 @@ public class RuleEffectClassifierTests
     public void AddCharacteristic_EmbeddedInConditionalClause_ExtractsNoEffect()
     {
         // Real corpus shape (a once-per-battle-round Relic activation). Same SentenceStart anchor as
-        // InvulnerableSaveGrant, applied to the Improve-shaped pattern - confirmed real false positive
-        // before this anchor (wrongly extracted Improve T 2), caught live reviewing corpus-report
-        // output, not by any test.
+        // InvulnerableSaveGrant, applied to the Improve-shaped pattern.
         var result = RuleEffectClassifier.Classify("Test Ability",
             "If it does, until the end of the battle round, add 2 to the Toughness characteristic of models in the bearer's unit.");
 
@@ -147,14 +138,10 @@ public class RuleEffectClassifierTests
     public void InvulnerableSaveGrant_BulletedAlternativeInASelectOneMenu_ExtractsNoEffect()
     {
         // Real corpus text (Adeptus Custodes' "Moment Shackle", Trajann Valoris). A bullet marker
-        // preceded the actual grant here, not a period - an earlier version of SentenceStart's anchor
-        // treated ■/▪ as a valid sentence boundary (alongside period/newline) specifically so a fresh
-        // bulleted item would be recognized as unconditional, but this text disproves that: the two
-        // bullets are mutually-exclusive alternatives in a "select one of the following" menu (you
-        // choose ONE), not two independent unconditional facts - conditional on which is chosen, same
-        // as any other conditional preamble. Confirmed real false positive (wrongly extracted
-        // Set InSv 2) before the anchor was narrowed to periods only - caught live reviewing
-        // corpus-report output (2026-09-08), not by any test.
+        // precedes the actual grant here, not a period. The two bullets are mutually-exclusive
+        // alternatives in a "select one of the following" menu (you choose ONE), not two independent
+        // unconditional facts - conditional on which is chosen, same as any other conditional
+        // preamble.
         const string text = """
                             Once per battle, at the start of the Fight phase, you can select one of the following to take effect until the end of the phase:
                             ■ This model's Watcher's Axe melee weapon has an Attacks characteristic of 12.
@@ -173,8 +160,7 @@ public class RuleEffectClassifierTests
         // a numbered/named heading line, then a newline, then the actual effect text - "select one
         // from the list below". A bare newline after a heading is not a genuine sentence boundary any
         // more than a bullet is (see the bulleted-menu test above) - it separates menu ITEMS, not
-        // independent unconditional sentences. Confirmed real false positive (wrongly extracted
-        // Improve T 1) before the anchor was narrowed to periods only.
+        // independent unconditional sentences.
         const string text = """
                             At the start of your Command phase, select which Combat Drugs will be active for your army. To do so, select one from the list below.
 
@@ -192,9 +178,7 @@ public class RuleEffectClassifierTests
     {
         // Real corpus text (Space Marines' "Astartes Banner"). "models in this unit" is functionally
         // the same claim as "models in the bearer's unit" - an ability's text describes its effect
-        // from the bearer's own perspective, so "this unit" means the bearer's unit. Confirmed real
-        // false classification (wrongly landed as Self) before AttachedUnitPhrase recognized this
-        // phrasing too - caught live reviewing corpus-report output (2026-09-08), not by any test.
+        // from the bearer's own perspective, so "this unit" means the bearer's unit.
         var result = RuleEffectClassifier.Classify("Astartes Banner",
             "Add 1 to the Objective Control characteristic of models in this unit.");
 
@@ -244,8 +228,7 @@ public class RuleEffectClassifierTests
         // different entry (Custodian Wardens) than the plain-space variant above (Custodian Guard).
         // The string literal below embeds a real U+00A0 character - verified byte-for-byte
         // (0xC2 0xA0), not just eyeballed, since a literal invisible character in source is easy
-        // to accidentally lose: an earlier draft of this exact test silently collapsed it to a
-        // plain space, which would have made the test pass without ever exercising the NBSP path.
+        // to lose silently, which would make the test pass without ever exercising the NBSP path.
         const string text = "Add 1 to the Objective Control characteristic of models in the bearer's unit.";
 
         var result = RuleEffectClassifier.Classify("Vexilla", text);
@@ -314,9 +297,7 @@ public class RuleEffectClassifierTests
     {
         // The Restrictions paragraph itself contains two further ALL-CAPS + "units" occurrences
         // ("BLACK TEMPLARS units", "ADEPTUS ASTARTES units") - the classifier must pick the FIRST
-        // occurrence in the text (the actual effect statement), not one of these. The "+1 OC"
-        // shorthand was a confirmed extraction gap (only "Add N to the X characteristic" was
-        // recognized) until ShorthandCharacteristicPlus was added.
+        // occurrence in the text (the actual effect statement), not one of these.
         const string text =
             "Friendly SWORD BRETHREN SQUAD units have +1 OC.\n\n\nRestrictions: Your army can " +
             "include BLACK TEMPLARS units, but it cannot include any ADEPTUS ASTARTES units drawn " +
@@ -356,8 +337,8 @@ public class RuleEffectClassifierTests
     [InlineData("Add 1 to the bearer's Wounds characteristic.")]
     public void AddCharacteristic_RecognizesPossessivePhrasing(string text)
     {
-        // Confirmed real, previously-dropped examples: Blasphemous Engine and Da Krushin' Armour both
-        // use "the bearer's X characteristic" rather than the plain "the X characteristic" phrasing.
+        // Real examples: Blasphemous Engine and Da Krushin' Armour both use "the bearer's X
+        // characteristic" rather than the plain "the X characteristic" phrasing.
         var result = RuleEffectClassifier.Classify("Test Ability", text);
 
         result.Effects.Should().ContainSingle().Which.Should().BeOfType<ScalarCharacteristicEffect>()
@@ -388,9 +369,9 @@ public class RuleEffectClassifierTests
 
     // Ground-truth texts below are taken verbatim from the checked-in baseline
     // (src/ProbHammer.Web/Data/RuleEffectClassifications.json) - the five carrying a known-incomplete
-    // `note` are the confirmed real caveated examples; the other two are the confirmed real lookalikes
-    // (a leading eligibility restriction before the matched clause, with nothing trailing) that must
-    // NOT be flagged caveated - see widen-rule-effect-classification-coverage design.md.
+    // `note` are real caveated examples; the other two are real lookalikes (a leading eligibility
+    // restriction before the matched clause, with nothing trailing) that must NOT be flagged
+    // caveated.
 
     [Theory]
     [InlineData(

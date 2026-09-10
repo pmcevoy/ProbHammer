@@ -5,11 +5,9 @@ namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 
 /// <summary>
 /// Seed "known limitation" allowlist for <see cref="CharacteristicResolutionScanTests"/> - see
-/// PROGRESS.md's Known Issues and design.md's "Confirmed by code inspection" decision. The
-/// InSv representation gap was resolved by the `structured-invulnerable-save` change (every
-/// confirmed real InSv shape now resolves into `InvulnerableSave` instead of throwing) except one
-/// genuine data anomaly (Aeldari's Archon/Ynnari Archon); the dice-notation Strength gap remains
-/// open separately, tracked here as before.
+/// PROGRESS.md's Known Issues. Every confirmed real InSv shape resolves into `InvulnerableSave`
+/// instead of throwing except one genuine data anomaly (Aeldari's Archon/Ynnari Archon); the
+/// dice-notation Strength gap remains open separately.
 /// </summary>
 public static partial class CharacteristicResolutionAllowlist
 {

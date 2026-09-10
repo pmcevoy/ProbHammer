@@ -4,13 +4,11 @@ namespace ProbHammer.Core.Domain.Catalogue.Bsdata;
 
 /// <summary>
 /// Extracts `[BRACKET]`-delimited cross-reference tokens from a piece of ability/rule text - a
-/// pure, `RuleGlossary`-independent step (see design.md's "Bracket-token extraction is a separate,
-/// pure function from resolution"). Deliberately has no awareness of `*`/`**`/`^^` emphasis markup
-/// as a *signal* of whether something is a candidate reference at all - that's what makes
+/// pure, `RuleGlossary`-independent step. Deliberately has no awareness of `*`/`**`/`^^` emphasis
+/// markup as a *signal* of whether something is a candidate reference at all - that's what makes
 /// "Non-Bracket Markup Is Not A Reference Signal" hold structurally rather than needing to
 /// explicitly exclude those characters. It does, however, normalize each already-captured token's
-/// own text before returning it (design.md's "Bracket-token extraction is a separate, pure
-/// function from resolution"): `*`/`^` characters found *inside* the brackets are stripped
+/// own text before returning it: `*`/`^` characters found *inside* the brackets are stripped
 /// (confirmed real shape: `[^^Lethal Hits^^]`, a rule referenced by its display Name wrapped in
 /// small-caps markup inside the brackets themselves - the reverse of markup wrapping a bracket
 /// from the outside), and known Unicode whitespace/hyphen variants are canonicalized to their
@@ -24,7 +22,7 @@ namespace ProbHammer.Core.Domain.Catalogue.Bsdata;
 public static partial class RuleTextTokenizer
 {
     // Simple non-nested "[...]" extraction - no real example of a nested "[[...]]" token has been
-    // observed in the corpus (see design.md).
+    // observed in the corpus.
     [GeneratedRegex(@"\[([^\[\]]+)\]")]
     private static partial Regex BracketTokenPattern();
 

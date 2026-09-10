@@ -3,13 +3,13 @@ using ProbHammer.Core.Domain.Catalogue.Bsdata;
 namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 
 /// <summary>
-/// Permanent, manually-triggered regression scan over the full local BSData clone - see
-/// design.md's "Corpus walk" decision. Every catalogue file gets a turn as the starting file for
-/// its own closure resolution, and every one of that file's own top-level
-/// SharedSelectionEntries is attempted through BsdataDatasheetMapper.BuildDatasheet, which
-/// recursively walks that entry's whole subtree (nested entries, groups, entryLinks, infoLinks),
-/// so this covers every characteristic reachable from any locally-defined entry across the whole
-/// corpus, not just names a captured export happens to reference.
+/// Permanent, manually-triggered regression scan over the full local BSData clone. Every catalogue
+/// file gets a turn as the starting file for its own closure resolution, and every one of that
+/// file's own top-level SharedSelectionEntries is attempted through
+/// BsdataDatasheetMapper.BuildDatasheet, which recursively walks that entry's whole subtree
+/// (nested entries, groups, entryLinks, infoLinks), so this covers every characteristic reachable
+/// from any locally-defined entry across the whole corpus, not just names a captured export
+/// happens to reference.
 /// </summary>
 public class CharacteristicResolutionScanTests
 {

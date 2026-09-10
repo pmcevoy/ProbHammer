@@ -4,8 +4,7 @@ namespace ProbHammer.Core.Domain.Import.BattleScribe.Json;
 
 /// <summary>
 /// Root wrapper for a BattleScribe/NewRecruit <c>rosterSchema</c> JSON export
-/// ({ "roster": { ... } }) - see battlescribe-roster-import's Format Recognition requirement.
-/// Only the fields this pipeline's mapping needs are modeled, mirroring
+/// ({ "roster": { ... } }). Only the fields this pipeline's mapping needs are modeled, mirroring
 /// <c>Domain.Catalogue.Bsdata.Json.BsCatalogueFile</c>'s existing precedent of modeling only what a
 /// loader actually reads - constraints/modifiers/conditionGroups are deliberately left unmapped;
 /// with System.Text.Json's default behavior, unmapped JSON properties are silently ignored.
@@ -65,8 +64,7 @@ public sealed class BsRosterSelection
     public List<BsRosterCost> Costs { get; set; } = [];
     public List<BsRosterSelection> Selections { get; set; } = [];
 
-    /// <summary>Outgoing <c>"Leading"</c>/<c>"Supporting"</c> attachment links only - see
-    /// battlescribe-roster-import's Attachment Relationship Resolution requirement. A target
+    /// <summary>Outgoing <c>"Leading"</c>/<c>"Supporting"</c> attachment links only. A target
     /// selection's own <c>incomingAssociations</c> field is redundant with this and deliberately
     /// not modeled.</summary>
     public List<BsRosterAssociation> Associations { get; set; } = [];
@@ -74,7 +72,7 @@ public sealed class BsRosterSelection
     /// <summary>This selection's own keyword/category tags (e.g. "Infantry", "Faction: Heretic
     /// Astartes") - already fully-resolved display names, mirroring
     /// <c>Domain.Catalogue.Bsdata.Json.BsCategoryLink</c>'s identical role for the BSData
-    /// pipeline. See resolve-category-keywords.</summary>
+    /// pipeline.</summary>
     public List<BsRosterCategory> Categories { get; set; } = [];
 }
 
@@ -113,8 +111,8 @@ public sealed class BsRosterCharacteristic
 /// <summary>One already-resolved rule-text entry (e.g. "Templar Vows", "Scouts 6\"", a weapon's own
 /// "Devastating Wounds"/"Anti" keyword rule) - carried through as opaque display text, matching
 /// <c>BsRule</c>'s own shape. No <c>modifiers</c>/gating field is modeled here: unlike the BSData
-/// pipeline, a roster JSON contains only rules that already apply to the exported army (see
-/// battlescribe-roster-import's Core Rule Extraction - "SHALL NOT apply any separate ... gating").</summary>
+/// pipeline, a roster JSON contains only rules that already apply to the exported army, so no
+/// separate gating evaluation is ever needed.</summary>
 public sealed class BsRosterRule
 {
     public string Id { get; set; } = "";

@@ -5,8 +5,8 @@ using ProbHammer.Web.Pages;
 namespace ProbHammer.Tests.Web;
 
 /// <summary>Exercises LivePlayModel.ExpandedSections/ForcedSections directly against every one of
-/// the twelve selection states in live-play-phase-tracker's "Section Relevance By Turn And Phase"
-/// table - no DOM/HTTP involved (tasks.md 3.3).</summary>
+/// the twelve phase/turn selection states and their expected section relevance - no DOM/HTTP
+/// involved.</summary>
 public class LivePlayPhaseTurnRelevanceTests
 {
     private static readonly UnitBlockSection[] AllSections =

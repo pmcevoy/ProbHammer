@@ -6,7 +6,7 @@ namespace ProbHammer.Web.Rendering;
 /// Builds one popover trigger/panel pair for an ability name, a resolvable weapon-keyword chip, or
 /// a nested [BRACKET] reference reached from either one's own text - extracted from
 /// `_UnitBlock.cshtml`'s original `BuildRulePopover`/`NextPopoverId`/`RenderNestedReference` local
-/// functions (design.md's "extract, don't duplicate" decision) so the new `_ArmyHeader.cshtml`
+/// functions so the `_ArmyHeader.cshtml`
 /// partial can render the identical trigger/panel behavior with no unit-block page index to scope
 /// popover ids against. One instance per render pass, scoped by an explicit id-scope prefix
 /// (<paramref name="idScopePrefix"/> - e.g. "u3" for unit block 3, "hdr" for the header) instead of
@@ -35,7 +35,7 @@ public sealed class RulePopoverRenderer(RuleGlossary glossary, string idScopePre
     /// (self-reference guard), which would otherwise make it indistinguishable from a genuinely
     /// nested popover if depth were derived from the set's size instead of tracked explicitly.
     /// Rendered as the panel's own `data-depth` attribute, which CSS uses to offset a nested
-    /// popover from its parent's shared centered position (recenter-rule-popovers).</summary>
+    /// popover from its parent's shared centered position.</summary>
     public (string Trigger, string Trailer) BuildRulePopover(
         string triggerHtml, string triggerClass, string ruleText, IReadOnlySet<string> shownRuleNames, int depth = 0)
     {

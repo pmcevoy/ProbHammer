@@ -29,17 +29,17 @@ public static class AttachedUnitAggregator
             Keywords: KeywordResolution.EffectiveKeywords(combatUnit));
     }
 
-    // unify-characteristic-effect-resolution: a caveated Statline.InSv gets exactly one resolution
-    // attempt against the checked-in baseline, via the same InvulnerableSaveEffectResolver
-    // ApplyInvulnerableSaveEffect (below) already uses for an ordinary present ability. Deliberately
-    // narrow - scoped to InSv only, reading Statline.InSv directly rather than joining through
-    // BuildAbilities' present-ability list - since Datasheet's own exclusion of the InSv-caveat-
-    // internal ability names (see Datasheet.IsExcludedFromGeneralAbilityWalk) already ensures that
-    // ability is never independently "present" for ApplyStatlineFlagRules to also match: there is no
+    // A caveated Statline.InSv gets exactly one resolution attempt against the checked-in baseline,
+    // via the same InvulnerableSaveEffectResolver ApplyInvulnerableSaveEffect (below) already uses
+    // for an ordinary present ability. Deliberately narrow - scoped to InSv only, reading
+    // Statline.InSv directly rather than joining through BuildAbilities' present-ability list -
+    // since Datasheet's own exclusion of the InSv-caveat-internal ability names (see
+    // Datasheet.IsExcludedFromGeneralAbilityWalk) already ensures that ability is never
+    // independently "present" for ApplyStatlineFlagRules to also match: there is no
     // ability-presence collision left here to coordinate against, so ordering relative to
     // ApplyStatlineFlagRules doesn't matter for correctness. Placed before it only because "resolve
     // what's already known to need resolving, then apply ability-presence-driven flags" reads most
-    // naturally (design.md Decision 3).
+    // naturally.
     private static IReadOnlyList<AggregateStatlineEntry> ResolveCaveatedInvulnerableSaves(
         IReadOnlyList<AggregateStatlineEntry> statlines, RuleClassificationBaseline baseline) =>
         statlines.Select(entry =>
@@ -85,14 +85,12 @@ public static class AttachedUnitAggregator
             _ => throw new InvalidOperationException($"Unrecognized characteristic '{characteristic}'.")
         };
 
-    // Runs after BuildStatlines/BuildAbilities produce their live, casualty-filtered results (design
-    // D3) - abilities is already filtered to only currently-present sources, so a matched entry's
-    // liveness falls out for free with no separate tracking (statline-flag-rules' "Mutation Liveness
-    // Follows Ability Presence"). Never mutates Datasheet/Unit; only the returned decorated copy of
-    // the statline entries carries an effect. Looks up each present ability's own normalized Text
-    // against the checked-in RuleClassificationBaseline (never Name+Text, and never a live call to
-    // RuleEffectClassifier.Classify - apply-rule-effect-baseline design.md's Decisions 1/2), replacing
-    // the old closed StatlineFlagRuleCatalogue vocabulary.
+    // Runs after BuildStatlines/BuildAbilities produce their live, casualty-filtered results -
+    // abilities is already filtered to only currently-present sources, so a matched entry's
+    // liveness falls out for free with no separate tracking. Never mutates Datasheet/Unit; only the
+    // returned decorated copy of the statline entries carries an effect. Looks up each present
+    // ability's own normalized Text against the checked-in RuleClassificationBaseline - never
+    // Name+Text, and never a live call to RuleEffectClassifier.Classify.
     private static IReadOnlyList<AggregateStatlineEntry> ApplyStatlineFlagRules(
         IReadOnlyList<AggregateStatlineEntry> statlines, IReadOnlyList<AggregateAbilityEntry> abilities,
         RuleClassificationBaseline baseline)
@@ -122,7 +120,7 @@ public static class AttachedUnitAggregator
 
     // A baseline entry whose own classified target this capability can't yet apply (KeywordRuleTarget/
     // UnconditionalRuleTarget - no roster-wide predicate evaluation exists) produces no match at all,
-    // the same outcome as an ability matching no baseline entry (design.md Decision 4).
+    // the same outcome as an ability matching no baseline entry.
     private static RuleClassificationBaselineEntry? TryGetApplicableEntry(RuleClassificationBaseline baseline,
         Ability ability)
     {
@@ -133,11 +131,10 @@ public static class AttachedUnitAggregator
             : null;
     }
 
-    // SelfRuleTarget maps onto the old Bearer scope - the matched ability's own (ComponentName,
-    // StatlineName): one specific model-line when StatlineName is set, the whole component when it's
-    // null (a Datasheet-level or Enhancement-sourced ability). AttachedUnitRuleTarget maps onto the
-    // old WholeUnit scope - applies to every row regardless, since the matched ability is already
-    // confirmed present on this ICombatUnit (design.md Decision 4).
+    // SelfRuleTarget applies to the matched ability's own (ComponentName, StatlineName): one specific
+    // model-line when StatlineName is set, the whole component when it's null (a Datasheet-level or
+    // Enhancement-sourced ability). AttachedUnitRuleTarget applies to every row regardless, since the
+    // matched ability is already confirmed present on this ICombatUnit.
     private static bool IsBearer(AggregateAbilityEntry abilityEntry, RuleTarget target,
         AggregateStatlineEntry statlineEntry)
     {
@@ -150,10 +147,9 @@ public static class AttachedUnitAggregator
             : abilityEntry.ComponentName == statlineEntry.ComponentName;
     }
 
-    // Design.md Decision 6: if two baseline-matched entries would both touch the same characteristic
-    // of the same statline entry, the first applied wins and the second is skipped - "skip if the
-    // field already carries a contributing ability", no separate accumulate logic. No real corpus
-    // example needs this today (checked - see design.md).
+    // If two baseline-matched entries would both touch the same characteristic of the same statline
+    // entry, the first applied wins and the second is skipped - "skip if the field already carries a
+    // contributing ability", no separate accumulate logic. No real corpus example needs this today.
     private static Statline ApplyEffect(Statline statline, CharacteristicEffect effect, Ability sourceAbility) =>
         effect switch
         {
@@ -162,8 +158,8 @@ public static class AttachedUnitAggregator
             _ => throw new ArgumentOutOfRangeException(nameof(effect))
         };
 
-    // Design.md Decision 7: the one missing piece of glue CharacteristicModificationResolver itself
-    // doesn't provide - wraps its resolved raw CharacteristicValue back into a ScalarCharacteristicView,
+    // The one missing piece of glue CharacteristicModificationResolver itself doesn't provide -
+    // wraps its resolved raw CharacteristicValue back into a ScalarCharacteristicView,
     // preserving the true pre-mutation OriginalValue through a chain of mutations (never the field's
     // current effective Value, which may already reflect an earlier effect in this same pass).
     private static Statline ApplyScalarEffect(Statline statline, ScalarCharacteristicEffect effect,
@@ -331,10 +327,10 @@ public static class AttachedUnitAggregator
     /// single component (<see cref="AggregateAbilityEntry.ComponentName"/> null,
     /// <see cref="AggregateAbilityEntry.ContributingComponentNames"/> listing every contributor),
     /// regardless of how many present components in THIS roster happen to reference it - even a
-    /// standalone Unit's own single component. This is deliberately NOT "shared by 2+ components"
-    /// (an earlier, wrong heuristic this replaces - it only promoted a shared army-wide ability
-    /// within a multi-component AttachedUnit, leaving it as an ordinary per-component entry on a
-    /// standalone Unit, which is exactly as much an army-wide fact there): whether an ability
+    /// standalone Unit's own single component. This is deliberately NOT "shared by 2+ components":
+    /// that rule would only promote a shared army-wide ability within a multi-component
+    /// AttachedUnit, leaving it as an ordinary per-component entry on a standalone Unit, which is
+    /// exactly as much an army-wide fact there. Whether an ability
     /// gets this treatment is a structural property of the ability itself (its Origin), not a
     /// headcount of who happens to reference it in one particular roster. Multiple components
     /// referencing the same ArmyRule ability still collapse into one entry, same as before. Since

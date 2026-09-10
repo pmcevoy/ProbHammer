@@ -11,7 +11,7 @@ namespace ProbHammer.Core.Domain.Catalogue.Bsdata.Json;
 /// sharedSelectionEntryGroups, sharedProfiles), so one <see cref="BsCatalogue"/> type models
 /// both; exactly one of <see cref="Catalogue"/>/<see cref="GameSystem"/> is populated per file.
 /// Only the fields this loader's resolution/mapping needs are modeled - constraints, modifiers,
-/// conditionGroups, associations, and costs are deliberately left unmapped (see design.md); with
+/// conditionGroups, associations, and costs are deliberately left unmapped; with
 /// System.Text.Json's default behavior, unmapped JSON properties are silently ignored rather than
 /// causing a deserialization failure.
 /// </summary>
@@ -54,19 +54,15 @@ public sealed class BsCatalogue
     /// <summary>Faction/library-level rule text (e.g. Black Templars' "Templar Vows", reached
     /// through `Library - Astartes Heresy Legends.json`) - absent entirely on a plain faction file
     /// with no rules of its own, which deserializes to the default empty list under this loader's
-    /// existing convention for optional BSData fields. See rules-glossary's "Faction and Library
-    /// Rule Text Extraction".</summary>
+    /// existing convention for optional BSData fields.</summary>
     public List<BsRule> Rules { get; set; } = [];
 
     /// <summary>Universal special-rule text (e.g. "Lethal Hits", "Devastating Wounds") - primarily
     /// populated on the game-system file ("Warhammer 40,000.json"), reached via
-    /// <see cref="BsdataClosure.GameSystem"/>. See rules-glossary's "Universal Rule Text
-    /// Extraction". A plain faction file can ALSO populate its own `sharedRules` locally
-    /// (confirmed real: Necrons.json's own "Command Protocols", "Reanimation Protocols" etc. - the
-    /// original assumption that only the game-system file uses this field was wrong; see
-    /// display-army-header-and-detachment-rules' Necrons "Awakened Dynasty" investigation) - so
-    /// <see cref="RuleGlossary.Build"/> reads this field on every closure file, not only the game
-    /// system.</summary>
+    /// <see cref="BsdataClosure.GameSystem"/>. A plain faction file can ALSO populate its own
+    /// `sharedRules` locally (confirmed real: Necrons.json's own "Command Protocols",
+    /// "Reanimation Protocols" etc.) - so <see cref="RuleGlossary.Build"/> reads this field on
+    /// every closure file, not only the game system.</summary>
     public List<BsRule> SharedRules { get; set; } = [];
 
     /// <summary>Profile-type definitions (Unit/Ranged Weapons/Melee Weapons/Abilities/Transport on
@@ -110,8 +106,7 @@ public sealed class BsRule
     /// <summary>A rule's own gating (e.g. chapter/sub-faction exclusivity, or game-mode
     /// exclusivity) - see BsdataDatasheetMapper's generalized IsGameModeGated/
     /// IsProvablyAlwaysTrueInMatchedPlay, which reads this to decide whether a Core Rule Ability
-    /// reference should be excluded for the current closure. Previously silently dropped like
-    /// every other unmapped BSData field on this type.</summary>
+    /// reference should be excluded for the current closure.</summary>
     public List<BsModifier> Modifiers { get; set; } = [];
 
     public string Description { get; set; } = "";
@@ -164,7 +159,7 @@ public sealed class BsSelectionEntry
 
     /// <summary>This entry's own keyword/category tags (e.g. "Infantry", "Faction: Black
     /// Templars") - already fully-resolved display names, unlike a weapon profile/rule/InSv text,
-    /// so no id cross-reference is needed. See resolve-category-keywords.</summary>
+    /// so no id cross-reference is needed.</summary>
     public List<BsCategoryLink> CategoryLinks { get; set; } = [];
 }
 
@@ -183,10 +178,9 @@ public sealed class BsSelectionEntryGroup
 /// value when its condition tree evaluates true. Used both narrowly (see
 /// BsdataDatasheetMapper.IsGameModeGated: "does a hidden=true modifier's condition tree reference
 /// a specific force-type id anywhere" - a plain existence check, not general boolean evaluation)
-/// and, per resolve-structured-characteristic-modifiers, structurally (a `Field` naming a known
-/// Unit/Ranged-Weapon/Melee-Weapon characteristic id, a `Value` parsed per that characteristic's
-/// own shape - see `bsdata-modifier-resolution`). AND/OR nesting, comparison operators, etc. in
-/// `Conditions`/`ConditionGroups` are read structurally but never evaluated as general boolean
+/// and structurally (a `Field` naming a known Unit/Ranged-Weapon/Melee-Weapon characteristic id, a
+/// `Value` parsed per that characteristic's own shape). AND/OR nesting, comparison operators, etc.
+/// in `Conditions`/`ConditionGroups` are read structurally but never evaluated as general boolean
 /// logic - only the specific, narrow evaluations those two capabilities each perform.</summary>
 public sealed class BsModifier
 {
@@ -195,20 +189,17 @@ public sealed class BsModifier
     public JsonElement Value { get; set; }
 
     /// <summary>BattleScribe's own cosmetic display-bookkeeping payload (e.g. `"+0"`) - the real
-    /// content of a cosmetic `replace`/`append` modifier whose own `Value` carries none (see
-    /// `bsdata-modifier-resolution`'s "Cosmetic Modifier Pattern Exclusion"). Deserialized so a
-    /// corpus scan can distinguish "genuinely no independent payload" from "has a real arg-only
-    /// payload we're choosing to ignore" - not itself part of the cosmetic-exclusion predicate,
-    /// which keys off `Value`'s own shape instead.</summary>
+    /// content of a cosmetic `replace`/`append` modifier whose own `Value` carries none.
+    /// Deserialized so a corpus scan can distinguish "genuinely no independent payload" from "has a
+    /// real arg-only payload we're choosing to ignore" - not itself part of the cosmetic-exclusion
+    /// predicate, which keys off `Value`'s own shape instead.</summary>
     public string? Arg { get; set; }
 
     /// <summary>BattleScribe's own address-path field (e.g. `"self.entries.group.recursive.
-    /// profiles.Melee Weapons"`) - deserialized verbatim, never parsed into a real path evaluator
-    /// (see `statline-flag-rules`' design.md Decision 1's rejected alternative). Used only for one
-    /// narrow, structural signal: a value containing `"recursive"` means this modifier's reach
-    /// spans an entire subtree rather than just its own granting selection's directly-owned
-    /// profile, which `statline-flag-rules`' "Datasheet-Sourced Rule Scope Inference" uses to infer
-    /// a data-derived rule's Bearer/WholeUnit Scope.</summary>
+    /// profiles.Melee Weapons"`) - deserialized verbatim, never parsed into a real path evaluator.
+    /// Used only for one narrow, structural signal: a value containing `"recursive"` means this
+    /// modifier's reach spans an entire subtree rather than just its own granting selection's
+    /// directly-owned profile, used to infer a data-derived rule's Bearer/WholeUnit Scope.</summary>
     public string? Affects { get; set; }
 
     public List<BsCondition> Conditions { get; set; } = [];
@@ -222,10 +213,10 @@ public sealed class BsCondition
     public string Scope { get; set; } = "";
 
     /// <summary>The condition's own target field (e.g. "selections", "associations", "forces") -
-    /// distinct from a BsModifier's own Field (the characteristic/property being SET). Read by
-    /// characteristic-modifier-caveats' tier-2 classifier to recognize a "selections" (quantity)
-    /// condition specifically, as opposed to an "associations" (live attachment state) or "forces"
-    /// (roster composition) one - see BsdataDatasheetMapper.IsTier1OrTier2.</summary>
+    /// distinct from a BsModifier's own Field (the characteristic/property being SET). Read by the
+    /// tier-2 classifier to recognize a "selections" (quantity) condition specifically, as opposed
+    /// to an "associations" (live attachment state) or "forces" (roster composition) one - see
+    /// BsdataDatasheetMapper.IsTier1OrTier2.</summary>
     public string Field { get; set; } = "";
 }
 
@@ -239,9 +230,9 @@ public sealed class BsConditionGroup
 /// <summary>
 /// A reference to another selectionEntry/selectionEntryGroup by id. The "import" flag on this
 /// shape is BattleScribe's shared-entry-reuse marker, not an indicator of which catalogue file
-/// the target lives in - do not use it to decide local-vs-imported resolution (see design.md's
-/// "entryLink target location" risk). TargetId is resolved against an id index built over the
-/// full closure, checking nearer files before farther ones, mirroring name resolution.
+/// the target lives in - do not use it to decide local-vs-imported resolution. TargetId is
+/// resolved against an id index built over the full closure, checking nearer files before
+/// farther ones, mirroring name resolution.
 /// </summary>
 public sealed class BsEntryLink
 {
@@ -257,8 +248,7 @@ public sealed class BsEntryLink
 }
 
 /// <summary>One `categoryLinks` entry - already carries the fully-resolved display name directly
-/// (`name`), unlike a weapon profile/rule/InSv text; no id cross-reference needed. See
-/// resolve-category-keywords.</summary>
+/// (`name`), unlike a weapon profile/rule/InSv text; no id cross-reference needed.</summary>
 public sealed class BsCategoryLink
 {
     public string Name { get; set; } = "";

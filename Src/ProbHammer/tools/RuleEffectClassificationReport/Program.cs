@@ -4,10 +4,9 @@ using ProbHammer.Core.Domain.Catalogue.Bsdata;
 
 namespace ProbHammer.Tools.RuleEffectClassificationReport;
 
-/// <summary>Corpus-wide manual-inspection tool for <see cref="RuleEffectClassifier"/> - see
-/// classify-rule-effects-from-text proposal.md's "Corpus-Wide Classification Reporting" and
-/// tasks.md's task 4. Walks the live BSData clone the same way this project's own
-/// <c>[Fact(Explicit = true)]</c> CorpusScan tests do (see
+/// <summary>Corpus-wide manual-inspection tool for <see cref="RuleEffectClassifier"/>. Walks the
+/// live BSData clone the same way this project's own <c>[Fact(Explicit = true)]</c> CorpusScan
+/// tests do (see
 /// tests/ProbHammer.Tests/Domain/Catalogue/Bsdata/CorpusScan/), collecting every rule/ability
 /// Name+Text pair it can reach - local + shared rules, always-enumerated <see cref="Datasheet.Abilities"/>,
 /// on-demand OptionalGrant/Enhancement abilities (<see cref="Datasheet.OptionalAbilityNames"/>), and
@@ -30,21 +29,21 @@ namespace ProbHammer.Tools.RuleEffectClassificationReport;
 /// distinct Name seen for a given (normalized) Text is still reported, as data on the row rather than
 /// as part of the grouping key.
 ///
-/// Since baseline-rule-effect-classifications, a text with a matching entry in the checked-in
-/// <see cref="RuleClassificationBaseline"/> (src/ProbHammer.Web/Data/RuleEffectClassifications.json)
-/// is diverted from its normal Effect/Target-only/default-only section into a separate "Changed since
-/// verified" listing driven by <see cref="RuleClassificationDiff"/> - an unchanged, already-verified
-/// result collapses to a summary count instead of reprinting, while any drift is always surfaced. See
-/// that change's proposal.md/design.md for the full rationale.
+/// A text with a matching entry in the checked-in <see cref="RuleClassificationBaseline"/>
+/// (src/ProbHammer.Web/Data/RuleEffectClassifications.json) is diverted from its normal
+/// Effect/Target-only/default-only section into a separate "Changed since verified" listing driven
+/// by <see cref="RuleClassificationDiff"/> - an unchanged, already-verified result collapses to a
+/// summary count instead of reprinting, while any drift is always surfaced.
 ///
-/// Since widen-rule-effect-classification-coverage, a further "Caveated baseline entries needing
-/// review" section lists every baselined text whose current <see cref="RuleClassification.IsCaveated"/>
+/// A further "Caveated baseline entries needing review" section lists every baselined text whose
+/// current <see cref="RuleClassification.IsCaveated"/>
 /// is true and whose baseline entry carries no <see cref="RuleClassificationBaselineEntry.Note"/> yet -
 /// independent of the Unchanged/Drift/NewInformation split above, since a caveated-and-unchanged entry
 /// would otherwise collapse into the summary count and never prompt a return visit. A human reviewing
 /// this list either extends the classifier to capture the extra content, or accepts the entry as-is by
 /// hand-adding a `note` recording that decision - the only field this tool never computes on a human's
-/// behalf. Adding the note is what removes the entry from this list on the next run.</summary>
+/// behalf. Adding the
+/// note is what removes the entry from this list on the next run.</summary>
 public static class Program
 {
     /// <summary>Same literal path already documented in CLAUDE.md/.claude/domain-model-11e.md and
@@ -59,8 +58,7 @@ public static class Program
     /// relative from this tool's own source file, the same portable-across-machines/checkouts
     /// convention <c>ArmyListParserTests.ReadDataFile</c> already uses for checked-in fixtures. Still
     /// overridable via a second command-line argument, mirroring the clone-path argument's own
-    /// precedent - see baseline-rule-effect-classifications design.md's "Report tool's own path
-    /// resolution" decision.</summary>
+    /// precedent.</summary>
     private static string DefaultBaselinePath([CallerFilePath] string here = "") =>
         Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "src", "ProbHammer.Web", "Data",
             "RuleEffectClassifications.json");
@@ -68,11 +66,9 @@ public static class Program
     public static int Main(string[] args)
     {
         // The process's default console encoding can't represent every character real BSData text
-        // carries (e.g. a U+00A0 non-breaking space authoring quirk - the same quirk the now-retired
-        // InvulnerableSaveCaveatClassifier once normalized elsewhere), and
-        // silently substitutes a garbage byte instead of erroring - forcing UTF-8 makes every
-        // character in a Truncate()d text preview round-trip correctly regardless of terminal or
-        // redirect target.
+        // carries (e.g. a U+00A0 non-breaking space authoring quirk), and silently substitutes a
+        // garbage byte instead of erroring - forcing UTF-8 makes every character in a Truncate()d
+        // text preview round-trip correctly regardless of terminal or redirect target.
         Console.OutputEncoding = System.Text.Encoding.UTF8;
 
         var writeBaseline = args.Contains("--write-baseline");
@@ -178,8 +174,8 @@ public static class Program
             .ToList();
 
         // A text with a baseline entry is diverted entirely from the three sections below into its
-        // own "Changed since verified" listing (task 4.3) - the baseline only ever suppresses what it
-        // has actually recorded, so every other text keeps appearing exactly as before the baseline
+        // own "Changed since verified" listing - the baseline only ever suppresses what it has
+        // actually recorded, so every other text keeps appearing exactly as before the baseline
         // existed.
         var unbaselined = results.Where(r => !baseline.TryGet(r.Text, out _)).ToList();
         var baselined = results
@@ -188,13 +184,11 @@ public static class Program
                 Diff: RuleClassificationDiff.Compare(baseline.Entries[r.Text].Classification, r.Classification)))
             .ToList();
 
-        // Three-way split, not the spec's original two-way non-default/default-only: results with
-        // 1+ Effects are their own section (the one worth eyeballing to confirm an extracted Effect
-        // actually matches what the text says), separate from results whose Target is broader than
-        // Self but which extracted no Effect at all (Templar Vows/Faith-Fuelled Resolve-shaped -
-        // still a "non-default" classification per the spec, just not an Effect-review candidate).
-        // An earlier version of this split (Effects-only vs. everything-else) silently dropped the
-        // Target-only bucket from BOTH sections - caught live, not by any test.
+        // Three-way split: results with 1+ Effects are their own section (the one worth eyeballing
+        // to confirm an extracted Effect actually matches what the text says), separate from results
+        // whose Target is broader than Self but which extracted no Effect at all (Templar
+        // Vows/Faith-Fuelled Resolve-shaped - still a "non-default" classification, just not an
+        // Effect-review candidate).
         var effectResults = unbaselined
             .Where(r => r.Classification.Effects.Count > 0)
             .OrderBy(r => r.Names[0], StringComparer.OrdinalIgnoreCase)
@@ -210,11 +204,11 @@ public static class Program
             .OrderBy(r => r.Names[0], StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        // D5's gate (resolve-invulnerable-save-effects) splits the default-only bucket: a text the
-        // gate rejects (no "invulnerable save" substring at all) can never plausibly have matched any
-        // InSv pattern, so it carries zero review value and is excluded from the reviewable listing
-        // entirely rather than sampled; a text that passes the gate but matched no recognized InSv
-        // pattern is the small, high-signal set actually worth reading in full - see design.md's D6.
+        // The invulnerable-save gate splits the default-only bucket: a text the gate rejects (no
+        // "invulnerable save" substring at all) can never plausibly have matched any InSv pattern,
+        // so it carries zero review value and is excluded from the reviewable listing entirely
+        // rather than sampled; a text that passes the gate but matched no recognized InSv pattern is
+        // the small, high-signal set actually worth reading in full.
         var defaultOnlyReviewable = defaultOnly
             .Where(r => RuleEffectClassifier.MayStateInvulnerableSave(r.Text))
             .ToList();
@@ -232,12 +226,11 @@ public static class Program
             Console.WriteLine($"    seen on: {string.Join("; ", r.Locations.Take(3))}{extra}");
         }
 
-        // Structurally-derived results and their regex-vs-structural disagreements (task 3.2/3.3) are
-        // computed over ALL results, not just `unbaselined` - the checked-in baseline only ever tracks
-        // a text-classified Target/Effects/IsCaveated (widen-baseline-generation-coverage adds no
-        // baseline field for a structural derivation itself, only feeds it into the SAME Effects list
-        // task 4.3's --write-baseline already writes), so a baselined text's own structural candidates
-        // are just as worth surfacing/cross-checking as an unbaselined one's.
+        // Structurally-derived results and their regex-vs-structural disagreements are computed over
+        // ALL results, not just `unbaselined` - the checked-in baseline only ever tracks a
+        // text-classified Target/Effects/IsCaveated, not a structural derivation itself, so a
+        // baselined text's own structural candidates are just as worth surfacing/cross-checking as
+        // an unbaselined one's.
         var structuralResults = results
             .Where(r => r.StructuralEffects.Count > 0)
             .OrderBy(r => r.Names[0], StringComparer.OrdinalIgnoreCase)
@@ -256,10 +249,10 @@ public static class Program
             Console.WriteLine($"    seen on: {string.Join("; ", r.Locations.Take(3))}{extra}");
         }
 
-        // widen-baseline-generation-coverage design.md Decision 4: disagreement is its own reviewable
-        // listing, never silently resolved by preferring either source. Agreement (same verb+amount on
-        // the same characteristic) and "only one source produced anything" both require no listing at
-        // all - only a genuine mismatch on a shared characteristic is surfaced.
+        // Disagreement is its own reviewable listing, never silently resolved by preferring either
+        // source. Agreement (same verb+amount on the same characteristic) and "only one source
+        // produced anything" both require no listing at all - only a genuine mismatch on a shared
+        // characteristic is surfaced.
         var disagreements = results
             .Select(r => (Result: r, Mismatches: r.StructuralEffects
                 .Select(structuralEffect => (
@@ -354,8 +347,7 @@ public static class Program
         // prompting a return visit - this list is that prompt, independent of Drift/NewInformation
         // status (a caveated entry with no note still needs a decision even when nothing else about
         // it changed this run). Once reviewed, adding a `note` to the entry is what removes it from
-        // this list on the next run - the same mechanism the five originally-seeded caveated entries
-        // already used, just not previously required for every future caveated entry too.
+        // this list on the next run.
         var caveatedNeedingReview = baselined
             .Where(b => b.Result.Classification.IsCaveated
                         && baseline.Entries[b.Result.Text].Note is null
@@ -425,24 +417,21 @@ public static class Program
         }
     }
 
-    /// <summary>widen-baseline-generation-coverage design.md Decision 2: matches a classified
-    /// <see cref="CharacteristicModifierCandidate"/> against its granting ability by
-    /// <see cref="Ability.Name"/> (case-insensitive) - the same join
-    /// <c>AttachedUnitAggregator.ApplyCharacteristicModifierCandidates</c> used to perform at
-    /// runtime before unify-characteristic-effect-resolution retired that live mechanism entirely;
-    /// this tool's own offline join is unaffected, performed here once per collected ability rather
-    /// than per resolved roster unit.</summary>
+    /// <summary>Matches a classified <see cref="CharacteristicModifierCandidate"/> against its
+    /// granting ability by <see cref="Ability.Name"/> (case-insensitive) - this tool's own offline
+    /// join, performed here once per collected ability rather than per resolved roster
+    /// unit.</summary>
     private static IEnumerable<CharacteristicModifierCandidate>
         MatchingCandidates(Datasheet datasheet, Ability ability) =>
         datasheet.CharacteristicModifierCandidates.Where(c =>
             string.Equals(c.EntryName, ability.Name, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>widen-baseline-generation-coverage design.md Decision 3: mechanically derives a
-    /// <see cref="ScalarCharacteristicEffect"/> straight from a candidate's own structured
-    /// {Field, Type, Value} - no text parsing, no prose ambiguity. Returns null (fails closed) for a
-    /// non-numeric <see cref="CharacteristicModifierCandidate.RawValue"/> or an unrecognized
-    /// <see cref="CharacteristicModifierCandidate.RawType"/> (anything other than "increment"/
-    /// "decrement"/"set") - see design.md's Open Question, resolved by task 4.1's corpus run.</summary>
+    /// <summary>Mechanically derives a <see cref="ScalarCharacteristicEffect"/> straight from a
+    /// candidate's own structured {Field, Type, Value} - no text parsing, no prose ambiguity.
+    /// Returns null (fails closed) for a non-numeric
+    /// <see cref="CharacteristicModifierCandidate.RawValue"/> or an unrecognized
+    /// <see cref="CharacteristicModifierCandidate.RawType"/> (anything other than
+    /// "increment"/"decrement"/"set").</summary>
     private static CharacteristicEffect? TryDeriveStructuralEffect(CharacteristicModifierCandidate candidate)
     {
         if (!int.TryParse(candidate.RawValue, out var value))
@@ -509,10 +498,9 @@ public static class Program
         public List<string> Locations { get; } = [];
 
         /// <summary>Every <see cref="CharacteristicModifierCandidate"/> matched to an ability whose
-        /// Text normalizes to this occurrence's own key (widen-baseline-generation-coverage design.md
-        /// Decision 2) - a plain <see cref="HashSet{T}"/> since the record's own value equality
-        /// dedupes identical candidates the same way <see cref="Names"/> already dedupes identical
-        /// names.</summary>
+        /// Text normalizes to this occurrence's own key - a plain <see cref="HashSet{T}"/> since the
+        /// record's own value equality dedupes identical candidates the same way
+        /// <see cref="Names"/> already dedupes identical names.</summary>
         public HashSet<CharacteristicModifierCandidate> StructuralCandidates { get; } = [];
     }
 }

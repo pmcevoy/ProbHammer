@@ -10,11 +10,11 @@ namespace ProbHammer.Core.Domain.Catalogue.Bsdata;
 /// "Unit"-typeName profile as a named <see cref="Statline"/> (deduped by name, first occurrence
 /// wins, in declared order - this single walk handles both the single-model case, where the
 /// profile sits on the entry itself, and the squad case, where it sits on distinct nested child
-/// entries, per design.md's squad-detection decision), every "Ranged Weapons"/"Melee
+/// entries), every "Ranged Weapons"/"Melee
 /// Weapons"-typeName profile as a resolvable <see cref="WeaponProfile"/>, and every
 /// "Abilities"-typeName profile as an <see cref="Ability"/>. EntryLinks are followed through an
 /// id index built over the closure so that wargear defined via a shared entry (in this file or an
-/// imported one) is still reachable - see design.md's "entryLink target location" risk. InfoLinks
+/// imported one) is still reachable. InfoLinks
 /// of type "profile" are followed through a separate id index into BsCatalogue.SharedProfiles -
 /// some model statlines (observed in real data: Chaos - Chaos Space Marines.json's "Legionaries"
 /// squad reaches its troop model's Unit profile this way, not nested in any selectionEntry's own
@@ -36,26 +36,24 @@ public static partial class BsdataDatasheetMapper
     private static readonly string[] GameModeGateNames = ["Army Roster", "Crusade Force"];
 
     /// <summary>Closed `BsModifier.Field` id -> Statline characteristic-property-name allowlist for
-    /// characteristic-modifier-caveats' classifier (see ClassifyCharacteristicModifierCandidates),
-    /// built from a full-corpus scan of the live BSData clone's real `Field` values (task 1.1), not
-    /// guessed - mirrors this mapper's own WeaponKeywordParser/ParseThreshold "closed vocabulary,
-    /// fail closed on the unrecognized case" discipline. Ids are the game system's own
-    /// profileTypes["Unit"].characteristicTypes ids (see BsCatalogue.ProfileTypes' own doc comment).
-    /// InSv (id "55a7-5b54-c60d-11dc") rejoined this allowlist via unify-characteristic-effect-
-    /// resolution - it was excluded previously only because no downstream consumer could safely
-    /// resolve a structurally-derived candidate without double-application risk; that risk is gone
-    /// now that AttachedUnitAggregator resolves every characteristic-affecting present ability
-    /// through the single baseline-driven pass (see AttachedUnitAggregator's own
-    /// ResolveCaveatedInvulnerableSaves/ApplyStatlineFlagRules). Real corpus case this unlocks:
-    /// Black Templars' "Consecrating Aura" Enhancement (tier 1, no condition). Still deliberately
-    /// excludes every WeaponProfile characteristic (Ranged/Melee Weapons' own A/S/AP/D/BS/WS/Range/
-    /// Keywords ids) - a full-corpus scan (task 1.1) confirmed zero real
-    /// `entry.Modifiers`/`group.Modifiers` anywhere in the corpus target a WeaponProfile field;
-    /// every real occurrence of those ids lives inside a Crusade-only `modifierGroups` block this
-    /// loader doesn't read at all (unmapped, per BsCatalogueFile.cs), never in the directly-modeled
-    /// `modifiers` array. Building an untested, unreachable WeaponProfile-targeting path would be
-    /// exactly the kind of premature behavior on an unconsumed shape this codebase deliberately
-    /// avoids elsewhere.</summary>
+    /// <see cref="ClassifyCharacteristicModifierCandidates"/>, built from a full-corpus scan of the
+    /// live BSData clone's real `Field` values, not guessed - mirrors this mapper's own
+    /// WeaponKeywordParser/ParseThreshold "closed vocabulary, fail closed on the unrecognized case"
+    /// discipline. Ids are the game system's own profileTypes["Unit"].characteristicTypes ids (see
+    /// BsCatalogue.ProfileTypes' own doc comment).
+    /// InSv (id "55a7-5b54-c60d-11dc") is included because AttachedUnitAggregator resolves every
+    /// characteristic-affecting present ability through a single baseline-driven pass (see
+    /// AttachedUnitAggregator's own ResolveCaveatedInvulnerableSaves/ApplyStatlineFlagRules), which
+    /// eliminates the double-application risk a structurally-derived candidate would otherwise
+    /// carry. Real corpus case this unlocks: Black Templars' "Consecrating Aura" Enhancement
+    /// (tier 1, no condition). Still deliberately excludes every WeaponProfile characteristic
+    /// (Ranged/Melee Weapons' own A/S/AP/D/BS/WS/Range/Keywords ids) - a full-corpus scan confirmed
+    /// zero real `entry.Modifiers`/`group.Modifiers` anywhere in the corpus target a WeaponProfile
+    /// field; every real occurrence of those ids lives inside a Crusade-only `modifierGroups` block
+    /// this loader doesn't read at all (unmapped, per BsCatalogueFile.cs), never in the
+    /// directly-modeled `modifiers` array. Building an untested, unreachable WeaponProfile-targeting
+    /// path would be exactly the kind of premature behavior on an unconsumed shape this codebase
+    /// deliberately avoids elsewhere.</summary>
     private static readonly IReadOnlyDictionary<string, string> CharacteristicFieldIds =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -101,8 +99,7 @@ public static partial class BsdataDatasheetMapper
 
     /// <summary>Maps a `categoryLinks` list into a Keywords set: each entry's `name`, with a
     /// literal "Faction: " prefix stripped when present, otherwise kept verbatim - no exclusions,
-    /// including an entry matching the owning entry's own name (see proposal.md/design.md's
-    /// reversed decision on this).</summary>
+    /// including an entry matching the owning entry's own name.</summary>
     private static IReadOnlyList<string> MapCategoryLinks(IReadOnlyList<BsCategoryLink> categoryLinks) =>
         categoryLinks
             .Select(c => c.Name.StartsWith("Faction: ", StringComparison.OrdinalIgnoreCase)
@@ -135,7 +132,7 @@ public static partial class BsdataDatasheetMapper
         /// <summary>The roster's own known army-wide rule names (see
         /// ArmyRuleNameLookup.Resolve), resolved once per roster by the caller that owns Faction
         /// and threaded in here - the sole signal Core Rule Ability Extraction uses to decide
-        /// ArmyRule vs. CoreRule Origin (classify-known-army-rules). Empty when not supplied
+        /// ArmyRule vs. CoreRule Origin. Empty when not supplied
         /// (every pre-existing BuildDatasheet call site) - every reference then classifies
         /// CoreRule, same fail-open-default shape as PrimaryCatalogueId/GameModeGateIds.</summary>
         public IReadOnlySet<string> KnownArmyRuleNames { get; } =
@@ -145,9 +142,8 @@ public static partial class BsdataDatasheetMapper
         public HashSet<string> SeenStatlineNames { get; } = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>One (Name, Keywords) pair per named model whose own `categoryLinks` were
-        /// collected at the same visit that extracted its Statline - see
-        /// resolve-category-keywords. Populated 1:1 with Statlines, gated by the same
-        /// SeenStatlineNames check, so no separate dedup is needed here.</summary>
+        /// collected at the same visit that extracted its Statline. Populated 1:1 with Statlines,
+        /// gated by the same SeenStatlineNames check, so no separate dedup is needed here.</summary>
         public List<(string Name, IReadOnlySet<string> Keywords)> ModelKeywords { get; } = [];
 
         /// <summary>Classified characteristic-modifier candidates found while walking every entry
@@ -176,18 +172,16 @@ public static partial class BsdataDatasheetMapper
 
     /// <summary>True when any of the given modifiers sets "hidden" to true in a way that is
     /// PROVABLY always excluded for the current context - either the matched-play "Army Roster"
-    /// mode this loader exclusively represents, or (since gate-and-dedupe-core-rule-abilities) the
-    /// resolved army's own chapter/sub-faction not matching a rule's own primary-catalogue
-    /// exclusivity - see <see cref="IsProvablyAlwaysTrueInMatchedPlay"/>/
-    /// <see cref="IsConditionProvablyTrue"/> for exactly what "provably" means for each. Despite
-    /// the name (kept for minimal diff against its original game-mode-only purpose), this is now
-    /// called on both entry/group modifiers (game-mode gating, its original use - found via a real
-    /// user-reported bug: /LivePlay showed abilities like Chaos Boons/Mark of Chaos options that
-    /// don't belong to matched play at all) and a resolved Core Rule's own target-rule modifiers
-    /// (chapter gating - found via a real user-reported bug: a Black Templars roster showed both
-    /// "Oath of Moment" and its own chapter-exclusive replacement "Templar Vows" together, and the
-    /// same pipeline run against a Salamanders closure produced the identical, equally-wrong
-    /// list).</summary>
+    /// mode this loader exclusively represents, or the resolved army's own chapter/sub-faction not
+    /// matching a rule's own primary-catalogue exclusivity - see
+    /// <see cref="IsProvablyAlwaysTrueInMatchedPlay"/>/<see cref="IsConditionProvablyTrue"/> for
+    /// exactly what "provably" means for each. Despite the name (kept for minimal diff against its
+    /// original game-mode-only purpose), this is now called on both entry/group modifiers
+    /// (game-mode gating, its original use - without it, /LivePlay would show abilities like Chaos
+    /// Boons/Mark of Chaos options that don't belong to matched play at all) and a resolved Core
+    /// Rule's own target-rule modifiers (chapter gating - without it, a Black Templars roster would
+    /// show both "Oath of Moment" and its own chapter-exclusive replacement "Templar Vows"
+    /// together).</summary>
     private static bool IsGameModeGated(IReadOnlyList<BsModifier> modifiers, WalkContext ctx)
     {
         if (ctx.GameModeGateIds.Count == 0 && ctx.PrimaryCatalogueId is null)
@@ -299,16 +293,15 @@ public static partial class BsdataDatasheetMapper
     }
 
     /// <summary>Classifies <paramref name="entry"/>'s own directly-nested `modifiers` (never a
-    /// group's - see below) as characteristic-modifier candidates, per
-    /// characteristic-modifier-caveats' closed-world tier-1/tier-2 discipline: a modifier is
-    /// recognized only when it carries no `Conditions`/`ConditionGroups` at all (tier 1), or when
-    /// every condition it carries is a "selections" count of this same entry (by id) evaluated from
-    /// a "self" or "parent" scope (tier 2 - the only condition shape a full-corpus scan (task 1.2)
-    /// could confirm is genuinely local to the granting entry, never broader). Any other condition
-    /// shape - a sibling entry's id, an "associations" (live attachment) check, a "roster"/"force"-
-    /// scoped self-reference, or anything else - is left unclassified; the classifier never treats
-    /// an unrecognized condition as satisfied. A modifier whose `Field` isn't in
-    /// <see cref="CharacteristicFieldIds"/> is likewise left unclassified.
+    /// group's - see below) as characteristic-modifier candidates, per a closed-world tier-1/tier-2
+    /// discipline: a modifier is recognized only when it carries no `Conditions`/`ConditionGroups`
+    /// at all (tier 1), or when every condition it carries is a "selections" count of this same
+    /// entry (by id) evaluated from a "self" or "parent" scope (tier 2 - the only condition shape a
+    /// full-corpus scan could confirm is genuinely local to the granting entry, never broader). Any
+    /// other condition shape - a sibling entry's id, an "associations" (live attachment) check, a
+    /// "roster"/"force"-scoped self-reference, or anything else - is left unclassified; the
+    /// classifier never treats an unrecognized condition as satisfied. A modifier whose `Field`
+    /// isn't in <see cref="CharacteristicFieldIds"/> is likewise left unclassified.
     ///
     /// Entry-scoped only, deliberately never called for a <see cref="BsSelectionEntryGroup"/>'s own
     /// `modifiers` (WalkGroup has no equivalent call) - a full-corpus check found every real
@@ -319,12 +312,11 @@ public static partial class BsdataDatasheetMapper
     /// candidate that fails closed by construction, never a reachable one.
     ///
     /// A genuine tier-2 example targeting a recognized characteristic field was NOT found anywhere
-    /// in the real corpus (task 1.2) - the one self-referencing-condition candidate found at all
-    /// (Astra Militarum's "Deficiency" Battle Scar) uses `scope: "roster"` with a roster-wide
-    /// `affects` path and is Crusade-mode-only content, correctly excluded by this method's
-    /// "self"/"parent"-only scope allowlist. Tier 2 is implemented per spec regardless (an empty
-    /// bucket is documented in design.md as an acceptable, honest outcome, not a design
-    /// failure).</summary>
+    /// in the real corpus - the one self-referencing-condition candidate found at all (Astra
+    /// Militarum's "Deficiency" Battle Scar) uses `scope: "roster"` with a roster-wide `affects`
+    /// path and is Crusade-mode-only content, correctly excluded by this method's "self"/"parent"-
+    /// only scope allowlist. Tier 2 is implemented regardless - an empty bucket is an acceptable,
+    /// honest outcome, not a design failure.</summary>
     private static IEnumerable<CharacteristicModifierCandidate> ClassifyCharacteristicModifierCandidates(
         BsSelectionEntry entry)
     {
@@ -371,7 +363,7 @@ public static partial class BsdataDatasheetMapper
         // (see ProcessProfile's Enhancement-vs-plain-grant split) always reads the *directly*
         // enclosing group, not some ancestor further up (confirmed necessary: Crusade Ancient
         // reaches "Thirst for Glory" through a group named "Legends of Saga and Song Enhancements",
-        // not through the outer "Enhancements" group one hop up - see design.md).
+        // not through the outer "Enhancements" group one hop up).
         var nearestGroupName = group.Name;
 
         foreach (var child in group.SelectionEntries)
@@ -446,12 +438,11 @@ public static partial class BsdataDatasheetMapper
     /// keyword cross-reference (confirmed real shape: the Impulsor's "Ironhail Skytalon Array"
     /// weapon-option entry carries "Sustained Hits"/"Anti" infoLinks describing its own Keywords
     /// characteristic, redundant with what WeaponAbilityTags/RuleGlossary already independently
-    /// resolves for that weapon's own keyword chip). A real user-reported near-miss: without this
-    /// guard, every weapon's own keyword rule-references leaked into Datasheet.Abilities as bogus
-    /// datasheet-wide entries ("Sustained Hits", "Anti", "Melta", "Rapid Fire", "Blast" appearing
-    /// unit-wide on the Impulsor) - caught by running the fix against a real export before
-    /// shipping, not by any existing test. Skipped entirely (not routed to OptionalAbilities
-    /// either) since it isn't an ability grant of any kind.</summary>
+    /// resolves for that weapon's own keyword chip). Without this guard, every weapon's own keyword
+    /// rule-references would leak into Datasheet.Abilities as bogus datasheet-wide entries
+    /// ("Sustained Hits", "Anti", "Melta", "Rapid Fire", "Blast" appearing unit-wide on the
+    /// Impulsor). Skipped entirely (not routed to OptionalAbilities either) since it isn't an
+    /// ability grant of any kind.</summary>
     private static void ProcessRuleInfoLink(BsEntryLink link, WalkContext ctx, IReadOnlyList<BsSelectionEntry> ancestry)
     {
         if (ancestry.Count > 0 && ancestry[^1].Type == "upgrade")

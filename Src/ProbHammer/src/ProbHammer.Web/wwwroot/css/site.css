@@ -1,6 +1,5 @@
 /* GW-datasheet-inspired light theme, shared by every current page (documented at
-   .claude/design-tokens.md). Promoted here from a page-local .live-play-page redeclaration once a
-   second page (/Import) needed the same theme - see design-tokens.md's Mechanism note. */
+   .claude/design-tokens.md). */
 :root {
     --bg: #eeece6;
     --bg2: #fbfaf7;
@@ -15,13 +14,10 @@
     --amber-tint: color-mix(in srgb, var(--amber) 20%, white);
     /* --amber lightened towards white - NOT a "brand" variant, a contrast fix: --amber's own
        ~2.8:1 contrast against --bg3 (the bottle green) reads as legible ink on this page's light
-       (--bg/--bg2) surfaces, where --amber has always been used before, but visibly fails to "pop"
-       as small icon ink directly against solid --bg3 - confirmed by direct user testing against
-       .unit-toolbar-icon-btn's `is-active` state (consolidate-unit-toolbar), the first place
-       --amber was ever used as icon ink on a --bg3 fill rather than on a light surface. Reaches
-       ~4.9:1 against --bg3, matching this token family's existing "derive a named, purpose-scoped
-       variant via color-mix rather than reach for opacity or a fully new hue" pattern
-       (--amber-tint, --bg3-tint). */
+       (--bg/--bg2) surfaces, but visibly fails to "pop" as small icon ink directly against solid
+       --bg3. Reaches ~4.9:1 against --bg3, matching this token family's existing "derive a named,
+       purpose-scoped variant via color-mix rather than reach for opacity or a fully new hue"
+       pattern (--amber-tint, --bg3-tint). */
     --amber-bright: color-mix(in srgb, var(--amber) 55%, white);
     --border: #d9d5c9;
     /* Lighter, flat shade of the bottle-green --bg3 - not derived from it via opacity, so it stays
@@ -51,11 +47,9 @@
 /* Disables WebKit/Blink's automatic text-size-adjust ("font boosting") - with a
    width=device-width viewport meta tag (_Layout.cshtml) and no override, mobile Safari inflates
    the rendered font-size of some text blocks based on content-dependent heuristics (line count,
-   container width) rather than rendering the declared CSS size literally - confirmed live on a
-   real iPhone: a 2-line-wrapped .unit-name summary rendered visibly larger than single-line ones
-   sharing the exact same font-size rule. Invisible in every desktop-Chrome emulator check this
-   session (chrome-devtools-mcp never applies this WebKit-only heuristic), which is why it wasn't
-   caught until a real-device screenshot. */
+   container width) rather than rendering the declared CSS size literally - e.g. a 2-line-wrapped
+   .unit-name summary rendering visibly larger than single-line ones sharing the exact same
+   font-size rule. */
 html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -73,8 +67,8 @@ h1 { color: var(--accent); margin-bottom: 0.75rem; }
 h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
 
 /* ── Live Play page ──
-   Layout only - the eight design tokens themselves live on :root now (shared with /Import),
-   documented at .claude/design-tokens.md. */
+   Layout only - the eight design tokens themselves live on :root (shared with /Import), documented
+   at .claude/design-tokens.md. */
 
 .live-play-page {
     padding: 1rem;
@@ -87,17 +81,15 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
 
 .live-play-page h1 { color: var(--text); }
 
-/* ── Orientation gate (live-play-landscape-only) ──
+/* ── Orientation gate ──
    The app's core layout - an ability rendered in its own column, row-aligned beside the specific
    unit/model-line that grants it - is inherently wide-format; a narrow portrait viewport clips
-   stat tiles and garbles weapon-keyword chips rather than degrading gracefully (see proposal.md's
-   "Why"). CSS-only detect-and-overlay, not a JS/server gate: both elements below always render
-   (LivePlay.cshtml), and this @media rule alone decides which one shows - rotating the device
-   re-evaluates it live with no JS listener, satisfying "no reload, no state loss" for free.
-   600px sits comfortably between the confirmed-broken real phone width (375px) and a typical
-   tablet's own portrait width (768px+) - a content-driven threshold, not a device-catalog one,
-   matching this project's existing breakpoint convention (see the retired 700px rule this same
-   change removed above). */
+   stat tiles and garbles weapon-keyword chips rather than degrading gracefully. CSS-only
+   detect-and-overlay, not a JS/server gate: both elements below always render (LivePlay.cshtml),
+   and this @media rule alone decides which one shows - rotating the device re-evaluates it live
+   with no JS listener, satisfying "no reload, no state loss" for free. 600px sits comfortably
+   between the confirmed-broken real phone width (375px) and a typical tablet's own portrait width
+   (768px+) - a content-driven threshold, not a device-catalog one. */
 .rotate-prompt {
     display: none;
 }
@@ -130,13 +122,12 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
     color: var(--text-dim);
 }
 
-/* ── Army header (display-army-header-and-detachment-rules) ──
+/* ── Army header ──
    Same card shape as .unit-block (bg2 surface, --border outline, 4px radius) - the header reads as
-   a peer of the unit blocks below it, not a page-chrome element. Since
-   live-play-touch-target-improvements, .army-header is itself a <details> - the whole card can
-   collapse to just its name bar, the exact same whole-block-collapse pattern .unit-block already
-   uses, so a player can get straight to the unit list below without the header's own meta/Rules
-   detail in the way. */
+   a peer of the unit blocks below it, not a page-chrome element. .army-header is itself a
+   <details> - the whole card can collapse to just its name bar, the exact same whole-block-collapse
+   pattern .unit-block already uses, so a player can get straight to the unit list below without the
+   header's own meta/Rules detail in the way. */
 .army-header {
     margin-bottom: 1.25rem;
     background: var(--bg2);
@@ -150,8 +141,7 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
    element itself, not to whatever box it renders), letting .army-header-name (the h1 inside)
    become the effective, directly-flexed bar child - same visual result as .unit-block .unit-name
    being the <summary> itself, but keeping the army name as a real <h1> for its own heading
-   semantics (LivePlay.cshtml no longer renders a bare "Live Play" heading above it), which a bare
-   <summary> element can't itself carry. */
+   semantics, which a bare <summary> element can't itself carry. */
 .army-header > summary {
     display: contents;
     cursor: pointer;
@@ -165,8 +155,8 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
    since its <summary> parent contributes no box of its own (see above). Selector deliberately two
    classes deep (matching .live-play-page .weapon-table's own precedent) so its specificity (0,2,0)
    beats the page-wide ".live-play-page h1 { color: var(--text) }" rule (0,1,1) - a plain
-   ".army-header-name" alone (0,1,0) lost that fight, rendering the name in --text (near-black)
-   instead of white against the --bg3 fill, a real contrast bug caught by direct user testing. */
+   ".army-header-name" alone (0,1,0) loses that fight, rendering the name in --text (near-black)
+   instead of white against the --bg3 fill. */
 .live-play-page .army-header-name {
     margin: 0;
     padding: 0.6rem 0.85rem;
@@ -209,23 +199,18 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
    for .army-header's own child. */
 .army-header > .lp-section { margin: 0.6rem 0.85rem; }
 
-/* Phase/turn selector (live-play-phase-tracker) - one page-wide 2-row x 5-phase-column grid, plus
-   each row's own selectable label. Rendered directly by LivePlay.cshtml, between the Army Header
-   and the first unit block (live-play-touch-target-improvements moved it out of _ArmyHeader.cshtml
-   entirely so it stays visible regardless of the header's own, now whole-header, collapse state) -
-   so it's its own peer card now, matching .army-header/.unit-block's own bg2/border/radius shape
-   rather than relying on an enclosing card's surface the way it used to when nested inside
-   .army-header. Selection semantics, not a momentary toggle - reuses .army-keyword-chip.is-active's
-   own filled --bg3/white "this is the current one" look (design-tokens.md: a control gets
-   active-state ink directly) rather than the --amber(-bright) icon convention, which signals
-   "toggled on" for a binary per-unit fact - a different kind of control from a mutually-exclusive
-   twelve-cell selection.
+/* Phase/turn selector - one page-wide 2-row x 5-phase-column grid, plus each row's own selectable
+   label. Rendered directly by LivePlay.cshtml, between the Army Header and the first unit block,
+   so it stays visible regardless of the header's own collapse state - its own peer card, matching
+   .army-header/.unit-block's own bg2/border/radius shape. Selection semantics, not a momentary
+   toggle - reuses .army-keyword-chip.is-active's own filled --bg3/white "this is the current one"
+   look (design-tokens.md: a control gets active-state ink directly) rather than the
+   --amber(-bright) icon convention, which signals "toggled on" for a binary per-unit fact - a
+   different kind of control from a mutually-exclusive twelve-cell selection.
 
-   Cell layout reworked (post-ship, live-edited via firefox-devtools-mcp against a real running
-   page, then landed here) to match .unit-toolbar's own convention: cells touch with no gap between
-   them, separated by a border-left divider rather than each cell carrying its own pill-shaped
-   border/radius, and each row's cell cluster is centered rather than stretched edge-to-edge - see
-   design-tokens.md's own note for the full before/after. */
+   Cells touch with no gap between them, matching .unit-toolbar's own convention - separated by a
+   border-left divider rather than each cell carrying its own pill-shaped border/radius - and each
+   row's cell cluster is centered rather than stretched edge-to-edge. */
 .phase-turn-tracker {
     display: flex;
     flex-direction: column;
@@ -296,8 +281,8 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
    five phase columns stay aligned between the My Turn / Their Turn rows regardless of the two row
    labels' different text lengths. Right-aligned with its own trailing padding (rather than the
    inherited centered text-align) so "My Turn"/"Their Turn" reads close to the phase columns that
-   follow it, not centered in a wide, mostly-empty cell - flush-right alone (no padding-right) was
-   tried first and read as glued to the divider line beside it. */
+   follow it, not centered in a wide, mostly-empty cell, and not glued to the divider line beside
+   it the way flush-right with no padding would read. */
 .phase-turn-row-label {
     width: 5.5rem;
     text-align: right;
@@ -330,20 +315,18 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
 }
 
 /* Flex column lives on an inner <div> inside each <td>, never on the <td> itself - setting
-   display: flex directly on a table cell takes it out of table-cell layout entirely (a real bug
-   caught by direct user testing: both cells rendered as stacked block boxes spanning the table's
-   full width instead of sitting side by side as columns). The <td> stays a plain, unstyled table
-   cell; only its own content wrapper is a flex column.
+   display: flex directly on a table cell takes it out of table-cell layout entirely, causing both
+   cells to render as stacked block boxes spanning the table's full width instead of sitting side
+   by side as columns. The <td> stays a plain, unstyled table cell; only its own content wrapper is
+   a flex column.
    .army-rules-cell (no per-entry name label to keep separate from) is itself the one border box,
    mirroring .statline-cell.col-abilities' own dashed 3px-radius container directly.
-   .detachment-rules-cell is a plain, unstyled list of .detachment-entry
-   blocks instead - see .detachment-entry-rules below for where that same border/striping actually
-   lives on the Detachment side, scoped per Detachment rather than to the whole column (a real fix
-   from direct user testing: the Detachment name label itself was getting pulled into the fill,
-   and striping was alternating continuously across Detachment boundaries instead of resetting at
-   each one). background: var(--bg2) (plain/neutral, not --bg) - a container never carries the
-   "filled ability card" look itself, only its .ability-name-line buttons do (resolve-known-
-   ability-effects' direct user-stated principle, applied here too for the same reason). */
+   .detachment-rules-cell is a plain, unstyled list of .detachment-entry blocks instead - see
+   .detachment-entry-rules below, where that same border/striping lives on the Detachment side,
+   scoped per Detachment rather than to the whole column, so the Detachment name label itself never
+   gets pulled into the fill and striping resets at each Detachment boundary instead of alternating
+   continuously across all of them. background: var(--bg2) (plain/neutral, not --bg) - a container
+   never carries the "filled ability card" look itself, only its .ability-name-line buttons do. */
 .army-rules-cell {
     display: flex;
     flex-direction: column;
@@ -393,8 +376,8 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
     overflow: hidden;
 }
 
-/* All Keywords section pill list (highlight-units-by-army-keyword) - laid out identically to
-   .weapon-tags (flex-wrap row of pills), entirely populated by live-play.js. */
+/* All Keywords section pill list - laid out identically to .weapon-tags (flex-wrap row of pills),
+   entirely populated by live-play.js. */
 .army-keyword-chips {
     display: flex;
     flex-wrap: wrap;
@@ -405,7 +388,7 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
 /* Header's own keyword-filter pill - a real <button> (built by refreshArmyKeywordFilters in
    live-play.js), always rendered with the base .weapon-tag pill class alongside this one, so the
    plain pill look (border/padding/uppercase/--bg2 fill) comes free - the exact same button-reset-
-   over-a-pill pattern .weapon-tag-resolved already uses (design.md Decision 4). */
+   over-a-pill pattern .weapon-tag-resolved already uses. */
 .army-keyword-chip {
     font: inherit;
     text-transform: inherit;
@@ -431,10 +414,10 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
     overflow: hidden;
 }
 
-/* .unit-name is now .unit-block's own <summary> (live-play-landscape-only) - the whole-block
-   collapse trigger. list-style/::-webkit-details-marker/::before mirror .lp-section summary's
-   own disclosure-arrow treatment exactly (same '▶' glyph, same rotate-on-[open] transition), so
-   this reads as the same kind of collapsible bar as every section beneath it. */
+/* .unit-name is .unit-block's own <summary> element - the whole-block collapse trigger.
+   list-style/::-webkit-details-marker/::before mirror .lp-section summary's own disclosure-arrow
+   treatment exactly (same '▶' glyph, same rotate-on-[open] transition), so this reads as the same
+   kind of collapsible bar as every section beneath it. */
 .unit-block .unit-name {
     margin: 0;
     padding: 0.6rem 0.85rem;
@@ -460,12 +443,11 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
 }
 .unit-block[open] > .unit-name::before { transform: rotate(90deg); }
 
-/* Unit status toolbar (consolidate-unit-toolbar): its own row between the unit-name header and the
-   Statline section - not squeezed into the header itself, so a long unit name wrapping onto
-   multiple lines can never push a control out of view (the problem this replaces the old
-   right-aligned header glyphs + Statline-summary-bar casualty-reset button for). Centered as a
-   group of .unit-toolbar-items, each a bordered cell (border-left on all but the first - a real
-   dividing rule, not a literal "|" character) so the three-way split reads at a glance. */
+/* Unit status toolbar: its own row between the unit-name header and the Statline section - not
+   squeezed into the header itself, so a long unit name wrapping onto multiple lines can never push
+   a control out of view. Centered as a group of .unit-toolbar-items, each a bordered cell
+   (border-left on all but the first - a real dividing rule, not a literal "|" character) so the
+   three-way split reads at a glance. */
 .unit-toolbar {
     display: flex;
     justify-content: center;
@@ -478,13 +460,12 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
 }
 .unit-toolbar-item + .unit-toolbar-item { border-left: 1px solid var(--border); }
 
-/* live-play-touch-target-improvements: the whole item (glyph + label) is now the clickable area,
-   not just the glyph - matching the "whole bar is the trigger" convention .lp-section summary/
-   .phase-turn-cell already use. .unit-toolbar-icon-btn is now a plain, unstyled flex-row button
-   (transparent background, no border) that carries .unit-toolbar-item's former padding/gap; the
-   filled-square glyph look that used to live directly on this button now lives on its child
-   .unit-toolbar-glyph span instead, so the visible layout is unchanged even though the hit area
-   grew - see design.md Decision 1. */
+/* The whole item (glyph + label) is the clickable area, not just the glyph - matching the "whole
+   bar is the trigger" convention .lp-section summary/.phase-turn-cell already use.
+   .unit-toolbar-icon-btn is a plain, unstyled flex-row button (transparent background, no border)
+   that carries .unit-toolbar-item's own padding/gap; the filled-square glyph look lives on its
+   child .unit-toolbar-glyph span instead, keeping the visible layout unchanged while enlarging
+   the hit area. */
 .unit-toolbar-icon-btn {
     display: flex;
     align-items: center;
@@ -498,9 +479,8 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
 }
 .unit-toolbar-icon-btn:disabled { cursor: default; }
 
-/* The filled-square glyph box - same size/shape/colors this element carried directly before this
-   change, just relocated onto a child span so the button itself can also wrap the caption label.
-   Two independent states, both built from existing tokens only - no new colors:
+/* The filled-square glyph box, relocated onto a child span so the button itself can also wrap the
+   caption label. Two independent states, both built from existing tokens only - no new colors:
    - ACTIONABLE (can this be clicked right now) via OPACITY on the glyph alone: full while
      clickable, faded once the button is `disabled` - reusing .casualty-btn:disabled's own exact
      treatment (`opacity: 0.4`). Scoped to the glyph, not the whole button, so the caption label
@@ -509,14 +489,13 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
    - ACTIVE (is the fact this control represents currently true) via the GLYPH color: white
      (matching .casualty-btn's own icon-color override, needed since .mod-step-btn's own default
      near-black text is unreadable against --bg3 here) when inactive, --amber-bright via
-     .is-active - plain --amber, tried first, was confirmed too low-contrast (~2.8:1) against a
-     solid --bg3 fill to actually read as "amber" rather than a slightly-different dark blob; see
-     --amber-bright's own definition above. Independent of the actionable dimension on purpose -
-     and independent of the caption's own color, which never changes (see .unit-toolbar-label
-     below). Note: an inert-but-active control (the multi-model Half Strength case, at or below
-     half-strength) renders its amber glyph at the same faded opacity as the button's disabled
-     state - a real trade-off of matching the inc/dec buttons' own disabled look exactly, flagged
-     here rather than silently accepted. */
+     .is-active - plain --amber is too low-contrast (~2.8:1) against a solid --bg3 fill to read as
+     "amber" rather than a slightly-different dark blob; see --amber-bright's own definition above.
+     Independent of the actionable dimension on purpose - and independent of the caption's own
+     color, which never changes (see .unit-toolbar-label below). Note: an inert-but-active control
+     (the multi-model Half Strength case, at or below half-strength) renders its amber glyph at the
+     same faded opacity as the button's disabled state - a real trade-off of matching the inc/dec
+     buttons' own disabled look exactly, flagged here rather than silently accepted. */
 .unit-toolbar-glyph {
     width: 1.4rem;
     height: 1.4rem;
@@ -534,22 +513,20 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
 .unit-toolbar-icon-btn:disabled .unit-toolbar-glyph { opacity: 0.4; }
 .unit-toolbar-icon-btn.is-active .unit-toolbar-glyph { color: var(--amber-bright); }
 
-/* Caption text, styled identically to .stat-label (below) per direct user feedback - a plain,
-   static label. Now a child of .unit-toolbar-icon-btn (live-play-touch-target-improvements) rather
-   than a sibling span outside it, so tapping the label activates the same button as tapping the
-   glyph; its own color still never changes with the button's actionable/active state, matching the
-   glyph-scoped opacity/color rules above. */
+/* Caption text, styled identically to .stat-label (below) - a plain, static label. A child of
+   .unit-toolbar-icon-btn rather than a sibling span outside it, so tapping the label activates the
+   same button as tapping the glyph; its own color still never changes with the button's
+   actionable/active state, matching the glyph-scoped opacity/color rules above. */
 .unit-toolbar-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; }
 
 /* Shared by the Battle-shock bolt and the Reset Casualties skull (both inline SVG, fill:
    currentColor - a single filled shape each, no outline-vs-solid duality needed since icon color
    alone, white vs. --amber-bright via .is-active above, carries active/inactive). Neither uses a
    Unicode character (⚡, U+1F480 SKULL) - both default to color-emoji presentation on most
-   platforms and would ignore this color scheme entirely; the skull's own emoji rendering is
-   exactly why its icon never actually turned amber before this was an SVG (confirmed by direct
-   user testing) - the same cross-platform-glyph problem this codebase already hit once with the
-   invulnerable-save Ranged icon (see that icon's own comment further down). Already sized in em,
-   so both already scale correctly under browser zoom. */
+   platforms and would ignore this color scheme entirely - the same cross-platform-glyph problem
+   this codebase already hit once with the invulnerable-save Ranged icon (see that icon's own
+   comment further down). Already sized in em, so both already scale correctly under browser
+   zoom. */
 .unit-toolbar-svg-icon {
     width: 0.85em;
     height: 0.85em;
@@ -600,10 +577,10 @@ button.filter-flag:hover { opacity: 0.8; }
 }
 
 /* Wraps the Statline summary's own right-aligned control (Clear-filter). Only one child today -
-   the Casualty-reset button that used to share this bar moved into .unit-toolbar
-   (consolidate-unit-toolbar) - kept as its own wrapper rather than folded away since Ranged/Melee's
-   own .filtered-badge already establishes "one right-aligned flag per summary bar" as this page's
-   pattern, and a future second Statline-bar control would want the same push-right anchor. */
+   the Casualty-reset button now lives in .unit-toolbar instead - kept as its own wrapper rather
+   than folded away since Ranged/Melee's own .filtered-badge already establishes "one right-aligned
+   flag per summary bar" as this page's pattern, and a future second Statline-bar control would
+   want the same push-right anchor. */
 .statline-flags {
     display: flex;
     align-items: center;
@@ -653,14 +630,13 @@ button.filter-flag:hover { opacity: 0.8; }
    shared row track(s).
 
    Model and Unit Abilities render in one stacked column (.col-abilities), not two side-by-side
-   ones (live-play-landscape-only, revised post-ship at the user's own request - the domain-level
-   distinction, still present on Ability.Scope and still split into ModelAbilities/UnitAbilities
-   on the view models below, no longer earns a separate visual column; a future per-ability scope
-   marker, mirroring the Enhancement "✦" prefix, is the planned way to surface it again if wanted).
-   This also fully absorbs the fixed-3-column template's own dead-space problem (a unit with no
-   Model Abilities anywhere left its middle column's width reserved with nothing in it) - with only
-   one abilities column, that case is now structurally impossible rather than something to detect
-   and work around. */
+   ones - the domain-level distinction, still present on Ability.Scope and still split into
+   ModelAbilities/UnitAbilities on the view models below, doesn't earn a separate visual column; a
+   future per-ability scope marker, mirroring the Enhancement "✦" prefix, is the planned way to
+   surface it again if wanted. This also fully absorbs the fixed-3-column template's own dead-space
+   problem (a unit with no Model Abilities anywhere left its middle column's width reserved with
+   nothing in it) - with only one abilities column, that case is now structurally impossible rather
+   than something to detect and work around. */
 
 .statline-grid {
     display: grid;
@@ -729,23 +705,19 @@ button.filter-flag:hover { opacity: 0.8; }
 .stat-value { font-size: 0.95rem; font-weight: 700; }
 
 /* Invulnerable save: a GW/Wahapedia-card-style box below the M/T/Sv/W/Ld/Oc row, aligned under Sv
-   specifically - see redesign-invulnerable-save-display's design.md. Reuses .stat-tile itself
-   (label-on-top, value-below, one bordered box) rather than a separate box+label pair beside each
-   other, so it matches the other Statline attributes' own layout exactly - direct user feedback.
-   grid-column: 3 (Sv's own column, single-column not spanning) so only that column's auto-width
-   grows to fit a wider value/icon combination, leaving the other five tiles' widths alone - a
-   spanning row previously let a long value bleed its width into every column it crossed. */
+   specifically. Reuses .stat-tile itself (label-on-top, value-below, one bordered box) rather than
+   a separate box+label pair beside each other, so it matches the other Statline attributes' own
+   layout exactly. grid-column: 3 (Sv's own column, single-column not spanning) so only that
+   column's auto-width grows to fit a wider value/icon combination, leaving the other five tiles'
+   widths alone - spanning would let a long value bleed its width into every column it crosses. */
 .insv-tile { grid-column: 3; }
-/* Shared "this stat-tile's value isn't the plain catalogue value" background treatment - originally
-   InSv-only (.insv-tile-caveated), generalized by half-strength-and-battleshock-indicators once the
-   Battle-shocked OC tile needed the identical visual family, and again by resolve-known-ability-
-   effects to also cover any tile flagged by a matched statline-flag-rules rule (e.g. Vexilla's OC).
-   A separate background token (--amber-tint) rather than the page's existing --amber accent itself,
-   kept black-on-light like every other stat value on this page (not GW's inverted dark-shield/
-   white-text treatment) - explicit user call, see redesign-invulnerable-save-display's design.md
-   "Caveated box color". The glyph/value inside stays in the tile's ordinary .stat-value color
-   regardless of which tile this is on - only the background carries the "flagged" signal, never the
-   value's own ink. */
+/* Shared "this stat-tile's value isn't the plain catalogue value" background treatment - covers
+   the caveated InSv box, a Battle-shocked unit's OC tile, and any tile flagged by a matched
+   statline-flag rule (e.g. Vexilla's OC). A separate background token (--amber-tint) rather than
+   the page's existing --amber accent itself, kept black-on-light like every other stat value on
+   this page (not GW's inverted dark-shield/white-text treatment). The glyph/value inside stays in
+   the tile's ordinary .stat-value color regardless of which tile this is on - only the background
+   carries the "flagged" signal, never the value's own ink. */
 .stat-tile-flagged { background: var(--amber-tint); border-color: var(--amber); }
 /* The differing-both-known case stacks its two icon+value pairs as two rows (ranged above melee)
    rather than one line with a "/" separator - each row reads as a complete, self-contained fact,
@@ -761,16 +733,14 @@ button.filter-flag:hover { opacity: 0.8; }
 }
 .insv-icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
 
-/* Flagged-statline legend (resolve-known-ability-effects) - a sibling of .statline-tiles, not one
-   of its grid children (unlike the retired .insv-caveat-text paragraph it replaces), since it now
+/* Flagged-statline legend - a sibling of .statline-tiles, not one of its grid children, since it
    covers any flagged tile in the run (InSv or OC), not only InSv. One line per distinct marker
    active in this run, each naming its source ability via the exact same .ability-name-line popover
    trigger/styling every other ability name on the page already uses - full card look (dashed-border
    box, padding, border-bottom, bold weight, 0.78rem sizing) plus its own :nth-of-type(even) zebra
    striping when a run carries more than one flag, not a trimmed-down variant - never rendering the
    source's full text inline. Mirrors .statline-cell.col-abilities' own box treatment exactly
-   (border/radius/padding/font-size), rather than leaving the row(s) floating with
-   no container the way a bare flex column did - a legend is the same kind of "ability card" as those
+   (border/radius/padding/font-size), so a legend reads as the same kind of "ability card" as those
    columns, just positioned beneath a run's own tiles instead of beside them. No max-height/opacity
    collapse transition copied from that box, since the whole legend already hides in one step via the
    run-collapsed rule below, not a per-cell fade. */
@@ -783,9 +753,8 @@ button.filter-flag:hover { opacity: 0.8; }
     font-size: 0.78rem;
     overflow: hidden;
     /* Matches .statline-cell.col-abilities' own container background exactly: always var(--bg2)
-       (plain/neutral), never var(--bg) - a container never carries the
-       "filled ability card" look itself, only its .ability-name-line buttons do (direct
-       user-stated principle, resolve-known-ability-effects) - see design-tokens.md. */
+       (plain/neutral), never var(--bg) - a container never carries the "filled ability card" look
+       itself, only its .ability-name-line buttons do - see design-tokens.md. */
     background: var(--bg2);
 }
 
@@ -858,23 +827,19 @@ button.filter-flag:hover { opacity: 0.8; }
    locally redeclares the same --bg3/--text/--border custom properties .mod-step-btn reads, so it
    renders in this page's light theme automatically, not ArmyView's dark one. A casualty control's
    click handler calls stopPropagation() before anything else (live-play.js), since it sits inside
-   its row's own selection-toggle click target. Gap widened (live-play-touch-target-improvements)
-   beyond the original 0.25rem so the two adjacent +/- buttons are harder to fat-finger the wrong
-   direction on a phone. */
+   its row's own selection-toggle click target. Gap is wide enough that the two adjacent +/-
+   buttons are hard to fat-finger the wrong direction on a phone. */
 .casualty-controls {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     margin-left: auto;
 }
-/* Sizing/shape folded forward from the removed legacy .mod-step-btn rule (ArmyView's own
-   step-control convention, reused here directly by class - the markup still combines
-   "casualty-btn mod-step-btn casualty-dec/inc" per button) during live-play-landscape-only's
-   dead-CSS sweep: .mod-step-btn's own base selector turned out not to be fully dead like the rest
-   of its section, so its declarations moved here rather than being deleted outright. `color:
-   var(--text)` (near-black, correct on ArmyView's dark --bg3) is overridden to white, the inverse
-   of the light statline-header background these buttons sit on here. Grown from the original
-   1.4rem (live-play-touch-target-improvements) for the same fat-finger reason as the gap above. */
+/* Reuses ArmyView's own .mod-step-btn step-control convention directly by class - the markup still
+   combines "casualty-btn mod-step-btn casualty-dec/inc" per button. `color: var(--text)`
+   (near-black, correct on ArmyView's dark --bg3) is overridden to white, the inverse of the light
+   statline-header background these buttons sit on here. Sized larger than ArmyView's own default
+   for the same fat-finger reason as the gap above. */
 .casualty-btn {
     width: 1.8rem;
     height: 1.8rem;
@@ -905,9 +870,8 @@ button.filter-flag:hover { opacity: 0.8; }
 /* Fixed, shared column widths so Ranged and Melee weapon tables (two independent <table>
    elements) don't drift apart under content-driven auto-layout - a Melee row with no ability
    tag and a Ranged row with one otherwise compute different Weapon-column widths per table.
-   col-slot's share was tightened, and the difference handed to col-weapon/col-weapon-melee
-   (live-play-touch-target-improvements), to give the weapon name/tags column more room - the
-   `<thead>` row and its labels are otherwise unchanged; see design.md Decision 4. */
+   col-slot's share is kept small, giving col-weapon/col-weapon-melee more room for the weapon
+   name/tags column; the `<thead>` row and its labels are otherwise unchanged. */
 .live-play-page .weapon-table col.col-weapon { width: 46%; }
 .live-play-page .weapon-table col.col-weapon-melee { width: 55%; }
 .live-play-page .weapon-table col.col-slot { width: 9%; }
@@ -978,8 +942,7 @@ button.filter-flag:hover { opacity: 0.8; }
 }
 .weapon-contribution-label { padding-left: 1.75rem; }
 
-/* One bordered pill per keyword (rules-glossary-popovers), replacing the earlier single
-   "[TAG, TAG, TAG]" joined span - matches the GW-app/Wahapedia reference precedent and lets each
+/* One bordered pill per keyword - matches the GW-app/Wahapedia reference precedent and lets each
    keyword be identified as its own tap target (a joined span can't). */
 .weapon-tags {
     display: flex;
@@ -1016,20 +979,19 @@ button.filter-flag:hover { opacity: 0.8; }
     opacity: 0.8;
 }
 
-/* A chip with no matching glossary entry is not an interactive trigger (rules-glossary's "A
-   keyword chip with no matching glossary entry is not interactive") - a plain, non-button <span>,
-   dimmed per the page's existing disabled-control convention rather than a distinct color, so it
-   reads as "not tappable" without implying a resolvable chip's own popover-trigger styling. */
+/* A chip with no matching glossary entry is not an interactive trigger - a plain, non-button
+   <span>, dimmed per the page's existing disabled-control convention rather than a distinct
+   color, so it reads as "not tappable" without implying a resolvable chip's own popover-trigger
+   styling. */
 .weapon-tag-unresolved {
     opacity: 0.55;
 }
 
-/* A per-unit Keywords pill flagged by an active header filter (highlight-units-by-army-keyword) -
-   the existing --amber-tint "flagged value" convention (.stat-tile-flagged's own pattern), applied
-   by live-play.js's applyKeywordHighlighting only while that specific keyword's filter is active.
-   A passive highlight, not itself a new control - the per-unit pill stays a plain, non-interactive
-   <span> (see design.md Decision 4 / design-tokens.md's control-vs-value rule). No changes to
-   .weapon-tag's own base style. */
+/* A per-unit Keywords pill flagged by an active header filter - the existing --amber-tint
+   "flagged value" convention (.stat-tile-flagged's own pattern), applied by live-play.js's
+   applyKeywordHighlighting only while that specific keyword's filter is active. A passive
+   highlight, not itself a new control - the per-unit pill stays a plain, non-interactive <span>
+   (see design-tokens.md's control-vs-value rule). No changes to .weapon-tag's own base style. */
 .weapon-tag-flagged {
     background: var(--amber-tint);
     border-color: var(--amber);
@@ -1038,23 +1000,22 @@ button.filter-flag:hover { opacity: 0.8; }
 /* ── Statline ability columns ── */
 
 /* padding: 0 (not the box's own inset) so every bit of internal spacing comes from
-   .ability-name-line's own padding uniformly, regardless of row parity or position - see
-   restyle-ability-list-rows/design.md for why a separate container-level padding band
-   reintroduced a visible gap under an odd/unstriped last row. display: flex + flex-direction:
-   column.
+   .ability-name-line's own padding uniformly, regardless of row parity or position - a separate
+   container-level padding band would reintroduce a visible gap under an odd/unstriped last row.
+   display: flex + flex-direction: column.
 
    background: var(--bg2) (plain default, same as the card behind it) always, spanning or not -
    the CONTAINER never carries the "filled ability card" look; that belongs to the buttons inside
-   it (below). An earlier pass of this same change had this backwards - the container carried
-   var(--bg) and a button's own background was `none` (transparent), so a compact, content-height
-   cell (e.g. Custodian Guard's Vexilla) looked correctly filled purely by accident, since its
-   border already hugged its one button almost exactly; a taller spanning cell (e.g. a
-   component-wide "Invulnerable Save" card) showed that same fill bleeding through the blank space
-   below its button too, which read as one solid grey blob rather than a button sitting in neutral
-   space. Direct user-stated principle: containers are always neutral; only a button (or its zebra
-   stripe) ever carries a background. overflow: hidden + border-radius here clips a flush-fitting
-   button's own corners to match the container's rounding, so a filled first/last button still
-   looks correctly rounded with no separate radius rule needed on the button itself. */
+   it (below). Painting the container itself (var(--bg), with a transparent button) instead would
+   only look right by accident for a compact, content-height cell (e.g. Custodian Guard's Vexilla,
+   whose border already hugs its one button almost exactly) - a taller spanning cell (e.g. a
+   component-wide "Invulnerable Save" card) would show that same fill bleeding through the blank
+   space below its button too, reading as one solid grey blob rather than a button sitting in
+   neutral space. Containers are always neutral; only a button (or its zebra stripe) ever carries a
+   background. overflow: hidden + border-radius here clips a
+   flush-fitting button's own corners to match the container's rounding, so a filled first/last
+   button still looks correctly rounded with no separate radius rule needed on the button
+   itself. */
 .statline-cell.col-abilities {
     border: 1px dashed var(--border);
     border-radius: 3px;
@@ -1070,8 +1031,8 @@ button.filter-flag:hover { opacity: 0.8; }
 }
 
 /* .ability-name-line always sizes to its own content (default flex: 0 1 auto), never grown to fill
-   its container - direct user-stated principle: a button's height should always be just a little
-   bigger than the text inside it, uniformly, whether its container happens to be exactly
+   its container - a button's height should always be just a little bigger than the text inside it,
+   uniformly, whether its container happens to be exactly
    content-height (a plain, non-spanning cell) or taller (a .spans-component/.spans-whole-unit
    cell, which still needs to stretch across the full row-track height it covers - see below - so
    its border keeps visually marking the rows/span it belongs to; only the button inside stays
@@ -1081,12 +1042,11 @@ button.filter-flag:hover { opacity: 0.8; }
    ability CELL itself to match its row's height (a separate mechanism from the flex-grow rule
    above, which only governs the BUTTON inside an already-stretched cell) - so even with that fix, a
    short one-line ability box next to a taller sibling .col-statline cell (e.g. a flagged/caveated
-   run with its own boxed legend) still rendered as an oversized dashed box with a compact button
-   and a large empty gap beneath it, found via direct user testing to look just as wrong as the
-   stretched-button version it replaced. align-self: start opts a plain cell out of that stretch
+   run with its own boxed legend) still renders as an oversized dashed box with a compact button
+   and a large empty gap beneath it. align-self: start opts a plain cell out of that stretch
    entirely, sizing its box to its own content and leaving any leftover row height as plain page
    background instead of empty space inside its own border - matching how the exact same box looks
-   in a shorter, isolated row today. A spanning cell is deliberately excluded (:not(...)) - it still
+   in a shorter, isolated row. A spanning cell is deliberately excluded (:not(...)) - it still
    needs to stretch across its own multi-row span, per the rule above. */
 .statline-cell.col-abilities:not(.spans-component):not(.spans-whole-unit) {
     align-self: start;
@@ -1104,10 +1064,10 @@ button.filter-flag:hover { opacity: 0.8; }
     border-color: transparent;
 }
 
-/* A <button popovertarget> now (rules-glossary-popovers), not a plain <div> - reset to keep the
-   exact same look/layout it had as a div (font-weight/border-bottom/flex/alignment all
-   unchanged), plus the button-chrome resets a native <button> needs stripped (background/border/
-   font/text-align/width/cursor), matching .weapon-name-toggle's own established reset pattern. */
+/* A <button popovertarget> now, not a plain <div> - reset to keep the exact same look/layout it
+   had as a div (font-weight/border-bottom/flex/alignment all unchanged), plus the button-chrome
+   resets a native <button> needs stripped (background/border/font/text-align/width/cursor),
+   matching .weapon-name-toggle's own established reset pattern. */
 .ability-name-line {
     padding: 0.3rem 0.6rem;
     border: none;
@@ -1119,9 +1079,7 @@ button.filter-flag:hover { opacity: 0.8; }
     font: inherit;
     /* font-weight MUST come after the `font: inherit` shorthand above - `font` resets font-weight
        (among other font-* longhands) to its own value, so a `font-weight: 700` declared before it
-       was silently overwritten back to inherited (normal) weight - a real bug caught by direct user
-       testing: every ability/rule-name trigger on the page (not just the new army header) rendered
-       at normal weight despite this rule's own stated intent. */
+       would be silently overwritten back to inherited (normal) weight. */
     font-weight: 700;
     color: inherit;
     text-align: left;
@@ -1131,26 +1089,24 @@ button.filter-flag:hover { opacity: 0.8; }
     opacity: 0.8;
 }
 
-/* :nth-of-type(even), not :nth-child: each ability-name-line button is now immediately followed
-   by its own sibling .rule-popover <div> (rules-glossary-popovers), which would shift a
-   :nth-child parity count - the exact same hidden-sibling hazard the weapon table's own
-   server-assigned row striping (site.css's "Striping is driven by..." note below) already avoids
-   for a different reason. :nth-of-type instead counts only same-tag (<button>) siblings, so the
-   interleaved <div> popovers - always display:none while closed, and promoted out of normal flow
-   into the top layer once open either way - never affect it. The zebra fill overrides every
-   even-indexed button's own plain var(--bg) (above) to a visibly darker shade - color-mix(border
-   70%, bg2) reads distinctly against both var(--bg) (the odd/unstriped button) and var(--bg2) (the
-   always-neutral container behind both) - see restyle-ability-list-rows/design.md for the original
-   comparison trail that picked this exact mix. */
+/* :nth-of-type(even), not :nth-child: each ability-name-line button is immediately followed by
+   its own sibling .rule-popover <div>, which would shift a :nth-child parity count - the exact
+   same hidden-sibling hazard the weapon table's own server-assigned row striping (site.css's
+   "Striping is driven by..." note below) already avoids for a different reason. :nth-of-type
+   instead counts only same-tag (<button>) siblings, so the interleaved <div> popovers - always
+   display:none while closed, and promoted out of normal flow into the top layer once open either
+   way - never affect it. The zebra fill overrides every even-indexed button's own plain var(--bg)
+   (above) to a visibly darker shade - color-mix(border 70%, bg2) reads distinctly against both
+   var(--bg) (the odd/unstriped button) and var(--bg2) (the always-neutral container behind
+   both). */
 .ability-name-line:nth-of-type(even) {
     background: color-mix(in srgb, var(--border) 70%, var(--bg2));
 }
 
-/* Trims the shared .ability-name-line trigger look down to plain small text for a
-/* ── Rule/ability text popover (rules-glossary-popovers) ── */
+/* ── Rule/ability text popover ── */
 
-/* Explicit centered placement (recenter-rule-popovers), not a reused implicit UA default - the
-   old fallback relied on the browser's own `[popover]` UA stylesheet already centering via
+/* Explicit centered placement, not a reused implicit UA default - the old fallback relied on the
+   browser's own `[popover]` UA stylesheet already centering via
    `inset: 0; margin: auto` when nothing else positioned it; that assumption is now stated
    directly instead of left implicit, since implicit browser defaults are exactly what made local
    anchor-positioning (removed below) unreliable in the first place. A nested popover overrides
@@ -1173,19 +1129,18 @@ button.filter-flag:hover { opacity: 0.8; }
    existing "named, derived token rather than a bare rgba()" convention - see --amber-tint/
    --bg3-tint) rather than a flat black, so it tints toward the page's own ink color instead of an
    unrelated hue. A nested popover's own backdrop stacks above its parent in the top layer, adding
-   a second, compounding dim over the parent's peeking title bar - confirmed still legible at this
-   opacity during manual verification, not just assumed. */
+   a second, compounding dim over the parent's peeking title bar. */
 .rule-popover::backdrop {
     background: color-mix(in srgb, var(--text) 45%, transparent);
 }
 
-/* A nested [BRACKET] reference popover (recenter-rule-popovers' "Nested Reference Popover")
-   offsets from the shared centered position by a small, increasing amount per nesting depth
-   (rendered as `data-depth` by RulePopoverRenderer, derived from its own ancestor-chain count) -
-   so a parent popover's own sticky title bar below still peeks out from behind each deeper panel,
-   giving the player a visible "this is still open" cue and something to tap to close only the
-   nested one. Confirmed real max nesting depth is 3 (domain-model-11e.md); deeper is unobserved
-   and reuses the depth-3 offset rather than growing without bound. */
+/* A nested [BRACKET] reference popover offsets from the shared centered position by a small,
+   increasing amount per nesting depth (rendered as `data-depth` by RulePopoverRenderer, derived
+   from its own ancestor-chain count) - so a parent popover's own sticky title bar below still
+   peeks out from behind each deeper panel, giving the player a visible "this is still open" cue
+   and something to tap to close only the nested one. Max nesting depth confirmed in the corpus is
+   3 (domain-model-11e.md); deeper is unobserved and reuses the depth-3 offset rather than growing
+   without bound. */
 .rule-popover[data-depth="1"] { transform: translate(0.75rem, 0.75rem); }
 .rule-popover[data-depth="2"] { transform: translate(1.5rem, 1.5rem); }
 .rule-popover[data-depth="3"],
@@ -1197,7 +1152,7 @@ button.filter-flag:hover { opacity: 0.8; }
    structurally different elements (an interactive, toggling <summary> vs. a plain <div>). Sticky
    within .rule-popover's own scroll container so a long rule's title stays visible while its body
    scrolls, matching how the page's own section headers are always visible. Flex row so the close
-   button (recenter-rule-popovers) can sit flush at the trailing edge without its own margin hack. */
+   button can sit flush at the trailing edge without its own margin hack. */
 .rule-popover-title {
     position: sticky;
     top: 0;
@@ -1215,7 +1170,7 @@ button.filter-flag:hover { opacity: 0.8; }
     border-radius: 4px 4px 0 0;
 }
 
-/* Explicit close control (recenter-rule-popovers), a second dismissal path alongside tap-outside -
+/* Explicit close control, a second dismissal path alongside tap-outside -
    `popovertargetaction="hide"` on the trigger itself, so no JS is involved. Small and square like
    the page's other icon-only controls (.unit-toolbar-icon-btn/.casualty-btn), but transparent
    against the title bar's own --bg3-tint fill rather than a solid --bg3 square, since it already
@@ -1247,17 +1202,16 @@ button.filter-flag:hover { opacity: 0.8; }
 
 /* Emphasis markup, rendered as styling only by RuleTextEmphasisRenderer - never an interactive
    trigger by virtue of this markup alone (only a resolved [BRACKET] reference, styled separately
-   below, is ever tappable) - per live-play-view's "Popover Renders Emphasis Markup As Styling,
-   Not As Links". font-variant (not text-transform/font-size) is the correct CSS tool for real
-   small-caps: it renders already-uppercase letters at full size and only shrinks the lowercase
-   ones, matching how `^^Fabius Bile^^`-style proper names are meant to look. */
+   below, is ever tappable). font-variant (not text-transform/font-size) is the correct CSS tool for
+   real small-caps: it renders already-uppercase letters at full size and only shrinks the
+   lowercase ones, matching how `^^Fabius Bile^^`-style proper names are meant to look. */
 .rule-text-smallcaps {
     font-variant: small-caps;
 }
 
-/* A resolved [BRACKET] cross-reference inside an open popover's own text (rules-glossary-popovers'
-   "Nested Reference Popover") - an inline text link, distinct from both `.weapon-tag` (a chip) and
-   `.ability-name-line` (a full-width row), since it sits mid-sentence in flowing popover-text
+/* A resolved [BRACKET] cross-reference inside an open popover's own text - an inline text link,
+   distinct from both `.weapon-tag` (a chip) and `.ability-name-line` (a full-width row), since it
+   sits mid-sentence in flowing popover-text
    content. Reset to plain inline text (matching `.weapon-name-toggle`'s established button-reset
    pattern) plus an underline and the page's `--accent` color as its only visual "this is tappable"
    cue, reusing design-tokens.md's existing "Emphasis: stat sub-values, primary headings" role

@@ -5,7 +5,7 @@ namespace ProbHammer.Tests.Domain.Catalogue.Bsdata;
 
 /// <summary>Exercises <see cref="RuleTextEmphasisRenderer"/> in isolation from bracket resolution -
 /// every test passes a trivial pass-through bracket delegate (renders the bracket's raw text
-/// unchanged, as if never resolved), per task 6.3a's "unit tests for the emphasis renderer".</summary>
+/// unchanged, as if never resolved).</summary>
 public class RuleTextEmphasisRendererTests
 {
     private static (string Inline, string Popovers) Render(string text) =>
@@ -117,8 +117,8 @@ public class RuleTextEmphasisRendererTests
 
         seen.Should().ContainSingle("A REFERENCE");
         // The bracket's own delegate result gets wrapped in the currently-open italic span too
-        // (its own adjacent <i>, not merged with the surrounding text's) - the bracket stayed
-        // reachable through the open emphasis exactly as design.md's confirmed real shape requires.
+        // (its own adjacent <i>, not merged with the surrounding text's) - the bracket stays
+        // reachable through the open emphasis.
         inline.Should().Be("<i>text with </i><i>A REFERENCE</i><i> inside</i>");
     }
 

@@ -4,7 +4,7 @@ using System.Text.Json.Nodes;
 namespace ProbHammer.Core.Domain.Catalogue;
 
 /// <summary>Whether a baselined text's freshly-computed classification matches what a human already
-/// verified - see baseline-rule-effect-classifications design.md's "Per-field diff" decision.</summary>
+/// verified.</summary>
 public enum RuleClassificationBaselineStatus
 {
     /// <summary>Every field matches the baseline (including any newly-added field computing to its
@@ -32,9 +32,8 @@ public sealed record RuleClassificationDiffResult(
     RuleClassificationBaselineStatus Status, IReadOnlyList<RuleClassificationFieldChange> Changes);
 
 /// <summary>Structural JSON diff between a baseline entry's stored classification and a
-/// freshly-computed one - see design.md's "Per-field diff: structural JSON diff between two serialized
-/// RuleClassification snapshots" decision. Reuses ordinary JSON structural comparison rather than a
-/// hand-written field-by-field comparator specifically so a future field added to
+/// freshly-computed one. Reuses ordinary JSON structural comparison rather than a hand-written
+/// field-by-field comparator specifically so a future field added to
 /// <see cref="RuleTarget"/>/<see cref="CharacteristicEffect"/> needs no matching change here - only
 /// that field's own "what's the boring default" definition, read directly off
 /// <see cref="DefaultClassification"/>'s own serialization rather than a separate lookup table.</summary>
@@ -42,8 +41,8 @@ public static class RuleClassificationDiff
 {
     /// <summary>Every field's own "boring default" (today: <c>Target = SelfRuleTarget</c>,
     /// <c>Effects = []</c> - the same default the report tool's own default-only bucket already uses)
-    /// is read off this single default instance's serialization, rather than maintained as a separate
-    /// per-field table - see design.md's "Per-field diff" decision.</summary>
+    /// is read off this single default instance's serialization, rather than maintained as a
+    /// separate per-field table.</summary>
     private static readonly RuleClassification DefaultClassification = new(new SelfRuleTarget());
 
     public static RuleClassificationDiffResult Compare(RuleClassification baseline, RuleClassification current)

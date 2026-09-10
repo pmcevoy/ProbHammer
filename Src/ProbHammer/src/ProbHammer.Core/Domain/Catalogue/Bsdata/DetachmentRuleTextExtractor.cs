@@ -4,15 +4,14 @@ namespace ProbHammer.Core.Domain.Catalogue.Bsdata;
 
 /// <summary>
 /// Extracts zero or more (Name, Text) rule pairs from an already-resolved Detachment
-/// <see cref="BsSelectionEntry"/> (see army-roster-enrichment's Detachment Name Resolution for how
-/// that entry is located in the first place) - the two real shapes confirmed in the BSData corpus:
+/// <see cref="BsSelectionEntry"/> - the two real shapes confirmed in the BSData corpus:
 /// a rule declared locally on the entry itself (<see cref="BsSelectionEntry.Rules"/>), and a rule
 /// reached via a "type": "rule" infoLink resolved against the closure's own <see cref="RuleGlossary"/>
 /// - the same glossary lookup <see cref="BsdataDatasheetMapper"/>'s Core Rule Ability Extraction
 /// already uses. Deliberately does NOT reuse that extraction's "nested inside a type: upgrade
 /// entry" ancestry guard - that guard exists specifically to exclude a weapon's own keyword
 /// cross-reference from leaking into a datasheet's abilities; a Detachment entry's own direct
-/// infoLinks carry no equivalent ambiguity (see design.md).
+/// infoLinks carry no equivalent ambiguity.
 /// </summary>
 public static class DetachmentRuleTextExtractor
 {

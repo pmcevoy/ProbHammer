@@ -3,9 +3,7 @@ namespace ProbHammer.Core.Domain.Catalogue;
 /// <summary>Resolves an <see cref="EffectVerb"/> plus a stated amount into a signed delta for a
 /// characteristic's own <see cref="CharacteristicModificationKind"/>, and the top-level entry point
 /// that applies that resolution (plus clamping) to a characteristic's actual
-/// <see cref="CharacteristicValue"/> - see introduce-characteristic-modification-kind/design.md's
-/// "Two separate small functions" and "Symbolic-value no-op is the caller-facing entry point's job"
-/// decisions.</summary>
+/// <see cref="CharacteristicValue"/>.</summary>
 public static class CharacteristicModificationResolver
 {
     /// <summary>Pure sign arithmetic, ignorant of any current value or clamp bound. <see
@@ -31,7 +29,7 @@ public static class CharacteristicModificationResolver
     /// delta for an "increment" modifier, negative for "decrement"), resolves the rulebook
     /// <see cref="EffectVerb"/> (<see cref="EffectVerb.Improve"/> or <see cref="EffectVerb.Worsen"/>
     /// only - never <see cref="EffectVerb.Set"/>, which has no delta/sign concept and is handled
-    /// separately by callers, see widen-baseline-generation-coverage/design.md Decision 3) plus the
+    /// separately by callers) plus the
     /// unsigned amount that verb states. <see cref="CharacteristicModificationKind.Plain"/> carries
     /// the sign straight through (a positive raw delta is an Improve); RollThreshold/ArmourPenetration
     /// invert it (raising the stored number is worse for both families) - the mirror image of
@@ -52,9 +50,7 @@ public static class CharacteristicModificationResolver
 
     /// <summary>Applies an effect to a characteristic's current <see cref="CharacteristicValue"/>,
     /// returning the resolved value. A symbolic current value ("-", "*", "N/A") is returned unchanged
-    /// regardless of verb/characteristic/amount - see
-    /// characteristic-modification-kind's "Symbolic Characteristic Values Are Never Modified"
-    /// requirement. Not yet consumed by any caller - see this change's own Non-Goals.</summary>
+    /// regardless of verb/characteristic/amount. Not yet consumed by any caller.</summary>
     public static CharacteristicValue Resolve(
         string characteristic, CharacteristicValue current, EffectVerb verb, int amount)
     {

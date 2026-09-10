@@ -9,12 +9,12 @@
     // instance's own "u{i}" scope (see RulePopoverRenderer's own doc comment).
     var popovers = new RulePopoverRenderer(glossary, "hdr");
 }
-@* live-play-touch-target-improvements: the whole header is now a <details>, its name bar the
+@* The whole header is a <details>, its name bar the
    <summary> - the exact same whole-block-collapse pattern _UnitBlock.cshtml's own outer <details>
    already uses, so a player can collapse the header entirely to get straight to the unit list
-   below. The phase/turn tracker moved out of this partial entirely (now rendered by LivePlay.cshtml
-   directly, between this partial and the unit-block loop) so it stays visible regardless of this
-   collapse state - no in-partial wrapper needed to protect it. Defaults open. *@
+   below. The phase/turn tracker is rendered by LivePlay.cshtml directly, between this partial and
+   the unit-block loop, so it stays visible regardless of this collapse state - no in-partial
+   wrapper needed to protect it. Defaults open. *@
 <details class="army-header" open>
     <summary>
         <h1 class="army-header-name">@header.Name</h1>
@@ -93,11 +93,11 @@
         </details>
     }
 
-    @* All Keywords section (highlight-units-by-army-keyword) - deliberately empty placeholder
+    @* All Keywords section - deliberately empty placeholder
        markup: no render-model field backs it, live-play.js scans every unit's own Keywords
-       section chips client-side and populates/hides this on every page load and casualty sync
-       (see design.md Decision 1 - casualty-aware, so a server-side aggregation here would be a
-       second, redundant definition of "currently active keywords"). Closed by default (no `open`
+       section chips client-side and populates/hides this on every page load and casualty sync,
+       so a server-side aggregation here would be a
+       second, redundant definition of "currently active keywords". Closed by default (no `open`
        attribute), matching every other lp-section's own default except Rules above. *@
     <details class="lp-section" data-section="army-keywords">
         <summary>

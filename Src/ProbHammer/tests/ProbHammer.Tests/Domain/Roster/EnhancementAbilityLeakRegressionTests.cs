@@ -10,9 +10,8 @@ namespace ProbHammer.Tests.Domain.Roster;
 /// export: after importing `data/gw-app-export-templars.txt`, Black Templars' "Crusade Ancient"
 /// incorrectly showed "Thirst for Glory" (a Space-Wolves-only Enhancement) and "Sword Brethren
 /// Squad" incorrectly showed both "Fervent Exemplars" and "Inheritors of Sigismund" (two real
-/// Black Templars Enhancements) - none selected in the export. Root cause and fix: see this
-/// change's proposal.md/design.md ("Datasheet.Abilities never got the same on-demand-only
-/// protection WeaponProfile already has").</summary>
+/// Black Templars Enhancements) - none selected in the export. Root cause: Datasheet.Abilities
+/// never got the same on-demand-only protection WeaponProfile already has.</summary>
 public class EnhancementAbilityLeakRegressionTests
 {
     private static string BundledBsDataRoot([CallerFilePath] string here = "") =>
@@ -72,9 +71,9 @@ public class EnhancementAbilityLeakRegressionTests
     public void Impulsor_ShieldDomeWargearLine_StillResolvesAsAModelLineAbility()
     {
         // This real export's Impulsor selects "1x Shield Dome" as a direct wargear line -
-        // confirms task 4.1's repoint (ResolveWargearItem's ability fallback onto
-        // TryResolveAbility) still works end-to-end against the real bundled BSData snapshot, not
-        // just the hand-built fixture in ArmyRosterEnricherTests.
+        // confirms ResolveWargearItem's ability fallback onto TryResolveAbility still works
+        // end-to-end against the real bundled BSData snapshot, not just the hand-built fixture in
+        // ArmyRosterEnricherTests.
         var roster = EnrichRealExport();
 
         var impulsor = roster.Units

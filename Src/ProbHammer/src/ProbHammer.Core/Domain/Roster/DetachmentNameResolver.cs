@@ -5,14 +5,13 @@ using ProbHammer.Core.Domain.Catalogue.Bsdata.Json;
 namespace ProbHammer.Core.Domain.Roster;
 
 /// <summary>
-/// Resolves one parsed Detachments entry's captured text (`army-list-parsing`'s Army Metadata
-/// Extraction - a single string that MAY itself name more than one Detachment in natural-language
-/// list form, e.g. "Fulguris Task Force, Marshal's Household, and Subversion Assets") against a
-/// faction's <see cref="ResolvedBsdataCatalogue"/> via a greedy, longest-known-name-first "chomp" -
-/// never a syntactic split on "and"/commas, since a real Detachment can itself be named with the
-/// word "and" in it ("Legends of Saga and Song") and one Detachment's name can be a literal
-/// substring of another's ("Warhost"/"Armoured Warhost") - see design.md's algorithm and
-/// army-roster-enrichment's Detachment Name Resolution requirement.
+/// Resolves one parsed Detachments entry's captured text (a single string that MAY itself name
+/// more than one Detachment in natural-language list form, e.g. "Fulguris Task Force, Marshal's
+/// Household, and Subversion Assets") against a faction's <see cref="ResolvedBsdataCatalogue"/> via
+/// a greedy, longest-known-name-first "chomp" - never a syntactic split on "and"/commas, since a
+/// real Detachment can itself be named with the word "and" in it ("Legends of Saga and Song") and
+/// one Detachment's name can be a literal substring of another's ("Warhost"/"Armoured
+/// Warhost").
 /// </summary>
 public static partial class DetachmentNameResolver
 {

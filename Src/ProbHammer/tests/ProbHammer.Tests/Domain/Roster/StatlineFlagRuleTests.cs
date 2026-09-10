@@ -5,13 +5,11 @@ using ProbHammer.Tests.Domain.Fixtures;
 
 namespace ProbHammer.Tests.Domain.Roster;
 
-/// <summary>Covers statline-flag-rules' requirements against a small, hand-built
+/// <summary>Covers rule-effect flagging against a small, hand-built
 /// <see cref="RuleClassificationBaseline"/> fixture reproducing Shield Dome's and Vexilla's real
 /// baseline entries (<see cref="RuleClassificationBaselineFixtures.ShieldDomeAndVexilla"/>), matched
-/// via <see cref="AttachedUnitAggregator.Build"/> directly - the baseline lookup runs inside Build
-/// (design D3), so its effect is only observable through the aggregate view it produces. Replaces
-/// the old exact-Name+Text StatlineFlagRuleCatalogue vocabulary this test file used to cover
-/// (apply-rule-effect-baseline).</summary>
+/// via <see cref="AttachedUnitAggregator.Build"/> directly - the baseline lookup runs inside Build,
+/// so its effect is only observable through the aggregate view it produces.</summary>
 public class StatlineFlagRuleTests
 {
     private static readonly Ability ShieldDome = new()
@@ -149,7 +147,6 @@ public class StatlineFlagRuleTests
         view.Statlines.Should().OnlyContain(s => s.Statline.Oc.Value == 2);
     }
 
-    // statline-flag-rules' new "Target-Scoped Application" requirement (apply-rule-effect-baseline).
     [Fact]
     public void KeywordScopedBaselineMatch_ProducesNoFlaggedValue()
     {
@@ -212,9 +209,9 @@ public class StatlineFlagRuleTests
         entry.Statline.T.Value.Should().Be((CharacteristicValue)4);
     }
 
-    // design.md Decision 6: same-field stacking between two baseline matches - the first applied
-    // wins, the second is skipped. Mirrors CharacteristicModifierApplicationTests' own pinning-test
-    // convention for the sibling mechanism.
+    // Same-field stacking between two baseline matches - the first applied wins, the second is
+    // skipped. Mirrors CharacteristicModifierApplicationTests' own pinning-test convention for the
+    // sibling mechanism.
     [Fact]
     public void TwoBaselineMatchesTargetingTheSameCharacteristic_TheFirstAppliedWins_TheSecondIsSkipped()
     {

@@ -15,9 +15,9 @@ public sealed class ModelLine
     public IReadOnlyList<Ability> Abilities { get; }
 
     /// <summary>Keywords scoped to this specific model-line, distinct from its Datasheet's
-    /// Keywords - e.g. a keyword belonging to only one named individual within a shared statline
-    /// (see roster-model spec: "Named individuals sharing a statline are modeled as separate
-    /// model-lines when a keyword differs").</summary>
+    /// Keywords - e.g. a keyword belonging to only one named individual within a shared statline.
+    /// Named individuals sharing a statline are modeled as separate model-lines when a keyword
+    /// differs.</summary>
     public IReadOnlySet<string> Keywords { get; }
 
     public int RemainingCount { get; private set; }

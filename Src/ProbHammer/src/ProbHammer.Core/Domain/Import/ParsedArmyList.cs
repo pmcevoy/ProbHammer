@@ -1,8 +1,8 @@
 namespace ProbHammer.Core.Domain.Import;
 
 /// <summary>One already-split per-loadout model sub-group within a parsed unit - the shared-vs-
-/// mutually-exclusive weapon-count partition (see ArmyListParser's "Model Group and Weapon
-/// Selection Parsing") has already been applied by the time this exists, so every ModelName+Count
+/// mutually-exclusive weapon-count partition has already been applied by the time this exists,
+/// so every ModelName+Count
 /// here is ready to resolve directly into a Domain.Roster.ModelLine without any further splitting
 /// downstream. Weapons is a flat, per-model list (duplicates meaningful - e.g. two entries named
 /// "Storm bolter" mean two copies of that weapon on the one model), matching

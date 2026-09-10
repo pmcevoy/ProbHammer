@@ -4,9 +4,8 @@ using ProbHammer.Core.Domain.Import.BattleScribe.Json;
 namespace ProbHammer.Core.Domain.Import.BattleScribe;
 
 /// <summary>
-/// Builds a roster-scoped <see cref="RuleGlossary"/> (see battlescribe-roster-import's Core Rule
-/// Extraction requirement and design.md's "Roster-scoped RuleGlossary, reusing the existing type")
-/// by walking the whole roster once, collecting every distinct rule entry (by id, first occurrence
+/// Builds a roster-scoped <see cref="RuleGlossary"/> by walking the whole roster once, collecting
+/// every distinct rule entry (by id, first occurrence
 /// wins) found anywhere - the force's own <c>rules</c>, every top-level selection's own
 /// <c>rules</c>, and every nested wargear selection's own <c>rules</c> (e.g. a weapon's "Sustained
 /// Hits"/"Anti" keyword rule text) - into <see cref="RuleDefinition"/>s. This is what gives

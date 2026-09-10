@@ -3,15 +3,12 @@ using ProbHammer.Core.Domain.Catalogue;
 
 namespace ProbHammer.Tests.Domain.Catalogue;
 
-/// <summary>Covers introduce-characteristic-modification-kind's requirements: sign resolution per
-/// arithmetic family, per-characteristic clamp bounds, symbolic-value no-op, and the proving
-/// requirement against Vexilla's own known-correct Objective Control mutation (see that change's
-/// design.md for why Shield Dome/InSv is not a valid proving example here).</summary>
+/// <summary>Covers sign resolution per arithmetic family, per-characteristic clamp bounds,
+/// symbolic-value no-op, and the proving requirement against Vexilla's own known-correct Objective
+/// Control mutation - Shield Dome/InSv is not a valid proving example here since it's a
+/// caveated invulnerable-save value, not a plain scalar mutation.</summary>
 public class CharacteristicModificationResolverTests
 {
-    // Rulebook worked examples (.claude/vnext-ideas.md, quoted verbatim from the user):
-    // "WS 3+ improved by 1 -> 2+"; "WS 3+ worsened by 1 -> 4+"; "AP -1 improved by 1 -> -2";
-    // "AP -1 worsened by 1 -> 0"; "S improved by 1 -> +1" (a Plain characteristic).
     [Theory]
     [InlineData(CharacteristicModificationKind.RollThreshold, EffectVerb.Improve, 1, -1)]
     [InlineData(CharacteristicModificationKind.RollThreshold, EffectVerb.Worsen, 1, 1)]
@@ -54,11 +51,10 @@ public class CharacteristicModificationResolverTests
         CharacteristicModificationClamp.Apply("W", -5).Should().Be(-5);
     }
 
-    // widen-baseline-generation-coverage's own inverse function: raw stored-value delta -> rulebook
-    // verb, the mirror image of ResolveDelta above. Auric Mantle's real corpus modifier is a
-    // structural "increment" of 2 on Toughness's own Plain-family characteristic (W, in this
-    // Datasheet's own field allowlist) - a positive raw delta on a Plain characteristic is Improve,
-    // sign carried straight through.
+    // The inverse function: raw stored-value delta -> rulebook verb, the mirror image of
+    // ResolveDelta above. Auric Mantle's real corpus modifier is a structural "increment" of 2 on
+    // Toughness's own Plain-family characteristic (W, in this Datasheet's own field allowlist) - a
+    // positive raw delta on a Plain characteristic is Improve, sign carried straight through.
     [Fact]
     public void ResolveVerbFromRawDelta_PlainFamily_AuricMantle_PositiveDeltaIsImprove()
     {
@@ -146,9 +142,7 @@ public class CharacteristicModificationResolverTests
     [Fact]
     public void Resolve_ReproducesVexillaStatlineFlagRulesResolvedObjectiveControl()
     {
-        // Ground-truth: Vexilla's own known-correct mutation is a plain +1 to Oc (the now-retired
-        // VexillaStatlineFlagRule.Apply's own "current + 1" - apply-rule-effect-baseline replaced it
-        // with this general resolver, run from the checked-in baseline).
+        // Ground-truth: Vexilla's own known-correct mutation is a plain +1 to Oc.
         var baseStatline = new Statline(6, 6, 2, 4, 7, 2); // Custodian Guard, base Oc 2
 
         var expected = new NumericCharacteristicValue(((NumericCharacteristicValue)baseStatline.Oc.Value).Value + 1);

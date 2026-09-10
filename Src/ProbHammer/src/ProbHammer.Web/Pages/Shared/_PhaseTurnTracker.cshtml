@@ -1,7 +1,7 @@
 @model ProbHammer.Core.Domain.Roster.PhaseTurnSelection
 @using ProbHammer.Core.Domain.Roster
 @{
-    // One page-wide control (never one per unit block - design.md Decision 5), model-driven from
+    // One page-wide control (never one per unit block), model-driven from
     // the current PhaseTurnSelection so the correct one of twelve cells is marked selected on first
     // paint, with no flash-of-wrong-cell. Every cell is a plain <button> (not a popover trigger -
     // this control asserts state, it doesn't explain a rule) POSTing its own {turn, phase} via

@@ -38,9 +38,9 @@ public abstract record WeaponProfile(
     /// <summary>Computed per subtype (<see cref="RangedWeapon.Skill"/> => Bs, <see
     /// cref="MeleeWeapon.Skill"/> => Ws) rather than a stored/init value here, so Bs/Ws stay the
     /// single source of truth per subtype while shared logic (<see cref="EqualityKey"/>) reads
-    /// one name. An earlier draft stored Skill separately, forwarded from Bs/Ws at construction -
-    /// that let the two backing values desync under a <c>with</c> expression; computing Skill
-    /// from the subtype's own field removes that failure mode structurally.</summary>
+    /// one name. Storing Skill separately, forwarded from Bs/Ws at construction, would let the two
+    /// backing values desync under a <c>with</c> expression; computing Skill from the subtype's
+    /// own field removes that failure mode structurally.</summary>
     public abstract ScalarCharacteristicView Skill { get; }
 
     public bool Torrent { get; init; }
@@ -61,10 +61,9 @@ public abstract record WeaponProfile(
     ///     Exact source keyword text, in source order, independent of whether any individual
     ///     keyword also corresponds to one of this profile's typed ability flags above.
     ///     Rendering of a weapon's keywords must read this verbatim record rather than being
-    ///     reconstructed from the typed flags - see datasheet-catalogue's "Weapon Profile
-    ///     Verbatim Keyword Text" requirement for why (an unrecognized token, or a
-    ///     context-dependent alternate spelling of an already-modeled flag, must never be
-    ///     silently dropped or rendered under the flag's own canonical wording instead).
+    ///     reconstructed from the typed flags: an unrecognized token, or a context-dependent
+    ///     alternate spelling of an already-modeled flag, must never be silently dropped or
+    ///     rendered under the flag's own canonical wording instead.
     /// </summary>
     public IReadOnlyList<string> KeywordsText { get; init; } = [];
 

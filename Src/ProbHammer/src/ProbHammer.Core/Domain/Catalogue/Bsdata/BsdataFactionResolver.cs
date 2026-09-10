@@ -2,8 +2,8 @@ namespace ProbHammer.Core.Domain.Catalogue.Bsdata;
 
 /// <summary>
 /// Resolves a parsed army list's Faction entries to the starting catalogue file for
-/// <see cref="BsdataClosureResolver.Resolve"/> - see design.md's "Faction → starting BSData file:
-/// suffix match, not a literal join". Matches only the most specific (last) Faction entry against
+/// <see cref="BsdataClosureResolver.Resolve"/> via a suffix match, not a literal join. Matches
+/// only the most specific (last) Faction entry against
 /// the available file names: a file whose name equals that entry, or ends with " - " followed by
 /// that entry, excluding any file whose name contains "Library" (shared cross-sub-faction content,
 /// never itself a playable faction identity - confirmed can hold the majority of a faction's real

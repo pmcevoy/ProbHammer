@@ -1,8 +1,7 @@
 namespace ProbHammer.Core.Domain.Catalogue;
 
 /// <summary>Abstract base with sealed per-kind subtypes (<see cref="ScalarCharacteristicView"/>,
-/// <see cref="InvulnerableSaveCharacteristicView"/>) rather than a generic
-/// CharacteristicView&lt;T&gt; - see introduce-characteristic-domain-model/design.md's Decision 2.
+/// <see cref="InvulnerableSaveCharacteristicView"/>) rather than a generic CharacteristicView&lt;T&gt;.
 /// Captures, per characteristic property, the abilities touching it
 /// (<see cref="ContributingAbilities"/>); each subtype adds its own typed OriginalValue/DerivedValue,
 /// since those differ in shape per kind and so can't live on this shared base.</summary>
@@ -84,9 +83,8 @@ public sealed record InvulnerableSaveCharacteristicView(
     InvulnerableSave? DerivedValue,
     IReadOnlyList<Ability> ContributingAbilities) : CharacteristicView(ContributingAbilities)
 {
-    /// <summary>Redeclared to enforce the one real invariant - see
-    /// invulnerable-save's "Caveated Values Always Carry Their Source Ability": a caveated value
-    /// (DerivedValue null) must carry at least one contributing ability.</summary>
+    /// <summary>Redeclared to enforce the one real invariant: a caveated value (DerivedValue null)
+    /// must carry at least one contributing ability.</summary>
     public InvulnerableSave? DerivedValue { get; init; } = DerivedValue is null && ContributingAbilities.Count == 0
         ? throw new ArgumentException(
             "A caveated view must carry at least one contributing ability.", nameof(ContributingAbilities))
@@ -131,8 +129,7 @@ public sealed record InvulnerableSaveCharacteristicView(
         IReadOnlyList<Ability> contributingAbilities) =>
         new(originalValue, derivedValue, contributingAbilities);
 
-    /// <summary>A value left caveated by exactly one unresolved contributing ability - see
-    /// invulnerable-save's "Caveated Values Always Carry Their Source Ability".</summary>
+    /// <summary>A value left caveated by exactly one unresolved contributing ability.</summary>
     public static InvulnerableSaveCharacteristicView Caveated(InvulnerableSave value, Ability caveatAbility) =>
         new(value, null, [caveatAbility]);
 

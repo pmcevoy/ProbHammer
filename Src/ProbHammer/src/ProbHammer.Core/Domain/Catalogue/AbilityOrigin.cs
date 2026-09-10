@@ -12,13 +12,12 @@ public enum AbilityOrigin
     /// <summary>A datasheet-wide reference to a separately-defined Core rule (e.g. Deadly Demise,
     /// Firing Deck, Infiltrators) - see BsdataDatasheetMapper's resolution of a "type: rule"
     /// infoLink via RuleGlossary. Always-exposed, like Intrinsic, not one of the on-demand
-    /// optional grants. Distinguished from <see cref="ArmyRule"/> purely by name: the resolved
+    /// optional grants. Distinguished from <see cref="ArmyRule"/> purely by name, not by gating
+    /// shape: several mustering/composition rules (e.g. Assigned Agents) share the same
+    /// primary-catalogue-scoped gating as a genuine army rule without being one, so the resolved
     /// rule's own Name is checked against <c>ArmyRuleNameLookup.Resolve(Faction)</c>'s curated
-    /// per-faction table - CoreRule otherwise. (An earlier structural-only signal - "does this
-    /// rule's own gating carry a primary-catalogue condition" - was tried first and replaced
-    /// after real data proved it unreliable: several mustering/composition rules, e.g. Assigned
-    /// Agents, share that same gating shape without being army-wide gameplay rules. See
-    /// ArmyRuleNameLookup's own doc comment.)</summary>
+    /// per-faction table instead - CoreRule otherwise. See ArmyRuleNameLookup's own doc
+    /// comment.</summary>
     CoreRule,
 
     /// <summary>A datasheet-wide reference to a Core rule that IS one of the roster's Faction's

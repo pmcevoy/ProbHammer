@@ -4,7 +4,7 @@
 /// <see cref="DiceCharacteristicValue"/>/<see cref="SymbolicCharacteristicValue"/> subtypes rather
 /// than one record with a Kind field, so a characteristic's raw value can never carry more than one
 /// kind at once or none at all - mirrors <see cref="WeaponProfile"/>'s own abstract-base/
-/// sealed-subtype shape. See introduce-characteristic-domain-model/design.md's Decision 1.</summary>
+/// sealed-subtype shape.</summary>
 public abstract record CharacteristicValue
 {
     /// <summary>Uniform with <see cref="DiceExpression"/>'s/<see cref="InvulnerableSave"/>'s own

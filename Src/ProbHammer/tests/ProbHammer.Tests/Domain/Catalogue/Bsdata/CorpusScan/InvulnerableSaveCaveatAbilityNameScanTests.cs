@@ -5,14 +5,13 @@ using ProbHammer.Core.Domain.Catalogue.Bsdata.Json;
 namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 
 /// <summary>
-/// Permanent, manually-triggered regression scan (unify-characteristic-effect-resolution) mirroring
-/// LeaderSupportAttachedUnitNameScanTests: confirms every real occurrence of either InSv-caveat-
-/// internal ability-name convention ("*Invulnerable Save", or the digit-parameterized "Invulnerable
-/// Save ({N}+*)") in the live BSData clone is genuinely BsdataDatasheetMapper.ResolveCaveatAbility's
-/// own internal mechanism, not a distinct, independently-meaningful ability that happens to share
-/// the name (design.md's Risks section - the existing ExcludedAttachmentAbilityNames exclusion has
-/// its own equivalent scan; this one needs the same confirmation before Datasheet excludes these two
-/// conventions from the general ability walk).
+/// Permanent, manually-triggered regression scan mirroring LeaderSupportAttachedUnitNameScanTests:
+/// confirms every real occurrence of either InSv-caveat-internal ability-name convention
+/// ("*Invulnerable Save", or the digit-parameterized "Invulnerable Save ({N}+*)") in the live
+/// BSData clone is genuinely BsdataDatasheetMapper.ResolveCaveatAbility's own internal mechanism,
+/// not a distinct, independently-meaningful ability that happens to share the name - the existing
+/// ExcludedAttachmentAbilityNames exclusion has its own equivalent scan; this one needs the same
+/// confirmation before Datasheet excludes these two conventions from the general ability walk.
 ///
 /// Walks each starting catalogue's own entry tree directly (local Abilities profiles only - both
 /// real naming conventions are always locally-nested per BsdataDatasheetMapper.ResolveCaveatAbility's
@@ -21,8 +20,7 @@ namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 /// filter every occurrence away before this scan ever saw it. Every occurrence is checked against a
 /// single shared semantic signal ("invulnerable save" in its own Description text) via the same
 /// AllowlistEntry/AllowlistCheck pattern the other CorpusScan tests use - one confirmed real anomaly
-/// (Orks' Makari, already tracked pre-this-change against the now-superseded
-/// InvulnerableSaveCaveatResolutionScanTests) is allowlisted rather than special-cased.
+/// (Orks' Makari) is allowlisted rather than special-cased.
 /// </summary>
 public class InvulnerableSaveCaveatAbilityNameScanTests
 {

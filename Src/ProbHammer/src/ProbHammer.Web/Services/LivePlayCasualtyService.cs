@@ -6,9 +6,8 @@ namespace ProbHammer.Web.Services;
 
 /// <summary>The casualty/status/phase-turn sync endpoint's request handler: rebuilds the roster
 /// with the posted casualty and unit-status batches applied and returns rendered `_UnitBlock`
-/// fragments for whichever units either batch addresses (see casualty-tracking's design.md -
-/// "every request carries the full current map", extended by half-strength-and-battleshock-
-/// indicators to the two new unit-status maps). Since live-play-phase-tracker, also persists a
+/// fragments for whichever units either batch addresses - every request carries the full current
+/// map, for both the casualty map and the two unit-status maps. Also persists a
 /// posted `PhaseTurnAdjustment` and, when present, expands the affected-unit set to every unit in
 /// the roster and reports the newly selected cell's own Forced-section set once, page-wide. Purely
 /// a thin controller-style wrapper - all the real logic
@@ -53,8 +52,7 @@ public class LivePlayCasualtyService(
         var result = rosterProvider.Build(import);
 
         // A phase/turn adjustment can change every unit's own disclosure state, not just the units
-        // a casualty/status batch happened to also touch in the same request - see design.md
-        // Decision 3.
+        // a casualty/status batch happened to also touch in the same request.
         var unitIndexes = request.PhaseTurnAdjustment is not null
             ? Enumerable.Range(0, result.Roster.Units.Count).ToList()
             : partialUnitIndexes;

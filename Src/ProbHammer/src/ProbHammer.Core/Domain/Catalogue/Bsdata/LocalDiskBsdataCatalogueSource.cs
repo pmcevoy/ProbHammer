@@ -4,9 +4,9 @@ namespace ProbHammer.Core.Domain.Catalogue.Bsdata;
 /// Local-disk implementation of <see cref="IBsdataCatalogueSource"/>, reading files directly from
 /// a root directory supplied by the caller (e.g. sourced from appsettings.json or an environment
 /// variable at the caller's composition root) - never a hardcoded path, so no specific developer's
-/// machine leaks into checked-in code. This change reads a local BSData clone during development
-/// to avoid GitHub API rate limits (see design.md); an HTTP-fetching source can implement the same
-/// interface later without changing anything downstream of it.
+/// machine leaks into checked-in code. Reads a local BSData clone during development to avoid
+/// GitHub API rate limits; an HTTP-fetching source can implement the same interface later without
+/// changing anything downstream of it.
 /// </summary>
 public sealed class LocalDiskBsdataCatalogueSource(string rootDirectory) : IBsdataCatalogueSource
 {

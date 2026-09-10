@@ -1,10 +1,10 @@
 namespace ProbHammer.Core.Domain.Catalogue.Bsdata;
 
 /// <summary>
-/// The "get JSON content for this filename" boundary (design.md). Deliberately narrow: closure
+/// The "get JSON content for this filename" boundary. Deliberately narrow: closure
 /// resolution and mapping depend only on this shape, never on how or where a file's bytes come
-/// from - a later in-memory cache or HTTP-fetching implementation (see design.md's Non-Goals and
-/// Risks/Trade-offs) can be dropped in behind this interface without touching either.
+/// from - a later in-memory cache or HTTP-fetching implementation can be dropped in behind this
+/// interface without touching either.
 /// </summary>
 public interface IBsdataCatalogueSource
 {

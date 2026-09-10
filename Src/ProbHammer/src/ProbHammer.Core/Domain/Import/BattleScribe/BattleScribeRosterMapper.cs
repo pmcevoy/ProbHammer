@@ -7,11 +7,10 @@ using ProbHammer.Core.Domain.Roster;
 namespace ProbHammer.Core.Domain.Import.BattleScribe;
 
 /// <summary>
-/// Maps an already-resolved <see cref="BsRoster"/> (see battlescribe-roster-import) directly into
+/// Maps an already-resolved <see cref="BsRoster"/> directly into
 /// an <see cref="ArmyRoster"/>, bypassing <c>Domain.Catalogue.Bsdata</c> entirely - every
 /// <see cref="Datasheet"/>/<see cref="Statline"/>/<see cref="WeaponProfile"/>/<see cref="Ability"/>
-/// needed is synthesized from the roster JSON's own already-resolved <c>profiles</c>/<c>rules</c>,
-/// per design.md's "Bypass BSData entirely" decision.
+/// needed is synthesized from the roster JSON's own already-resolved <c>profiles</c>/<c>rules</c>.
 /// </summary>
 public static partial class BattleScribeRosterMapper
 {
@@ -67,8 +66,8 @@ public static partial class BattleScribeRosterMapper
     /// <summary>Splits a force's catalogue name (e.g. "Imperium - Adeptus Astartes - Black
     /// Templars") into an ordered segment list, matching <c>ArmyRoster.Faction</c>'s "parent codex
     /// before sub-faction" convention - not required to match <c>BsdataFactionResolver</c>'s own
-    /// suffix-matching convention, since that resolver is never invoked by this pipeline (see
-    /// design.md's Risks - Faction is otherwise unread outside the text pipeline).</summary>
+    /// suffix-matching convention, since that resolver is never invoked by this pipeline (Faction is
+    /// otherwise unread outside the text pipeline).</summary>
     private static List<string> SplitFaction(string catalogueName)
     {
         var segments =
@@ -85,8 +84,7 @@ public static partial class BattleScribeRosterMapper
         return match.Success ? match.Groups[1].Value : text;
     }
 
-    /// <summary>Resolves attachment (see battlescribe-roster-import's Attachment Relationship
-    /// Resolution) from every top-level "unit"/"model" selection's own outgoing
+    /// <summary>Resolves attachment from every top-level "unit"/"model" selection's own outgoing
     /// "Leading"/"Supporting" association, then builds each resulting <see cref="Unit"/>/
     /// <see cref="AttachedUnit"/>. Every other top-level selection (Battle Size, Detachment, Force
     /// Disposition, Show/Hide Options - all "upgrade"-typed) is not a real army entry and is
@@ -127,8 +125,8 @@ public static partial class BattleScribeRosterMapper
 
     /// <summary>Builds one <see cref="Unit"/> from a top-level unit/model selection: its
     /// Datasheet-wide Abilities from the selection's own "Abilities"-typeName profiles (Intrinsic)
-    /// plus its own <c>rules</c> entries (CoreRule - see battlescribe-roster-import's Core Rule
-    /// Extraction), its ModelLines and their Statlines/weapon profiles from BuildModelLines, and
+    /// plus its own <c>rules</c> entries (CoreRule), its ModelLines and their Statlines/weapon
+    /// profiles from BuildModelLines, and
     /// its Enhancements from every descendant selection tagged with a <c>costs["Enhancements"]</c>
     /// entry anywhere in its tree.</summary>
     private static Unit BuildUnit(BsRosterSelection top, IReadOnlySet<string> knownArmyRuleNames)
@@ -176,8 +174,7 @@ public static partial class BattleScribeRosterMapper
                 : c.Name)
             .ToList();
 
-    /// <summary>Builds one <see cref="ModelLine"/> per per-loadout model group (see
-    /// battlescribe-roster-import's Statline, Weapon, and Ability Extraction requirement): when the
+    /// <summary>Builds one <see cref="ModelLine"/> per per-loadout model group: when the
     /// top-level selection has one or more immediate "model"-typed nested selections, each is its
     /// own loadout - either with its own Unit-typeName profile (Crusader Squad's Sword
     /// Brother/Initiate/Neophyte) or, when it carries none, falling back to the top-level
@@ -213,7 +210,7 @@ public static partial class BattleScribeRosterMapper
     /// <summary>Walks a loadout node's own nested wargear <c>selections</c> recursively, collecting
     /// its per-model weapon name list (a weapon-carrying child's own <c>number</c> divided by
     /// <paramref name="modelCount"/> gives the per-model quantity - already-resolved, no partition
-    /// inference needed, per battlescribe-roster-import's own requirement) and any wargear-granted
+    /// inference needed) and any wargear-granted
     /// Abilities (e.g. Impulsor's "Shield Dome" - OptionalGrant, mirroring the BSData pipeline's own
     /// classification for the equivalent shape). A selection carrying no <c>profiles</c> of its own
     /// (a pure grouping wrapper, e.g. "2 Storm Bolters") is walked one level deeper rather than
@@ -263,8 +260,8 @@ public static partial class BattleScribeRosterMapper
         selection.Costs.Any(c => string.Equals(c.Name, "Enhancements", StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Finds every Enhancement selection anywhere in the top-level selection's own
-    /// descendant tree (see battlescribe-roster-import's Enhancement Recognition requirement) -
-    /// recognized structurally by its own <c>costs["Enhancements"]</c> tag, never by name or group
+    /// descendant tree - recognized structurally by its own <c>costs["Enhancements"]</c> tag, never
+    /// by name or group
     /// path. A roster JSON only ever contains selections the player actually made, so - unlike the
     /// BSData text pipeline - this cannot leak an available-but-unselected Enhancement onto a Unit
     /// that never chose it.</summary>
@@ -302,9 +299,9 @@ public static partial class BattleScribeRosterMapper
             InSv = ResolveInvulnerableSave(profile.CharacteristicText("InSv"), node, top)
         };
 
-    /// <summary>This format's own, simpler invulnerable-save caveat resolution (see design.md's
-    /// Decisions - deferred detail, no BSData-style entryLink ancestry chain available here): a
-    /// footnoted value's linked ability is searched for directly on the owning loadout node, then
+    /// <summary>This format's own, simpler invulnerable-save caveat resolution (no BSData-style
+    /// entryLink ancestry chain available here): a footnoted value's linked ability is searched for
+    /// directly on the owning loadout node, then
     /// the top-level selection, under the same two BSData naming conventions
     /// ("Invulnerable Save ({digit}+*)" / "*Invulnerable Save") - unverified against a real
     /// caveated-InSv sample (none exists in the one roster analyzed so far; see PROGRESS.md).</summary>

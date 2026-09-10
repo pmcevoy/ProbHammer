@@ -5,8 +5,7 @@ namespace ProbHammer.Web.Services;
 
 /// <summary>Stores a session's current <see cref="PhaseTurnSelection"/> - mirrors
 /// <see cref="ISessionArmyListStore"/>'s own plain JSON round-trip through ASP.NET Core Session's
-/// string storage exactly, under its own session key (see live-play-phase-tracker's design.md
-/// Decision 3).</summary>
+/// string storage exactly, under its own session key.</summary>
 public interface IPhaseTurnStore
 {
     void Save(ISession session, PhaseTurnSelection selection);

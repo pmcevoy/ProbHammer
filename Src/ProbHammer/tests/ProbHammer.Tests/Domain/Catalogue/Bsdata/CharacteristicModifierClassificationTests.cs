@@ -7,10 +7,9 @@ using ProbHammer.Core.Domain.Catalogue.Bsdata.Json;
 namespace ProbHammer.Tests.Domain.Catalogue.Bsdata;
 
 /// <summary>Unit tests for BsdataDatasheetMapper's closed-world tier-1/tier-2
-/// characteristic-modifier classifier (characteristic-modifier-caveats) - hand-built
-/// BsSelectionEntry objects, not fixture JSON, since the classifier's own logic depends only on
-/// BsModifier/BsCondition shape, not the full closure-resolution machinery the other
-/// BsdataDatasheetMapperTests fixtures exercise.</summary>
+/// characteristic-modifier classifier - hand-built BsSelectionEntry objects, not fixture JSON,
+/// since the classifier's own logic depends only on BsModifier/BsCondition shape, not the full
+/// closure-resolution machinery the other BsdataDatasheetMapperTests fixtures exercise.</summary>
 public class CharacteristicModifierClassificationTests
 {
     private const string OcFieldId = "bef7-942a-1a23-59f8";
@@ -52,11 +51,9 @@ public class CharacteristicModifierClassificationTests
     [Fact]
     public void An_InSv_targeting_modifier_is_classified_now_that_a_safe_consumer_exists()
     {
-        // Real corpus case (unify-characteristic-effect-resolution): Black Templars' "Consecrating
-        // Aura" Enhancement - tier 1, unconditional, previously discarded entirely because InSv was
-        // excluded from CharacteristicFieldIds. It now classifies like any other tier-1 candidate,
-        // since AttachedUnitAggregator resolves it through the same single baseline-driven pass as
-        // every other characteristic-affecting ability.
+        // Real corpus case: Black Templars' "Consecrating Aura" Enhancement - tier 1, unconditional.
+        // Resolves through the same single baseline-driven pass as every other
+        // characteristic-affecting ability.
         var entry = WithModifier(new BsModifier { Field = InSvFieldId, Type = "set", Value = JsonValue("\"4\"") });
 
         var sheet = Build(entry);

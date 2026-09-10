@@ -292,10 +292,9 @@ public static class Datasheets
         );
     }
 
-    /// <summary>Fixture added by `structured-invulnerable-save` specifically to give `/LivePlay`
-    /// a real example of a non-uniform/caveated invulnerable save to render, since none of the
-    /// existing example army's units have one. Uses real, verified values (from the live BSData
-    /// clone, investigated during that change's design): Canis Rex's real InSv text "5+*"
+    /// <summary>Fixture giving `/LivePlay` a real example of a non-uniform/caveated invulnerable
+    /// save to render, since none of the existing example army's units have one. Uses real,
+    /// verified values from the live BSData clone: Canis Rex's real InSv text "5+*"
     /// resolves - via the same entry-scoped ability resolution `BsdataDatasheetMapper` uses - to a
     /// caveated save with the real linked ability's exact text.</summary>
     public static Datasheet CanisRex()
@@ -329,10 +328,9 @@ public static class Datasheets
         );
     }
 
-    /// <summary>Fixture added by `redesign-invulnerable-save-display` to give `/LivePlay` a second,
-    /// independently-sourced caveated invulnerable save alongside `CanisRex()` - real, verified
-    /// values (from the live BSData clone, traced during that change's design). Howling Banshees'
-    /// real InSv text `"4+* / 5+"` resolves, via the same entry-scoped ability resolution
+    /// <summary>Fixture giving `/LivePlay` a second, independently-sourced caveated invulnerable
+    /// save alongside `CanisRex()` - real, verified values from the live BSData clone. Howling
+    /// Banshees' real InSv text `"4+* / 5+"` resolves, via the same entry-scoped ability resolution
     /// `BsdataDatasheetMapper` uses, to a caveated save keeping only the unfootnoted `5+` digit
     /// (duplicated into both `MeleeInSv`/`RangedInSv`), linked to the real base-rules ability
     /// (id `9fa6-3128-6c5b-55f6`, `Warhammer 40,000.json`) whose text describes the melee-improved
@@ -368,11 +366,10 @@ public static class Datasheets
         );
     }
 
-    /// <summary>Explicitly synthetic fixture added by `redesign-invulnerable-save-display` to
-    /// exercise `/LivePlay`'s "differing, both known, non-caveated" invulnerable-save render case.
-    /// Unlike every other fixture in this file, its `InSv` value is hand-constructed and does NOT
-    /// come from any real BSData catalogue entry: tracing `BsdataDatasheetMapper
-    /// .ResolveInvulnerableSave` during this change's design confirmed no real source text can
+    /// <summary>Explicitly synthetic fixture exercising `/LivePlay`'s "differing, both known,
+    /// non-caveated" invulnerable-save render case. Unlike every other fixture in this file, its
+    /// `InSv` value is hand-constructed and does NOT come from any real BSData catalogue entry:
+    /// tracing `BsdataDatasheetMapper.ResolveInvulnerableSave` confirmed no real source text can
     /// currently produce two independently-known, non-zero, differing melee/ranged values - a
     /// footnoted `/`-split always collapses to one duplicated (caveated) digit, and a parenthetical
     /// restriction always zeroes the other side. This fixture exists purely so the render logic has

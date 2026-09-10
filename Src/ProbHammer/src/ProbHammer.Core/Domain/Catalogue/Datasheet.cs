@@ -23,18 +23,17 @@ public sealed class Datasheet
     private readonly IReadOnlyDictionary<string, Ability> _optionalAbilities;
     private readonly IReadOnlyDictionary<string, IReadOnlySet<string>> _modelKeywordsByName;
 
-    /// <summary>Classified, data-derived characteristic-modifier candidates (see
-    /// characteristic-modifier-caveats) - selection-blind catalog data, never applied to this
-    /// Datasheet's own Statline fields. See CharacteristicModifierCandidates.</summary>
+    /// <summary>Classified, data-derived characteristic-modifier candidates - selection-blind
+    /// catalog data, never applied to this Datasheet's own Statline fields.</summary>
     public IReadOnlyList<CharacteristicModifierCandidate> CharacteristicModifierCandidates { get; }
 
     // These three names only ever restate attachment eligibility a resolved roster's own attachment
     // relationships already represent directly - excluded regardless of source (Intrinsic or Core
-    // Rule), per datasheet-catalogue's "Attachment-Eligibility Abilities Are Excluded".
+    // Rule).
     private static readonly HashSet<string> ExcludedAttachmentAbilityNames =
         new(StringComparer.OrdinalIgnoreCase) { "Leader", "Support", "Attached Unit" };
 
-    // The generic InSv-caveat-internal naming convention (unify-characteristic-effect-resolution) -
+    // The generic InSv-caveat-internal naming convention -
     // every real corpus occurrence of this exact name is BsdataDatasheetMapper.ResolveCaveatAbility's
     // own internal mechanism, never a player-facing ability (see that method's own doc comment for
     // the base-catalogue collision - two different profiles both named "Invulnerable Save (4+*)"

@@ -3,12 +3,11 @@ using ProbHammer.Core.Domain.Import;
 
 namespace ProbHammer.Web.Services;
 
-/// <summary>Stores a session's successfully-parsed army import (see army-list-import's Per-Session
-/// Roster Storage requirement) - the format-discriminated <see cref="StoredArmyImport"/> wrapper
-/// around a <see cref="ParsedArmyList"/> (GW-app text) or a BattleScribe roster JSON (see
-/// import-battlescribe-json-rosters' design.md), never a built
-/// <see cref="ProbHammer.Core.Domain.Roster.ArmyRoster"/> itself (see design.md's "Session stores
-/// the intermediate, not the graph"). Plain JSON round-trip via ASP.NET Core Session's string
+/// <summary>Stores a session's successfully-parsed army import - the format-discriminated
+/// <see cref="StoredArmyImport"/> wrapper around a <see cref="ParsedArmyList"/> (GW-app text) or a
+/// BattleScribe roster JSON, never a built
+/// <see cref="ProbHammer.Core.Domain.Roster.ArmyRoster"/> itself: the session stores
+/// the intermediate, not the graph. Plain JSON round-trip via ASP.NET Core Session's string
 /// storage, using System.Text.Json's polymorphic serialization (<see cref="StoredArmyImport"/>'s
 /// own <c>[JsonDerivedType]</c> attributes) to preserve which variant was stored.</summary>
 public interface ISessionArmyListStore

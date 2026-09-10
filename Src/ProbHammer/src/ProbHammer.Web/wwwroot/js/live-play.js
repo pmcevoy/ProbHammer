@@ -1,5 +1,5 @@
 const CASUALTY_STORAGE_KEY = 'probhammer.livePlay.casualties';
-// Half-strength-override/Battle-shocked toggles (half-strength-and-battleshock-indicators) live in
+// Half-strength-override/Battle-shocked toggles live in
 // their own maps, keyed by unit index alone (not the component/statline/loadout coordinate
 // casualties use) - both are unit-level status, never per-model-line.
 const HALF_STRENGTH_STORAGE_KEY = 'probhammer.livePlay.halfStrength';
@@ -16,14 +16,14 @@ const BATTLESHOCKED_STORAGE_KEY = 'probhammer.livePlay.battleShocked';
 // reload" requirement - only in-session swaps of the same load now preserve it.
 const deselectedByUnit = new Map();
 
-// Army-wide keyword filter state (highlight-units-by-army-keyword) - a page-scope Set of active
+// Army-wide keyword filter state - a page-scope Set of active
 // keyword filters, keyed by normalized (trimmed, case-folded) keyword text so it can be compared
 // directly against a per-unit chip's own textContent with no new data-keyword attribute needed on
-// the already-shipped _UnitBlock.cshtml Keywords markup (design.md Decision 2). Lives alongside
+// the already-shipped _UnitBlock.cshtml Keywords markup. Lives alongside
 // deselectedByUnit for the same reason: must survive a swapUnitBlock without resetting, but must
 // NOT survive a real page reload/navigation - reinitialized empty on each load, matching the
-// per-unit selection filter's own "Selection State Does Not Persist Across A Page Reload"
-// precedent (design.md Decision 3), not the casualty/status localStorage precedent.
+// per-unit selection filter's own "does not persist across a page reload" behavior, not the
+// casualty/status localStorage precedent.
 const activeKeywordFilters = new Set();
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     void syncLivePlayState();
 });
 
-// Phase/turn tracker (live-play-phase-tracker) - one page-wide control (Army Header), not one per
+// Phase/turn tracker - one page-wide control (Army Header), not one per
 // unit block, so wired once here rather than from initUnitBlock. Each of the twelve cells (ten
 // Turn/Phase cells, two row labels) carries its own {turn, phase} directly as data-* attributes -
 // see _PhaseTurnTracker.cshtml.
@@ -47,9 +47,7 @@ function initPhaseTurnTracker() {
 
 // One consolidated per-unit-block init, covering everything that attaches listeners to a
 // unit-block's own DOM subtree - re-run on a swapped-in unit block after a casualty adjustment
-// (see swapUnitBlock) so neither piece is left with dead listeners. Combines what used to be two
-// independent DOMContentLoaded passes (a page-wide .weapon-name-toggle query, and a per-unit-block
-// initUnitSelection call) plus this change's own casualty controls.
+// (see swapUnitBlock) so neither piece is left with dead listeners.
 function initUnitBlock(unitEl) {
     initWeaponProvenanceToggles(unitEl);
     initCasualtyControls(unitEl);
@@ -58,8 +56,8 @@ function initUnitBlock(unitEl) {
     initUnitSelection(unitEl);
 }
 
-// Provenance breakdown expand/collapse (add-live-play-weapon-provenance). Scoped to unitEl (was a
-// page-wide query) so re-running this after a casualty swap only rewires the one affected unit.
+// Provenance breakdown expand/collapse. Scoped to unitEl
+// so re-running this after a casualty swap only rewires the one affected unit.
 function initWeaponProvenanceToggles(unitEl) {
     unitEl.querySelectorAll('.weapon-name-toggle').forEach(button => {
         button.addEventListener('click', () => {
@@ -76,7 +74,7 @@ function initWeaponProvenanceToggles(unitEl) {
     });
 }
 
-// Casualty marking controls (casualty-tracking). Each button carries its own coordinate
+// Casualty marking controls. Each button carries its own coordinate
 // (data-casualty-key) and current remaining/initial counts as data-* attributes - stopPropagation
 // first, since these buttons sit inside their row's own selection-toggle click target.
 function initCasualtyControls(unitEl) {
@@ -100,8 +98,7 @@ function initCasualtyControls(unitEl) {
     });
 }
 
-// Unit toolbar status controls (half-strength-and-battleshock-indicators; relocated into
-// .unit-toolbar by consolidate-unit-toolbar). Both are always real <button>s now - the multi-model
+// Unit toolbar status controls, in .unit-toolbar. Both are always real <button>s - the multi-model
 // Half Strength case is permanently `disabled` in markup rather than a separate, listener-less
 // <span> - so this always finds and wires up both; native `disabled` buttons never dispatch click
 // events, so attaching a listener to that permanently-disabled case is inert, not a bug. Neither
@@ -131,9 +128,8 @@ function toggleStoredUnitFlag(storageKey, unitIndex) {
     writeJsonMap(storageKey, stored);
 }
 
-// Reset-casualties control (casualty-tracking follow-up; relocated into .unit-toolbar by
-// consolidate-unit-toolbar, `disabled` in markup whenever the unit has no casualties to reset).
-// Confirms first - this can revert several taps' worth of marking at once. Resets every model-line
+// Reset-casualties control, in .unit-toolbar, `disabled` in markup whenever the unit has no
+// casualties to reset. Confirms first - this can revert several taps' worth of marking at once. Resets every model-line
 // this specific unit currently has a casualty control for, regardless of whether that one is
 // actually adjusted right now - simpler than diffing, and a no-op remaining==initial send is
 // harmless (SetRemainingCount is idempotent).
@@ -172,9 +168,9 @@ function initCasualtyReset(unitEl) {
     });
 }
 
-// Shared by the casualty map and the two unit-status maps (half-strength-and-battleshock-
-// indicators) - all three are "a plain object, JSON-round-tripped through localStorage under one
-// key", differing only in which key and what the object's values mean.
+// Shared by the casualty map and the two unit-status maps - all three are "a plain object,
+// JSON-round-tripped through localStorage under one key", differing only in which key and what
+// the object's values mean.
 function readJsonMap(storageKey) {
     try {
         return JSON.parse(localStorage.getItem(storageKey) || '{}');
@@ -242,9 +238,9 @@ function buildStatusAdjustments() {
 
 // Posts the *entire* current localStorage state on every call, never just the newest change - the
 // server is stateless and always rebuilds from a pristine roster, so a request carrying only one
-// adjustment would discard every earlier casualty/status from the same session (see casualty-
-// tracking's design.md - "every request carries the full current map", extended by half-strength-
-// and-battleshock-indicators to the two new unit-status maps sharing this same POST). A no-op when
+// adjustment would discard every earlier casualty/status from the same session; every request
+// carries the full current map, for both the casualty map and the two unit-status maps sharing
+// this same POST. A no-op when
 // both are empty, so a browser with no recorded adjustments never issues a request at all. Returns
 // whether the sync actually completed (used by initCasualtyReset to know when it's safe to prune
 // storage) - true for the no-op case too, since there was nothing to fail.
@@ -270,12 +266,12 @@ async function syncLivePlayState() {
     return true;
 }
 
-// Posts a phase/turn selection change (live-play-phase-tracker). Moves .is-active to the clicked
+// Posts a phase/turn selection change. Moves .is-active to the clicked
 // cell immediately - unambiguous, it's exactly what was clicked, no need to wait on the response for
-// this part (design.md Decision 5) - then applies the response's own fragment map using its reported
+// this part - then applies the response's own fragment map using its reported
 // Forced set, same as syncLivePlayState.
 //
-// live-play-touch-target-improvements: every phase/turn selection also fully overrides every unit
+// Every phase/turn selection also fully overrides every unit
 // block's own collapsed/expanded state (see swapUnitBlock's unitBlocksOpen parameter) - a row-label
 // cell (no Phase) collapses every block to its name bar (a compact roster list); a specific phase
 // column instead expands every block, since otherwise that phase's own Forced/Expanded inner
@@ -285,7 +281,7 @@ async function syncLivePlayState() {
 // hidden. This is a full override on every click, not a one-time transition - even reselecting the
 // same phase re-applies it. `phase` is already `null` at this exact call site whenever a row label -
 // not one of its five phase columns - was clicked (a row-label cell has no data-phase attribute), so
-// this needs no new server signal - see design.md Decision 2.
+// this needs no new server signal.
 async function syncPhaseTurn(turn, phase) {
     setActivePhaseTurnCell(turn, phase);
     const unitBlocksOpen = phase !== null;
@@ -321,11 +317,11 @@ function setActivePhaseTurnCell(turn, phase) {
 
 // Shared by syncLivePlayState and syncPhaseTurn - applies one sync response's fragment map,
 // generalizing swapUnitBlock's carry-forward to be scoped to the response's own reported Forced
-// section set (design.md Decision 2). forcedSectionNames is absent/empty for a casualty/status-only
-// sync, so that case's own carry-forward is unchanged (every section carries forward, as before this
-// change). unitBlocksOpen (live-play-touch-target-improvements) is a tri-state override: `null` (the
+// section set. forcedSectionNames is absent/empty for a casualty/status-only
+// sync, so that case's own carry-forward is unchanged (every section carries forward). unitBlocksOpen
+// is a tri-state override: `null` (the
 // default, used by the same casualty/status-only path) means "no override, carry forward each
-// block's own prior open/closed state" exactly as before this change; `true`/`false` (used by
+// block's own prior open/closed state"; `true`/`false` (used by
 // syncPhaseTurn) forces every unit block open/closed outright, overriding whatever it was.
 function applySyncResponse(fragments, forcedSectionNames, unitBlocksOpen = null) {
     const forcedSections = new Set(forcedSectionNames || []);
@@ -333,7 +329,7 @@ function applySyncResponse(fragments, forcedSectionNames, unitBlocksOpen = null)
     refreshArmyKeywordFilters();
 }
 
-// Same trim + case-fold normalization design.md Decision 2 relies on for matching a header pill's
+// Same trim + case-fold normalization used for matching a header pill's
 // own keyword against a per-unit chip's rendered text with no shared identity scheme.
 function normalizeKeyword(text) {
     return text.trim().toLowerCase();
@@ -341,7 +337,7 @@ function normalizeKeyword(text) {
 
 // Scans every currently-rendered unit's own Keywords section chips - mirrors
 // recomputeWeaponSections' "recompute from what's actually in the DOM right now" approach
-// (design.md Decision 1) rather than a second server-side keyword aggregation. Returns a Map of
+// rather than a second server-side keyword aggregation. Returns a Map of
 // normalized keyword -> its first-seen display text, so original casing survives the dedup pass.
 function scanRenderedKeywords() {
     const found = new Map();
@@ -356,8 +352,8 @@ function scanRenderedKeywords() {
 
 // Renders/replaces the header's own pill list from a freshly-scanned keyword map, one <button> per
 // keyword, marked .is-active per the (already-pruned) activeKeywordFilters Set. Hides the whole
-// section when the map is empty (Requirement: "All Keywords section omitted when no unit has any
-// keyword") - there's no server-rendered fallback content for this purely client-side section.
+// section when the map is empty (the All Keywords section is omitted when no unit has any
+// keyword) - there's no server-rendered fallback content for this purely client-side section.
 // Each pill carries both .weapon-tag (the plain pill look) and .army-keyword-chip (the button-
 // reset-over-a-pill layer) - the same two-class pattern .weapon-tag-resolved already uses.
 function renderArmyKeywordChips(keywordMap) {
@@ -386,7 +382,7 @@ function renderArmyKeywordChips(keywordMap) {
                 // to rescan, just re-render the pill list and re-apply cross-unit highlighting.
                 renderArmyKeywordChips(keywordMap);
                 applyKeywordHighlighting();
-                // live-play-touch-target-improvements: jump to the first matching unit block on
+                // Jump to the first matching unit block on
                 // activation only, never on deactivation - speeds up the "collapse everything via
                 // My Turn, then pick a keyword" navigation flow. Scoped to the specific keyword just
                 // clicked (not just any active filter), and only fires from this click handler, never
@@ -400,10 +396,10 @@ function renderArmyKeywordChips(keywordMap) {
 
 // Cross-unit highlighting pass: for every unit block, for every rendered Keywords pill, add/remove
 // the flagged style based on activeKeywordFilters membership; force a matching unit's Keywords
-// section open. A one-way ratchet - never forces a section closed (design.md Decision 5), so no
+// section open. A one-way ratchet - never forces a section closed, so no
 // "opened by filter" bookkeeping is needed at all.
 //
-// live-play-touch-target-improvements: also force the unit block itself open on a match - the same
+// Also force the unit block itself open on a match - the same
 // class of bug the phase/turn work fixed elsewhere on this page. Forcing only the inner Keywords
 // section open (as this did before) is invisible when the containing unit block is collapsed (e.g.
 // via the phase/turn tracker's row-label bulk-collapse, or a plain manual collapse) - the section
@@ -445,8 +441,8 @@ function scrollToFirstKeywordMatch(key) {
 
 // One orchestrating pass: scan -> prune -> render header pills -> apply cross-unit highlighting.
 // Pruning the active Set against a freshly-scanned keyword set (rather than any explicit "clear
-// this filter" step) is what makes both dropout and reappearance fall out for free - see design.md
-// Decisions 6/7. Called once on DOMContentLoaded and once per syncLivePlayState() batch, after
+// this filter" step) is what makes both dropout and reappearance fall out for free.
+// Called once on DOMContentLoaded and once per syncLivePlayState() batch, after
 // every fragment in that batch has been swapped in - never once per individual swapped unit, since
 // an active filter can match units that weren't part of this particular sync.
 function refreshArmyKeywordFilters() {
@@ -463,18 +459,17 @@ function refreshArmyKeywordFilters() {
 // selection state (deselectedByUnit) survives the swap too - see initUnitSelection. Carries forward
 // which <details> sections (Statline/Ranged/Melee/Keywords - each independently collapsible) were
 // open on the old node, so tapping a casualty control doesn't visually snap an expanded section shut
-// - caught via hands-on browser testing, not from the spec discussion; a full markup swap has no
-// other way to know a section was manually opened. Since live-play-phase-tracker, this carry-forward
-// is SCOPED by forcedSections (design.md Decision 2): a section named there is excluded from the
+// - a full markup swap has no other way to know a section was manually opened. This carry-forward
+// is SCOPED by forcedSections: a section named there is excluded from the
 // carried-forward set, so the fresh server markup's own open/closed state (baked in from the current
 // phase/turn selection's Expanded set) wins for it instead - forcedSections defaults to empty, which
-// carries forward every section exactly as before this change (a casualty/status-only sync).
-// Since live-play-landscape-only, `.unit-block` is itself a <details> (its own whole-block collapse,
+// carries forward every section (a casualty/status-only sync).
+// `.unit-block` is itself a <details> (its own whole-block collapse,
 // independent of the four inner sections above) - carried forward unconditionally by default, the
 // simplest case of this same pattern, since (unlike the inner sections) it has no server-computed
-// forced state anywhere in the spec: it's presentation-only and entirely player-controlled.
+// forced state anywhere: it's presentation-only and entirely player-controlled.
 //
-// live-play-touch-target-improvements: unitBlocksOpen is the one exception - null (the default)
+// unitBlocksOpen is the one exception - null (the default)
 // preserves the carry-forward above; true/false (every phase/turn selection - see syncPhaseTurn)
 // fully overrides every unit block's open state instead of carrying it forward, the unit-block-level
 // counterpart to forcedSections' per-section forcing above.
@@ -545,8 +540,7 @@ function initUnitSelection(unitEl) {
 
         if (groupHeader) {
             // Activating the group header selects all loadouts unless every one is already
-            // selected, in which case it deselects all of them - see the Statline Section
-            // Rendering requirement's tri-state scenarios.
+            // selected, in which case it deselects all of them.
             groupHeader.addEventListener('click', () => {
                 const allSelected = loadouts.every(li => !deselected.has(li.dataset.selectKey));
                 loadouts.forEach(li => {
@@ -631,7 +625,7 @@ function initUnitSelection(unitEl) {
 
     // A run collapses to header-only once every entry sharing it meets either of two independent
     // conditions: it's fully deselected (this Set, ephemeral/client-side), or it's fully dead -
-    // read from data-dead, rendered server-side from RemainingCount (casualty-tracking) - so a
+    // read from data-dead, rendered server-side from RemainingCount - so a
     // dead run stays collapsed regardless of reselection, and a reload shows it already collapsed
     // without needing this function to have run first. The two are combined per-run (OR), never
     // merged into the deselected Set itself, so neither can accidentally suppress the other; a
@@ -698,8 +692,7 @@ function initUnitSelection(unitEl) {
     // that already disagreed on PerModelAttacks before any filtering) shows exactly its selected raw
     // rows the same way. The primary row hides entirely once no contribution anywhere is selected.
     // A fully-dead loadout/model-line never has a contribution row to begin with (excluded
-    // server-side - see the Aggregate Weapon Count View requirement), so casualty state needs no
-    // special-casing here at all.
+    // server-side), so casualty state needs no special-casing here at all.
     function recomputeWeaponRow(row) {
         const weaponId = row.dataset.weaponId;
         const breakdownRows = [...unitEl.querySelectorAll(`tr.weapon-contribution-row[data-weapon-id="${weaponId}"]`)];

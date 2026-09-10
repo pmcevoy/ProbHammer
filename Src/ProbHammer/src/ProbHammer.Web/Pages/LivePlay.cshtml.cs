@@ -19,26 +19,23 @@ public class LivePlayModel(
 {
     public List<UnitBlockViewModel> Units { get; private set; } = [];
 
-    // The roster's own metadata/rules header - see display-army-header-and-detachment-rules'
-    // Army Header Rendering requirement. Set alongside Units/Glossary in OnGet so all three come
-    // from the same ArmyRosterBuildResult.
+    // The roster's own metadata/rules header. Set alongside Units/Glossary in OnGet so all three
+    // come from the same ArmyRosterBuildResult.
     public ArmyHeaderViewModel Header { get; private set; } = null!;
 
     // Consumed by _UnitBlock.cshtml (via UnitBlockRenderModel) to decide whether a weapon-keyword
-    // chip or ability name is a resolvable rules-glossary reference - see live-play-view's
-    // "Ability And Rule Text Popover"/rules-glossary's "Glossary Lookup By Normalized Name Or
-    // Alias". Set alongside Units in OnGet so both come from the same ArmyRosterBuildResult.
+    // chip or ability name is a resolvable rules-glossary reference. Set alongside Units in OnGet
+    // so both come from the same ArmyRosterBuildResult.
     public RuleGlossary Glossary { get; private set; } = null!;
 
-    // The player-asserted current phase/turn selection (live-play-phase-tracker) - loaded via
-    // IPhaseTurnStore alongside the rest of OnGet's build, defaulting when the session has never
-    // recorded one. Consumed by _ArmyHeader.cshtml (to render _PhaseTurnTracker) and by
-    // LivePlay.cshtml (to compute each unit block's initial ExpandedSections).
+    // The player-asserted current phase/turn selection - loaded via IPhaseTurnStore alongside the
+    // rest of OnGet's build, defaulting when the session has never recorded one. Consumed by
+    // _ArmyHeader.cshtml (to render _PhaseTurnTracker) and by LivePlay.cshtml (to compute each
+    // unit block's initial ExpandedSections).
     public PhaseTurnSelection PhaseTurn { get; private set; } = PhaseTurnSelection.Default;
 
-    // Per live-play-view's "Live Play Redirects Without An Active Import" requirement: a session
-    // with no successfully imported army list has nothing to render, so it's sent to the import
-    // page instead of rendering an empty/erroring page.
+    // A session with no successfully imported army list has nothing to render, so it's sent to
+    // the import page instead of rendering an empty/erroring page.
     public IActionResult OnGet()
     {
         var import = sessionStore.Load(HttpContext.Session);
@@ -53,7 +50,7 @@ public class LivePlayModel(
         return Page();
     }
 
-    // live-play-phase-tracker's "Section Relevance By Turn And Phase" table - the sections that
+    // The Section Relevance By Turn And Phase table - the sections that
     // render OPEN for a given selection. A row-label selection (Phase null) expands nothing. Phase
     // == Fight expands Melee (alongside Statline) regardless of Turn, since My Turn/Fight and Their
     // Turn/Fight both name the identical Expanded set in the table; My Turn/Shooting is the one
@@ -70,7 +67,7 @@ public class LivePlayModel(
             _ => new HashSet<UnitBlockSection> { UnitBlockSection.Statline }
         };
 
-    // live-play-phase-tracker's "Section Relevance By Turn And Phase" table - the sections a given
+    // The Section Relevance By Turn And Phase table - the sections a given
     // selection actually DICTATES the state of (a superset of ExpandedSections; a Forced-but-not-
     // Expanded section is dictated closed). A row label or any Their Turn phase forces all four
     // sections; My Turn/Shooting and My Turn/Fight force Statline+Ranged+Melee (Keywords untouched
@@ -114,8 +111,8 @@ public class LivePlayModel(
 
     // Builds the header's own view model directly from the roster's army-level metadata plus the
     // two new roster-wide aggregations (Army rules, Detachments) - a small, self-contained pipeline
-    // distinct from BuildUnitBlocks' own per-unit one, per design.md's "new, separate step from
-    // AttachedUnitAggregator's existing per-unit dedup - not a generalization of it".
+    // distinct from BuildUnitBlocks' own per-unit one; a new, separate step from
+    // AttachedUnitAggregator's existing per-unit dedup, not a generalization of it.
     internal static ArmyHeaderViewModel BuildArmyHeader(ArmyRoster roster) =>
         new(
             Name: roster.Name,
@@ -133,7 +130,7 @@ public class LivePlayModel(
     // ArmyRule ability is a fact about the army's chapter identity, not about which models are
     // currently alive, so - unlike the existing per-unit box, which disappears once its
     // contributing component is fully dead - this header entry never disappears over the course of
-    // a game. See design.md's "Roster-wide ArmyRule aggregation is a new, separate step...".
+    // a game.
     internal static IReadOnlyList<Ability> BuildArmyRules(ArmyRoster roster) =>
         roster.Units
             .SelectMany(unit => unit.Components)
@@ -147,7 +144,7 @@ public class LivePlayModel(
     // (IsAttachedUnit, initial total model count, Name) - factored out so a casualty-adjusted
     // rebuild (RebuildRoster) assigns each unit the same UnitIndex a pristine GET would, without
     // duplicating the sort key logic. Safe to sort by a pristine build's keys even when adjustments
-    // are pending: none of the three keys depend on RemainingCount (see design.md's Risks section).
+    // are pending: none of the three keys depend on RemainingCount.
     internal static List<ICombatUnit>
         SortRoster(IEnumerable<ICombatUnit> roster, RuleClassificationBaseline baseline) =>
         roster
@@ -171,11 +168,10 @@ public class LivePlayModel(
     // the localStorage map's key, both client-side-only concerns.
 
     // Rebuilds the roster from scratch (a fresh ArmyRoster re-enriched from the session's stored
-    // ParsedArmyList - see design.md's "Session stores the intermediate, not the graph") and replays
+    // ParsedArmyList - the session stores the intermediate, not the graph) and replays
     // every adjustment in the batch onto it before aggregating. The server holds no state between
     // requests, so the caller (the casualty sync endpoint) must always pass the *entire* current
-    // adjustment set, not just the newest one - see design.md's "every request carries the full
-    // current map" decision, added after this exact bug was caught mid-implementation. An adjustment
+    // adjustment set, not just the newest one. An adjustment
     // whose coordinate doesn't resolve to a real model-line (out-of-range UnitIndex, unknown
     // ComponentName/StatlineName/LoadoutIndex) is silently ignored rather than throwing - defensive
     // against stale localStorage from a roster shape that no longer matches (e.g. after a re-import).
@@ -461,9 +457,8 @@ public class LivePlayModel(
     internal static readonly string[] ScalarStatlineFieldOrder = ["M", "T", "Sv", "W", "LD", "OC"];
 
     // Field-name -> ScalarCharacteristicView lookup shared by GroupStatlines and
-    // _UnitBlock.cshtml's RenderScalarTile - the read-only half of what used to be
-    // CharacteristicFieldAccessor (resolve-structured-characteristic-modifiers, reverted); no
-    // write side is needed since nothing mutates a Statline's fields today.
+    // _UnitBlock.cshtml's RenderScalarTile; no write side is needed since nothing mutates a
+    // Statline's fields today.
     internal static ScalarCharacteristicView GetScalarField(Statline statline, string field) => field switch
     {
         "M" => statline.M,
@@ -478,12 +473,10 @@ public class LivePlayModel(
     // Assigns a footnote marker (*, **, ...) to each distinct flag-producing source ability, in the
     // order its runs are first encountered - the first distinct source seen gets "*", the next
     // distinct source gets "**", and so on; every later run naming the same source (by exact Name +
-    // Text) reuses its already-assigned marker (live-play-view's "Flagged Statline Characteristic
-    // Rendering" - marker identity is assigned once per unit block, not per run). Runs through every
-    // ScalarStatlineFieldOrder tile before InSv within a run, matching the tiles' own left-to-right
-    // visual order - generalized (resolve-structured-characteristic-modifiers) from the original
-    // Oc-only version to cover M/T/Sv/W/Ld alike, with no distinction between a hand-authored
-    // statline-flag-rules match and a data-derived StructuralCharacteristicGrant one at this layer.
+    // Text) reuses its already-assigned marker - marker identity is assigned once per unit block,
+    // not per run. Runs through every ScalarStatlineFieldOrder tile before InSv within a run,
+    // matching the tiles' own left-to-right visual order, covering M/T/Sv/W/Ld/OC alike with no
+    // distinction between a hand-authored rule match and a data-derived one at this layer.
     private static IReadOnlyList<StatlineBlockViewModel> AssignFlagMarkers(IReadOnlyList<StatlineBlockViewModel> blocks)
     {
         var markerBySource = new Dictionary<(string Name, string Text), string>();
@@ -580,9 +573,9 @@ public class LivePlayModel(
     // When a component's span covers exactly one run (FirstRunIndex == LastRunIndex), that run's
     // own row-bound abilities (StatlineBlockViewModel.ModelAbilities/UnitAbilities) would
     // otherwise render at the identical grid coordinates as this span - two independently
-    // positioned cells occupying the same area, one painting over the other. Found via a real
-    // user-reported bug: the Impulsor's row-bound "Shield Dome" (its only statline row) was
-    // invisible behind its own component-wide "Transport"/"Assault Vehicle"/etc cell. Fixed by
+    // positioned cells occupying the same area, one painting over the other. Without the fix below,
+    // the Impulsor's row-bound "Shield Dome" (its only statline row) would be invisible behind its
+    // own component-wide "Transport"/"Assault Vehicle"/etc cell. Fixed by
     // absorbing that single run's row-bound abilities into this span instead of rendering them
     // separately - returned alongside an adjusted copy of statlineBlocks with that run's own
     // ability lists cleared, so the caller's final Statlines never render the now-redundant
@@ -635,7 +628,7 @@ public class LivePlayModel(
         return (adjustedBlocks, spans);
     }
 
-    // A ComponentName-null entry (see AttachedUnitAggregator.DedupeSharedCoreRuleAbilities)
+    // A ComponentName-null entry (see AttachedUnitAggregator.PromoteArmyRuleAbilities)
     // belongs to no single component - grouped by Ability.Name (there can in principle be more
     // than one distinct deduplicated ability on the same unit) rather than by component, since
     // there's no per-component run range to key off. IsFullyDead reads the entry's own
@@ -688,13 +681,13 @@ public sealed record CasualtyAdjustment(CasualtyCoordinate Coordinate, int Remai
 /// loadout.</summary>
 public sealed record UnitStatusAdjustment(int UnitIndex, bool IsHalfStrength, bool IsBattleShocked);
 
-/// <summary>One entry in a phase/turn-sync request: the new current selection - see
-/// live-play-phase-tracker's design.md Decision 3. <see cref="Phase"/> null represents a row-label
+/// <summary>One entry in a phase/turn-sync request: the new current selection.
+/// <see cref="Phase"/> null represents a row-label
 /// selection (see <see cref="ProbHammer.Core.Domain.Roster.PhaseTurnSelection"/>).</summary>
 public sealed record PhaseTurnAdjustment(GameTurn Turn, GamePhase? Phase);
 
 /// <summary>The casualty-sync endpoint's full request body - bundles a casualty batch, a
-/// unit-status-toggle batch, and (live-play-phase-tracker) an optional phase/turn adjustment into
+/// unit-status-toggle batch, and an optional phase/turn adjustment into
 /// one POST/one roster rebuild/one set of re-rendered fragments, rather than independent requests
 /// that could race each other's fragment swap. The two lists may be empty;
 /// <see cref="PhaseTurnAdjustment"/> is null when this sync carries no phase/turn change.</summary>
@@ -705,7 +698,7 @@ public sealed record LivePlaySyncRequest(
 
 /// <summary>Which of a unit block's four independently-collapsible sections
 /// (<c>_UnitBlock.cshtml</c>'s own <c>data-section</c> values - see
-/// <see cref="LivePlayModel.SectionName"/>) live-play-phase-tracker's relevance table governs. Never
+/// <see cref="LivePlayModel.SectionName"/>) the phase/turn relevance table governs. Never
 /// the Army Header's own Rules/All Keywords sections, which this capability does not touch.</summary>
 public enum UnitBlockSection
 {
@@ -716,7 +709,7 @@ public enum UnitBlockSection
 }
 
 /// <summary>The casualty-sync endpoint's full JSON response: the existing per-unit-index fragment
-/// map, plus (live-play-phase-tracker) the current selection's own Forced-section set, once, page-
+/// map, plus the current selection's own Forced-section set, once, page-
 /// wide - <see cref="LivePlayModel.SectionName"/>-encoded strings so live-play.js can match them
 /// directly against a <c>data-section</c> attribute with no further decoding. Empty whenever the
 /// request carried no <see cref="PhaseTurnAdjustment"/>, so a casualty/status-only sync's client
@@ -730,15 +723,13 @@ public sealed record LivePlaySyncResponse(Dictionary<int, string> Fragments, Lis
 /// <see cref="LivePlayModel.CompressLoadoutLabels"/>, in the same order. <see cref="ModelAbilities"/>/
 /// <see cref="UnitAbilities"/> are the row-bound (ModelLine-sourced) abilities matching this
 /// specific run. <see cref="ScalarFlagSources"/> (keyed by
-/// <see cref="LivePlayModel.ScalarStatlineFieldOrder"/>'s own field-name strings - generalized,
-/// resolve-structured-characteristic-modifiers, from an earlier Objective-Control-only shape to
-/// cover any of the six <c>ScalarCharacteristicView</c>-backed tiles uniformly) and
+/// <see cref="LivePlayModel.ScalarStatlineFieldOrder"/>'s own field-name strings, covering any of
+/// the six <c>ScalarCharacteristicView</c>-backed tiles uniformly) and
 /// <see cref="InvulnerableSaveFlagSource"/> are that run's own flag-producing sources, set by
 /// <see cref="LivePlayModel.GroupStatlines"/>; <see cref="ScalarMarkers"/>/
 /// <see cref="InvulnerableSaveMarker"/> are those sources' own footnote markers, filled in
 /// afterwards by <see cref="LivePlayModel.AssignFlagMarkers"/> once every run's source is known
-/// (marker identity spans the whole unit block, not one run - live-play-view's "Flagged Statline
-/// Characteristic Rendering").</summary>
+/// (marker identity spans the whole unit block, not one run).</summary>
 public sealed record StatlineBlockViewModel(
     IReadOnlyList<AggregateStatlineEntry> Entries,
     IReadOnlyList<IReadOnlyList<string>> LoadoutLabels,
@@ -752,9 +743,8 @@ public sealed record StatlineBlockViewModel(
     public Statline Statline => Entries[0].Statline;
 
     /// <summary>True once every entry in this run has a remaining count of 0 - the server-computed
-    /// collapse trigger casualty-tracking adds alongside the existing client-only fully-deselected
-    /// one (see casualty-tracking's design.md - Decisions). Computed from <see cref="Entries"/>'
-    /// own summed <c>RemainingCount</c>, never stored independently.</summary>
+    /// collapse trigger alongside the existing client-only fully-deselected one. Computed from
+    /// <see cref="Entries"/>' own summed <c>RemainingCount</c>, never stored independently.</summary>
     public bool IsFullyDead => Entries.All(e => e.RemainingCount == 0);
 
     /// <summary>This run's own footnote marker for one scalar tile (e.g. `"M"`, `"Sv"`, `"OC"` -
@@ -763,8 +753,7 @@ public sealed record StatlineBlockViewModel(
     public string? ScalarMarker(string field) => ScalarMarkers?.GetValueOrDefault(field);
 
     /// <summary>One entry per distinct marker present on this run's own tiles, in tile order
-    /// (M, T, Sv, W, Ld, OC, then InSv) - the source lines this run's own legend renders, per
-    /// "Flagged Statline Characteristic Rendering".</summary>
+    /// (M, T, Sv, W, Ld, OC, then InSv) - the source lines this run's own legend renders.</summary>
     public IReadOnlyList<(string Marker, Ability Source)> FlagLegend
     {
         get
@@ -822,9 +811,9 @@ public sealed record WeaponContributionRow(
 {
     /// <summary>The plain integer value of <see cref="Subtotal"/> when it's a fixed (non-dice)
     /// expression, for live-play.js to sum without needing any <see cref="DiceExpression"/>
-    /// semantics client-side; null when Subtotal is dice-based (e.g. a lone D6 contribution) - see
-    /// design.md's Risks section for the accepted scope limit this implies for client-side
-    /// recompute of a dice-valued contribution sharing a weapon with others.</summary>
+    /// semantics client-side; null when Subtotal is dice-based (e.g. a lone D6 contribution) - an
+    /// accepted scope limit for client-side recompute of a dice-valued contribution sharing a
+    /// weapon with others.</summary>
     public int? SubtotalValue => Subtotal.Count == 0 ? Subtotal.Modifier : null;
 }
 
@@ -861,13 +850,13 @@ public sealed record UnitBlockViewModel(
 
 /// <summary>Wraps a <see cref="UnitBlockViewModel"/> with its position in
 /// <see cref="LivePlayModel.Units"/> for the <c>_UnitBlock</c> partial - needed for the weapon-row
-/// <c>data-weapon-id</c> derivation (<c>"w-{UnitIndex}-r-{w}"</c>/<c>"w-{UnitIndex}-m-{w}"</c>) and,
-/// from casualty-tracking onward, the casualty coordinate's unit-level qualifier.
+/// <c>data-weapon-id</c> derivation (<c>"w-{UnitIndex}-r-{w}"</c>/<c>"w-{UnitIndex}-m-{w}"</c>) and
+/// the casualty coordinate's unit-level qualifier.
 /// <see cref="Glossary"/> travels alongside the view model (rather than being read off
 /// <see cref="LivePlayModel"/> directly) so the casualty-sync endpoint's own fragment re-render
 /// (<see cref="ProbHammer.Web.Services.LivePlayCasualtyService"/>, which renders
 /// <c>_UnitBlock.cshtml</c> directly rather than through a full page request) can supply it too.
-/// <see cref="ExpandedSections"/> (live-play-phase-tracker) is the current phase/turn selection's
+/// <see cref="ExpandedSections"/> is the current phase/turn selection's
 /// own Expanded set (<see cref="LivePlayModel.ExpandedSections"/>), used to bake each of the four
 /// <c>data-section</c> elements' initial <c>open</c> state - null defaults to "nothing expanded"
 /// (today's unconditional-collapsed behavior), so a pre-existing call site that predates this
@@ -883,9 +872,8 @@ public sealed record UnitBlockRenderModel(
 /// roster-wide aggregations <see cref="LivePlayModel.BuildArmyHeader"/> computes: every
 /// distinctly-named ArmyRule-origin ability present anywhere in the roster (<see cref="ArmyRules"/>,
 /// deduplicated army-wide - distinct from <see cref="AttachedUnitAggregator"/>'s existing per-unit
-/// dedup, see design.md), and the roster's own resolved <see cref="Detachments"/>. Deliberately
-/// carries no DP cost and no unit points cost - see live-play-view's Army Header Rendering
-/// requirement.</summary>
+/// dedup), and the roster's own resolved <see cref="Detachments"/>. Deliberately
+/// carries no DP cost and no unit points cost.</summary>
 public sealed record ArmyHeaderViewModel(
     string Name,
     IReadOnlyList<string> Faction,
@@ -898,11 +886,10 @@ public sealed record ArmyHeaderViewModel(
 
 /// <summary>Wraps <see cref="ArmyHeaderViewModel"/> with the <see cref="RuleGlossary"/> the
 /// <c>_ArmyHeader</c> partial needs to build its own popover triggers - mirrors
-/// <see cref="UnitBlockRenderModel"/>'s own "view model + glossary" pairing exactly. No longer
-/// carries a <c>PhaseTurn</c> field (live-play-touch-target-improvements) - the phase/turn tracker
-/// moved out of <c>_ArmyHeader.cshtml</c> entirely, now rendered directly by <c>LivePlay.cshtml</c>
+/// <see cref="UnitBlockRenderModel"/>'s own "view model + glossary" pairing exactly. Carries no
+/// <c>PhaseTurn</c> field - the phase/turn tracker is rendered directly by <c>LivePlay.cshtml</c>
 /// from <see cref="LivePlayModel.PhaseTurn"/> so it stays visible regardless of the army header's
-/// own (now whole-header) collapse state.</summary>
+/// own (whole-header) collapse state.</summary>
 public sealed record ArmyHeaderRenderModel(
     ArmyHeaderViewModel Header,
     RuleGlossary Glossary);

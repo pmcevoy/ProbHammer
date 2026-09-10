@@ -9,10 +9,10 @@ namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 /// </summary>
 public static class CharacteristicModifierClassificationAllowlist
 {
-    // unify-characteristic-effect-resolution: InSv rejoined CharacteristicFieldIds, so a tier-1/
-    // tier-2 InSv modifier now classifies successfully like any other recognized field - no longer
-    // allowlisted here. A tier-3+ InSv modifier still falls through to the HasCondition entry below,
-    // the same as any other characteristic's unrecognized condition shape.
+    // InSv is a recognized field in CharacteristicFieldIds, so a tier-1/tier-2 InSv modifier
+    // classifies successfully like any other recognized field - not allowlisted here. A tier-3+
+    // InSv modifier still falls through to the HasCondition entry below, the same as any other
+    // characteristic's unrecognized condition shape.
     public const string InvulnerableSaveFieldId = "55a7-5b54-c60d-11dc";
 
     public static readonly IReadOnlyList<AllowlistEntry<ModifierOccurrence>> Entries =

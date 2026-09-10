@@ -5,7 +5,7 @@ namespace ProbHammer.Core.Domain.Catalogue.Bsdata;
 /// <summary>
 /// Resolves a unit name to its <see cref="BsSelectionEntry"/> over a closure, checking the
 /// starting file's own sharedSelectionEntries first and only falling through to each imported
-/// file (in closure order) on a miss - see design.md's "Local-Over-Imported Name Precedence".
+/// file (in closure order) on a miss.
 /// </summary>
 public static class BsdataNameResolver
 {
@@ -33,9 +33,8 @@ public static class BsdataNameResolver
     /// Builds an id index over every top-level sharedSelectionEntry in the closure, nearer files'
     /// entries taking precedence on an (extremely unlikely) id collision. Used to resolve
     /// entryLinks encountered while walking a resolved entry's subtree - entryLinks carry a
-    /// targetId, not a name, and that id may point into any file in the closure (see design.md's
-    /// "entryLink target location" risk: never assume an entryLink's shape alone indicates
-    /// local-vs-imported).
+    /// targetId, not a name, and that id may point into any file in the closure: never assume an
+    /// entryLink's shape alone indicates local-vs-imported.
     /// </summary>
     public static IReadOnlyDictionary<string, BsSelectionEntry> BuildIdIndex(BsdataClosure closure)
     {
@@ -83,13 +82,10 @@ public static class BsdataNameResolver
     /// <summary>Locates the closure's own Detachment-choice group and returns its direct child
     /// selectionEntries - each one a real Detachment choice. A Detachment choice is a NESTED child
     /// of this group, never a top-level sharedSelectionEntry itself, so <see cref="Resolve"/> can
-    /// never reach it directly - see army-roster-enrichment's Detachment Name Resolution
-    /// requirement and design.md's "dedicated nested-name index, not a change to Resolve's existing
-    /// contract" decision.
+    /// never reach it directly.
     ///
     /// Confirmed by a full-corpus scan (<c>DetachmentGroupNameScanTests</c>) to take TWO real,
-    /// structurally different shapes - design.md's own risk ("unverified across the full corpus")
-    /// turned out to be correct that an outlier existed, just far more common than a single outlier:
+    /// structurally different shapes:
     ///   1. A top-level sharedSelectionEntryGroup named "Detachment" (or "Detachments" - both real,
     ///      confirmed singular on Space Marines, plural on the Aeldari Library) directly.
     ///   2. A top-level sharedSelectionEntries ENTRY of the same name (confirmed on Chaos Space

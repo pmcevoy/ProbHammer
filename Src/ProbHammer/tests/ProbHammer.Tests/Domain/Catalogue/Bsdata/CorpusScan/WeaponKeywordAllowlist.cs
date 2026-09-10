@@ -1,11 +1,10 @@
 namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 
 /// <summary>
-/// Seed "known limitation" allowlist for <see cref="WeaponKeywordScanTests"/>, populated from the
-/// first real run against the live clone (task 4.4) - 45 distinct unrecognized tokens, none of
-/// them fixed here: recognizing a new token as an existing <c>WeaponProfile</c> flag, or adding a
-/// new flag for a genuinely unmodeled mechanic, is explicitly out of scope for this change (see
-/// design.md's Non-Goals) - this only makes each one an expected, tracked finding instead of an
+/// Seed "known limitation" allowlist for <see cref="WeaponKeywordScanTests"/> - 45 distinct
+/// unrecognized tokens from the live clone, none of them fixed here: recognizing a new token as an
+/// existing <c>WeaponProfile</c> flag, or adding a new flag for a genuinely unmodeled mechanic, is
+/// out of scope here - this only makes each one an expected, tracked finding instead of an
 /// unexplained failure. See PROGRESS.md's Known Issues for the follow-up triage this seeds.
 /// Grouped by kind, matched by exact (case-sensitive) token text - a same-named token appearing
 /// with different casing or punctuation in the future is a genuinely new finding, not covered by
@@ -15,16 +14,16 @@ public static class WeaponKeywordAllowlist
 {
     public static IReadOnlyList<AllowlistEntry<string>> Entries { get; } =
     [
-        // Already-documented "no corresponding flag" tokens (datasheet-catalogue's own
-        // "Token with no corresponding WeaponProfile flag" scenario names Hazardous/Precision/
-        // Heavy explicitly) - expected, not a new finding.
+        // Already-documented "no corresponding flag" tokens - the existing "Token with no
+        // corresponding WeaponProfile flag" scenario names Hazardous/Precision/Heavy explicitly -
+        // expected, not a new finding.
         new("Hazardous - no corresponding flag; already an explicit datasheet-catalogue scenario.", t => t == "Hazardous"),
         new("Precision - no corresponding flag; already an explicit datasheet-catalogue scenario.", t => t == "Precision"),
         new("Heavy - no corresponding flag; already an explicit datasheet-catalogue scenario.", t => t == "Heavy"),
 
         // Case-only variants of an already-recognized exact-match token - WeaponKeywordParser's
         // switch/regex vocabulary is case-sensitive; these are candidates for a future
-        // case-insensitivity fix (follow-up, not this change), not a new mechanic.
+        // case-insensitivity fix, not a new mechanic.
         new("'Devastating wounds' - lowercase variant of the recognized 'Devastating Wounds'.", t => t == "Devastating wounds"),
         new("'Ignores cover' - lowercase variant of the recognized 'Ignores Cover'.", t => t == "Ignores cover"),
         new("'Sustained hits 1' - lowercase variant of the recognized 'Sustained Hits N' pattern.", t => t == "Sustained hits 1"),

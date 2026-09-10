@@ -41,9 +41,9 @@ public class BattleScribeRosterMapperTests
     [Fact]
     public void SelectedDetachment_CarriesItsOwnInlineRuleTextDirectlyFromTheRosterJson()
     {
-        // No BSData involvement in this pipeline (design.md's "Bypass BSData entirely") - a
-        // selected Detachment's own rule text is already inline on its own selections[].rules[]
-        // (confirmed real shape: "Companions of Vehemence" carries "Righteous Fervour").
+        // No BSData involvement in this pipeline - a selected Detachment's own rule text is already
+        // inline on its own selections[].rules[] (real shape: "Companions of Vehemence" carries
+        // "Righteous Fervour").
         var army = BuildRoster();
 
         var detachment = army.Detachments.Should().ContainSingle().Subject;
@@ -57,12 +57,9 @@ public class BattleScribeRosterMapperTests
     {
         // A real Adeptus Custodes NewRecruit export (data/gw-android-export-custodes.json) names
         // its top-level Detachment-choice selection "Detachments" (plural), not "Detachment"
-        // (singular, as Death Guard/Black Templars use) - mirroring the exact same
-        // singular-vs-plural inconsistency the BSData pipeline's own
-        // DetachmentGroupNameScanTests already documents for catalogue group names. FindGroup
-        // previously matched "Detachment" only, so this shape silently resolved zero
-        // Detachments - "Auric Champions"/"Assemblage of Might" never appearing on /LivePlay
-        // despite being present in the roster JSON.
+        // (singular, as Death Guard/Black Templars use) - mirroring the same singular-vs-plural
+        // inconsistency the BSData pipeline's own DetachmentGroupNameScanTests already documents
+        // for catalogue group names.
         var army = BuildRoster("custodes-detachments-plural-excerpt.json");
 
         var detachment = army.Detachments.Should().ContainSingle().Subject;
@@ -152,11 +149,11 @@ public class BattleScribeRosterMapperTests
     [Fact]
     public void CoreRuleReference_ResolvesWithFullTextAndNoAdditionalGating()
     {
-        // classify-known-army-rules: "Templar Vows" matches the curated lookup for this roster's
-        // own ("Black Templars") Faction, so it now classifies ArmyRule, not plain CoreRule - the
-        // same name-match classification the BSData pipeline uses (see
-        // ArmyRuleOriginClassificationTests). "No additional gating" still holds: this pipeline
-        // applies no separate chapter/game-mode gating pass of its own.
+        // "Templar Vows" matches the curated lookup for this roster's own ("Black Templars")
+        // Faction, so it classifies ArmyRule, not plain CoreRule - the same name-match
+        // classification the BSData pipeline uses (see ArmyRuleOriginClassificationTests). "No
+        // additional gating" still holds: this pipeline applies no separate chapter/game-mode
+        // gating pass of its own.
         var army = BuildRoster();
         var crusaderSquad = FindUnit(army, "Crusader Squad");
 
@@ -201,9 +198,8 @@ public class BattleScribeRosterMapperTests
     [Fact]
     public void WargearGrantedShieldDome_FlagsTheImpulsorsInvulnerableSave()
     {
-        // Real end-to-end confirmation (statline-flag-rules) against this fixture's own real
-        // "Shield Dome" text ("The bearer has a 5+ invulnerable save.") - not just a hand-built
-        // rule-engine fixture, per this project's "verify against a real captured export" habit.
+        // Real end-to-end confirmation against this fixture's own real "Shield Dome" text
+        // ("The bearer has a 5+ invulnerable save.") - not just a hand-built rule-engine fixture.
         var army = BuildRoster();
         var impulsor = army.Units.OfType<Unit>().Single(u => u.Name == "Impulsor");
 
@@ -249,8 +245,7 @@ public class BattleScribeRosterMapperTests
         // Real fixture shape: "Lieutenant" carries BOTH a rules[]-sourced "Support" entry (Core
         // Rule Extraction) and a profiles[]-sourced "Support" Abilities entry (Statline/Weapon/
         // Ability Extraction) - both restate attachment eligibility the roster's own Attachment
-        // Relationship Resolution already represents directly (battlescribe-roster-import's
-        // "Attachment-Eligibility Abilities Are Excluded").
+        // Relationship Resolution already represents directly.
         var army = BuildRoster();
         var lieutenant = FindUnit(army, "Lieutenant");
 

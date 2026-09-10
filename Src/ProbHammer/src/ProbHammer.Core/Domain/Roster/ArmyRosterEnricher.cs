@@ -5,14 +5,13 @@ using ProbHammer.Core.Domain.Import;
 namespace ProbHammer.Core.Domain.Roster;
 
 /// <summary>
-/// Resolves a <see cref="ParsedArmyList"/> (army-list-parsing) against a
-/// <see cref="ResolvedBsdataCatalogue"/> (already resolved for the army's faction - see
-/// <see cref="BsdataFactionResolver"/> and the app-wide catalogue cache in ProbHammer.Web) to build
-/// a live <see cref="ArmyRoster"/>. Every name resolution is eager (validated during the walk, not
-/// deferred to later aggregation) so a resolution failure surfaces here with a diagnostic naming
-/// the unresolved text, per army-roster-enrichment's "Unit and Weapon Name Resolution" requirement -
-/// wargear/statline names are still stored on <see cref="ModelLine"/> as plain strings afterward,
-/// matching that type's existing by-name (not by-reference) convention.
+/// Resolves a <see cref="ParsedArmyList"/> against a <see cref="ResolvedBsdataCatalogue"/> (already
+/// resolved for the army's faction - see <see cref="BsdataFactionResolver"/> and the app-wide
+/// catalogue cache in ProbHammer.Web) to build a live <see cref="ArmyRoster"/>. Every name
+/// resolution is eager (validated during the walk, not deferred to later aggregation) so a
+/// resolution failure surfaces here with a diagnostic naming the unresolved text - wargear/statline
+/// names are still stored on <see cref="ModelLine"/> as plain strings afterward, matching that
+/// type's existing by-name (not by-reference) convention.
 /// </summary>
 public static class ArmyRosterEnricher
 {
@@ -57,13 +56,12 @@ public static class ArmyRosterEnricher
     }
 
     /// <summary>Resolves each parsed Enhancement name against the Datasheet's on-demand ability
-    /// index (per datasheet-catalogue's On-Demand Ability Resolution) - the same "resolve by name,
-    /// fail loud with a did-you-mean diagnostic" contract as every other name resolution in this
-    /// file. Deliberately does not check that a resolved ability's Origin is actually Enhancement
-    /// (vs. some other optional grant) - that would be new eligibility-checking behavior this
-    /// project has consistently declined to add elsewhere (see resolve-enhancement-abilities'
-    /// design.md). An empty Enhancements list resolves to an empty result - no Enhancement is ever
-    /// attached merely because the Datasheet defines one available.</summary>
+    /// index - the same "resolve by name, fail loud with a did-you-mean diagnostic" contract as
+    /// every other name resolution in this file. Deliberately does not check that a resolved
+    /// ability's Origin is actually Enhancement (vs. some other optional grant) - that would be new
+    /// eligibility-checking behavior this project has consistently declined to add elsewhere. An
+    /// empty Enhancements list resolves to an empty result - no Enhancement is ever attached merely
+    /// because the Datasheet defines one available.</summary>
     private static IReadOnlyList<Ability> ResolveEnhancements(IReadOnlyList<string> enhancementNames,
         Datasheet datasheet) =>
         enhancementNames
@@ -94,9 +92,8 @@ public static class ArmyRosterEnricher
     }
 
     /// <summary>Resolves a parsed model sub-group's own name to one of the Datasheet's actual
-    /// Statline names. Tries an exact match first (the common case - see design.md's "Model-line
-    /// count-splitting is arithmetic over the export's own weapon counts, not a BSData name-match"),
-    /// then two independent fallbacks, both confirmed necessary against the live BSData clone (one
+    /// Statline names. Tries an exact match first (the common case), then two independent
+    /// fallbacks, both confirmed necessary against the live BSData clone (one
     /// does not subsume the other - a Datasheet can be multi-statline with one statline named after
     /// the whole unit, or single-statline with an arbitrarily decorated name, and these are genuinely
     /// different real shapes):

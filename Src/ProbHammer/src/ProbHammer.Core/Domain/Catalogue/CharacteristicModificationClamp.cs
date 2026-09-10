@@ -1,11 +1,9 @@
 namespace ProbHammer.Core.Domain.Catalogue;
 
 /// <summary>Enforces a characteristic's own rulebook-legal value bound after a delta or `Set` value
-/// is resolved - see introduce-characteristic-modification-kind/design.md's "Per-characteristic
-/// clamp bound" table, transcribed verbatim from the user in .claude/vnext-ideas.md. A separate
-/// lookup table from <see cref="CharacteristicModificationKinds"/>, keyed by the same characteristic
-/// names, since a characteristic's arithmetic family and its clamp bound are independent facts (WS
-/// and Ld share RollThreshold but have different bounds).</summary>
+/// is resolved. A separate lookup table from <see cref="CharacteristicModificationKinds"/>, keyed by
+/// the same characteristic names, since a characteristic's arithmetic family and its clamp bound
+/// are independent facts (WS and Ld share RollThreshold but have different bounds).</summary>
 public static class CharacteristicModificationClamp
 {
     private sealed record Bound(int? Floor, int? Ceiling);

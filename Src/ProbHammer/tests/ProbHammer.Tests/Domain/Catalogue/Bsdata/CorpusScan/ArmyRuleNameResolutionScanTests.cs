@@ -4,11 +4,10 @@ using ProbHammer.Core.Domain.Catalogue.Bsdata;
 namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 
 /// <summary>
-/// Permanent, manually-triggered regression scan over the full local BSData clone - see
-/// bsdata-corpus-scan's Full-Corpus Army-Rule Name Resolution Scan. Every entry in
+/// Permanent, manually-triggered regression scan over the full local BSData clone. Every entry in
 /// <see cref="ArmyRuleNameLookup"/>'s curated inclusion table is resolved against its own
-/// faction's real catalogue closure in the clone, mitigating design.md's "mid-edition codex/BSData
-/// renames silently break a table entry" risk - a rename or removal shows up here as an
+/// faction's real catalogue closure in the clone, mitigating the risk that a mid-edition
+/// codex/BSData rename silently breaks a table entry - a rename or removal shows up here as an
 /// unresolved name rather than silently keeping a stale table entry.
 /// </summary>
 public class ArmyRuleNameResolutionScanTests

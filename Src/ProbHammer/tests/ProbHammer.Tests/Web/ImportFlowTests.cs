@@ -32,10 +32,9 @@ public class ImportFlowTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task SuccessfulBattleScribeJsonImport_RedirectsToLivePlay_MatchingTheEquivalentTextImport()
     {
         // gw-app-export-templars.json is the same real Templars list as gw-app-export.txt,
-        // re-exported from NewRecruit as BattleScribe roster JSON (see
-        // import-battlescribe-json-rosters' proposal.md) - both pipelines should produce an
-        // equivalent rendered army for the same real list, which is exactly the cross-check this
-        // sample was chosen for.
+        // re-exported from NewRecruit as BattleScribe roster JSON - both pipelines should produce
+        // an equivalent rendered army for the same real list, which is exactly the cross-check
+        // this sample was chosen for.
         var client = _factory.CreateClient();
 
         var response = await ImportAsync(client, ReadRealExport("gw-app-export-templars.json"));

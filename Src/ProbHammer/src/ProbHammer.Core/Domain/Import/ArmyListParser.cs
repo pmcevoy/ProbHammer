@@ -2,11 +2,9 @@ using System.Text.RegularExpressions;
 
 namespace ProbHammer.Core.Domain.Import;
 
-/// <summary>Concrete IArmyListParser for the GW-app 11e export text shape (see design.md's
-/// "Pipeline shape", the iOS-captured exports in data/gw-app-export*.txt, and the
-/// Android-captured ones in data/gw-android-export*.txt - see
-/// openspec/changes/harden-army-list-parsing-for-android-exports/design.md for the two formats'
-/// differences). Line-based: blank lines are discarded, then every remaining line is classified
+/// <summary>Concrete IArmyListParser for the GW-app 11e export text shape (the iOS-captured
+/// exports in data/gw-app-export*.txt, and the Android-captured ones in
+/// data/gw-android-export*.txt). Line-based: blank lines are discarded, then every remaining line is classified
 /// either positionally (the fixed army-metadata preamble), by a small set of regexes (metadata
 /// suffixes, section headers, attachment-group boundaries, unit headers - matched
 /// case-insensitively where an Android export is known to vary casing), or, for bullet lines, by
@@ -184,12 +182,12 @@ public sealed partial class ArmyListParser : IArmyListParser
     /// <summary>Splits one explicit "Nx ModelName" header's nested weapons into one or more
     /// ParsedModelGroups: a weapon whose count equals the header's own total is common to every
     /// resulting sub-group; every other weapon is its own mutually-exclusive alternative, becoming
-    /// its own sub-group carrying that weapon's own count - see "Model Group and Weapon Selection
-    /// Parsing". Two alternatives can coincidentally share the same numeric count without merging
-    /// (verified against a real second squad in design.md: Company Veteran's "1x Master-crafted
-    /// bolt rifle" / "1x Master-crafted heavy bolter" are two distinct 1-model sub-groups, not one
-    /// 1-model sub-group carrying both weapons - grouping by count value instead of by weapon entry
-    /// would incorrectly collapse them and fail the total-count sum). Throws when the non-common
+    /// its own sub-group carrying that weapon's own count. Two alternatives can coincidentally
+    /// share the same numeric count without merging (confirmed on a real second squad: Company
+    /// Veteran's "1x Master-crafted bolt rifle" / "1x Master-crafted heavy bolter" are two distinct
+    /// 1-model sub-groups, not one 1-model sub-group carrying both weapons - grouping by count
+    /// value instead of by weapon entry would incorrectly collapse them and fail the total-count
+    /// sum). Throws when the non-common
     /// counts don't sum exactly to the total, rather than guessing a split. Known open gap:
     /// Adeptus Custodes' Custodian Guard ("1x Guardian spear" / "3x Praesidium Shield" / "3x
     /// Sentinel blade" against a total of 4) needs Shield+blade paired as one 3-model sub-group,
@@ -229,7 +227,7 @@ public sealed partial class ArmyListParser : IArmyListParser
     /// first item (whether at the unit's top level or nested under a model-group header) reuses
     /// "•", and every later item in that same list drops its bullet entirely, relying on
     /// indentation alone. Two signals - both confirmed necessary against the real captured
-    /// Android exports (see design.md) - resolve this without a depth-specific special case:
+    /// Android exports - resolve this without a depth-specific special case:
     /// (1) a "•" line nests under the current top-level block, rather than starting a new
     /// sibling, only when that block's own text looks like an "Nx ModelName" header (so it can
     /// plausibly own a weapon list), it has no nested item yet (so only the list's own first

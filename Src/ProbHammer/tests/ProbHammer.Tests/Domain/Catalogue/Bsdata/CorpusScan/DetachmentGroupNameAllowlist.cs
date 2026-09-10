@@ -2,19 +2,15 @@ using ProbHammer.Core.Domain.Catalogue.Bsdata;
 
 namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 
-/// <summary>Allowlist for <see cref="DetachmentGroupNameScanTests"/> - confirmed real corpus gaps
-/// found by the scan's first real run against the live clone. Started 15 failures against the
-/// original single-shape ("a top-level selectionEntryGroup literally named 'Detachment'")
-/// assumption design.md flagged as unverified; <see cref="BsdataNameResolver.ResolveDetachmentEntries"/>
-/// was generalized to a second, equally-common real shape (a wrapper entry of the same name holding
-/// one nested group), which fixed 11 of the 15. These 4 remain unresolvable with the two shapes that
-/// method now recognizes, all for the SAME underlying reason: the real Detachment choices live
-/// inside a "Library" catalogue file this specific faction's own closure never actually reaches,
-/// because the catalogueLink to that Library has `importRootEntries` false in the source data
-/// (confirmed by direct inspection - see each entry's own note) - a closure-resolution gap, not a
-/// Detachment-group-shape gap, and out of scope to fix here (widening which links
-/// BsdataClosureResolver follows is a deep, high-blast-radius change unrelated to this proposal's
-/// own scope). Mirrors this project's existing "infoGroup" precedent
+/// <summary>Allowlist for <see cref="DetachmentGroupNameScanTests"/> - confirmed real corpus gaps.
+/// These entries are unresolvable with the two Detachment-group shapes
+/// <see cref="BsdataNameResolver.ResolveDetachmentEntries"/> recognizes, all for the SAME
+/// underlying reason: the real Detachment choices live inside a "Library" catalogue file this
+/// specific faction's own closure never actually reaches, because the catalogueLink to that
+/// Library has `importRootEntries` false in the source data (confirmed by direct inspection - see
+/// each entry's own note) - a closure-resolution gap, not a Detachment-group-shape gap, and out of
+/// scope to fix here (widening which links BsdataClosureResolver follows is a deep,
+/// high-blast-radius change). Mirrors this project's existing "infoGroup" precedent
 /// (InfoLinkTypeAllowlist.cs) - a confirmed, real, not-yet-fixed gap, deliberately allowlisted
 /// rather than guessed around, tracked as a dedicated follow-up.</summary>
 public static class DetachmentGroupNameAllowlist

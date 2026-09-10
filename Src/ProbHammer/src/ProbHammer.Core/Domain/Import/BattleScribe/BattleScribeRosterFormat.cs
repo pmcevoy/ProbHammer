@@ -4,8 +4,7 @@ using ProbHammer.Core.Domain.Import.BattleScribe.Json;
 namespace ProbHammer.Core.Domain.Import.BattleScribe;
 
 /// <summary>
-/// Recognizes and deserializes a BattleScribe/NewRecruit roster JSON export - see
-/// battlescribe-roster-import's Format Recognition requirement. A payload is recognized only when
+/// Recognizes and deserializes a BattleScribe/NewRecruit roster JSON export. A payload is recognized only when
 /// it parses as JSON and contains a top-level <c>roster</c> object whose <c>xmlns</c> identifies
 /// the standard, cross-tool BattleScribe roster schema; anything else (plain GW-app export text,
 /// or JSON of some other shape) is not treated as a BattleScribe roster export, letting it fall

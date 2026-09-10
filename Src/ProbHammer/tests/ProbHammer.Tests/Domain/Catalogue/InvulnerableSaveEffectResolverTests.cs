@@ -53,12 +53,9 @@ public class InvulnerableSaveEffectResolverTests
     [Fact]
     public void ReproducesShieldDomesResolvedInvulnerableSave()
     {
-        // Ground-truth: resolving the Effect classified from Shield Dome's own real Name+Text against
-        // Shield Dome's own Ability must reproduce the exact hand-computed result the now-retired
-        // ShieldDomeStatlineFlagRule.Apply used to produce (apply-rule-effect-baseline replaced it
-        // with this general resolver, run from the checked-in baseline) - proving the general
-        // resolver is at least as correct as the specific rule it replaced. See
-        // invulnerable-save-effect-resolution's "Reproduces An Existing Hand-Authored Rule's Result".
+        // Ground-truth: resolving the Effect classified from Shield Dome's own real Name+Text
+        // against Shield Dome's own Ability must reproduce the exact hand-computed expected result
+        // below - proving the general resolver produces the same result a hand-authored rule would.
         var shieldDome = new Ability
         {
             Name = "Shield Dome",

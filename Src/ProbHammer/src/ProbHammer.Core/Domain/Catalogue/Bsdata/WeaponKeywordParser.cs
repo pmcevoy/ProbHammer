@@ -5,11 +5,10 @@ namespace ProbHammer.Core.Domain.Catalogue.Bsdata;
 /// <summary>
 /// Parses a weapon profile's free-text "Keywords" characteristic (e.g.
 /// "Anti-infantry 4+, Devastating Wounds") into a set of flag mutations to apply to a
-/// <see cref="WeaponProfile"/>, plus the verbatim token list every token unconditionally joins
-/// (see datasheet-catalogue's "Weapon Profile Verbatim Keyword Text" requirement). Only tokens
-/// whose mapping to an existing flag is exact and unambiguous are recognized - no alias/synonym
-/// recognition (see design.md's deferred-alias decision: "Cleave" is never mapped to Blast, nor
-/// "Close Combat" to Pistol).
+/// <see cref="WeaponProfile"/>, plus the verbatim token list every token unconditionally joins.
+/// Only tokens whose mapping to an existing flag is exact and unambiguous are recognized - no
+/// alias/synonym recognition ("Cleave" is never mapped to Blast, nor "Close Combat" to
+/// Pistol).
 /// </summary>
 public static partial class WeaponKeywordParser
 {
@@ -51,9 +50,8 @@ public static partial class WeaponKeywordParser
     /// Every token in <paramref name="keywordsText"/> that does not exactly match an existing
     /// <see cref="WeaponProfile"/> flag - the same recognition rules <see cref="Apply"/> uses,
     /// shared through <see cref="TryRecognize"/> rather than duplicated, so this can never drift
-    /// from what <see cref="Apply"/> actually recognizes (see the full-BSData-corpus scan's
-    /// design.md). A value of "-" (or blank) yields an empty list, matching <see cref="Apply"/>'s
-    /// own handling of "no keywords".
+    /// from what <see cref="Apply"/> actually recognizes. A value of "-" (or blank) yields an
+    /// empty list, matching <see cref="Apply"/>'s own handling of "no keywords".
     /// </summary>
     public static IReadOnlyList<string> UnrecognizedTokens(string keywordsText)
     {

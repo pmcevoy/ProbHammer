@@ -56,7 +56,7 @@ public sealed record AggregateWeaponEntry(
 /// <see cref="ComponentName"/> is null only for a deduplicated Core Rule ability shared verbatim
 /// by two or more present components of one AttachedUnit (e.g. "Templar Vows", identical by
 /// Origin+Name across every component that references it) - see
-/// <c>AttachedUnitAggregator.BuildAbilities</c>'s dedup step (gate-and-dedupe-core-rule-abilities).
+/// <c>AttachedUnitAggregator.BuildAbilities</c>'s dedup step.
 /// Such an entry belongs to no single component, renders as its own row above every component's
 /// statline rows, and always carries <see cref="StatlineName"/> null too (it can never be
 /// row-bound - a shared army-wide fact is never tied to one specific model-line).

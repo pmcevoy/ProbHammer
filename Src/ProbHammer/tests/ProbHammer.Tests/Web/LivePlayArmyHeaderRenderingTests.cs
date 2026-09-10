@@ -11,12 +11,12 @@ using ProbHammer.Web.Services;
 
 namespace ProbHammer.Tests.Web;
 
-/// <summary>Exercises `_ArmyHeader.cshtml` (display-army-header-and-detachment-rules) against
-/// hand-built `ArmyRoster`s - roster metadata, Detachment rule rendering (zero/one/many rules per
-/// Detachment), the roster-wide `ArmyRule` column (including the two-simultaneous-abilities case
-/// design.md flags as architecturally-sound-but-unexercised, since no real captured export in the
-/// repo is Drukhari), and that the existing per-unit `ArmyRule` box is unaffected. Same real-Razor-
-/// path harness as `LivePlayAbilityRenderingTests`.</summary>
+/// <summary>Exercises `_ArmyHeader.cshtml` against hand-built `ArmyRoster`s - roster metadata,
+/// Detachment rule rendering (zero/one/many rules per Detachment), the roster-wide `ArmyRule`
+/// column (including the two-simultaneous-abilities case, architecturally sound but otherwise
+/// unexercised since no real captured export in the repo is Drukhari), and that the existing
+/// per-unit `ArmyRule` box is unaffected. Same real-Razor-path harness as
+/// `LivePlayAbilityRenderingTests`.</summary>
 public class LivePlayArmyHeaderRenderingTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory;
@@ -123,11 +123,10 @@ public class LivePlayArmyHeaderRenderingTests : IClassFixture<WebApplicationFact
     [Fact]
     public async Task TwoSimultaneousArmyRuleAbilities_BothRenderIndependentlyInTheArmyColumn()
     {
-        // classify-known-army-rules confirmed "Corsairs and Travelling Players" is a mustering
-        // rule (composition eligibility for allied units), never genuinely ArmyRule-origin in real
-        // data - swapped for Tyranids' own real, confirmed pair, "Synapse" and "Shadow in the
-        // Warp" (see ArmyRuleNameLookup.cs), a genuine single-faction case of two simultaneous
-        // ArmyRule-origin abilities.
+        // "Corsairs and Travelling Players" is a mustering rule (composition eligibility for
+        // allied units), never genuinely ArmyRule-origin in real data - using Tyranids' own real,
+        // confirmed pair instead, "Synapse" and "Shadow in the Warp" (see ArmyRuleNameLookup.cs),
+        // a genuine single-faction case of two simultaneous ArmyRule-origin abilities.
         var synapse = new Ability
             { Name = "Synapse", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
         var shadowInTheWarp = new Ability

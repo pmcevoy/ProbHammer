@@ -8,14 +8,14 @@
     var i = Model.UnitIndex;
     var glossary = Model.Glossary;
 
-    // live-play-phase-tracker's own Expanded set for the current phase/turn selection - see
-    // LivePlayModel.ExpandedSections. Null (a pre-existing call site that predates this feature)
-    // defaults to "nothing expanded", matching this page's original unconditional-collapsed markup.
+    // The current phase/turn selection's own Expanded set - see LivePlayModel.ExpandedSections.
+    // Null (a pre-existing call site that predates this feature) defaults to "nothing expanded",
+    // matching this page's original unconditional-collapsed markup.
     var expandedSections = Model.ExpandedSections ?? new HashSet<UnitBlockSection>();
 
     // Popover trigger/panel building (ability names, resolvable weapon-keyword chips, and nested
     // [BRACKET] references reached from either one's own text) is extracted into RulePopoverRenderer
-    // (design.md's "extract, don't duplicate" decision) so the header partial can produce the
+    // so the header partial can produce the
     // identical markup with no unit page index to scope popover ids against - "u{i}" here matches
     // this unit block's own page index, "hdr" scopes the header's own instance.
     var popovers = new RulePopoverRenderer(glossary, $"u{i}");
@@ -23,7 +23,7 @@
     (string Trigger, string Trailer) BuildRulePopover(string triggerHtml, string triggerClass, string ruleText, IReadOnlySet<string> shownRuleNames) =>
         popovers.BuildRulePopover(triggerHtml, triggerClass, ruleText, shownRuleNames);
 }
-@* Whole-unit-block collapse (live-play-landscape-only): the block itself is now a <details>, and
+@* Whole-unit-block collapse: the block itself is a <details>, and
    its name bar is the <summary> - the same full-bar-is-the-trigger affordance every .lp-section
    summary already uses, reused here rather than a small dedicated icon-button (icon-buttons on
    this page are reserved for binary per-unit facts - Half Strength, Battle-shock - not broad
@@ -38,11 +38,10 @@
         <span class="unit-name-text">@unit.Name</span>
     </summary>
 
-    @* Unit status toolbar (consolidate-unit-toolbar): its own row between the unit-name header and
-       the Statline section, immune to the header wrapping onto multiple lines for a long unit name
-       (the reason the two status glyphs and the casualty-reset button used to live split across the
-       header and the Statline summary bar). All three controls always render - no more
-       hide-when-irrelevant per control. Each is a small square icon-button (.unit-toolbar-icon-btn,
+    @* Unit status toolbar: its own row between the unit-name header and
+       the Statline section, immune to the header wrapping onto multiple lines for a long unit name.
+       All three controls always render - no more hide-when-irrelevant per control. Each is a small
+       square icon-button (.unit-toolbar-icon-btn,
        sized like .casualty-btn's existing inc/dec controls) - the ONLY clickable
        area - with its plain-text caption (.unit-toolbar-label, styled like .stat-label) sitting
        beside it, outside the button, never part of the click target. Two independent states,
@@ -85,8 +84,7 @@
         }
         @* Battle-shock: always present, always actionable - the app never simulates the
            2D6-vs-Leadership test itself, only records the player's own reported result. Icon color
-           alone now carries active/inactive (see .unit-toolbar-icon-btn.is-active in site.css) -
-           the bolt's old outline-vs-solid duality is no longer needed. *@
+           alone carries active/inactive (see .unit-toolbar-icon-btn.is-active in site.css). *@
         <div class="unit-toolbar-item">
             <button type="button"
                     class="unit-toolbar-icon-btn status-glyph-battleshock @(unit.IsBattleShocked ? "is-active" : "")"
@@ -244,9 +242,7 @@
                                text: unlike a caveated InSv, there's only one fixed reason, already
                                conveyed by the header glyph. Applies to every run's OC tile in this
                                unit, not only whichever run the header itself sits above - Battle-
-                               shocked is one flag for the whole unit (see
-                               attached-unit-tracker's Battle-Shocked Status Is Player-Set
-                               requirement). *@
+                               shocked is one flag for the whole unit. *@
                             @if (unit.IsBattleShocked)
                             {
                                 <div class="stat-tile stat-tile-flagged"><span class="stat-label">OC</span><span
@@ -274,8 +270,8 @@
                             }
                             @* The invulnerable save renders as its own labeled box below the row, GW/Wahapedia-card
                                style, rather than a value stacked inside the Sv tile. The caveated branch is the only
-                               place in this file that renders an Ability's Text rather than only its Name - see
-                               `redesign-invulnerable-save-display`'s design.md; this is a scoped exception to the
+                               place in this file that renders an Ability's Text rather than only its Name; this is
+                               a scoped exception to the
                                page's otherwise name-only ability rendering, not a step toward rendering text
                                generally, since only this one condition has no other way to be shown to the player. *@
                             @{
@@ -640,19 +636,15 @@
         ability.Origin == AbilityOrigin.Enhancement ? $"✦ {ability.Name}" : ability.Name;
 
     // Shared renderer for the five ScalarCharacteristicView-backed statline tiles other than OC
-    // (which keeps its own bespoke branch for the Battle-shocked override - see
-    // resolve-known-ability-effects). Generalized from that same Oc-only flagged-tile pattern to
-    // cover M/T/Sv/W/Ld uniformly: `fieldKey` is the LivePlayModel.GetScalarField-recognized name
+    // (which keeps its own bespoke branch for the Battle-shocked override). Covers
+    // M/T/Sv/W/Ld uniformly: `fieldKey` is the LivePlayModel.GetScalarField-recognized name
     // ("M"/"T"/"Sv"/"W"/"LD"), `label` is the display text a flagged run's own marker gets
     // appended to, `suffix` is the literal trailing text (`"`/`+`/none) each characteristic's own
     // printed convention uses.
     //
     // The amber .stat-tile-flagged background is reserved for a RESOLVED (non-caveated) run - one
     // whose displayed value is an actual DerivedValue the app computed, not the plain catalogue
-    // Value shown while still caveated (characteristic-modifier-caveats' own tier-1/2 candidates are
-    // the first thing that ever produces a caveated Scalar view here - before that, a marker always
-    // meant "a StatlineFlagRule resolved this," never "still caveated," so this distinction was
-    // previously unreachable). The marker itself (and the legend line it points to) still renders
+    // Value shown while still caveated. The marker itself (and the legend line it points to) still renders
     // either way - amber specifically means "this number has already been adjusted for you," which
     // a still-caveated tile hasn't been; painting it amber would wrongly suggest the shown value
     // already accounts for the linked ability, per direct user feedback reviewing a real caveated
@@ -669,7 +661,7 @@
     }
 
     // Shared lightning-bolt shape for both the Battle-shock toolbar control and a Battle-shocked
-    // unit's OC tile - "the same glyph", per half-strength-and-battleshock-indicators' spec, not
+    // unit's OC tile - the same glyph, not
     // two independently-drawn bolts that only coincidentally look similar. Inline SVG rather than a
     // Unicode/emoji character, matching .filter-flag-icon's own precedent - fill resolves from
     // currentColor, so the same markup paints white/--amber (toolbar) or the tile's own
@@ -677,10 +669,9 @@
     static string BoltSvgIcon(string cssClass) =>
         $"<svg class=\"{cssClass}\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path d=\"M9 1 L3 9 L7 9 L6 15 L13 6 L9 6 Z\" /></svg>";
 
-    // Reset Casualties' skull, inline SVG rather than the U+1F480 emoji character this button used
-    // before consolidate-unit-toolbar's restyle - found, via direct user testing, to be the reason
-    // the icon never actually turned amber when active: most platforms render an emoji as a fixed,
-    // full-color glyph that ignores `color`/`currentColor` entirely, the same class of problem
+    // Reset Casualties' skull, inline SVG rather than the U+1F480 emoji character: most platforms
+    // render an emoji as a fixed, full-color glyph that ignores `color`/`currentColor` entirely,
+    // which would keep the icon from ever turning amber when active - the same class of problem
     // BoltSvgIcon above was already built to avoid. fill-rule="evenodd" carves the eye sockets and
     // nasal cavity as true holes (through to whatever's behind the icon - the button's own current
     // background) out of one filled silhouette, rather than layering same-colored shapes that would

@@ -3,16 +3,14 @@ using ProbHammer.Core.Domain.Catalogue;
 namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 
 /// <summary>
-/// Permanent, manually-triggered regression scan over the full local BSData clone - see
-/// classify-known-army-rules' Full-Faction Coverage Scan decision (design.md). Distinct from
+/// Permanent, manually-triggered regression scan over the full local BSData clone. Distinct from
 /// <see cref="PrimaryCatalogueGatedRuleTriageScanTests"/>, which only ever discovers a
 /// shared-library, gated rule shape (Oath-of-Moment-shaped) - this scan instead enumerates every
 /// real playable-faction catalogue file directly and requires <see cref="ArmyRuleNameLookup"/> to
 /// carry an explicit entry (a populated name list, or a deliberately empty one for a faction
 /// confirmed to have no single unifying army-wide rule) for every one of them, so "no entry"
 /// always means "nobody has checked yet" - never "checked and found nothing" - and a brand-new
-/// faction added to a future BSData snapshot can't silently sit uncovered the way roughly half the
-/// real corpus did when this change's own original 11-faction table shipped.
+/// faction added to a future BSData snapshot can't silently sit uncovered.
 ///
 /// Reads <see cref="ArmyRuleNameLookup.Entries"/>, not <see cref="ArmyRuleNameLookup.Resolve"/> -
 /// <c>Resolve</c>'s own "absent key or present-but-empty" contract intentionally treats both as an

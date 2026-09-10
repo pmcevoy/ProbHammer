@@ -6,14 +6,13 @@ namespace ProbHammer.Core.Domain.Catalogue.Bsdata;
 
 /// <summary>
 /// Renders a piece of ability/rule text to HTML: `*italic*`/`**bold**`/`^^small-caps^^` markup
-/// (including the nested `***bold+italic***` split-close case) becomes styling only - see
-/// design.md's "Emphasis markup: a three-way mapping, not a link signal" - and every `[BRACKET]`
-/// token encountered is handed to the caller-supplied <paramref name="renderBracket"/> delegate,
-/// never resolved or interpreted here. A single left-to-right token scan (not sequential string
-/// replacement - see design.md's rationale for why that would break the split-close case), so this
-/// stays pure and independently testable with a trivial pass-through bracket delegate (task 6.3a's
-/// tests use exactly that), while the real caller (`_UnitBlock.cshtml`) supplies a delegate that
-/// resolves each bracket against a `RuleGlossary` and returns nested popover markup.
+/// (including the nested `***bold+italic***` split-close case) becomes styling only, and every
+/// `[BRACKET]` token encountered is handed to the caller-supplied <paramref name="renderBracket"/>
+/// delegate, never resolved or interpreted here. A single left-to-right token scan, not sequential
+/// string replacement (which would break the split-close case), so this stays pure and
+/// independently testable with a trivial pass-through bracket delegate, while the real caller
+/// (`_UnitBlock.cshtml`) supplies a delegate that resolves each bracket against a `RuleGlossary`
+/// and returns nested popover markup.
 ///
 /// Every recursive call - rendering a bracket's own raw inner text (which may itself carry
 /// emphasis markup, e.g. `[^^Lethal Hits^^]`), or a resolved reference's own `RuleDefinition.Text`
@@ -34,11 +33,10 @@ public static partial class RuleTextEmphasisRenderer
 
     // A real BSData authoring quirk, confirmed on Black Templars' "Faith-Fuelled Resolve" (its own
     // trailing "Restrictions: ..." sentence is separated from the main text by THREE newlines, not
-    // the usual one blank-line paragraph break e.g. "Lethal Hits"' own Designer's Note uses) -
-    // caught by direct user testing showing a visibly oversized gap in a popover body. Collapses any
-    // run of 3+ newlines down to exactly 2 (one blank line, the normal paragraph-break shape) before
-    // rendering; a genuine single blank line (already 2 newlines) is left untouched, so this can't
-    // flatten an intentional paragraph break down to a run-on line.
+    // the usual one blank-line paragraph break e.g. "Lethal Hits"' own Designer's Note uses).
+    // Collapses any run of 3+ newlines down to exactly 2 (one blank line, the normal paragraph-break
+    // shape) before rendering; a genuine single blank line (already 2 newlines) is left untouched,
+    // so this can't flatten an intentional paragraph break down to a run-on line.
     [GeneratedRegex(@"\n{3,}")]
     private static partial Regex ExcessBlankLinesPattern();
 

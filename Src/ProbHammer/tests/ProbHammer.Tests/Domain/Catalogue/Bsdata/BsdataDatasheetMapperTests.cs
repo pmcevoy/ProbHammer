@@ -59,7 +59,7 @@ public class BsdataDatasheetMapperTests
         // carry their own Unit-typeName profile nested within distinct wargear-option child
         // entries - Initiate's profile is repeated across 4 sibling weapon-loadout entries and
         // Neophyte's across 2, all byte-identical duplicates of the same underlying model, not
-        // distinct variants (see tasks.md 4.4/design.md's "repeated same-named child entry" risk).
+        // distinct variants.
         var sheet = Build("black-templars-crusader-squad.json", "Crusader Squad");
 
         sheet.Statlines.Select(s => s.Name).Should().Equal("Sword Brother", "Initiate", "Neophyte");
@@ -84,8 +84,7 @@ public class BsdataDatasheetMapperTests
         // Chaos - Chaos Space Marines.json's Legionaries squad: the troop model's ("Legionary")
         // Unit-typeName profile is not nested inside any of the squad's own selectionEntries -
         // it exists only as a standalone entry in the catalogue's top-level "sharedProfiles" list,
-        // reached through a "profile"-type infoLink (see design.md's "entryLink target location"
-        // risk - the same applies to infoLinks pointing at a profile rather than an entry/group).
+        // reached through a "profile"-type infoLink.
         var sheet = Build("chaos-space-marines-legionaries.json", "Legionaries");
 
         sheet.Statlines.Select(s => s.Name).Should().Contain("Legionaries");

@@ -197,7 +197,7 @@ public class ArmyListParserTests
     {
         // Company Veteran: "1x Master-crafted bolt rifle" and "1x Master-crafted heavy bolter"
         // share the same count (1) but must produce two distinct 1-model sub-groups, not one
-        // sub-group carrying both weapons (design.md's verified real-data finding).
+        // sub-group carrying both weapons.
         var army = ParseDataFile("gw-app-export-3-dp.txt");
 
         var veteranGroups = army.StandaloneUnits.Single(u => u.Name == "Company Heroes").ModelGroups
@@ -230,11 +230,9 @@ public class ArmyListParserTests
     [Fact]
     public void RealExport_AndroidDeathGuard_ParsesFullArmyMetadata()
     {
-        // No attached units and no partition ambiguity - the whole file is expected to succeed
-        // once the case-insensitivity and bullet-continuation fixes are in place. Also has no
-        // ForceDisposition line at all (goes straight from the Detachment line to the BattleSize
-        // line) - a third real finding beyond the two this change originally scoped to; see
-        // design.md's "ForceDisposition is optional" decision.
+        // No attached units and no partition ambiguity - the whole file is expected to succeed.
+        // Also has no ForceDisposition line at all (goes straight from the Detachment line to the
+        // BattleSize line) - ForceDisposition is optional.
         var army = ParseDataFile("gw-android-export-deathguard.txt");
 
         army.Name.Should().Be("11th First");
@@ -377,8 +375,7 @@ public class ArmyListParserTests
     {
         // Once the bullet-continuation rule flattens this group's three weapon-count lines into
         // one list (1x Guardian spear, 3x Praesidium Shield, 3x Sentinel blade, total 4), the
-        // existing partition rule still can't resolve it - a deliberate non-goal of this change
-        // (see design.md's "Custodian Guard partition ambiguity is not resolved").
+        // existing partition rule still can't resolve it - a deliberate, permanent non-goal.
         var act = () => ParseCustodesUnitInIsolation("Custodian Guard (");
 
         act.Should().Throw<ArmyListParseException>()
@@ -557,7 +554,7 @@ public class ArmyListParserTests
         // bullet, and the second continues it with no bullet at all, two tiers deep. The
         // continuation rule correctly flattens this into one list - the resulting counts (5 and 1
         // against a total of 5) still can't be partitioned, which is the existing, unmodified
-        // diagnostic this change deliberately leaves in place (see design.md).
+        // diagnostic this deliberately leaves in place.
         var text = StandaloneArmyListText(
         [
             "  • 5x Custodian Warden",

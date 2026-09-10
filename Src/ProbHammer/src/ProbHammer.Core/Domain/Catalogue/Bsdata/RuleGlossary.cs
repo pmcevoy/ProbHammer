@@ -7,8 +7,7 @@ namespace ProbHammer.Core.Domain.Catalogue.Bsdata;
 /// A single normalized-key index of every <see cref="RuleDefinition"/> reachable from one
 /// <see cref="BsdataClosure"/> - each catalogue file's own `rules` array (faction/library rule
 /// text) plus the game system's `sharedRules` array (universal rule text). Built once alongside
-/// <see cref="ResolvedBsdataCatalogue"/> and cached at the same tier - see design.md's "Glossary
-/// is built alongside ResolvedBsdataCatalogue, cached at the same tier".
+/// <see cref="ResolvedBsdataCatalogue"/> and cached at the same tier.
 /// </summary>
 public sealed partial class RuleGlossary
 {
@@ -72,10 +71,9 @@ public sealed partial class RuleGlossary
     /// <summary>Builds a RuleGlossary directly from an already-known flat set of
     /// <see cref="RuleDefinition"/>s, indexed the same way <see cref="Build"/> indexes a
     /// <see cref="BsdataClosure"/>'s own rules (by each definition's Name and every Alias,
-    /// normalized, first occurrence wins) - used by battlescribe-roster-import, whose "closure" is
-    /// just a roster JSON's own already-resolved rule entries, with no <see cref="BsdataClosure"/>/
-    /// BSData catalogue involved at all (see design.md's "Roster-scoped RuleGlossary, reusing the
-    /// existing type").</summary>
+    /// normalized, first occurrence wins) - used by the BattleScribe roster-import pipeline, whose
+    /// "closure" is just a roster JSON's own already-resolved rule entries, with no
+    /// <see cref="BsdataClosure"/>/BSData catalogue involved at all.</summary>
     public static RuleGlossary BuildFrom(IEnumerable<RuleDefinition> definitions)
     {
         var index = new Dictionary<string, RuleDefinition>(StringComparer.Ordinal);
@@ -114,7 +112,7 @@ public sealed partial class RuleGlossary
     //      "ANTI: non-MONSTER/VEHICLE 5+"), so trailing-suffix removal alone can't recover it. A
     //      blanket "cut at the first hyphen" rule was rejected as unsafe - "Twin-linked"'s hyphen
     //      is part of the rule's own name, not a category separator - so Anti gets this one named
-    //      exception instead (see design.md). The boundary check matters: without it, an
+    //      exception instead. The boundary check matters: without it, an
     //      unrelated word merely starting with "anti" (e.g. "Antimatter") would wrongly collapse
     //      too - and it must run before step 3 removes that same boundary character, or there
     //      would be nothing left to check.

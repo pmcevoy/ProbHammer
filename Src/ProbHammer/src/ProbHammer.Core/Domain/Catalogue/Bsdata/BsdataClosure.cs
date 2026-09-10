@@ -4,8 +4,8 @@ namespace ProbHammer.Core.Domain.Catalogue.Bsdata;
 
 /// <summary>
 /// The full transitive set of catalogue files reachable from one starting file, in resolution
-/// order: the starting file first, then every imported file, nearer files before farther ones
-/// (see design.md's "Local-file entries always win" decision). Name/id resolution always walks
+/// order: the starting file first, then every imported file, nearer files before farther ones.
+/// Name/id resolution always walks
 /// <see cref="Files"/> in this order and stops at the first match.
 /// </summary>
 public sealed class BsdataClosure(IReadOnlyList<(string FileName, BsCatalogue Catalogue)> files, BsCatalogue? gameSystem = null)
@@ -32,9 +32,8 @@ public sealed class BsdataClosure(IReadOnlyList<(string FileName, BsCatalogue Ca
 
 /// <summary>
 /// Resolves a faction's full <c>catalogueLinks</c> closure: starting from one file, follows every
-/// <c>importRootEntries: true</c> link outward, transitively. Per-faction, not corpus-wide (see
-/// design.md's "Resolve per-faction closures" decision) - two unrelated factions' same-named
-/// entries are never both in scope for one resolution.
+/// <c>importRootEntries: true</c> link outward, transitively. Per-faction, not corpus-wide - two
+/// unrelated factions' same-named entries are never both in scope for one resolution.
 /// </summary>
 public static class BsdataClosureResolver
 {

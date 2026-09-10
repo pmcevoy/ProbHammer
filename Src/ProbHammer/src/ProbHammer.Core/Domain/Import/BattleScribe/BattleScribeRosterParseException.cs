@@ -4,6 +4,5 @@ namespace ProbHammer.Core.Domain.Import.BattleScribe;
 /// <see cref="BattleScribeRosterFormat.TryParse"/>) doesn't resolve into an <c>ArmyRoster</c> -
 /// e.g. a unit/model selection with no resolvable Unit-typeName profile anywhere in its own or its
 /// enclosing selection's <c>profiles</c>. Mirrors <c>ArmyListParseException</c>'s role for the
-/// GW-app text pipeline: caught and reported on the `/Import` page rather than crashing (see
-/// army-list-import's Import Submission requirement).</summary>
+/// GW-app text pipeline: caught and reported on the `/Import` page rather than crashing.</summary>
 public sealed class BattleScribeRosterParseException(string message) : Exception(message);

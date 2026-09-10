@@ -7,15 +7,14 @@ using ProbHammer.Web.Services;
 
 namespace ProbHammer.Web.Pages;
 
-/// <summary>The paste/submit page tying army-list-parsing/army-roster-enrichment (GW-app text) and
-/// battlescribe-roster-import (BattleScribe/NewRecruit JSON) together (see army-list-import's
-/// Import Submission requirement). Format detection (<see cref="BattleScribeRosterFormat.TryParse"/>)
-/// runs first: a payload recognized as a BattleScribe roster export is routed to that pipeline;
-/// anything else falls through to the existing GW-app text parser unchanged. Enrichment/mapping is
-/// run here too - not deferred entirely to `/LivePlay` - so a resolution failure is caught and
-/// reported before anything is committed to session (see Import Failure Reporting's "leaves a
-/// previously-successful session import untouched" scenario: only a fully-successful parse+build
-/// ever calls Save).</summary>
+/// <summary>The paste/submit page tying the GW-app text parsing/enrichment pipeline and the
+/// BattleScribe/NewRecruit JSON pipeline together. Format detection
+/// (<see cref="BattleScribeRosterFormat.TryParse"/>) runs first: a payload recognized as a
+/// BattleScribe roster export is routed to that pipeline; anything else falls through to the
+/// existing GW-app text parser unchanged. Enrichment/mapping is run here too - not deferred
+/// entirely to `/LivePlay` - so a resolution failure is caught and reported before anything is
+/// committed to session: only a fully-successful parse+build ever calls Save, leaving a
+/// previously-successful session import untouched.</summary>
 public class ImportModel(IArmyListParser parser, IArmyRosterProvider rosterProvider, ISessionArmyListStore sessionStore)
     : PageModel
 {
