@@ -33,17 +33,19 @@ public sealed record WeaponContribution(
     string StatlineName,
     int Count,
     DiceExpression PerModelAttacks,
+    string Name,
     int LoadoutIndex = -1);
 
 /// <summary>
-/// <see cref="Profile"/> is retained for its identity fields (Name/Type/Range/Skill/S/Ap/D/ability
-/// flags) - but once a row merges contributions from multiple model-lines, <c>Profile.A</c> is
-/// whichever contributor happened to be inserted first and is not authoritative. Only
-/// <see cref="TotalAttacks"/> is safe to render.
+/// <see cref="Profile"/> is retained for its identity fields (Type/Range/Skill/S/Ap/D/ability
+/// flags) - but once a row merges contributions from multiple model-lines, <c>Profile.A</c> and
+/// <c>Profile.Name</c> are each whichever contributor happened to be inserted first and are not
+/// authoritative. Only <see cref="TotalAttacks"/> and <see cref="Name"/> are safe to render.
 /// </summary>
 public sealed record AggregateWeaponEntry(
     WeaponProfile Profile,
     DiceExpression TotalAttacks,
+    string Name,
     IReadOnlyList<WeaponContribution> Contributions);
 
 /// <summary>

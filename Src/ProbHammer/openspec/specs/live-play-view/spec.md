@@ -684,17 +684,19 @@ SHALL NOT gate whether its casualty controls are available or functional.
 Each unit block SHALL group the view's `Weapons` into a Ranged section and a Melee section by each
 entry's `Profile.Type`, rendering the Ranged section before the Melee section, and SHALL omit
 either section entirely when it has no entries. Within each section, entries SHALL be ordered by
-descending expected value of their aggregated `TotalAttacks`. Each entry SHALL show the weapon's
-name, Skill, Strength, AP, Damage, the aggregated total Attacks value, and any active ability
-keywords, each rendered as its own bordered chip immediately alongside the weapon's name rather
-than in a separate column or joined with other keywords into a single bracketed group. Ranged
-weapon entries SHALL additionally show Range; Melee weapon entries SHALL NOT show a Range value,
-since it is always the fixed literal "Melee" for that weapon type and carries no information
-beyond the section it's already listed under. No entry's default (collapsed) rendering SHALL
-display a raw per-model Attacks value alongside a separate model count.
+descending expected value of their aggregated `TotalAttacks`. Each entry SHALL show its name (the
+composite display Name computed from every distinct weapon Name merged into it — see the Aggregate
+Weapon Count View requirement — not an arbitrary single contributor's Name), Skill, Strength, AP,
+Damage, the aggregated total Attacks value, and any active ability keywords, each rendered as its
+own bordered chip immediately alongside the entry's name rather than in a separate column or joined
+with other keywords into a single bracketed group. Ranged weapon entries SHALL additionally show
+Range; Melee weapon entries SHALL NOT show a Range value, since it is always the fixed literal
+"Melee" for that weapon type and carries no information beyond the section it's already listed
+under. No entry's default (collapsed) rendering SHALL display a raw per-model Attacks value
+alongside a separate model count.
 
 When the unit has more than one `ModelLine` in total across all of its components, every weapon
-entry's weapon name SHALL be an interactive trigger that toggles a contribution breakdown rendered
+entry's name SHALL be an interactive trigger that toggles a contribution breakdown rendered
 directly beneath that entry's row, regardless of how many contributions that specific entry has -
 knowing which single `ModelLine` a weapon came from is informative on its own when the unit has
 other `ModelLine`s it could be distinguished from. When the unit has exactly one `ModelLine` in
@@ -735,7 +737,7 @@ affects the other weapon section of the same unit block.
 
 #### Scenario: Any weapon entry can expand a contribution breakdown when the unit has multiple ModelLines
 - **WHEN** a unit has more than one `ModelLine` in total across all of its components
-- **THEN** every one of that unit's weapon entries renders its weapon name as an interactive
+- **THEN** every one of that unit's weapon entries renders its name as an interactive
   trigger, and activating it reveals a breakdown of rows beneath the entry, one row (or group of
   rows) per distinct `(ComponentName, StatlineName)` group among its contributions - including an
   entry whose `Contributions` has only one item
@@ -838,6 +840,13 @@ affects the other weapon section of the same unit block.
   Ranged Weapons section, but has no effect on any entry in the Melee Weapons section
 - **THEN** the Ranged Weapons section's disclosure summary shows a filtered indicator and the Melee
   Weapons section's disclosure summary does not
+
+#### Scenario: A weapon entry merged from differently-named weapons renders its composite name
+- **WHEN** a weapon entry's contributions were merged from weapons named "Bolt rifle" and "Combat
+  rifle" (identical structural profile, different catalogue names)
+- **THEN** the entry's rendered name is "Bolt rifle and Combat rifle", and that composite name is
+  the interactive trigger for the entry's contribution breakdown when the unit has more than one
+  `ModelLine` in total
 
 ### Requirement: Ability And Rule Text Popover
 Tapping an ability name (in the Abilities column) or a weapon keyword chip that has a matching

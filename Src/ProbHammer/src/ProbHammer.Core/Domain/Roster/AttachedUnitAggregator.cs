@@ -258,6 +258,7 @@ public static class AttachedUnitAggregator
                     StatlineName: modelLine.StatlineName,
                     Count: modelLine.RemainingCount,
                     PerModelAttacks: profile.A,
+                    Name: profile.Name,
                     LoadoutIndex: LoadoutIndexOf(unit, modelLine));
                 var scaledAttacks = profile.A.Scale(modelLine.RemainingCount);
 
@@ -274,8 +275,23 @@ public static class AttachedUnitAggregator
         }
 
         return groups.Values
-            .Select(v => new AggregateWeaponEntry(v.Profile, v.TotalAttacks, v.Contributions))
+            .Select(v =>
+                new AggregateWeaponEntry(v.Profile, v.TotalAttacks, CompositeName(v.Contributions), v.Contributions))
             .ToList();
+    }
+
+    // Order-preserving Distinct() (first-occurrence order) over the merged contributions' own
+    // Names, then joined per the same 1/2/3+ Oxford-comma convention AttachedUnit.Name already
+    // uses for its own composite-name case.
+    private static string CompositeName(List<WeaponContribution> contributions)
+    {
+        var names = contributions.Select(c => c.Name).Distinct().ToList();
+        return names.Count switch
+        {
+            1 => names[0],
+            2 => $"{names[0]} and {names[1]}",
+            _ => $"{string.Join(", ", names[..^1])}, and {names[^1]}"
+        };
     }
 
     // Mirrors the same (unfiltered by RemainingCount) statline-name match BuildStatlines uses to

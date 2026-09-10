@@ -162,10 +162,11 @@ public class LivePlayModelTests
         var entry = new AggregateWeaponEntry(
             Profile: profile,
             TotalAttacks: DiceExpression.Fixed(7),
+            Name: "Test Weapon",
             Contributions:
             [
-                new WeaponContribution("Squad A", "Initiate", 2, DiceExpression.Fixed(1)),
-                new WeaponContribution("Squad A", "Initiate", 1, DiceExpression.Fixed(5))
+                new WeaponContribution("Squad A", "Initiate", 2, DiceExpression.Fixed(1), "Test Weapon"),
+                new WeaponContribution("Squad A", "Initiate", 1, DiceExpression.Fixed(5), "Test Weapon")
             ]);
 
         var breakdown = LivePlayModel.BuildContributionBreakdown(entry, EmptyLoadoutLabels);
@@ -189,7 +190,9 @@ public class LivePlayModelTests
         var entry = new AggregateWeaponEntry(
             Profile: profile,
             TotalAttacks: DiceExpression.Fixed(3),
-            Contributions: [new WeaponContribution("Squad A", "Sword Brother", 3, DiceExpression.Fixed(1))]);
+            Name: "Test Weapon",
+            Contributions:
+            [new WeaponContribution("Squad A", "Sword Brother", 3, DiceExpression.Fixed(1), "Test Weapon")]);
 
         var breakdown = LivePlayModel.BuildContributionBreakdown(entry, EmptyLoadoutLabels);
 

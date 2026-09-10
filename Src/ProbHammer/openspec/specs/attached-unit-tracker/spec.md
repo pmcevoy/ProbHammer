@@ -122,10 +122,17 @@ Hits, Lethal Hits, Devastating Wounds, Twin-Linked, Indirect Fire, Pistol, Ignor
 and Anti — excluding Name, Range, and Attacks), and SHALL report a total Attacks value computed by
 summing each contributing model-line's per-model Attacks scaled by that model-line's remaining
 count. Each aggregated entry SHALL retain a list of the individual contributions (owning component
-name, statline name, remaining count, and per-model Attacks) that the total was built from. A
-model-line with a remaining count of 0 SHALL NOT produce a contribution at all — neither a zero-
-valued entry nor any entry — regardless of whether that statline name's entry still appears in the
-Aggregate Statline View.
+name, statline name, remaining count, per-model Attacks, and the contributing weapon's own Name)
+that the total was built from. A model-line with a remaining count of 0 SHALL NOT produce a
+contribution at all — neither a zero-valued entry nor any entry — regardless of whether that
+statline name's entry still appears in the Aggregate Statline View.
+
+Each aggregated entry SHALL additionally report a display Name computed from the distinct Name
+values among its own contributions, in first-encountered order: unchanged when every contribution
+shares one Name; two distinct Names joined as "X and Y"; three or more Names joined with a trailing
+Oxford comma ("X, Y, and Z"). This display Name, not any single contributor's own Name, is the
+entry's identity for rendering purposes — grouping/equality itself is unaffected, since Name is
+already excluded from the structural profile equality above.
 
 #### Scenario: Same weapon profile from different components is combined
 - **WHEN** the Bodyguard unit has 4 models carrying a weapon profile with 3 Attacks each, and the attached Leader carries a wargear item with an identical structural profile but 7 Attacks
@@ -153,7 +160,18 @@ Aggregate Statline View.
 
 #### Scenario: Contributions are retained on a merged entry
 - **WHEN** two or more model-lines contribute to the same aggregated weapon entry
-- **THEN** the entry's contribution list includes one item per contributing model-line, each reporting that model-line's own remaining count and per-model Attacks
+- **THEN** the entry's contribution list includes one item per contributing model-line, each reporting that model-line's own remaining count, per-model Attacks, and weapon Name
+
+#### Scenario: A merged entry from differently-named weapons reports a composite display Name
+- **WHEN** two contributions share an identical structural profile but come from weapons named
+  "Bolt rifle" and "Combat rifle" respectively
+- **THEN** the aggregated entry's display Name is "Bolt rifle and Combat rifle", not either name
+  alone
+
+#### Scenario: A merged entry from three or more differently-named weapons uses an Oxford comma
+- **WHEN** three contributions share an identical structural profile but come from three
+  differently-named weapons, encountered in the order "Bolt rifle", "Combat rifle", "Auto rifle"
+- **THEN** the aggregated entry's display Name is "Bolt rifle, Combat rifle, and Auto rifle"
 
 ### Requirement: Aggregate Ability View
 The Attached Unit aggregate view SHALL report abilities per present component Unit, without

@@ -26,22 +26,12 @@ record, not this file).
 
 Explored in depth 2026-09-10 (sibling to the already-shipped Statline characteristic-effect
 resolution work — `RuleEffectClassifier`/`CharacteristicEffect`/`CharacteristicModificationResolver`/
-`RuleClassificationBaseline`). Six phases, in dependency order — only the first is ready to scope as
-a real OpenSpec change; the rest stay here until their turn. Don't re-litigate the decisions already
-made below without new evidence.
+`RuleClassificationBaseline`). Six phases, in dependency order. Phase 0 shipped as
+`name-weapon-group-contributions` (archived) — `WeaponContribution`/`AggregateWeaponEntry` now carry
+a real weapon Name and a computed composite display Name. Phase 1 is next ready to scope as a real
+OpenSpec change; the rest stay here until their turn. Don't re-litigate the decisions already made
+below without new evidence.
 
-- **Phase 0 (ready to propose now)**: give `WeaponContribution` its own weapon Name (currently
-  absent — the rendered group name today is "whichever contributor was inserted first," not
-  reliable). Unlocks two things at once: named-weapon effect targeting later, and immediate
-  composite group naming today — `AggregateWeaponEntry` groups by `WeaponProfileEqualityKey`,
-  which deliberately excludes Name, so two differently-named weapons sharing an identical profile
-  already silently merge under one arbitrary name; once Name is tracked per contribution, a merged
-  group should render every distinct name it merged, joined ("Bolt rifle and Combat Rifle";
-  Oxford-comma for 3+, mirroring `AttachedUnit.Name`'s existing joining convention — NOT
-  `DetachmentNameResolver`, which was floated during exploration but turned out to run the
-  opposite direction: it parses one blob of text into separate names, with no join/format logic
-  of its own). **Now proposed** as `openspec/changes/name-weapon-group-contributions/` — read that
-  change's own design.md rather than re-deriving this from scratch.
 - **Phase 1 (do the corpus spike first)**: pull real weapon-effect ability text from the live
   BSData clone before deciding anything further — same discipline as the original four-ground-
   truth-example start of `classify-rule-effects-from-text`. Settles: whether/how to handle one

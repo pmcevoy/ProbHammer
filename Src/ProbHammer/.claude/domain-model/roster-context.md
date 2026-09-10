@@ -72,17 +72,21 @@ AggregateStatlineEntry(ComponentName, StatlineName, Statline, RemainingCount, In
   // weapon list) so a fully-wiped loadout-variant still shows 0/InitialCount instead of
   // disappearing.
 
-WeaponContribution(ComponentName, StatlineName, Count, PerModelAttacks, LoadoutIndex = -1)
+WeaponContribution(ComponentName, StatlineName, Count, PerModelAttacks, Name: string, LoadoutIndex = -1)
   // ComponentName is the owning Unit.Datasheet.Name; Count is that ModelLine's RemainingCount.
+  // Name is the contributing WeaponProfile's own Name, resolved at the same point PerModelAttacks
+  // is (name-weapon-group-contributions) - feeds AggregateWeaponEntry.Name's composite computation
+  // below.
   // LoadoutIndex is the contributing ModelLine's position within its statline's own Loadouts list
   // (-1 when the statline has only one ModelLine, so no Loadouts breakdown renders at all) - see
   // the record's own doc comment for why it's needed (two sibling loadouts under the same statline
   // name are otherwise indistinguishable by ComponentName/StatlineName alone, and Count isn't
   // reliable either, since two loadouts can coincidentally share a model count).
 
-AggregateWeaponEntry(Profile: WeaponProfile, TotalAttacks: DiceExpression,
+AggregateWeaponEntry(Profile: WeaponProfile, TotalAttacks: DiceExpression, Name: string,
                       Contributions: IReadOnlyList<WeaponContribution>)
-  // see record's own doc comment
+  // see record's own doc comment. Name is the group's own composite display name (below) - not
+  // Profile.Name, which stays an arbitrary, non-authoritative first-inserted value.
 
 AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ability,
                        ContributingComponentNames: IReadOnlyList<string> = [])
@@ -111,7 +115,15 @@ AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ab
   `PerModelAttacks.Scale(modelLine.RemainingCount)`, `Add`-reduced across every contributor sharing
   the `EqualityKey` — **not** a representative contributor's raw `A` with only the model count
   summed (the bug this shape fixes: 4 models × A3 and 1 model × A7 sharing an `EqualityKey` must
-  total 19, not silently report one contributor's A with Count=5).
+  total 19, not silently report one contributor's A with Count=5). `Name` (`name-weapon-group-
+  contributions`) is likewise computed from every contribution, not a representative contributor's
+  own `Profile.Name`: order-preserving `Distinct()` over `Contributions.Select(c => c.Name)`, then
+  joined 1 → itself, 2 → `"X and Y"`, 3+ → `"X, Y, and Z"` (trailing Oxford comma) — the same
+  join convention `AttachedUnit.Name` already uses for its own Bodyguard-plus-Attached composite
+  name. Since Name plays no role in `EqualityKey`, a group merging two differently-named weapons
+  sharing an identical structural profile (e.g. a Bolt rifle and a Combat rifle) is expected and
+  unchanged by this — only what that group displays as its name changed, from an arbitrary single
+  contributor's Name to this composite.
 - `Abilities` — built by `BuildAbilities`, walking components in `BuildStatlines`'s display order.
   For each component where `IsPresent`: one entry per `Datasheet.Ability` (`StatlineName: null`),
   one entry per resolved `Unit.Enhancements` ability (`StatlineName: null`, reported the same way

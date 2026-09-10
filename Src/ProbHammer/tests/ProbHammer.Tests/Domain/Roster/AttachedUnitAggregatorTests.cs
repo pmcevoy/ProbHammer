@@ -389,6 +389,64 @@ public class AttachedUnitAggregatorTests
     }
 
     [Fact]
+    public void WeaponView_Name_IsUnchangedWhenEveryContributionSharesOneName()
+    {
+        var attachedUnit = AggregateViewFixtures.WeaponAggregationAttachedUnit();
+
+        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+
+        view.Weapons.Single().Name.Should().Be("Master-crafted power weapon");
+    }
+
+    [Fact]
+    public void WeaponView_Name_IsACompositeOfTwoDistinctNames_WhenAMergeCombinesTwoDifferentlyNamedWeapons()
+    {
+        // Bolt rifle and Combat rifle share an identical structural profile (Type/Skill/S/Ap/D and
+        // flags) but different Names, so they merge into one group - the composite display Name
+        // must show both, not whichever happened to be inserted first.
+        var boltRifle = new RangedWeapon("Bolt rifle", 24, 1, 3, 4, -1, 1);
+        var combatRifle = new RangedWeapon("Combat rifle", 24, 1, 3, 4, -1, 1);
+        var datasheet = new Datasheet(
+            name: "Intercessor Squad",
+            factionKeywords: ["ADEPTUS ASTARTES"],
+            keywords: ["INFANTRY"],
+            abilities: [],
+            statlines: [("Intercessor", new Statline(6, 4, 3, 2, 6, 2))],
+            weaponProfiles: [boltRifle, combatRifle]);
+        var unit = new Unit(
+            datasheet, [],
+            [new ModelLine("Intercessor", [boltRifle.Name, combatRifle.Name], count: 1)]);
+
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+
+        view.Weapons.Should().ContainSingle();
+        view.Weapons[0].Name.Should().Be("Bolt rifle and Combat rifle");
+    }
+
+    [Fact]
+    public void WeaponView_Name_IsACompositeWithAnOxfordComma_WhenAMergeCombinesThreeOrMoreDifferentlyNamedWeapons()
+    {
+        var boltRifle = new RangedWeapon("Bolt rifle", 24, 1, 3, 4, -1, 1);
+        var combatRifle = new RangedWeapon("Combat rifle", 24, 1, 3, 4, -1, 1);
+        var autoRifle = new RangedWeapon("Auto rifle", 24, 1, 3, 4, -1, 1);
+        var datasheet = new Datasheet(
+            name: "Intercessor Squad",
+            factionKeywords: ["ADEPTUS ASTARTES"],
+            keywords: ["INFANTRY"],
+            abilities: [],
+            statlines: [("Intercessor", new Statline(6, 4, 3, 2, 6, 2))],
+            weaponProfiles: [boltRifle, combatRifle, autoRifle]);
+        var unit = new Unit(
+            datasheet, [],
+            [new ModelLine("Intercessor", [boltRifle.Name, combatRifle.Name, autoRifle.Name], count: 1)]);
+
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+
+        view.Weapons.Should().ContainSingle();
+        view.Weapons[0].Name.Should().Be("Bolt rifle, Combat rifle, and Auto rifle");
+    }
+
+    [Fact]
     public void AbilityView_DatasheetSourcedAbilityIsReportedWithoutAStatlineName()
     {
         var attachedUnit = AggregateViewFixtures.ModelScopedAbilityAttachedUnit();
