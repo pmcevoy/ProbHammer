@@ -16,175 +16,42 @@ record, not this file).
 - **Multi-profile-weapon "select one profile" disclaimer** — some weapons have multiple firing
   profiles the player picks between; not flagged today.
 - **Ability-driven attack modifiers** — e.g. a unit-wide "+1 Attack" ability changing a printed
-  total. Depends on the `WeaponProfile`-targeting rule effects idea below.
+  total. Depends on resolving an Attacks (`"A"`) effect — see `WeaponProfile`-targeting rule
+  effects' deferred coverage below; `WeaponProfile.A` stays a plain `DiceExpression` today.
 - **Split `Keywords` into unit-wide-union vs. per-component, or add `FactionKeywords`** — currently
   one unioned set.
 - **Split `wwwroot/css/site.css` into a `/LivePlay`-only stylesheet** — it still ships dead 10e
   selectors interleaved with the live rules.
 
-## `WeaponProfile`-targeting rule effects — phased plan
+## `WeaponProfile`-targeting rule effects — deferred coverage
 
-Explored in depth 2026-09-10 (sibling to the already-shipped Statline characteristic-effect
-resolution work — `RuleEffectClassifier`/`CharacteristicEffect`/`CharacteristicModificationResolver`/
-`RuleClassificationBaseline`). Six phases, in dependency order. Phase 0 shipped as
-`name-weapon-group-contributions` (archived) — `WeaponContribution`/`AggregateWeaponEntry` now carry
-a real weapon Name and a computed composite display Name. Phase 1 is done (informal spike, no
-OpenSpec change — see below for why). **Phase 2 is done** (`classify-weapon-characteristic-effects`,
-2026-09-10, `IsCaveated` correction 2026-09-11 — see below). **Phase 3 is done**
-(`resolve-weapon-characteristic-effects`, archived 2026-09-11 — see below). Phase 4 is next ready to
-scope as a real OpenSpec change; the rest stay here until their turn. Don't re-litigate the decisions
-already made below without new evidence.
+The six-phase plan explored 2026-09-10/11 (sibling to the already-shipped Statline
+characteristic-effect resolution work — `RuleEffectClassifier`/`CharacteristicEffect`/
+`CharacteristicModificationResolver`/`RuleClassificationBaseline`) shipped in full: `name-weapon-
+group-contributions`, `classify-weapon-characteristic-effects`, `resolve-weapon-characteristic-
+effects`, and `render-weapon-characteristic-effects` (all archived, last one 2026-09-11). Attached
+Unit weapon entries on `/LivePlay` now resolve real Strength/AP/Damage mutations from a checked-in,
+human-verified baseline against the live BSData corpus, splitting/merging aggregated weapon groups
+as needed; a caveated match instead surfaces an unresolved-ability-reference marker + shared legend,
+reusing the Statline family's own marker registry. See the archived changes for full phase-by-phase
+history — this file no longer tracks it.
 
-- **Phase 1 (done 2026-09-10, informal spike, no OpenSpec change)**: pulled real weapon-effect
-  ability text from the live BSData clone via an ad hoc `jq` dump (every `Abilities`/`sharedRules`
-  Name+Text pair across all 46 real catalogue files, grepped for weapon-characteristic phrasing) —
-  a pure research question with no shippable behavior of its own, so it stayed outside OpenSpec
-  entirely (an earlier attempt to scope it as a full `openspec` change with its own spec/design/
-  tasks was corrected as overkill mid-session; the actual corpus query was thrown away after use,
-  not checked in). Settled both open questions:
-  - **Coordinate "and"-joined effects are real and common**, in two shapes, always sharing exactly
-    one weapon selector across every characteristic touched (never a different selector or a
-    different amount per characteristic in any real example found): the dominant shape (~30 real
-    examples across Aeldari/Chaos/Imperium/Necrons/Orks) is one verb + one shared amount + a
-    comma/and-joined list of 2-4 characteristics — e.g. Zealot (Adepta Sororitas): "improve the
-    Strength and Attacks characteristics of melee weapons equipped by this model by 3"; Chance for
-    Glory (Chaos Space Marines), a real 4-way list: "improve the Strength, Attacks, Armour
-    Penetration and Damage characteristics of melee weapons equipped by this model by 1". A rarer
-    shape (3 examples — Brutal Raider/Chaos Space Marines, Euphoric Strikes/Emperor's Children x2)
-    is two full clauses each with their own verb, joined by "and", referring back to the same
-    weapons via anaphora: "...add 1 to the Strength characteristic of melee weapons equipped by
-    this model and improve the Armour Penetration characteristic of those weapons by 1."
-  - **`RuleClassification.Target` does not need to vary across one ability's own Effects** — no
-    real corpus evidence found (confirming the Dark Pact retraction above). The only texts that
-    *look* like varying targets are multi-choice menus bundled into one Ability's Text field
-    (Adeptus Mechanicus Doctrina Imperatives, Astra Militarum Orders, Adepta Sororitas Vows of
-    Atonement) where several mutually-exclusive, independently-named sub-abilities happen to share
-    one Name+Text pair — an import-chunking question (should each named bullet become its own
-    Name+Text pair before classification?) for whoever eventually handles those specific abilities,
-    not evidence `RuleClassification`/`WeaponCharacteristicEffect` need a per-effect selector.
-- **Phase 2 (done 2026-09-10, `classify-weapon-characteristic-effects`)**: shipped exactly as
-  scoped below, plus one real, evidence-driven deviation and several new corpus findings deferred
-  rather than folded in — see the "Phase 2 findings" bullet below for both. `WeaponCharacteristicEffect(WeaponSelector,
-  Characteristic, Verb, Amount)` + `WeaponSelector` (`NamedWeapon`/`WeaponClass`/`AllWeapons`) landed
-  as a sibling `CharacteristicEffect` subtype, one shape covering both Attacks and Damage at
-  classification time. `RuleEffectClassifier` widened for both real shapes (dominant coordinate-list,
-  two-verb anaphora) via two new patterns plus a new `WeaponEffectStart` anchor (see below). A live
-  corpus review found 19 real weapon-characteristic Effect results, initially reported as all
-  confirmed correct (zero bugs, unlike the original Statline work's 6) — all 19 baselined.
-  **Correction (2026-09-11, post-ship user review)**: that "zero bugs" claim was wrong.
-  `IsCaveated` only ever checked text *after* the last contributing match, never text *before* the
-  first one — safe under the plain `SentenceStart` anchor (nothing conditional can precede a true
-  sentence start within the same sentence), but `WeaponEffectStart`'s whole reason for existing is
-  to match *after* a mid-sentence temporal-scope clause, and every real example of that shape has a
-  genuine, unmodeled activation condition ("Once per battle... If it does," / "Each time...") sitting
-  immediately in front of it that `IsCaveated` never inspected. Result: 7 of the 19 baselined
-  abilities (Brutal Raider, Might of Titan ×2, Euphoric Strikes, Mantra of Strength, Chance for
-  Glory, Moment of Glory/Zealot, Master of Combat — 9 baseline rows counting byte-variant
-  duplicates) were wrongly `IsCaveated: false`. Fixed by widening `IsCaveated` to also check the
-  span between the true sentence-start enclosing the earliest contributing match and that match's
-  own start position — a structural check (finds the real sentence boundary, not a phrase list):
-  Brutal Raider's own trigger, "Each time this model's unit ends a Charge move,", doesn't start with
-  "Once per battle" and would have slipped past a hand-maintained denylist. All 9 rows now correctly
-  `IsCaveated: true` and sit in the baseline's "Caveated entries needing review" queue awaiting a
-  human `Note`; Effects stay populated rather than nulled out, matching the same "extract now, never
-  auto-apply while caveated" convention the Statline/InSv work already established. `WeaponType` also
-  picked up `[JsonConverter(typeof(JsonStringEnumConverter))]` in the same pass, mirroring
-  `EffectVerb`'s own convention (the baseline JSON was serializing it as a bare `0`/`1`).
-  `CharacteristicModificationKind`/
-  `Resolver`/`Clamp` extended to cover Damage (`Plain` kind, dice-aware arithmetic via
-  `DiceExpression`'s existing `+` operator plus a new `ApplyToDice` guaranteed-minimum clamp path);
-  `S`/`AP` got their first real proving example against genuine weapon data, `WS`/`BS` did not (see
-  below - out of this change's own weapon-characteristic vocabulary). `WeaponProfile.D` retyped to
-  `ScalarCharacteristicView`, mirroring `S`/`Ap`/`Bs`/`Ws`.
-  - **Real deviation found during implementation**: the plain `SentenceStart` anchor does not work
-    for this family at all — every real ground-truth text (Zealot, Chance for Glory, Brutal Raider,
-    Euphoric Strikes ×2) states its mutation clause immediately after a ", until the end of the
-    phase/turn," temporal-scope clause that is itself not at a true sentence start, so
-    `SentenceStart` applied unmodified would reject all five. Added `WeaponEffectStart`, a second,
-    narrower anchor scoped only to the two dominant-shape weapon patterns (see
-    `.claude/domain-model/rule-effect-classification.md`'s own "Weapon-characteristic Effects"
-    section for the structural reasoning) — `SentenceStart` itself and every Statline/InSv pattern
-    are untouched.
-  - **New corpus findings deferred to a future phase, not folded into Phase 2's own scope**
-    (`classify-weapon-characteristic-effects` tasks.md task 1.2): a real `Set`-verb-shaped weapon
-    effect ("...change the Attacks characteristic of melee weapons equipped by this model to 12.");
-    a real dice-valued amount ("add D3 to the Strength characteristic..." — `WeaponCharacteristicEffect.Amount`
-    is `int`); two further real weapon-selector shapes beyond `WeaponClass`/`AllWeapons` (an
-    ability-flag-qualified selector - "Psychic weapons", "Lethal Hits weapons" - and a
-    whole-unit-scoped variant - "weapons equipped by models in this unit" / "the bearer's melee
-    weapons" / "this model's {named weapon}", no "equipped by" at all); two further real weapon
-    characteristics beyond the four this change's own vocabulary covers (Weapon Skill/Ballistic
-    Skill - `CharacteristicModificationKinds` already has `WS`/`BS` entries from an earlier change,
-    unconsumed by any real weapon data still); and two real "...and those weapons have the [KEYWORD]
-    ability" anaphora continuations (Finest Hour/Instrument of the Emperor's Wrath, Possessed Lord) -
-    correctly extract only the real characteristic Effect and correctly flag `IsCaveated`, but the
-    keyword grant itself is unextracted (feeds the existing `KeywordEffect`/`AbilityEffect` idea
-    below).
-  - **Broader corpus grep, 2026-09-11 (ad hoc, no OpenSpec change)**: a raw text search across the
-    whole live clone for any ability description containing both "characteristic" and "weapon" found
-    29 distinct hits total, against the 19 this change actually baselined - confirming the 19 is a
-    narrow slice (bearer-scoped only, two phrasings, four characteristics), not the full corpus
-    picture. Roughly 15 of the 29 are real additional weapon-characteristic mutations the classifier
-    still doesn't recognize at all (not caveated, not baselined - just silently unclassified),
-    confirming several of the shapes named above with real corpus evidence: **WS/BS** (Doctrina
-    Imperatives' "Improve the Ballistic Skill characteristic..."; a T'au Sept ranged-attack rule; a
-    Sniper-type ability that worsens WS on an *enemy* unit - permanently out of scope per this file's
-    own "debuffing an enemy's weapon" boundary below, not a near-term miss); **ability-flag-qualified
-    selector** (Waaagh!/Void Waaagh!/Martial Ka'tah, "models from your army with this ability");
-    **whole-unit-scoped selector** (World Eaters' and Adeptus Astartes' own Charge abilities,
-    Emperor's Children's Sensational Performance using "this unit's melee weapons" phrasing instead
-    of "weapons equipped by"). Two further real shapes not previously named: a **different amount per
-    characteristic within one coordinate clause** ("add 1 to Attacks... and add 2 to Strength...",
-    distinct from both the shared-amount coordinate list and the two-verb-anaphora pattern - neither
-    existing pattern covers per-characteristic amounts that differ), and a **two-branch conditional**
-    ("add 1..., if Battle-shocked, add 2... instead"). The remaining ~14 of the 29 are not misses:
-    `[MELTA]`/`[CLEAVE]`/`[RAPID FIRE]`/`[BLAST]`/`[DEVASTATING WOUNDS]` core-rule text describing a
-    weapon's own printed characteristic generically (not a bearer mutation), a couple of per-*attack*
-    roll modifiers (a transient concept, distinct from a persistent `WeaponProfile` mutation), and
-    2-3 multi-choice-menu-bundled abilities (the same Doctrina-Imperatives-shaped import-chunking
-    question already noted above, not a new finding).
-- **Phase 3 (done 2026-09-11, `resolve-weapon-characteristic-effects`)**: shipped
-  `WeaponCharacteristicEffectResolver.Resolve` (mirroring `InvulnerableSaveEffectResolver`) plus a
-  `WeaponSelector`-to-`WeaponProfile` matching predicate, and wired both directly into the live
-  `AttachedUnitAggregator.BuildWeapons` — a matched, non-caveated, bearer-scoped baseline entry now
-  mutates the applicable weapon's `S`/`Ap`/`D` field before computing `WeaponProfileEqualityKey`, so
-  existing structural-equality grouping does the split/merge for free, exactly as scoped below. Went
-  straight to live wiring rather than staying an unconsumed standalone resolver first, per direct
-  instruction for that change (a deliberate divergence from the Statline family's own
-  resolver-then-baseline-wiring sequencing). Real, evidence-driven deviation: a caveated baseline
-  entry is deliberately NOT applied here — Phase 2's own corpus review found the weapon-characteristic
-  family's caveats are disproportionately real, unmodeled activation conditions ("Once per battle...
-  If it does,"), and this app has no turn-trigger mechanism to evaluate them, so auto-applying would
-  misrepresent a conditional buff as permanent; only 4 of the 19 baselined entries are uncaveated, and
-  of those only 3 touch a resolvable characteristic (Attacks stays unresolved — see below). Also fixed
-  a real, pre-existing production bug found via this change's own regression run:
-  `AttachedUnitAggregator.ApplyEffect` crashed with `ArgumentOutOfRangeException` on any present
-  ability whose baseline entry carries a `WeaponCharacteristicEffect` with a Self/AttachedUnit target
-  (17 of the 19 real entries already meet that shape), so any roster carrying one of those abilities
-  already crashed `/LivePlay` before this change. **Verified against the real bundled corpus**: no
-  currently-importable ordinary roster produces a visible mutation yet (the 3 remaining uncaveated,
-  resolvable entries are all Crusade-only Battle Honour wargear, already excluded by
-  `IsGameModeGated`) — the mechanism is real and fixture-proven, just not yet exercised end-to-end by
-  live data. **Named but explicitly deferred, not built**: resolving an Attacks (`"A"`) effect —
-  `WeaponProfile.A` stays a plain `DiceExpression`, unretyped; `CharacteristicModificationKinds`
-  already, deliberately, excludes it.
-- **Phase 4 (rendering)**: widen `ShowsBreakdownTrigger` to fire on any weapon-effect ability
-  contribution, not just >1 model line. New ability-contribution row (ability-name popover trigger
-  + optional resolved delta, e.g. "+1") placed via three tiers mirroring `AggregateAbilityEntry`'s
-  existing `ComponentName`-null convention: row-bound (targets one modelline's contribution),
-  group-wide (reaches every current contributor — rendered once, not repeated), partial-subset
-  (reaches some but not all — nested under just the affected modellines). Group-name caveat
-  marker: an asterisk appended to `weapon.Name` (mirrors the Statline `.stat-label` marker
-  convention) when an unresolved ability contribution exists anywhere in the group — no separate
-  legend block needed, unlike Statline, since the table's own existing expand-to-see-breakdown
-  affordance already is the explanation. Resolved-value marker: `--amber-tint` + an inline marker
-  on the specific S/AP/D VALUE cell itself ("5*"), not a label — the weapon table has no per-row
-  label the way a Statline tile does. Open: does a weapon-table marker share Statline's
-  per-unit-block `AssignFlagMarkers` registry, or get its own?
-- **Phase 5**: wire resolved weapon effects into `AttachedUnitAggregator` via the baseline lookup
-  — mirrors `apply-rule-effect-baseline`'s classify-offline/human-verify-into-baseline/
-  runtime-reads-baseline-only convention. Real-captured-export verification pass before calling
-  this done, per this project's standing practice for this class of change.
+**Real corpus shapes found during Phase 2's classifier work but not yet classified/resolved** —
+candidates for a future phase, not scoped anywhere yet:
+- WS/BS weapon-characteristic mutations (`CharacteristicModificationKinds` already has entries for
+  both, unconsumed by any real weapon data).
+- An ability-flag-qualified weapon selector ("models from your army with this ability").
+- A whole-unit-scoped selector phrased without "equipped by" ("this unit's melee weapons").
+- A coordinate clause with a different amount per characteristic ("add 1 to Attacks... and add 2 to
+  Strength...").
+- A two-branch conditional ("add 1..., if Battle-shocked, add 2... instead").
+- A `Set`-verb-shaped effect, and a dice-valued amount (`WeaponCharacteristicEffect.Amount` is `int`
+  today).
+- Two "...and those weapons have the [KEYWORD] ability" anaphora continuations — correctly extract
+  the characteristic Effect and flag `IsCaveated`, but leave the keyword grant itself unextracted
+  (feeds the `KeywordEffect`/`AbilityEffect` idea below).
+- Resolving an Attacks (`"A"`) effect — `WeaponProfile.A` stays a plain `DiceExpression`, deliberately
+  unretyped by `CharacteristicModificationKinds`.
 
 **Permanent boundaries, not tasks**: an effect debuffing an *enemy's* weapon is unresolvable until
 the attacker/defender two-roster half of the app exists (no opposing-roster concept today).

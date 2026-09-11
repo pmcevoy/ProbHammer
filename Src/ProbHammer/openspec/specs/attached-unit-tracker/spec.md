@@ -157,6 +157,17 @@ resolved unit, regardless of which component granted the matched ability. A matc
 classified target is scoped to a named keyword, or is unconditionally roster-wide with no bearer/
 unit qualifier, SHALL NOT mutate any contribution — the same outcome as an unmatched ability.
 
+In addition, when a present ability's normalized text matches a checked-in baseline entry whose
+classification IS caveated, and that entry's own weapon selector matches a contribution's weapon
+profile under the same Target-Scoped Application matching rule above, the aggregate view SHALL
+record that contribution as carrying an unresolved ability reference naming the source ability —
+without mutating the profile. This unresolved-reference signal is independent of the applied-
+mutation signal above: a contribution can carry an applied mutation from one matched ability and an
+unresolved reference from a different matched ability at the same time, and an aggregated entry
+whose contributions collectively carry at least one unresolved reference anywhere in the group SHALL
+report that fact at the entry level as well as at the individual contribution level, so a consumer
+can flag the group without inspecting every contribution.
+
 #### Scenario: Same weapon profile from different components is combined
 - **WHEN** the Bodyguard unit has 4 models carrying a weapon profile with 3 Attacks each, and the attached Leader carries a wargear item with an identical structural profile but 7 Attacks
 - **THEN** the aggregate view shows one combined entry with a total Attacks value of 19 (4 × 3 + 7), not the Attacks value of either contributor alone
@@ -216,6 +227,21 @@ unit qualifier, SHALL NOT mutate any contribution — the same outcome as an unm
   classification is caveated
 - **THEN** no weapon profile is mutated by that entry, and the affected weapon's aggregate entry
   reports its original, unmutated value
+
+#### Scenario: A caveated baseline entry surfaces an unresolved ability reference
+- **WHEN** a present ability's normalized text matches a checked-in baseline entry whose
+  classification is caveated, and that entry's weapon selector matches a contribution's weapon
+  profile under the same bearer/unit target-scoping rule an applied effect would use
+- **THEN** the affected contribution carries an unresolved ability reference naming that ability,
+  and the aggregated entry containing that contribution reports the group as having an unresolved
+  reference, even though no value was mutated
+
+#### Scenario: An unresolved reference and an applied mutation can coexist on one contribution
+- **WHEN** a contribution's bearer carries two present abilities matching two different checked-in
+  baseline entries with matching weapon selectors — one caveated, one not — each naming a different
+  characteristic on the same weapon
+- **THEN** the contribution's resolved profile reflects the non-caveated entry's mutation, and the
+  contribution still carries an unresolved ability reference naming the caveated entry's own ability
 
 #### Scenario: A class-qualified weapon selector leaves a non-matching weapon type unaffected
 - **WHEN** a present ability matches a checked-in, non-caveated baseline entry whose weapon selector

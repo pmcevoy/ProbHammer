@@ -680,6 +680,48 @@ SHALL NOT gate whether its casualty controls are available or functional.
 - **THEN** its casualty controls still function, decreasing or increasing its remaining count as
   usual
 
+### Requirement: Flagged Weapon Characteristic Rendering
+A weapon-table Strength/AP/Damage value cell whose underlying characteristic was mutated by a
+matched, non-caveated weapon-characteristic effect (per `attached-unit-tracker`'s "Aggregate Weapon
+Count View") SHALL render a footnote marker appended to that cell's displayed value (e.g. "5*"), and
+SHALL render with the same flagged-value styling the Statline family uses for a resolved
+characteristic. A weapon entry with at least one contribution carrying an unresolved (caveated)
+ability reference SHALL render a footnote marker appended to the entry's own display Name, distinct
+from a resolved value-cell marker, since the weapon table has no per-characteristic label the way a
+Statline tile does.
+
+Marker identity SHALL be assigned once per unit block and reused for the same source ability
+wherever it recurs within that block — sharing the same assignment registry the Statline family's
+own "Flagged Statline Characteristic Rendering" requirement already establishes, so a source ability
+affecting both a Statline tile and a weapon entry within one unit block is named by the same marker
+in both places, and the unit block's legend lists it once per distinct source regardless of which
+kind of value it flagged. Each flagged weapon entry (name-marker or value-marker alike) SHALL surface
+its source ability as an interactive popover trigger, using the same popover mechanism as any other
+ability name in the unit block, reachable from that entry's contribution breakdown.
+
+#### Scenario: A resolved weapon value carries a marker
+- **WHEN** a weapon entry's Strength, AP, or Damage value was mutated by a matched, non-caveated
+  weapon-characteristic effect
+- **THEN** that value's cell renders with a footnote marker appended and the flagged-value styling,
+  distinguishing it from an unmutated value of the same characteristic
+
+#### Scenario: An unresolved ability reference marks the weapon's name
+- **WHEN** a weapon entry has at least one contribution carrying an unresolved ability reference
+- **THEN** the entry's own display Name renders with a footnote marker appended, even when none of
+  its Strength/AP/Damage values were mutated
+
+#### Scenario: A weapon-value marker and a Statline marker for the same source share one marker
+- **WHEN** one source ability both mutates a Statline characteristic (flagged per "Flagged Statline
+  Characteristic Rendering") and mutates a weapon's Strength/AP/Damage value within the same unit
+  block
+- **THEN** both the flagged Statline tile and the flagged weapon value cell carry the identical
+  marker, and the unit block's legend names that source once, not twice
+
+#### Scenario: Tapping a flagged weapon's contribution breakdown reaches the source ability
+- **WHEN** a player activates a flagged weapon entry's contribution breakdown
+- **THEN** the source ability responsible for the flag is reachable from the breakdown as a popover
+  trigger, per "Ability And Rule Text Popover"
+
 ### Requirement: Weapon Section Rendering
 Each unit block SHALL group the view's `Weapons` into a Ranged section and a Melee section by each
 entry's `Profile.Type`, rendering the Ranged section before the Melee section, and SHALL omit
@@ -700,8 +742,11 @@ entry's name SHALL be an interactive trigger that toggles a contribution breakdo
 directly beneath that entry's row, regardless of how many contributions that specific entry has -
 knowing which single `ModelLine` a weapon came from is informative on its own when the unit has
 other `ModelLine`s it could be distinguished from. When the unit has exactly one `ModelLine` in
-total, no weapon entry SHALL render such a trigger, since there is no second source to distinguish
-it from. The breakdown SHALL group contributions by `(ComponentName, StatlineName)`: when every
+total, a weapon entry SHALL still render its name as an interactive breakdown trigger if that entry
+carries a resolved value marker or an unresolved ability reference (per "Flagged Weapon
+Characteristic Rendering") — so the source ability responsible stays reachable even with nothing
+else to distinguish — and SHALL NOT render such a trigger otherwise, since there is no second source
+to distinguish it from. The breakdown SHALL group contributions by `(ComponentName, StatlineName)`: when every
 contribution in a group shares the same `PerModelAttacks` (a group of exactly one contribution
 trivially satisfies this), the group SHALL render as one row showing that group's name, its summed
 `Count`, its shared `PerModelAttacks`, and the product of the two as a subtotal in the Attacks
@@ -750,9 +795,16 @@ affects the other weapon section of the same unit block.
   product as the subtotal
 
 #### Scenario: No breakdown trigger when the unit has only one ModelLine total
-- **WHEN** a unit has exactly one `ModelLine` in total across all of its components
+- **WHEN** a unit has exactly one `ModelLine` in total across all of its components, and none of
+  that unit's weapon entries carry a resolved value marker or an unresolved ability reference
 - **THEN** none of that unit's weapon entries render an interactive trigger on their name, and no
   breakdown is available for any of them
+
+#### Scenario: A flagged weapon entry keeps its breakdown trigger even on a single-ModelLine unit
+- **WHEN** a unit has exactly one `ModelLine` in total, and one of its weapon entries carries a
+  resolved value marker or an unresolved ability reference
+- **THEN** that entry still renders its name as an interactive breakdown trigger, so its source
+  ability stays reachable, while any other, unflagged entry on the same unit renders no trigger
 
 #### Scenario: Uniform contributions within a group collapse to one row
 - **WHEN** a contribution breakdown group's contributions all share the same `PerModelAttacks`
