@@ -22,6 +22,41 @@
 
     (string Trigger, string Trailer) BuildRulePopover(string triggerHtml, string triggerClass, string ruleText, IReadOnlySet<string> shownRuleNames) =>
         popovers.BuildRulePopover(triggerHtml, triggerClass, ruleText, shownRuleNames);
+
+    // A flag-legend line's own popover trigger never has a nested [BRACKET] reference to suppress
+    // (the source ability isn't itself re-cited anywhere on the page), so it always passes an empty
+    // shownRuleNames set.
+    var noShownRuleNames = new HashSet<string>();
+
+    // Renders one whole legend line (marker span + ability-name-line pill, or plain text when the
+    // source ability has no descriptive text of its own - e.g. a wargear item like "Sigil of
+    // Corruption") as a single HTML string, called from all three legend sites (Statline, Ranged
+    // weapons, Melee weapons) below. Built this way - one Razor call site per legend entry, `@Html.
+    // Raw(RenderLegendLine(flag))` - rather than an inline if/else mixing markup and a tuple-
+    // deconstructing var statement directly in the .cshtml: that shape kept getting corrupted by
+    // this project's own .cshtml auto-formatter at this nesting depth (observed twice: it wrapped a
+    // `new HashSet<string>()` call right after `HashSet`, which Razor's parser then read as an HTML
+    // tag start and exited the code block early; even after removing that call, it still broke a
+    // wrapped `var (a, b) = Method(...)` tuple-deconstruction statement enough to leave `a`/`b`
+    // undeclared). Moving the whole thing into one C# method sidesteps the formatter entirely - a
+    // plain method body is not subject to whatever heuristic mis-wraps a markup/code transition.
+    string RenderLegendLine((string Marker, Ability Source) flag)
+    {
+        var marker = WebUtility.HtmlEncode(flag.Marker);
+        var abilityNameHtml = WebUtility.HtmlEncode(AbilityDisplayName(flag.Source));
+        string nameHtml;
+        if (string.IsNullOrWhiteSpace(flag.Source.Text))
+        {
+            nameHtml = $"<span class=\"ability-name-line\">{abilityNameHtml}</span>";
+        }
+        else
+        {
+            var popover = BuildRulePopover(abilityNameHtml, "ability-name-line", flag.Source.Text, noShownRuleNames);
+            nameHtml = popover.Trigger + popover.Trailer;
+        }
+
+        return $"<div class=\"flag-legend-line\"><span class=\"flag-legend-marker\">{marker}</span>{nameHtml}</div>";
+    }
 }
 @* Whole-unit-block collapse: the block itself is a <details>, and
    its name bar is the <summary> - the same full-bar-is-the-trigger affordance every .lp-section
@@ -358,23 +393,7 @@
                             <div class="statline-flag-legend">
                                 @foreach (var flag in block.FlagLegend)
                                 {
-                                    var legendTriggerHtml = WebUtility.HtmlEncode($"{flag.Marker} {AbilityDisplayName(flag.Source)}");
-                                    @* A build-time structural modifier's source ability can have no descriptive
-                                       text of its own (e.g. a wargear item like "Sigil of Corruption" with no
-                                       separate rules text) - renders as plain, non-interactive text instead of an
-                                       empty/non-functional popover trigger, mirroring the existing convention for
-                                       an unresolvable weapon-keyword chip. *@
-                                    if (string.IsNullOrWhiteSpace(flag.Source.Text))
-                                    {
-                                        <span
-                                            class="ability-name-line flag-legend-line">@Html.Raw(legendTriggerHtml)</span>
-                                    }
-                                    else
-                                    {
-                                        var (legendTrigger, legendTrailer) = BuildRulePopover(legendTriggerHtml, "ability-name-line flag-legend-line", flag.Source.Text, new HashSet<string>());
-                                        @Html.Raw(legendTrigger)
-                                        @Html.Raw(legendTrailer)
-                                    }
+                                    @Html.Raw(RenderLegendLine(flag))
                                 }
                             </div>
                         }
@@ -504,18 +523,7 @@
                                 <div class="statline-flag-legend">
                                     @foreach (var flag in row.FlagLegend)
                                     {
-                                        var legendTriggerHtml = WebUtility.HtmlEncode($"{flag.Marker} {AbilityDisplayName(flag.Source)}");
-                                        if (string.IsNullOrWhiteSpace(flag.Source.Text))
-                                        {
-                                            <span
-                                                class="ability-name-line flag-legend-line">@Html.Raw(legendTriggerHtml)</span>
-                                        }
-                                        else
-                                        {
-                                            var (legendTrigger, legendTrailer) = BuildRulePopover(legendTriggerHtml, "ability-name-line flag-legend-line", flag.Source.Text, new HashSet<string>());
-                                            @Html.Raw(legendTrigger)
-                                            @Html.Raw(legendTrailer)
-                                        }
+                                        @Html.Raw(RenderLegendLine(flag))
                                     }
                                 </div>
                             </td>
@@ -628,18 +636,7 @@
                                 <div class="statline-flag-legend">
                                     @foreach (var flag in row.FlagLegend)
                                     {
-                                        var legendTriggerHtml = WebUtility.HtmlEncode($"{flag.Marker} {AbilityDisplayName(flag.Source)}");
-                                        if (string.IsNullOrWhiteSpace(flag.Source.Text))
-                                        {
-                                            <span
-                                                class="ability-name-line flag-legend-line">@Html.Raw(legendTriggerHtml)</span>
-                                        }
-                                        else
-                                        {
-                                            var (legendTrigger, legendTrailer) = BuildRulePopover(legendTriggerHtml, "ability-name-line flag-legend-line", flag.Source.Text, new HashSet<string>());
-                                            @Html.Raw(legendTrigger)
-                                            @Html.Raw(legendTrailer)
-                                        }
+                                        @Html.Raw(RenderLegendLine(flag))
                                     }
                                 </div>
                             </td>

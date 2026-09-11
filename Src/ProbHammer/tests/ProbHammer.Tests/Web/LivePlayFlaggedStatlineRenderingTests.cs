@@ -55,10 +55,13 @@ public class LivePlayFlaggedStatlineRenderingTests : IClassFixture<WebApplicatio
 
         var html = await RenderAsync(view);
 
+        // The marker renders in its own span OUTSIDE the ability-name-line pill, not baked into the
+        // trigger's own text - direct user preference.
         html.Should().Contain(">OC*<")
             .And.Contain("stat-tile-flagged")
             .And.Contain("statline-flag-legend")
-            .And.Contain("* Vexilla")
+            .And.Contain("flag-legend-marker\">*</span>")
+            .And.Contain(">Vexilla<")
             .And.Contain("Add 1 to the Objective Control characteristic of models in the bearer&#39;s unit.");
     }
 
@@ -101,7 +104,7 @@ public class LivePlayFlaggedStatlineRenderingTests : IClassFixture<WebApplicatio
 
         html.Should().Contain(">OC*<");
         html.Should().NotContain(">OC**<"); // same source, same marker in both runs - never a second marker
-        var legendOccurrences = html.Split("* Vexilla").Length - 1;
+        var legendOccurrences = html.Split("flag-legend-marker\">*</span>").Length - 1;
         legendOccurrences.Should().BeGreaterThanOrEqualTo(2); // one legend line per affected run
     }
 
@@ -159,10 +162,11 @@ public class LivePlayFlaggedStatlineRenderingTests : IClassFixture<WebApplicatio
         html.Should().Contain(">Sv*<")
             .And.Contain("stat-tile-flagged")
             .And.Contain("statline-flag-legend")
-            .And.Contain("* Sigil of Corruption");
+            .And.Contain("flag-legend-marker\">*</span>")
+            .And.Contain(">Sigil of Corruption<");
         // no descriptive text of its own - renders as plain, non-interactive text, not a popover
         // trigger button (live-play-view's "no descriptive text" scenario).
-        html.Should().Contain("class=\"ability-name-line flag-legend-line\">* Sigil of Corruption</span>")
+        html.Should().Contain("<span class=\"ability-name-line\">Sigil of Corruption</span>")
             .And.NotContain("popovertarget");
     }
 
@@ -239,6 +243,7 @@ public class LivePlayFlaggedStatlineRenderingTests : IClassFixture<WebApplicatio
             .And.Contain(">6<")
             .And.NotContain("stat-tile-flagged")
             .And.Contain("statline-flag-legend")
-            .And.Contain("* ✦ Auric Mantle");
+            .And.Contain("flag-legend-marker\">*</span>")
+            .And.Contain(">✦ Auric Mantle<");
     }
 }

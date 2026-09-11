@@ -330,6 +330,8 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
 .army-rules-cell {
     display: flex;
     flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.3rem;
     background: var(--bg2);
     border: 1px dashed var(--border);
     border-radius: 3px;
@@ -369,6 +371,8 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
 .detachment-entry-rules {
     display: flex;
     flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.3rem;
     margin-left: 1.2rem;
     background: var(--bg2);
     border: 1px dashed var(--border);
@@ -747,6 +751,8 @@ button.filter-flag:hover { opacity: 0.8; }
 .statline-flag-legend {
     display: flex;
     flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.3rem;
     margin-top: 0.25rem;
     border: 1px dashed var(--border);
     border-radius: 3px;
@@ -756,6 +762,22 @@ button.filter-flag:hover { opacity: 0.8; }
        (plain/neutral), never var(--bg) - a container never carries the "filled ability card" look
        itself, only its .ability-name-line buttons do - see design-tokens.md. */
     background: var(--bg2);
+}
+
+/* A legend entry's own footnote marker (e.g. "*") renders OUTSIDE its ability-name-line pill,
+   not baked into the pill's own trigger text - direct user preference over the marker sitting
+   inside the pill (e.g. "* Vexilla" as one string). .flag-legend-line is the row wrapper (marker +
+   pill, left-aligned); each .ability-name-line:nth-of-type(even) zebra pair therefore no longer
+   applies within a legend specifically (every pill is now the lone button inside its own wrapper) -
+   an accepted trade-off, since a legend rarely carries more than one or two lines anyway. */
+.flag-legend-line {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.flag-legend-marker {
+    font-weight: 700;
+    color: var(--text-dim);
 }
 
 .loadout-breakdown {
@@ -1045,9 +1067,10 @@ button.filter-flag:hover { opacity: 0.8; }
 .statline-cell.col-abilities {
     border: 1px dashed var(--border);
     border-radius: 3px;
-    padding: 0;
+    padding: 0.3rem;
     display: flex;
     flex-direction: column;
+    gap: 0.3rem;
     font-size: 0.78rem;
     max-height: 10rem;
     overflow: hidden;
@@ -1091,16 +1114,24 @@ button.filter-flag:hover { opacity: 0.8; }
 }
 
 /* A <button popovertarget> now, not a plain <div> - reset to keep the exact same look/layout it
-   had as a div (font-weight/border-bottom/flex/alignment all unchanged), plus the button-chrome
-   resets a native <button> needs stripped (background/border/font/text-align/width/cursor),
-   matching .weapon-name-toggle's own established reset pattern. */
+   had as a div (font-weight/flex/alignment all unchanged), plus the button-chrome resets a native
+   <button> needs stripped (background/font/text-align/cursor), matching .weapon-name-toggle's own
+   established reset pattern.
+
+   width: fit-content (was 100%), plus a real border + border-radius (was border-bottom only, flush
+   to the container's own edges) - the pill treatment .weapon-tag already uses, per direct user
+   feedback that a lone short ability name (e.g. "Vexilla") stretched into an oversized, mostly-empty
+   bar reads as messy rather than as a control. Left-aligned, one per row still (not wrapped into a
+   flex-row of pills like .weapon-tags) - the existing per-row zebra striping and column semantics
+   below are unaffected, only the button's own width and shape change. */
 .ability-name-line {
-    padding: 0.3rem 0.6rem;
-    border: none;
-    border-bottom: 1px solid var(--border);
+    padding: 0.25rem 0.55rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
     display: flex;
     align-items: center;
-    width: 100%;
+    width: fit-content;
+    max-width: 100%;
     background: var(--bg);
     font: inherit;
     /* font-weight MUST come after the `font: inherit` shorthand above - `font` resets font-weight
