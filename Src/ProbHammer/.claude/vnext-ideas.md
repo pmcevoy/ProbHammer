@@ -22,26 +22,8 @@ record, not this file).
 
 ## `WeaponProfile`-targeting rule effects — deferred coverage
 
-The plan explored 2026-09-10/11 (sibling to the already-shipped Statline characteristic-effect
-resolution work — `RuleEffectClassifier`/`CharacteristicEffect`/`CharacteristicModificationResolver`/
-`RuleClassificationBaseline`) shipped in full, including the Attacks-characteristic follow-up picked
-up after the original plan closed: `name-weapon-group-contributions`, `classify-weapon-characteristic-
-effects`, `resolve-weapon-characteristic-effects`, `render-weapon-characteristic-effects`, and
-`resolve-weapon-attacks-effects` (all archived, last one 2026-09-11). Attached Unit weapon entries on
-`/LivePlay` now resolve real Strength/AP/Damage/Attacks effects from a checked-in, human-verified
-baseline against the live BSData corpus — S/AP/D mutating the profile and splitting/merging
-aggregated weapon groups as needed, Attacks instead rendering as a separate, additive ability-
-contribution line since it's excluded from a weapon's grouping identity; a caveated match instead
-surfaces an unresolved-ability-reference marker + shared legend, reusing the Statline family's own
-marker registry. (The one real corpus Attacks example, Scorpion Tail / Writhing Tentacles, turned
-out to be Crusade Boons content excluded from a datasheet's always-present `Abilities` — but still
-reachable through the same on-demand `Datasheet.TryResolveAbility` path a wargear-granted ability
-like Vexilla already uses, proven end-to-end against real bundled BSData in
-`WeaponCharacteristicEffectRealCorpusTests`.) See the archived changes for full phase-by-phase
-history — this file no longer tracks it.
-
-**Real corpus shapes found during Phase 2's classifier work but not yet classified/resolved** —
-candidates for a future phase, not scoped anywhere yet:
+Real corpus shapes found while classifying weapon-characteristic effects but not yet classified or
+resolved — candidates for a future phase, not scoped anywhere yet:
 - WS/BS weapon-characteristic mutations (`CharacteristicModificationKinds` already has entries for
   both, unconsumed by any real weapon data).
 - An ability-flag-qualified weapon selector ("models from your army with this ability").
@@ -54,8 +36,6 @@ candidates for a future phase, not scoped anywhere yet:
 - Two "...and those weapons have the [KEYWORD] ability" anaphora continuations — correctly extract
   the characteristic Effect and flag `IsCaveated`, but leave the keyword grant itself unextracted
   (feeds the `KeywordEffect`/`AbilityEffect` idea below).
-
-Resolving an Attacks (`"A"`) effect — the last item that was on this list — is done too (see above).
 
 **Permanent boundaries, not tasks**: an effect debuffing an *enemy's* weapon is unresolvable until
 the attacker/defender two-roster half of the app exists (no opposing-roster concept today).
