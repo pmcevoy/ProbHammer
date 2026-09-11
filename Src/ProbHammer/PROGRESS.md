@@ -1608,13 +1608,35 @@ Nothing outstanding.
 
 ## Next Session Prompt
 
-**Immediate next step**: `import-army-list-for-live-play` is implemented (27/27 tasks) but not yet
-archived — run the archive flow (`openspec-archive-change`/`/opsx:archive`) once the user has
-reviewed it, syncing its four delta specs (`army-list-parsing`, `army-roster-enrichment`,
-`army-list-import`, the `live-play-view` modification) into `openspec/specs/`.
+**This section was stale as of 2026-09-11** — its previous "immediate next step"
+(`import-army-list-for-live-play`) was archived long ago, along with a large amount of intervening
+work (the whole `WeaponProfile`-targeting weapon-characteristic-effects arc: `classify-weapon-
+characteristic-effects`, `resolve-weapon-characteristic-effects`, `render-weapon-characteristic-
+effects`, all archived — see `.claude/vnext-ideas.md`'s "WeaponProfile-targeting rule effects —
+deferred coverage" for the closed-out summary). This file had not been updated across that whole
+arc; treat everything below this note as historical unless independently re-verified.
 
-**After that**, two candidates surfaced by this change itself, neither scoped or agreed yet — raise
-with the user before starting either:
+**Immediate next step**: archive `openspec/changes/resolve-weapon-attacks-effects/` — implemented
+2026-09-11 (all 18 tasks done, full test suite green: 676 passed, 0 failed, 14 explicit corpus-scan
+tests not run per existing convention), the last deferred piece of the weapon-characteristic-effects
+arc, resolving the Attacks (`"A"`) characteristic. `CharacteristicModificationKinds` gained an `"A"`
+entry; `CharacteristicModificationResolver.ResolveAttacksAmount` resolves a signed per-model amount;
+`AttachedUnitAggregator` records it as a new `AttacksContribution` per `WeaponContribution` (never
+mutating `WeaponProfile.A`, which stays a plain `DiceExpression` — simpler than originally scoped);
+`/LivePlay`'s weapon breakdown renders it as a separate, additive ability-contribution line
+(`(Count×Amount)` notation), placed at one of three tiers (row-bound/partial/group-wide) mirroring
+`AggregateAbilityEntry`'s existing tiering. Real-corpus verification (`WeaponCharacteristicEffect
+RealCorpusTests`) found a genuine wrinkle: proposal.md's Scorpion Tail/Writhing Tentacles example is
+real, uncaveated Attacks-only BSData, but it's Crusade Boons content excluded from a datasheet's
+always-present `Abilities` by `IsGameModeGated` — still reachable through the same on-demand
+`Datasheet.TryResolveAbility` path a wargear-granted ability like Vexilla already uses, so a real
+import naming it as a wargear item on Chosen (Chaos Space Marines) genuinely resolves and renders it
+end-to-end against the real bundled BSData, proven directly rather than via `docker compose`/
+`firefox-devtools` (no captured export exercises this datasheet). Full reasoning and worked examples
+in auto-memory `project_attacks_contribution_row_design`.
+
+**After that**, older candidates below, none scoped or agreed, unverified against current state —
+raise with the user before starting any of them:
 
 - The deferred "ability-text tuning pass" this change's own design.md explicitly left a slot for
   (between `enrich` and `/LivePlay`, operating on the built `ArmyRoster`'s distinct `Datasheet`s) —

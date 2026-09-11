@@ -270,7 +270,8 @@ public class LivePlayModel(
 
         var orderedWeapons = view.Weapons
             .OrderByDescending(w => w.TotalAttacks.ExpectedValue())
-            .Select(w => new WeaponRowViewModel(w, BuildContributionBreakdown(w, loadoutLabels), hasMultipleModelLines))
+            .Select(w => new WeaponRowViewModel(w, BuildContributionBreakdown(w, loadoutLabels), hasMultipleModelLines,
+                GroupWideAttacksLines: BuildGroupWideAttacksLines(w)))
             .ToList();
         var rangedWeaponRows = orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Ranged).ToList();
         var meleeWeaponRows = orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Melee).ToList();
@@ -362,6 +363,8 @@ public class LivePlayModel(
         AggregateWeaponEntry entry,
         IReadOnlyDictionary<(string ComponentName, string StatlineName, int LoadoutIndex), string> loadoutLabels)
     {
+        var groupWidePairs = ResolveGroupWideAttacksPairs(entry.Contributions);
+
         var groups = new List<List<WeaponContribution>>();
         var groupIndex = new Dictionary<(string ComponentName, string StatlineName), List<WeaponContribution>>();
         foreach (var contribution in entry.Contributions)
@@ -381,7 +384,9 @@ public class LivePlayModel(
         foreach (var group in groups)
         {
             var groupKey = $"{group[0].ComponentName}::{group[0].StatlineName}";
-            var uniform = group.All(c => c.PerModelAttacks == group[0].PerModelAttacks);
+            var uniform = group.All(c => c.PerModelAttacks == group[0].PerModelAttacks &&
+                                         AttacksContributionsMatch(c.AttacksContributions,
+                                             group[0].AttacksContributions));
 
             if (uniform && group.Count > 1)
             {
@@ -392,7 +397,8 @@ public class LivePlayModel(
                     PerModelAttacks: group[0].PerModelAttacks,
                     Subtotal: group[0].PerModelAttacks.Scale(count),
                     GroupKey: groupKey,
-                    SelectKey: null));
+                    SelectKey: null,
+                    AttacksLines: RowAttacksLines(group[0].AttacksContributions, count, groupWidePairs)));
             }
 
             foreach (var c in group)
@@ -405,11 +411,76 @@ public class LivePlayModel(
                     PerModelAttacks: c.PerModelAttacks,
                     Subtotal: c.PerModelAttacks.Scale(c.Count),
                     GroupKey: groupKey,
-                    SelectKey: SelectKey(c.ComponentName, c.StatlineName, c.LoadoutIndex)));
+                    SelectKey: SelectKey(c.ComponentName, c.StatlineName, c.LoadoutIndex),
+                    AttacksLines: RowAttacksLines(c.AttacksContributions, c.Count, groupWidePairs)));
             }
         }
 
         return rows;
+    }
+
+    // The entry-level counterpart to BuildContributionBreakdown's own per-row AttacksLines (design.md
+    // D3): an ability-Amount pair that reaches every one of the entry's current Contributions renders
+    // once, above the breakdown, rather than repeated under each contributor row it also reaches.
+    internal static IReadOnlyList<AttacksContributionLine> BuildGroupWideAttacksLines(AggregateWeaponEntry entry)
+    {
+        var groupWidePairs = ResolveGroupWideAttacksPairs(entry.Contributions);
+        var totalCount = entry.Contributions.Sum(c => c.Count);
+        return groupWidePairs
+            .Select(p => new AttacksContributionLine(p.SourceAbility, p.Amount, totalCount))
+            .ToList();
+    }
+
+    // A distinct (source ability, amount) pair is group-wide when it reaches every one of the
+    // entry's current Contributions - reused by both BuildContributionBreakdown (to exclude a
+    // group-wide pair from a row's own nested AttacksLines) and BuildGroupWideAttacksLines (to
+    // render it once, above the breakdown). Ability identity is (Name, Text), the same convention
+    // CompositeUnresolvedAbilities/AssignFlagMarkers already use.
+    private static IReadOnlyList<(Ability SourceAbility, int Amount)> ResolveGroupWideAttacksPairs(
+        IReadOnlyList<WeaponContribution> contributions)
+    {
+        if (contributions.Count == 0)
+            return [];
+
+        var candidates = contributions
+            .SelectMany(c => c.AttacksContributions)
+            .DistinctBy(a => (a.SourceAbility.Name, a.SourceAbility.Text, a.Amount))
+            .ToList();
+
+        return candidates
+            .Where(candidate => contributions.All(c => c.AttacksContributions.Any(a =>
+                a.SourceAbility.Name == candidate.SourceAbility.Name &&
+                a.SourceAbility.Text == candidate.SourceAbility.Text &&
+                a.Amount == candidate.Amount)))
+            .Select(candidate => (candidate.SourceAbility, candidate.Amount))
+            .ToList();
+    }
+
+    // A row's own nested ability-contribution lines: every AttacksContribution it carries, minus
+    // whichever pairs are promoted to a single group-wide line instead (design.md D3) - Count is the
+    // row's own Count (the number of models this specific row's value already scales), never the
+    // group-wide total.
+    private static IReadOnlyList<AttacksContributionLine> RowAttacksLines(
+        IReadOnlyList<AttacksContribution> contributions, int count,
+        IReadOnlyList<(Ability SourceAbility, int Amount)> groupWidePairs) =>
+        contributions
+            .Where(c => !groupWidePairs.Any(p =>
+                p.SourceAbility.Name == c.SourceAbility.Name &&
+                p.SourceAbility.Text == c.SourceAbility.Text &&
+                p.Amount == c.Amount))
+            .Select(c => new AttacksContributionLine(c.SourceAbility, c.Amount, count))
+            .ToList();
+
+    // Order-independent equality by source-ability identity + amount (design.md D3's widened
+    // uniformity check) - two contributions can list their own matched Attacks effects in different
+    // orders (ability iteration order is not a meaningful signal) and still agree.
+    private static bool AttacksContributionsMatch(
+        IReadOnlyList<AttacksContribution> a, IReadOnlyList<AttacksContribution> b)
+    {
+        static IEnumerable<(string Name, string Text, int Amount)> Key(IReadOnlyList<AttacksContribution> list) =>
+            list.Select(x => (x.SourceAbility.Name, x.SourceAbility.Text, x.Amount)).OrderBy(t => t);
+
+        return Key(a).SequenceEqual(Key(b));
     }
 
     // Single forward scan: a new run starts whenever ComponentName or Statline differs from the
@@ -890,6 +961,15 @@ public sealed record WholeUnitAbilitySpanViewModel(
     IReadOnlyList<Ability> UnitAbilities,
     bool IsFullyDead);
 
+/// <summary>One rendered Attacks ability-contribution line (resolve-weapon-attacks-effects) -
+/// either nested under a specific <see cref="WeaponContributionRow"/> (row-bound/partial reach,
+/// <see cref="Count"/> is that row's own Count) or rendered once above a weapon entry's whole
+/// breakdown (group-wide reach, <see cref="Count"/> is the entry's total reach - see
+/// <see cref="LivePlayModel.BuildGroupWideAttacksLines"/>). <see cref="Amount"/> is the source
+/// ability's own resolved signed per-model delta - never folded into any contributor row's own
+/// value, so the entry's total is always the literal sum of every rendered number.</summary>
+public sealed record AttacksContributionLine(Ability SourceAbility, int Amount, int Count);
+
 /// <summary>One row of a weapon entry's contribution breakdown - either a merged display row
 /// (<see cref="SelectKey"/> null, spans every raw contribution in <see cref="GroupKey"/>) or a raw
 /// per-contribution row (<see cref="SelectKey"/> set - see <see cref="LivePlayModel.SelectKey"/>).
@@ -897,14 +977,18 @@ public sealed record WholeUnitAbilitySpanViewModel(
 /// always <c>PerModelAttacks.Scale(Count)</c> - safe to render standalone since every row's own
 /// Count/PerModelAttacks are shown right beside it. Raw rows always exist (used by live-play.js for
 /// selection-driven filtering/recompute regardless of whether a visible expand trigger exists for
-/// this weapon - see <see cref="WeaponRowViewModel.ShowsBreakdownTrigger"/>).</summary>
+/// this weapon - see <see cref="WeaponRowViewModel.ShowsBreakdownTrigger"/>). <see cref="AttacksLines"/>
+/// lists every Attacks ability-contribution line nested under this specific row (excluding any
+/// promoted to a group-wide line instead - <see cref="LivePlayModel.BuildContributionBreakdown"/>),
+/// empty when none reach it.</summary>
 public sealed record WeaponContributionRow(
     string Label,
     int Count,
     DiceExpression PerModelAttacks,
     DiceExpression Subtotal,
     string GroupKey,
-    string? SelectKey)
+    string? SelectKey,
+    IReadOnlyList<AttacksContributionLine>? AttacksLines = null)
 {
     /// <summary>The plain integer value of <see cref="Subtotal"/> when it's a fixed (non-dice)
     /// expression, for live-play.js to sum without needing any <see cref="DiceExpression"/>
@@ -912,6 +996,8 @@ public sealed record WeaponContributionRow(
     /// accepted scope limit for client-side recompute of a dice-valued contribution sharing a
     /// weapon with others.</summary>
     public int? SubtotalValue => Subtotal.Count == 0 ? Subtotal.Modifier : null;
+
+    public IReadOnlyList<AttacksContributionLine> AttacksLines { get; init; } = AttacksLines ?? [];
 }
 
 /// <summary>A weapon entry plus its contribution breakdown (always at least one row - see
@@ -922,7 +1008,11 @@ public sealed record WeaponContributionRow(
 /// <see cref="LivePlayModel.WeaponScalarFieldOrder"/>'s own field-name strings) and
 /// <see cref="NameMarker"/>/<see cref="NameMarkerSource"/> are filled in by
 /// <see cref="LivePlayModel.AssignFlagMarkers"/>, sharing that method's one marker registry with the
-/// Statline family (render-weapon-characteristic-effects design.md D2).</summary>
+/// Statline family (render-weapon-characteristic-effects design.md D2). <see cref="GroupWideAttacksLines"/>
+/// lists every Attacks ability-contribution line that reaches every current contributor of this
+/// entry identically (resolve-weapon-attacks-effects design.md D3) - rendered once, above the
+/// breakdown, rather than repeated under each row (see <see cref="WeaponContributionRow.AttacksLines"/>
+/// for the row-bound/partial counterpart).</summary>
 public sealed record WeaponRowViewModel(
     AggregateWeaponEntry Entry,
     IReadOnlyList<WeaponContributionRow> Breakdown,
@@ -930,14 +1020,19 @@ public sealed record WeaponRowViewModel(
     IReadOnlyDictionary<string, string>? ValueMarkers = null,
     IReadOnlyDictionary<string, Ability>? ValueFlagSources = null,
     string? NameMarker = null,
-    Ability? NameMarkerSource = null)
+    Ability? NameMarkerSource = null,
+    IReadOnlyList<AttacksContributionLine>? GroupWideAttacksLines = null)
 {
     /// <summary>True when the unit has more than one ModelLine in total
-    /// (<see cref="HasMultipleModelLines"/>), or this entry itself carries a resolved-value marker
-    /// or an unresolved ability reference - so a flagged entry's source stays reachable even on an
-    /// otherwise single-ModelLine unit (render-weapon-characteristic-effects design.md D4).</summary>
+    /// (<see cref="HasMultipleModelLines"/>), or this entry itself carries a resolved-value marker,
+    /// an unresolved ability reference, or a recorded Attacks Effect amount - so a flagged entry's
+    /// source stays reachable even on an otherwise single-ModelLine unit (render-weapon-
+    /// characteristic-effects design.md D4, widened by resolve-weapon-attacks-effects design.md D4).</summary>
     public bool ShowsBreakdownTrigger =>
-        HasMultipleModelLines || NameMarker is not null || (ValueMarkers?.Count ?? 0) > 0;
+        HasMultipleModelLines || NameMarker is not null || (ValueMarkers?.Count ?? 0) > 0 ||
+        Entry.Contributions.Any(c => c.AttacksContributions.Count > 0);
+
+    public IReadOnlyList<AttacksContributionLine> GroupWideAttacksLines { get; init; } = GroupWideAttacksLines ?? [];
 
     /// <summary>This entry's own footnote marker for one S/AP/D value cell (see
     /// <see cref="LivePlayModel.WeaponScalarFieldOrder"/>), or null when that value isn't

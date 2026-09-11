@@ -15,9 +15,11 @@ record, not this file).
   Faction-wide ones (`CoreRule`/`ArmyRule`); a Psychic-specific tag doesn't exist yet.
 - **Multi-profile-weapon "select one profile" disclaimer** — some weapons have multiple firing
   profiles the player picks between; not flagged today.
-- **Ability-driven attack modifiers** — e.g. a unit-wide "+1 Attack" ability changing a printed
-  total. Depends on resolving an Attacks (`"A"`) effect — see `WeaponProfile`-targeting rule
-  effects' deferred coverage below; `WeaponProfile.A` stays a plain `DiceExpression` today.
+- ~~**Ability-driven attack modifiers**~~ — done via `resolve-weapon-attacks-effects` (implemented,
+  not yet archived): a matched, non-caveated Attacks effect now renders as a separate, additive
+  ability-contribution line in a weapon's contribution breakdown. `WeaponProfile.A` itself still
+  stays a plain `DiceExpression` (deliberately - see that change's own design.md D1), the resolved
+  amount lives alongside it, not folded into it.
 - **Split `Keywords` into unit-wide-union vs. per-component, or add `FactionKeywords`** — currently
   one unioned set.
 - **Split `wwwroot/css/site.css` into a `/LivePlay`-only stylesheet** — it still ships dead 10e
@@ -50,8 +52,17 @@ candidates for a future phase, not scoped anywhere yet:
 - Two "...and those weapons have the [KEYWORD] ability" anaphora continuations — correctly extract
   the characteristic Effect and flag `IsCaveated`, but leave the keyword grant itself unextracted
   (feeds the `KeywordEffect`/`AbilityEffect` idea below).
-- Resolving an Attacks (`"A"`) effect — `WeaponProfile.A` stays a plain `DiceExpression`, deliberately
-  unretyped by `CharacteristicModificationKinds`.
+
+Resolving an Attacks (`"A"`) effect — the last item that was on this list — is no longer deferred:
+`openspec/changes/resolve-weapon-attacks-effects/` (implemented 2026-09-11, all 18 tasks done,
+verified against real BSData - not yet archived) picked it up after real corpus evidence turned up
+(Scorpion Tail / Writhing Tentacles). That corpus check found a wrinkle worth recording: both are
+Crusade Boons content, excluded from a datasheet's always-present `Abilities` by
+`BsdataDatasheetMapper.IsGameModeGated` - but still reachable through the same on-demand
+`Datasheet.TryResolveAbility` path a wargear-granted ability like Vexilla already uses, so a real
+import naming one as a wargear item genuinely resolves and renders it end-to-end (proven directly
+against the real bundled BSData in `WeaponCharacteristicEffectRealCorpusTests`). Ready for
+`/opsx:archive`.
 
 **Permanent boundaries, not tasks**: an effect debuffing an *enemy's* weapon is unresolvable until
 the attacker/defender two-roster half of the app exists (no opposing-roster concept today).

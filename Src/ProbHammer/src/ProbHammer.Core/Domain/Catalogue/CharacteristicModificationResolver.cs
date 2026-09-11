@@ -84,4 +84,13 @@ public static class CharacteristicModificationResolver
 
         return new NumericCharacteristicValue(CharacteristicModificationClamp.Apply(characteristic, resolved));
     }
+
+    /// <summary>Resolves a classified <see cref="WeaponCharacteristicEffect"/> naming the Attacks
+    /// characteristic into its signed per-model amount - the weapon-Attacks counterpart to
+    /// <see cref="Resolve"/>'s own mutated-profile path, which never covers Attacks (see
+    /// <see cref="WeaponCharacteristicEffectResolver"/>'s own doc comment). Throws for a Set verb,
+    /// matching <see cref="ResolveDelta"/>'s own existing behavior - no real corpus example uses
+    /// one. Callers are responsible for passing only an effect whose Characteristic is "A".</summary>
+    public static int ResolveAttacksAmount(WeaponCharacteristicEffect effect) =>
+        ResolveDelta(CharacteristicModificationKinds.Of("A"), effect.Verb, effect.Amount);
 }

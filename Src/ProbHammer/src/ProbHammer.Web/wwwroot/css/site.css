@@ -990,6 +990,26 @@ button.filter-flag:hover { opacity: 0.8; }
 }
 .live-play-page .weapon-table tr.weapon-flag-legend-row .statline-flag-legend { margin-top: 0; }
 
+/* Attacks ability-contribution line (resolve-weapon-attacks-effects): a nested addend under a
+   weapon entry's breakdown, not a .weapon-contribution-row - excluded from that class deliberately
+   so it's never mistaken for a real per-contributor row by the selection-filtering group logic
+   (recomputeWeaponRow); its own show/hide is wired into initWeaponProvenanceToggles alongside
+   .weapon-flag-legend-row. Shares .weapon-contribution-row's own dim/italic look. */
+.live-play-page .weapon-table tr.weapon-attacks-contribution-row td {
+    color: var(--text-dim);
+    font-size: 0.72rem;
+    font-style: italic;
+    white-space: normal;
+}
+/* A row-bound/partial line nests under its own contributor row, one indent deeper than that row's
+   own label; a group-wide line sits at the same indent as a contributor row, since it isn't nested
+   under any one of them. */
+.weapon-attacks-contribution-row.row-bound .weapon-attacks-contribution-label { padding-left: 2.75rem; }
+.weapon-attacks-contribution-row.group-wide .weapon-attacks-contribution-label { padding-left: 1.75rem; }
+/* The trailing "(Count×Amount)" text never itself splits across two lines, even if the surrounding
+   .flag-legend-line flex row has to wrap the whole phrase down at a very narrow width. */
+.weapon-attacks-contribution-amount { white-space: nowrap; }
+
 /* One bordered pill per keyword - matches the GW-app/Wahapedia reference precedent and lets each
    keyword be identified as its own tap target (a joined span can't). */
 .weapon-tags {

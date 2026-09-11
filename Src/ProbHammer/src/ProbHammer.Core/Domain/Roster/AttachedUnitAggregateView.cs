@@ -18,6 +18,13 @@ public sealed record AggregateStatlineEntry(
     int InitialCount,
     IReadOnlyList<ModelLineLoadout> Loadouts);
 
+/// <summary>One matched, non-caveated Attacks-characteristic effect reaching a
+/// <see cref="WeaponContribution"/> - the source ability plus its own resolved signed per-model
+/// amount (<see cref="CharacteristicModificationResolver.ResolveAttacksAmount"/>). Never folded
+/// into <see cref="WeaponContribution.PerModelAttacks"/> - see that record's own doc comment for
+/// why Attacks can't reuse S/AP/D's mutate-in-place convention.</summary>
+public sealed record AttacksContribution(Ability SourceAbility, int Amount);
+
 /// <summary>
 /// <see cref="LoadoutIndex"/> is the contributing <c>ModelLine</c>'s position within its
 /// statline's <see cref="AggregateStatlineEntry.Loadouts"/> list (same ordering
@@ -34,6 +41,12 @@ public sealed record AggregateStatlineEntry(
 /// Empty when no caveated match reaches this contribution. Independent of whether this
 /// contribution's own <see cref="PerModelAttacks"/>/<see cref="Name"/> already reflect an applied
 /// mutation from a different, non-caveated ability.
+/// <see cref="AttacksContributions"/> is Attacks' own genuinely different mechanism
+/// (`resolve-weapon-attacks-effects`): unlike S/AP/D, a matched Attacks effect never mutates
+/// <see cref="PerModelAttacks"/> in place (Attacks is excluded from
+/// <see cref="WeaponProfile.EqualityKey()"/>'s grouping identity, so mutating it in place would
+/// discard the per-ability attribution a consumer needs) - it's recorded here instead, empty when
+/// no non-caveated Attacks match reaches this contribution.
 /// </summary>
 public sealed record WeaponContribution(
     string ComponentName,
@@ -42,9 +55,11 @@ public sealed record WeaponContribution(
     DiceExpression PerModelAttacks,
     string Name,
     int LoadoutIndex = -1,
-    IReadOnlyList<Ability>? UnresolvedAbilities = null)
+    IReadOnlyList<Ability>? UnresolvedAbilities = null,
+    IReadOnlyList<AttacksContribution>? AttacksContributions = null)
 {
     public IReadOnlyList<Ability> UnresolvedAbilities { get; init; } = UnresolvedAbilities ?? [];
+    public IReadOnlyList<AttacksContribution> AttacksContributions { get; init; } = AttacksContributions ?? [];
 }
 
 /// <summary>

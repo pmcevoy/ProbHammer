@@ -359,10 +359,12 @@ public class WeaponCharacteristicEffectRosterTests
     }
 
     [Fact]
-    public void EffectNamingBothAResolvableCharacteristicAndAttacks_LeavesAttacksUnchanged()
+    public void EffectNamingBothAResolvableCharacteristicAndAttacks_ResolvesBothIndependently()
     {
         // Zealot-shaped: "improve the Strength and Attacks characteristics... by 1" splits into two
-        // atomic WeaponCharacteristicEffects sharing one selector - only the Strength one resolves.
+        // atomic WeaponCharacteristicEffects sharing one selector - both now resolve independently
+        // (resolve-weapon-attacks-effects): Strength mutates the profile, Attacks is recorded as a
+        // separate per-contribution amount, neither displacing the other.
         var weapon = new MeleeWeapon("Chainsword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
         var zealousFury = new Ability
         {
@@ -391,6 +393,130 @@ public class WeaponCharacteristicEffectRosterTests
 
         var entry = view.Weapons.Should().ContainSingle().Subject;
         entry.Profile.S.Value.Should().Be((CharacteristicValue)5);
-        entry.TotalAttacks.Should().Be(DiceExpression.Fixed(3)); // Attacks left unresolved - 1 model x A3
+        entry.TotalAttacks.Should().Be(DiceExpression.Fixed(4)); // 1 model x (base A3 + 1)
+        var contribution = entry.Contributions.Single();
+        contribution.PerModelAttacks.Should().Be(DiceExpression.Fixed(3)); // base value, unmutated
+        contribution.AttacksContributions.Should().ContainSingle(c =>
+            c.SourceAbility.Name == "Zealous Fury" && c.Amount == 1);
+    }
+
+    [Fact]
+    public void MatchedAttacksEffect_RecordsAContributionWithoutChangingPerModelAttacks()
+    {
+        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
+        var boost = new Ability
+        {
+            Name = "Extra Limbs",
+            Text = "Add 1 to the Attacks characteristic of melee weapons equipped by this model.",
+            Scope = AbilityScope.Model,
+            Origin = AbilityOrigin.Intrinsic
+        };
+        var baseline = RuleClassificationBaseline.FromEntries(
+        [
+            new RuleClassificationBaselineEntry(
+                Text: boost.Text,
+                Target: new SelfRuleTarget(),
+                Effects:
+                [
+                    new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "A", EffectVerb.Improve, 1)
+                ])
+        ]);
+        var datasheet = new Datasheet(
+            "Some Unit", factionKeywords: [], keywords: [], abilities: [boost],
+            statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
+        var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 2)]);
+
+        var view = AttachedUnitAggregator.Build(unit, baseline);
+
+        var entry = view.Weapons.Should().ContainSingle().Subject;
+        var contribution = entry.Contributions.Single();
+        contribution.PerModelAttacks.Should().Be(DiceExpression.Fixed(3));
+        contribution.AttacksContributions.Should().ContainSingle(c =>
+            c.SourceAbility.Name == "Extra Limbs" && c.Amount == 1);
+        entry.TotalAttacks.Should().Be(DiceExpression.Fixed(8)); // 2 models x (3 base + 1)
+    }
+
+    [Fact]
+    public void RecordedAttacksContribution_DoesNotSplitOrMergeAnOtherwiseIdenticalGroup()
+    {
+        // Regression against "Same weapon profile from different components is combined": one
+        // contribution carries a recorded Attacks amount, the other doesn't - both still merge into
+        // one entry, since Attacks plays no part in structural profile equality.
+        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
+        var boost = new Ability
+        {
+            Name = "Extra Limbs",
+            Text = "Add 1 to the Attacks characteristic of melee weapons equipped by this model.",
+            Scope = AbilityScope.Model,
+            Origin = AbilityOrigin.Intrinsic
+        };
+        var baseline = RuleClassificationBaseline.FromEntries(
+        [
+            new RuleClassificationBaselineEntry(
+                Text: boost.Text,
+                Target: new SelfRuleTarget(),
+                Effects:
+                [
+                    new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "A", EffectVerb.Improve, 1)
+                ])
+        ]);
+
+        var bodyguardDatasheet = new Datasheet(
+            "Sword Brethren Squad", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Sword Brother", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
+        var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Sword Brother", [weapon.Name], count: 4)]);
+
+        var leaderDatasheet = new Datasheet(
+            "Marshal", factionKeywords: [], keywords: [], abilities: [boost],
+            statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: [weapon]);
+        var leader = new Unit(leaderDatasheet, [], [new ModelLine("Marshal", [weapon.Name], count: 1)]);
+
+        var attachedUnit = new AttachedUnit(bodyguard, [leader]);
+
+        var view = AttachedUnitAggregator.Build(attachedUnit, baseline);
+
+        var entry = view.Weapons.Should().ContainSingle().Subject;
+        entry.Contributions.Should().HaveCount(2);
+        entry.TotalAttacks.Should().Be(DiceExpression.Fixed(16)); // 4x3 (Bodyguard) + 1x(3+1) (Marshal)
+    }
+
+    [Fact]
+    public void EffectNamingAnUnresolvableCharacteristicAlongsideAttacks_LeavesTheUnresolvableOneUnapplied()
+    {
+        // A hypothetical effect naming a characteristic this mechanism doesn't yet resolve (e.g.
+        // Weapon Skill) alongside Attacks - the unresolvable one is silently skipped (the existing
+        // GetWeaponScalarField/ApplyWeaponCharacteristicEffect throw path is never reached for it,
+        // since it's filtered out by ResolveContributionProfile's own S/AP/D allowlist), while the
+        // co-occurring Attacks effect still resolves.
+        var weapon = new MeleeWeapon("Chainsword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
+        var hybrid = new Ability
+        {
+            Name = "Hybrid Boost",
+            Text = "Improve the Weapon Skill and Attacks characteristics of melee weapons equipped by this model by 1.",
+            Scope = AbilityScope.Model,
+            Origin = AbilityOrigin.Intrinsic
+        };
+        var baseline = RuleClassificationBaseline.FromEntries(
+        [
+            new RuleClassificationBaselineEntry(
+                Text: hybrid.Text,
+                Target: new SelfRuleTarget(),
+                Effects:
+                [
+                    new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "WS", EffectVerb.Improve, 1),
+                    new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "A", EffectVerb.Improve, 1)
+                ])
+        ]);
+        var datasheet = new Datasheet(
+            "Some Unit", factionKeywords: [], keywords: [], abilities: [hybrid],
+            statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
+        var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 1)]);
+
+        var act = () => AttachedUnitAggregator.Build(unit, baseline);
+
+        act.Should().NotThrow();
+        var view = AttachedUnitAggregator.Build(unit, baseline);
+        var entry = view.Weapons.Should().ContainSingle().Subject;
+        entry.TotalAttacks.Should().Be(DiceExpression.Fixed(4)); // 1 model x (base A3 + 1), WS ignored
     }
 }

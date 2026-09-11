@@ -72,7 +72,9 @@ AggregateStatlineEntry(ComponentName, StatlineName, Statline, RemainingCount, In
   // weapon list) so a fully-wiped loadout-variant still shows 0/InitialCount instead of
   // disappearing.
 
-WeaponContribution(ComponentName, StatlineName, Count, PerModelAttacks, Name: string, LoadoutIndex = -1)
+WeaponContribution(ComponentName, StatlineName, Count, PerModelAttacks, Name: string, LoadoutIndex = -1,
+                    UnresolvedAbilities: IReadOnlyList<Ability> = [],
+                    AttacksContributions: IReadOnlyList<AttacksContribution> = [])
   // ComponentName is the owning Unit.Datasheet.Name; Count is that ModelLine's RemainingCount.
   // Name is the contributing WeaponProfile's own Name, resolved at the same point PerModelAttacks
   // is (name-weapon-group-contributions) - feeds AggregateWeaponEntry.Name's composite computation
@@ -82,11 +84,25 @@ WeaponContribution(ComponentName, StatlineName, Count, PerModelAttacks, Name: st
   // the record's own doc comment for why it's needed (two sibling loadouts under the same statline
   // name are otherwise indistinguishable by ComponentName/StatlineName alone, and Count isn't
   // reliable either, since two loadouts can coincidentally share a model count).
+  // UnresolvedAbilities (resolve-weapon-characteristic-effects) names every present, bearer-scoped,
+  // selector-matched ability whose checked-in baseline entry is caveated - matched the same way an
+  // applied WeaponCharacteristicEffect would be, but left unapplied.
+  // AttacksContributions (resolve-weapon-attacks-effects) - see AttacksContribution below and
+  // "Weapon-characteristic effect resolution" further down.
+
+AttacksContribution(SourceAbility: Ability, Amount: int)
+  // resolve-weapon-attacks-effects: one matched, non-caveated Attacks-characteristic effect
+  // reaching a WeaponContribution - the source ability plus its own resolved signed per-model
+  // amount (CharacteristicModificationResolver.ResolveAttacksAmount). Never folded into
+  // PerModelAttacks - see "Weapon-characteristic effect resolution" below for why.
 
 AggregateWeaponEntry(Profile: WeaponProfile, TotalAttacks: DiceExpression, Name: string,
-                      Contributions: IReadOnlyList<WeaponContribution>)
+                      Contributions: IReadOnlyList<WeaponContribution>,
+                      UnresolvedAbilities: IReadOnlyList<Ability> = [])
   // see record's own doc comment. Name is the group's own composite display name (below) - not
   // Profile.Name, which stays an arbitrary, non-authoritative first-inserted value.
+  // UnresolvedAbilities (resolve-weapon-characteristic-effects) is the same order-preserving-distinct
+  // composite Name already computes, but over every contribution's own UnresolvedAbilities.
 
 AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ability,
                        ContributingComponentNames: IReadOnlyList<string> = [])
@@ -112,18 +128,42 @@ AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ab
   for the paired UI collapse behavior.
 - `Weapons` — grouped by `WeaponProfile.EqualityKey()` (excludes Name/Range/Attacks) across only
   `RemainingCount > 0` model-lines. `TotalAttacks` is computed per contribution as
-  `PerModelAttacks.Scale(modelLine.RemainingCount)`, `Add`-reduced across every contributor sharing
-  the `EqualityKey` — **not** a representative contributor's raw `A` with only the model count
-  summed (the bug this shape fixes: 4 models × A3 and 1 model × A7 sharing an `EqualityKey` must
-  total 19, not silently report one contributor's A with Count=5). `Name` (`name-weapon-group-
-  contributions`) is likewise computed from every contribution, not a representative contributor's
-  own `Profile.Name`: order-preserving `Distinct()` over `Contributions.Select(c => c.Name)`, then
-  joined 1 → itself, 2 → `"X and Y"`, 3+ → `"X, Y, and Z"` (trailing Oxford comma) — the same
-  join convention `AttachedUnit.Name` already uses for its own Bodyguard-plus-Attached composite
-  name. Since Name plays no role in `EqualityKey`, a group merging two differently-named weapons
-  sharing an identical structural profile (e.g. a Bolt rifle and a Combat rifle) is expected and
-  unchanged by this — only what that group displays as its name changed, from an arbitrary single
-  contributor's Name to this composite.
+  `(profile.A + attacksContributions.Sum(c => c.Amount)).Scale(modelLine.RemainingCount)`,
+  `Add`-reduced across every contributor sharing the `EqualityKey` — **not** a representative
+  contributor's raw `A` with only the model count summed (the bug this shape fixes: 4 models × A3
+  and 1 model × A7 sharing an `EqualityKey` must total 19, not silently report one contributor's A
+  with Count=5). `Name` (`name-weapon-group-contributions`) is likewise computed from every
+  contribution, not a representative contributor's own `Profile.Name`: order-preserving `Distinct()`
+  over `Contributions.Select(c => c.Name)`, then joined 1 → itself, 2 → `"X and Y"`, 3+ →
+  `"X, Y, and Z"` (trailing Oxford comma) — the same join convention `AttachedUnit.Name` already uses
+  for its own Bodyguard-plus-Attached composite name. Since Name plays no role in `EqualityKey`, a
+  group merging two differently-named weapons sharing an identical structural profile (e.g. a Bolt
+  rifle and a Combat rifle) is expected and unchanged by this — only what that group displays as its
+  name changed, from an arbitrary single contributor's Name to this composite.
+- **Weapon-characteristic effect resolution** (`resolve-weapon-characteristic-effects`,
+  `resolve-weapon-attacks-effects`) — before `EqualityKey` grouping runs, `BuildWeapons` resolves
+  each contribution's own base `WeaponProfile` against every present, non-caveated, bearer-scoped,
+  selector-matched `WeaponCharacteristicEffect` from the checked-in `RuleClassificationBaseline`,
+  via two genuinely different mechanisms depending on the named characteristic:
+  - **S/AP/D** (`ResolveContributionProfile`) — mutates the matched field in place via
+    `WeaponCharacteristicEffectResolver.Resolve`, the same "mutate a `ScalarCharacteristicView`
+    field" convention `ApplyStatlineFlagRules` already uses for `Statline`. A mutation reaching
+    every current contributor of what would otherwise be one `EqualityKey` group leaves it merged
+    (reporting the mutated value); a mutation reaching only some of them splits the group.
+  - **Attacks ("A")** (`ResolveAttacksContributions`) — never mutates `WeaponProfile.A` (a bare
+    `DiceExpression`, excluded from `EqualityKey` since it's the summed quantity, not part of the
+    weapon's identity — `WeaponCharacteristicEffectResolver` still throws for it). Instead resolves
+    each matched effect into a signed per-model amount
+    (`CharacteristicModificationResolver.ResolveAttacksAmount`) and records it as a separate
+    `AttacksContribution` on the contribution, leaving `PerModelAttacks` untouched — folding several
+    abilities' amounts into one resolved value would discard the per-ability attribution the render
+    layer needs (`live-play-view`'s "Weapon Ability-Contribution Row Rendering"). A recorded Attacks
+    amount never splits or merges an `EqualityKey` group, unlike S/AP/D.
+
+  Both mechanisms share the same matching machinery (`IsBearerOf`/`WeaponSelectorMatches`/
+  `TryGetWeaponEffectEntry`) and the same caveated-branch counterpart (`FindUnresolvedAbilities`,
+  which never mutates or records anything — only names the source ability, covering S/AP/D/A alike,
+  since a caveated match's own activation condition has no evaluation mechanism in this app).
 - `Abilities` — built by `BuildAbilities`, walking components in `BuildStatlines`'s display order.
   For each component where `IsPresent`: one entry per `Datasheet.Ability` (`StatlineName: null`),
   one entry per resolved `Unit.Enhancements` ability (`StatlineName: null`, reported the same way

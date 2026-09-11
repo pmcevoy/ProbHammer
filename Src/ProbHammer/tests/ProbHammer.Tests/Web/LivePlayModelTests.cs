@@ -326,6 +326,144 @@ public class LivePlayModelTests
         ]);
     }
 
+    // Attacks ability-contribution rendering (resolve-weapon-attacks-effects).
+
+    [Fact]
+    public void BuildContributionBreakdown_RowBoundAttacksContribution_NestsUnderItsOwnContributorRow()
+    {
+        var ability = new Ability
+            { Name = "Extra Limbs", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
+        var profile = new RangedWeapon("Test Weapon", 12, DiceExpression.Fixed(1), 3, 4, 0, 1);
+        var entry = new AggregateWeaponEntry(
+            Profile: profile,
+            TotalAttacks: DiceExpression.Fixed(7),
+            Name: "Test Weapon",
+            Contributions:
+            [
+                new WeaponContribution("Squad A", "Trooper", 3, DiceExpression.Fixed(1), "Test Weapon",
+                    AttacksContributions: [new AttacksContribution(ability, 1)]),
+                new WeaponContribution("Squad A", "Gunner", 1, DiceExpression.Fixed(3), "Test Weapon")
+            ]);
+
+        var breakdown = LivePlayModel.BuildContributionBreakdown(entry, EmptyLoadoutLabels);
+
+        var trooperRow = breakdown.Single(r => r.Label == "Trooper");
+        trooperRow.AttacksLines.Should().ContainSingle(l =>
+            l.SourceAbility.Name == "Extra Limbs" && l.Amount == 1 && l.Count == 3);
+        breakdown.Single(r => r.Label == "Gunner").AttacksLines.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void BuildGroupWideAttacksLines_ContributionReachingEveryContributor_RendersOnce()
+    {
+        var ability = new Ability
+            { Name = "Aura Buff", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
+        var profile = new RangedWeapon("Test Weapon", 12, DiceExpression.Fixed(1), 3, 4, 0, 1);
+        var entry = new AggregateWeaponEntry(
+            Profile: profile,
+            TotalAttacks: DiceExpression.Fixed(8),
+            Name: "Test Weapon",
+            Contributions:
+            [
+                new WeaponContribution("Squad A", "Trooper", 3, DiceExpression.Fixed(1), "Test Weapon",
+                    AttacksContributions: [new AttacksContribution(ability, 1)]),
+                new WeaponContribution("Squad A", "Gunner", 1, DiceExpression.Fixed(3), "Test Weapon",
+                    AttacksContributions: [new AttacksContribution(ability, 1)])
+            ]);
+
+        var groupWideLines = LivePlayModel.BuildGroupWideAttacksLines(entry);
+
+        groupWideLines.Should().ContainSingle(l =>
+            l.SourceAbility.Name == "Aura Buff" && l.Amount == 1 && l.Count == 4);
+
+        var breakdown = LivePlayModel.BuildContributionBreakdown(entry, EmptyLoadoutLabels);
+        breakdown.Should().OnlyContain(r => r.AttacksLines.Count == 0);
+    }
+
+    [Fact]
+    public void BuildContributionBreakdown_PartialReachAttacksContribution_NestsOnlyUnderReachedRows()
+    {
+        var ability = new Ability
+            { Name = "Squad Boost", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
+        var profile = new RangedWeapon("Test Weapon", 12, DiceExpression.Fixed(1), 3, 4, 0, 1);
+        var entry = new AggregateWeaponEntry(
+            Profile: profile,
+            TotalAttacks: DiceExpression.Fixed(9),
+            Name: "Test Weapon",
+            Contributions:
+            [
+                new WeaponContribution("Squad A", "Trooper", 3, DiceExpression.Fixed(1), "Test Weapon",
+                    AttacksContributions: [new AttacksContribution(ability, 1)]),
+                new WeaponContribution("Squad A", "Gunner", 1, DiceExpression.Fixed(1), "Test Weapon",
+                    AttacksContributions: [new AttacksContribution(ability, 1)]),
+                new WeaponContribution("Squad A", "Sarge", 1, DiceExpression.Fixed(4), "Test Weapon")
+            ]);
+
+        // Not group-wide: it reaches 2 of 3 contributions, so no line is promoted above the breakdown.
+        LivePlayModel.BuildGroupWideAttacksLines(entry).Should().BeEmpty();
+
+        var breakdown = LivePlayModel.BuildContributionBreakdown(entry, EmptyLoadoutLabels);
+        breakdown.Single(r => r.Label == "Trooper").AttacksLines.Should().ContainSingle(l => l.Amount == 1);
+        breakdown.Single(r => r.Label == "Gunner").AttacksLines.Should().ContainSingle(l => l.Amount == 1);
+        breakdown.Single(r => r.Label == "Sarge").AttacksLines.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void
+        BuildContributionBreakdown_ContributionsAgreeingOnBaseButDifferingOnAttacksContributions_RenderSeparately()
+    {
+        var ability = new Ability
+            { Name = "Extra Limbs", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
+        var profile = new RangedWeapon("Test Weapon", 12, DiceExpression.Fixed(1), 3, 4, 0, 1);
+        var entry = new AggregateWeaponEntry(
+            Profile: profile,
+            TotalAttacks: DiceExpression.Fixed(5),
+            Name: "Test Weapon",
+            Contributions:
+            [
+                new WeaponContribution("Squad A", "Initiate", 1, DiceExpression.Fixed(1), "Test Weapon",
+                    AttacksContributions: [new AttacksContribution(ability, 1)]),
+                new WeaponContribution("Squad A", "Initiate", 1, DiceExpression.Fixed(1), "Test Weapon")
+            ]);
+
+        var breakdown = LivePlayModel.BuildContributionBreakdown(entry, EmptyLoadoutLabels);
+
+        // No merged row: both share PerModelAttacks but disagree on AttacksContributions.
+        breakdown.Should().HaveCount(2);
+        breakdown.Should().OnlyContain(r => r.SelectKey != null);
+    }
+
+    [Fact]
+    public void BuildUnitBlock_SingleModelLineUnit_AttacksOnlyFlaggedEntryShowsABreakdownTrigger()
+    {
+        var ability = new Ability
+            { Name = "Extra Limbs", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
+        var flaggedWeapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
+        var plainWeapon = new MeleeWeapon("Combat knife", A: 1, Ws: 3, S: 3, Ap: 0, D: 1);
+
+        var view = new AttachedUnitAggregateView(
+            Name: "Test Unit",
+            IsAttachedUnit: false,
+            Statlines: [new AggregateStatlineEntry("Squad A", "Trooper", new Statline(6, 4, 3, 2, 6, 2), 1, 1, [])],
+            Weapons:
+            [
+                new AggregateWeaponEntry(flaggedWeapon, DiceExpression.Fixed(4), flaggedWeapon.Name,
+                [
+                    new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(3), flaggedWeapon.Name,
+                        AttacksContributions: [new AttacksContribution(ability, 1)])
+                ]),
+                new AggregateWeaponEntry(plainWeapon, DiceExpression.Fixed(1), plainWeapon.Name,
+                    [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(1), plainWeapon.Name)])
+            ],
+            Abilities: [],
+            Keywords: new HashSet<string>());
+
+        var block = LivePlayModel.BuildUnitBlock(view);
+
+        block.MeleeWeapons.Single(w => w.Entry.Profile.Name == "Power sword").ShowsBreakdownTrigger.Should().BeTrue();
+        block.MeleeWeapons.Single(w => w.Entry.Profile.Name == "Combat knife").ShowsBreakdownTrigger.Should().BeFalse();
+    }
+
     [Fact]
     public void OnGet_AttachesContributionBreakdown_ForCrusaderSquadsMergedBoltPistolRow()
     {

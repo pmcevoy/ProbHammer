@@ -277,6 +277,8 @@ public static class AttachedUnitAggregator
                 var baseProfile = unit.Datasheet.ResolveWeaponProfile(weaponName);
                 var profile = ResolveContributionProfile(baseProfile, unit, modelLine, abilities, baseline);
                 var unresolvedAbilities = FindUnresolvedAbilities(baseProfile, unit, modelLine, abilities, baseline);
+                var attacksContributions =
+                    ResolveAttacksContributions(baseProfile, unit, modelLine, abilities, baseline);
                 var key = profile.EqualityKey();
 
                 var contribution = new WeaponContribution(
@@ -286,8 +288,10 @@ public static class AttachedUnitAggregator
                     PerModelAttacks: profile.A,
                     Name: profile.Name,
                     LoadoutIndex: LoadoutIndexOf(unit, modelLine),
-                    UnresolvedAbilities: unresolvedAbilities);
-                var scaledAttacks = profile.A.Scale(modelLine.RemainingCount);
+                    UnresolvedAbilities: unresolvedAbilities,
+                    AttacksContributions: attacksContributions);
+                var scaledAttacks =
+                    (profile.A + attacksContributions.Sum(c => c.Amount)).Scale(modelLine.RemainingCount);
 
                 if (groups.TryGetValue(key, out var existing))
                 {
@@ -311,8 +315,9 @@ public static class AttachedUnitAggregator
     // Applies every present, non-caveated, bearer-scoped, selector-matched WeaponCharacteristicEffect
     // to this contribution's own resolved profile before EqualityKey grouping runs (see BuildWeapons'
     // own comment). Reads the same abilities list BuildAbilities already assembles - no separate
-    // per-component walk. An Attacks-characteristic effect is filtered out here rather than reaching
-    // WeaponCharacteristicEffectResolver, which stays fail-loud for that case (design.md D3).
+    // per-component walk. An Attacks-characteristic effect is filtered out here - it's handled
+    // entirely by ResolveAttacksContributions' own separate path instead (design.md D2), never by
+    // WeaponCharacteristicEffectResolver, which stays fail-loud for that case.
     private static WeaponProfile ResolveContributionProfile(
         WeaponProfile profile, Unit unit, ModelLine modelLine,
         IReadOnlyList<AggregateAbilityEntry> abilities, RuleClassificationBaseline baseline)
@@ -322,7 +327,7 @@ public static class AttachedUnitAggregator
             .Where(x => x.Matched is not null)
             .Where(x => IsBearerOf(x.Entry, x.Matched!.Target, unit.Datasheet.Name, modelLine.StatlineName))
             .SelectMany(x => x.Matched!.Effects.OfType<WeaponCharacteristicEffect>()
-                .Where(e => e.Characteristic != "A")
+                .Where(e => e.Characteristic is "S" or "AP" or "D")
                 .Where(e => WeaponSelectorMatches(e.Selector, profile))
                 .Select(e => (Effect: e, SourceAbility: x.Entry.Ability)));
 
@@ -333,12 +338,36 @@ public static class AttachedUnitAggregator
         return resolved;
     }
 
+    // Sibling to ResolveContributionProfile, for the Attacks characteristic specifically
+    // (design.md D1/D2): identical IsBearerOf/WeaponSelectorMatches/TryGetWeaponEffectEntry
+    // matching against the same unmutated base profile, but collects a list of signed per-model
+    // deltas instead of mutating a WeaponProfile field - there is no WeaponProfile.A
+    // ScalarCharacteristicView field to mutate, and folding several abilities' amounts into one
+    // resolved value would discard the per-ability attribution the render layer needs.
+    private static IReadOnlyList<AttacksContribution> ResolveAttacksContributions(
+        WeaponProfile profile, Unit unit, ModelLine modelLine,
+        IReadOnlyList<AggregateAbilityEntry> abilities, RuleClassificationBaseline baseline)
+    {
+        return abilities
+            .Select(a => (Entry: a, Matched: TryGetWeaponEffectEntry(baseline, a.Ability, isCaveated: false)))
+            .Where(x => x.Matched is not null)
+            .Where(x => IsBearerOf(x.Entry, x.Matched!.Target, unit.Datasheet.Name, modelLine.StatlineName))
+            .SelectMany(x => x.Matched!.Effects.OfType<WeaponCharacteristicEffect>()
+                .Where(e => e.Characteristic == "A")
+                .Where(e => WeaponSelectorMatches(e.Selector, profile))
+                .Select(e => new AttacksContribution(
+                    x.Entry.Ability, CharacteristicModificationResolver.ResolveAttacksAmount(e))))
+            .ToList();
+    }
+
     // Caveated-branch counterpart to ResolveContributionProfile (design.md D5): identical
     // IsBearerOf/WeaponSelectorMatches matching against the same unmutated base profile, admitting a
     // caveated baseline entry instead of a non-caveated one, and never mutating the profile - only
     // naming the source ability so a caveated match is still visible without evaluating the
     // activation condition this app has no mechanism for (attached-unit-tracker's "Aggregate Weapon
-    // Count View" requirement).
+    // Count View" requirement). Includes Attacks alongside S/AP/D (design.md D2) - a caveated
+    // Attacks match still surfaces via this same unresolved-ability-reference mechanism, unlike the
+    // non-caveated case above, which routes Attacks through ResolveAttacksContributions instead.
     private static IReadOnlyList<Ability> FindUnresolvedAbilities(
         WeaponProfile profile, Unit unit, ModelLine modelLine,
         IReadOnlyList<AggregateAbilityEntry> abilities, RuleClassificationBaseline baseline)
@@ -348,7 +377,7 @@ public static class AttachedUnitAggregator
             .Where(x => x.Matched is not null)
             .Where(x => IsBearerOf(x.Entry, x.Matched!.Target, unit.Datasheet.Name, modelLine.StatlineName))
             .Where(x => x.Matched!.Effects.OfType<WeaponCharacteristicEffect>()
-                .Where(e => e.Characteristic != "A")
+                .Where(e => e.Characteristic is "S" or "AP" or "D" or "A")
                 .Any(e => WeaponSelectorMatches(e.Selector, profile)))
             .Select(x => x.Entry.Ability)
             .DistinctBy(a => (a.Name, a.Text))

@@ -102,4 +102,57 @@ public class WeaponCharacteristicEffectRealCorpusTests
         weaponRow.NameMarker.Should().Be("*");
         weaponRow.FlagLegend.Should().ContainSingle(l => l.Marker == "*" && l.Source.Name == "Zealot");
     }
+
+    // resolve-weapon-attacks-effects task 4.4: proposal.md names Scorpion Tail/Writhing Tentacles
+    // (Chaos Space Marines/Death Guard) as real, uncaveated corpus evidence that this gap is visible
+    // today. Investigating the real bundled BSData found Scorpion Tail is Crusade Boons content (the "Chaos
+    // Boons" selection group) - the same category BsdataDatasheetMapper's own IsGameModeGated doc
+    // comment names by name as its motivating exclusion ("without it, /LivePlay would show abilities
+    // like Chaos Boons/Mark of Chaos options that don't belong to matched play at all"). That gating
+    // keeps it out of Chosen's always-present Abilities list (confirmed below) - but, unlike a
+    // Statline-scoped ability, it's still reachable through the same on-demand
+    // Datasheet.TryResolveAbility path a wargear-granted ability like Vexilla already uses
+    // (ArmyRosterEnricher.ResolveWargearItem falls back to it for any Weapons-list item that isn't a
+    // weapon profile name) - so a real import naming it as a wargear item still resolves it as a
+    // present ability, and this test proves that real end-to-end path actually applies the real,
+    // checked-in, uncaveated baseline entry against a real BSData-resolved melee weapon.
+    [Fact]
+    public void ScorpionTail_IsExcludedFromChosensAbilitiesList_ButStillResolvesAndRendersWhenNamedAsWargear()
+    {
+        var source = new LocalDiskBsdataCatalogueSource(BundledBsDataRoot());
+        var catalogue = ResolvedBsdataCatalogue.Build(source, "Chaos - Chaos Space Marines.json");
+        var datasheet = catalogue.ResolveDatasheet("Chosen");
+        datasheet.Abilities.Should().NotContain(a => a.Name == "Scorpion Tail");
+
+        var parsed = new ParsedArmyList(
+            Name: "Test Army", PointsSpent: 0, Faction: ["Chaos", "Chaos Space Marines"], Detachments: [],
+            ForceDisposition: "Test", BattleSize: "Incursion", PointsLimit: 1000, AttachmentGroups: [],
+            StandaloneUnits:
+            [
+                new ParsedUnit(
+                    "Chosen",
+                    [new ParsedModelGroup("Chosen", 1, ["Accursed weapon", "Scorpion Tail"])], [])
+            ]);
+
+        var roster = ArmyRosterEnricher.Enrich(parsed, catalogue);
+        var chosen = roster.Units.Single();
+        var baseline = RuleClassificationBaseline.Load(BundledBaselinePath());
+
+        var view = AttachedUnitAggregator.Build(chosen, baseline);
+
+        view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Scorpion Tail");
+        var weapon = view.Weapons.Should().ContainSingle(w => w.Profile.Name == "Accursed weapon").Subject;
+        var contribution = weapon.Contributions.Single();
+        contribution.AttacksContributions.Should()
+            .ContainSingle(c => c.SourceAbility.Name == "Scorpion Tail" && c.Amount == 1);
+        weapon.TotalAttacks.Should().Be(contribution.PerModelAttacks + 1);
+
+        var block = LivePlayModel.BuildUnitBlock(view);
+        var weaponRow = block.MeleeWeapons.Should().ContainSingle(w => w.Entry.Profile.Name == "Accursed weapon")
+            .Subject;
+        weaponRow.ShowsBreakdownTrigger.Should().BeTrue();
+        var groupWideLine = weaponRow.GroupWideAttacksLines.Should().ContainSingle().Subject;
+        groupWideLine.SourceAbility.Name.Should().Be("Scorpion Tail");
+        groupWideLine.Amount.Should().Be(1);
+    }
 }

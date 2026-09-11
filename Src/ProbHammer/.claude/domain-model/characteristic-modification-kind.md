@@ -20,7 +20,9 @@ CharacteristicModificationKind        // Domain/Catalogue/CharacteristicModifica
                                        // convention)
   Plain                               // see member's own doc comment (M, T, W, Oc, S, Range, and -
                                        // since classify-weapon-characteristic-effects - Damage
-                                       // ("D"), the first dice-shaped characteristic in this family)
+                                       // ("D"), and - since resolve-weapon-attacks-effects -
+                                       // Attacks ("A"), a signed-per-model-amount resolution only,
+                                       // never a mutated WeaponProfile field)
 
 CharacteristicModificationKinds.Of(characteristic) -> CharacteristicModificationKind
                                        // see class's and method's own doc comments
@@ -49,15 +51,21 @@ CharacteristicModificationResolver.ResolveVerbFromRawDelta(kind, delta) -> (Effe
                                        // comment) - not consumed at Build time.
 ```
 
-**Deliberately excludes InSv and `WeaponProfile`'s Attacks** — a scope correction made before any
-code was written, once the original draft (which folded InSv into `RollThreshold`) was found not to
-type-check against `InvulnerableSaveCharacteristicView`'s actual shape; see
+**Deliberately excludes InSv** — a scope correction made before any code was written, once the
+original draft (which folded InSv into `RollThreshold`) was found not to type-check against
+`InvulnerableSaveCharacteristicView`'s actual shape; see
 `introduce-characteristic-modification-kind/design.md`'s Context and Decisions for the full trail,
-and characteristic-modifier-caveats.md for the matching precedent. Attacks stays excluded even now
-that Damage is covered (below) - `classify-weapon-characteristic-effects`'s own Non-Goals treats
-classification and resolution as separately-sequenced work per characteristic, the same way a
-Statline Effect was provably extracted well before its own resolver existed; Attacks is real,
-classifiable `WeaponCharacteristicEffect` output today with no resolution path to consume it yet.
+and characteristic-modifier-caveats.md for the matching precedent.
+
+**Attacks ("A") is now covered too, but through a genuinely different resolution shape**
+(`resolve-weapon-attacks-effects`) — `CharacteristicModificationResolver.ResolveAttacksAmount`
+resolves a classified `WeaponCharacteristicEffect` naming Attacks into a signed per-model amount via
+the same `Plain`-family `ResolveDelta` sign arithmetic every other `Plain` characteristic uses. This
+is *not* the same mechanism as `Resolve`'s own mutated-`CharacteristicValue` path: `WeaponProfile.A`
+stays a bare `DiceExpression` with no `ScalarCharacteristicView` field to mutate (unlike S/AP/D),
+and `WeaponCharacteristicEffectResolver` still throws for "A" - the resolved amount is recorded as a
+separate `AttachedUnitAggregator.AttacksContribution` per contribution instead (see
+roster-context.md), never folded into a resolved value.
 
 **Damage ("D") is covered, despite being dice-shaped too** (`classify-weapon-characteristic-effects`)
 — the first characteristic this component resolves whose `CharacteristicValue` is a

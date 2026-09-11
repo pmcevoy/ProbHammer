@@ -256,6 +256,35 @@ public class CharacteristicModificationResolverTests
         CharacteristicModificationClamp.Apply(characteristic, value).Should().Be(expected);
     }
 
+    // Attacks resolution (resolve-weapon-attacks-effects) - a signed per-model amount, never a
+    // mutated CharacteristicValue.
+
+    [Fact]
+    public void ResolveAttacksAmount_ImproveEffect_ResolvesToAPositiveAmount()
+    {
+        var effect = new WeaponCharacteristicEffect(new AllWeapons(), "A", EffectVerb.Improve, 3);
+
+        CharacteristicModificationResolver.ResolveAttacksAmount(effect).Should().Be(3);
+    }
+
+    [Fact]
+    public void ResolveAttacksAmount_WorsenEffect_ResolvesToANegativeAmount()
+    {
+        var effect = new WeaponCharacteristicEffect(new AllWeapons(), "A", EffectVerb.Worsen, 1);
+
+        CharacteristicModificationResolver.ResolveAttacksAmount(effect).Should().Be(-1);
+    }
+
+    [Fact]
+    public void ResolveAttacksAmount_SetEffect_ThrowsRatherThanGuessAtASign()
+    {
+        var effect = new WeaponCharacteristicEffect(new AllWeapons(), "A", EffectVerb.Set, 3);
+
+        var act = () => CharacteristicModificationResolver.ResolveAttacksAmount(effect);
+
+        act.Should().Throw<ArgumentException>();
+    }
+
     [Fact]
     public void Resolve_ReproducesVexillaStatlineFlagRulesResolvedObjectiveControl()
     {

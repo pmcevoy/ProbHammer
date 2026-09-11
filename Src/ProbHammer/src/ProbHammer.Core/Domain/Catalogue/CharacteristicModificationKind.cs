@@ -24,12 +24,14 @@ public enum CharacteristicModificationKind
 
 /// <summary>Closed characteristic-name -> <see cref="CharacteristicModificationKind"/> lookup,
 /// keyed by the same plain characteristic-name strings <see cref="ScalarCharacteristicEffect.Characteristic"/>
-/// already uses. Deliberately excludes InSv and WeaponProfile's Attacks: InSv is a compound
-/// melee/ranged <see cref="InvulnerableSave"/>, not a plain scalar; Attacks is a bare
-/// <see cref="DiceExpression"/> with no resolver/clamp path yet (see
-/// `classify-weapon-characteristic-effects` design.md's own Non-Goals - classification-only for
-/// Attacks, deliberately deferred). Damage ("D") IS covered, despite being dice-shaped too - see
-/// <see cref="CharacteristicModificationResolver.Resolve"/>'s own dice-aware branch.</summary>
+/// already uses. Deliberately excludes InSv: it's a compound melee/ranged
+/// <see cref="InvulnerableSave"/>, not a plain scalar. Attacks ("A") IS covered - it resolves a
+/// signed per-model delta only (`resolve-weapon-attacks-effects`), never a mutated
+/// <see cref="WeaponProfile"/> field: <see cref="WeaponProfile.A"/> stays a bare
+/// <see cref="DiceExpression"/> with no resolver/clamp path of its own, and
+/// <see cref="WeaponCharacteristicEffectResolver"/> still throws for it. Damage ("D") IS covered
+/// too, despite being dice-shaped - see <see cref="CharacteristicModificationResolver.Resolve"/>'s
+/// own dice-aware branch.</summary>
 public static class CharacteristicModificationKinds
 {
     private static readonly Dictionary<string, CharacteristicModificationKind> Kinds =
@@ -46,12 +48,12 @@ public static class CharacteristicModificationKinds
             ["Oc"] = CharacteristicModificationKind.Plain,
             ["S"] = CharacteristicModificationKind.Plain,
             ["Range"] = CharacteristicModificationKind.Plain,
-            ["D"] = CharacteristicModificationKind.Plain
+            ["D"] = CharacteristicModificationKind.Plain,
+            ["A"] = CharacteristicModificationKind.Plain
         };
 
-    /// <summary>Throws for a characteristic name this component doesn't cover (including InSv and
-    /// Attacks) rather than guessing - see this type's own doc comment for why those are
-    /// excluded.</summary>
+    /// <summary>Throws for a characteristic name this component doesn't cover (including InSv)
+    /// rather than guessing - see this type's own doc comment for why that's excluded.</summary>
     public static CharacteristicModificationKind Of(string characteristic) =>
         Kinds.TryGetValue(characteristic, out var kind)
             ? kind

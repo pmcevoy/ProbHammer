@@ -64,12 +64,14 @@ function initWeaponProvenanceToggles(unitEl) {
             const weaponId = button.dataset.weaponId;
             const expanded = button.getAttribute('aria-expanded') === 'true';
 
-            // .weapon-flag-legend-row is included here (not in recomputeWeaponRow's own
-            // .weapon-contribution-row query) so it expands/collapses with the breakdown without
-            // being mistaken for a real contribution by the selection-filtering group logic below.
+            // .weapon-flag-legend-row and .weapon-attacks-contribution-row are included here (not in
+            // recomputeWeaponRow's own .weapon-contribution-row query) so they expand/collapse with
+            // the breakdown without being mistaken for a real contribution by the selection-filtering
+            // group logic below.
             unitEl.querySelectorAll(
                 `tr.weapon-contribution-row[data-weapon-id="${weaponId}"], ` +
-                `tr.weapon-flag-legend-row[data-weapon-id="${weaponId}"]`)
+                `tr.weapon-flag-legend-row[data-weapon-id="${weaponId}"], ` +
+                `tr.weapon-attacks-contribution-row[data-weapon-id="${weaponId}"]`)
                 .forEach(row => {
                     row.hidden = expanded;
                 });
@@ -734,6 +736,23 @@ function initUnitSelection(unitEl) {
                 else sum += value;
             });
         });
+
+        // Attacks ability-contribution lines (resolve-weapon-attacks-effects) are never among
+        // breakdownRows above (deliberately not .weapon-contribution-row, so the group logic above
+        // never mistakes one for a real per-contributor row) - their own amount has to be folded in
+        // separately here, or this recompute would silently drop back to the base-only total on
+        // every page load, discarding the server-rendered TotalAttacks that already includes them.
+        // Not scaled down on a partial deselection (an accepted scope limit, same class as
+        // SubtotalValue's own dice-value limit above) - each line's full amount counts as long as
+        // anything in the entry is still selected.
+        if (numericOk) {
+            unitEl.querySelectorAll(`tr.weapon-attacks-contribution-row[data-weapon-id="${weaponId}"]`)
+                .forEach(line => {
+                    const amount = parseInt(line.dataset.amountTotal, 10);
+                    if (Number.isNaN(amount)) numericOk = false;
+                    else sum += amount;
+                });
+        }
 
         row.classList.toggle('selection-excluded', !anySelected);
 
