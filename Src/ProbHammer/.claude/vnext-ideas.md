@@ -15,11 +15,6 @@ record, not this file).
   Faction-wide ones (`CoreRule`/`ArmyRule`); a Psychic-specific tag doesn't exist yet.
 - **Multi-profile-weapon "select one profile" disclaimer** — some weapons have multiple firing
   profiles the player picks between; not flagged today.
-- ~~**Ability-driven attack modifiers**~~ — done via `resolve-weapon-attacks-effects` (implemented,
-  not yet archived): a matched, non-caveated Attacks effect now renders as a separate, additive
-  ability-contribution line in a weapon's contribution breakdown. `WeaponProfile.A` itself still
-  stays a plain `DiceExpression` (deliberately - see that change's own design.md D1), the resolved
-  amount lives alongside it, not folded into it.
 - **Split `Keywords` into unit-wide-union vs. per-component, or add `FactionKeywords`** — currently
   one unioned set.
 - **Split `wwwroot/css/site.css` into a `/LivePlay`-only stylesheet** — it still ships dead 10e
@@ -27,15 +22,22 @@ record, not this file).
 
 ## `WeaponProfile`-targeting rule effects — deferred coverage
 
-The six-phase plan explored 2026-09-10/11 (sibling to the already-shipped Statline
-characteristic-effect resolution work — `RuleEffectClassifier`/`CharacteristicEffect`/
-`CharacteristicModificationResolver`/`RuleClassificationBaseline`) shipped in full: `name-weapon-
-group-contributions`, `classify-weapon-characteristic-effects`, `resolve-weapon-characteristic-
-effects`, and `render-weapon-characteristic-effects` (all archived, last one 2026-09-11). Attached
-Unit weapon entries on `/LivePlay` now resolve real Strength/AP/Damage mutations from a checked-in,
-human-verified baseline against the live BSData corpus, splitting/merging aggregated weapon groups
-as needed; a caveated match instead surfaces an unresolved-ability-reference marker + shared legend,
-reusing the Statline family's own marker registry. See the archived changes for full phase-by-phase
+The plan explored 2026-09-10/11 (sibling to the already-shipped Statline characteristic-effect
+resolution work — `RuleEffectClassifier`/`CharacteristicEffect`/`CharacteristicModificationResolver`/
+`RuleClassificationBaseline`) shipped in full, including the Attacks-characteristic follow-up picked
+up after the original plan closed: `name-weapon-group-contributions`, `classify-weapon-characteristic-
+effects`, `resolve-weapon-characteristic-effects`, `render-weapon-characteristic-effects`, and
+`resolve-weapon-attacks-effects` (all archived, last one 2026-09-11). Attached Unit weapon entries on
+`/LivePlay` now resolve real Strength/AP/Damage/Attacks effects from a checked-in, human-verified
+baseline against the live BSData corpus — S/AP/D mutating the profile and splitting/merging
+aggregated weapon groups as needed, Attacks instead rendering as a separate, additive ability-
+contribution line since it's excluded from a weapon's grouping identity; a caveated match instead
+surfaces an unresolved-ability-reference marker + shared legend, reusing the Statline family's own
+marker registry. (The one real corpus Attacks example, Scorpion Tail / Writhing Tentacles, turned
+out to be Crusade Boons content excluded from a datasheet's always-present `Abilities` — but still
+reachable through the same on-demand `Datasheet.TryResolveAbility` path a wargear-granted ability
+like Vexilla already uses, proven end-to-end against real bundled BSData in
+`WeaponCharacteristicEffectRealCorpusTests`.) See the archived changes for full phase-by-phase
 history — this file no longer tracks it.
 
 **Real corpus shapes found during Phase 2's classifier work but not yet classified/resolved** —
@@ -53,16 +55,7 @@ candidates for a future phase, not scoped anywhere yet:
   the characteristic Effect and flag `IsCaveated`, but leave the keyword grant itself unextracted
   (feeds the `KeywordEffect`/`AbilityEffect` idea below).
 
-Resolving an Attacks (`"A"`) effect — the last item that was on this list — is no longer deferred:
-`openspec/changes/resolve-weapon-attacks-effects/` (implemented 2026-09-11, all 18 tasks done,
-verified against real BSData - not yet archived) picked it up after real corpus evidence turned up
-(Scorpion Tail / Writhing Tentacles). That corpus check found a wrinkle worth recording: both are
-Crusade Boons content, excluded from a datasheet's always-present `Abilities` by
-`BsdataDatasheetMapper.IsGameModeGated` - but still reachable through the same on-demand
-`Datasheet.TryResolveAbility` path a wargear-granted ability like Vexilla already uses, so a real
-import naming one as a wargear item genuinely resolves and renders it end-to-end (proven directly
-against the real bundled BSData in `WeaponCharacteristicEffectRealCorpusTests`). Ready for
-`/opsx:archive`.
+Resolving an Attacks (`"A"`) effect — the last item that was on this list — is done too (see above).
 
 **Permanent boundaries, not tasks**: an effect debuffing an *enemy's* weapon is unresolvable until
 the attacker/defender two-roster half of the app exists (no opposing-roster concept today).
