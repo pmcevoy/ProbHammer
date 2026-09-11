@@ -134,6 +134,29 @@ Oxford comma ("X, Y, and Z"). This display Name, not any single contributor's ow
 entry's identity for rendering purposes — grouping/equality itself is unaffected, since Name is
 already excluded from the structural profile equality above.
 
+Before this structural grouping runs, each contributing weapon's own resolved profile SHALL be
+mutated by every applicable weapon-characteristic Effect recorded against a checked-in, human-
+verified baseline entry whose classification is not caveated: an entry matches when a present
+ability on the contribution's own bearer (per Target-Scoped Application below) has normalized text
+equal to that baseline entry's own Text, and when the Effect's own weapon selector matches that
+contribution's weapon profile (an unqualified selector matches any weapon; a class-qualified
+selector matches only a profile of the named weapon type; a name-qualified selector matches only a
+profile with that exact name). A caveated baseline entry's Effects SHALL NOT be applied. Grouping
+itself is otherwise unaffected — structural profile equality still determines which contributions
+combine into one entry, now evaluated against each contribution's own (possibly mutated) profile: a
+mutation reaching every current contributor of what would otherwise be one group leaves that group
+merged, reporting the mutated value; a mutation reaching only some of those contributors splits them
+into a separate entry from the unaffected ones.
+
+A matched baseline entry's own classified target scope SHALL determine which contributions it
+mutates: a target scoped to the ability's own bearer SHALL mutate only weapons contributed by that
+bearer's own model-line (when the matched ability is model-line-sourced) or by any model-line of
+that bearer's owning component (when the matched ability is component-wide); a target scoped to the
+bearer's whole attached unit SHALL mutate matching weapons contributed by every component of the
+resolved unit, regardless of which component granted the matched ability. A matched entry whose own
+classified target is scoped to a named keyword, or is unconditionally roster-wide with no bearer/
+unit qualifier, SHALL NOT mutate any contribution — the same outcome as an unmatched ability.
+
 #### Scenario: Same weapon profile from different components is combined
 - **WHEN** the Bodyguard unit has 4 models carrying a weapon profile with 3 Attacks each, and the attached Leader carries a wargear item with an identical structural profile but 7 Attacks
 - **THEN** the aggregate view shows one combined entry with a total Attacks value of 19 (4 × 3 + 7), not the Attacks value of either contributor alone
@@ -172,6 +195,38 @@ already excluded from the structural profile equality above.
 - **WHEN** three contributions share an identical structural profile but come from three
   differently-named weapons, encountered in the order "Bolt rifle", "Combat rifle", "Auto rifle"
 - **THEN** the aggregated entry's display Name is "Bolt rifle, Combat rifle, and Auto rifle"
+
+#### Scenario: A bearer-scoped weapon-characteristic effect splits an otherwise-merged group
+- **WHEN** two model-lines from different components carry structurally identical melee weapons,
+  and one of those model-lines' own bearer carries a present ability matching a checked-in,
+  non-caveated baseline entry whose weapon selector matches that weapon
+- **THEN** the aggregate view shows two separate entries — one reporting the mutated Strength/Armour
+  Penetration/Damage value for the affected contribution, one reporting the original value for the
+  unaffected one
+
+#### Scenario: A unit-scoped weapon-characteristic effect keeps every reached contributor merged
+- **WHEN** every present model-line of a resolved unit carries a structurally identical weapon
+  matching a checked-in, non-caveated baseline entry whose classified target is scoped to the
+  bearer's whole attached unit
+- **THEN** the aggregate view shows one merged entry reporting the mutated value, combining every
+  contributor exactly as it would if none of them had been mutated
+
+#### Scenario: A caveated baseline entry does not mutate a weapon profile
+- **WHEN** a present ability's normalized text matches a checked-in baseline entry whose
+  classification is caveated
+- **THEN** no weapon profile is mutated by that entry, and the affected weapon's aggregate entry
+  reports its original, unmutated value
+
+#### Scenario: A class-qualified weapon selector leaves a non-matching weapon type unaffected
+- **WHEN** a present ability matches a checked-in, non-caveated baseline entry whose weapon selector
+  is scoped to melee weapons, and the same bearer also contributes a ranged weapon
+- **THEN** the bearer's melee weapon is mutated and the bearer's ranged weapon is not
+
+#### Scenario: An unresolvable characteristic within an otherwise-applicable effect is left unapplied
+- **WHEN** a matched, non-caveated baseline entry's Effects include both a resolvable characteristic
+  (Strength, Armour Penetration, or Damage) and the Attacks characteristic, scoped to the same weapon
+- **THEN** the resolvable characteristic's value is mutated and the weapon's Attacks value is
+  unchanged
 
 ### Requirement: Aggregate Ability View
 The Attached Unit aggregate view SHALL report abilities per present component Unit, without
