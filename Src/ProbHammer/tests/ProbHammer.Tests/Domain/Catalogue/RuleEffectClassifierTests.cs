@@ -442,7 +442,9 @@ public class RuleEffectClassifierTests
         result.Effects.Should().Equal(
             new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 3),
             new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "A", EffectVerb.Improve, 3));
-        result.IsCaveated.Should().BeFalse();
+        // The leading "Once per battle... If it does," activation condition is real, unmodeled game
+        // content - IsCaveated must surface it, not just trailing content after the last match.
+        result.IsCaveated.Should().BeTrue();
     }
 
     [Fact]
@@ -456,7 +458,7 @@ public class RuleEffectClassifierTests
             new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "A", EffectVerb.Improve, 1),
             new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "AP", EffectVerb.Improve, 1),
             new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "D", EffectVerb.Improve, 1));
-        result.IsCaveated.Should().BeFalse();
+        result.IsCaveated.Should().BeTrue();
     }
 
     [Fact]
@@ -468,7 +470,9 @@ public class RuleEffectClassifierTests
         result.Effects.Should().Equal(
             new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 1),
             new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "AP", EffectVerb.Improve, 1));
-        result.IsCaveated.Should().BeFalse();
+        // The leading "Each time this model's unit ends a Charge move," trigger condition is real,
+        // unmodeled game content - IsCaveated must surface it too.
+        result.IsCaveated.Should().BeTrue();
     }
 
     [Theory]

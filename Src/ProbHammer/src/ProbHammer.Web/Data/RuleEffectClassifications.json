@@ -152,7 +152,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "A",
           "verb": "Improve",
@@ -177,7 +177,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "A",
           "verb": "Improve",
@@ -202,7 +202,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "A",
           "verb": "Improve",
@@ -233,7 +233,7 @@
       "fullyHandled": true,
       "note": "Leadership improvement is correctly extracted, but the text also grants a re-roll ability (Battle-shock and Leadership tests), which the classifier has no vocabulary to extract.",
       "names": [
-        "Lesk\u2019s Heroes"
+        "Lesk’s Heroes"
       ]
     },
     {
@@ -515,7 +515,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "S",
           "verb": "Improve",
@@ -525,14 +525,14 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "AP",
           "verb": "Improve",
           "amount": 1
         }
       ],
-      "isCaveated": false,
+      "isCaveated": true,
       "fullyHandled": false,
       "note": null,
       "names": [
@@ -570,7 +570,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "AP",
           "verb": "Improve",
@@ -596,7 +596,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "AP",
           "verb": "Improve",
@@ -620,7 +620,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 0
+            "type": "Ranged"
           },
           "characteristic": "S",
           "verb": "Improve",
@@ -630,7 +630,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 0
+            "type": "Ranged"
           },
           "characteristic": "AP",
           "verb": "Improve",
@@ -654,7 +654,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "S",
           "verb": "Improve",
@@ -678,7 +678,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "S",
           "verb": "Improve",
@@ -744,7 +744,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "A",
           "verb": "Improve",
@@ -754,14 +754,14 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "S",
           "verb": "Improve",
           "amount": 3
         }
       ],
-      "isCaveated": false,
+      "isCaveated": true,
       "fullyHandled": false,
       "note": null,
       "names": [
@@ -778,7 +778,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "A",
           "verb": "Improve",
@@ -788,14 +788,14 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "AP",
           "verb": "Improve",
           "amount": 1
         }
       ],
-      "isCaveated": false,
+      "isCaveated": true,
       "fullyHandled": false,
       "note": null,
       "names": [
@@ -812,7 +812,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "A",
           "verb": "Improve",
@@ -822,7 +822,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "S",
           "verb": "Improve",
@@ -832,14 +832,14 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "D",
           "verb": "Improve",
           "amount": 2
         }
       ],
-      "isCaveated": false,
+      "isCaveated": true,
       "fullyHandled": false,
       "note": null,
       "names": [
@@ -856,7 +856,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "A",
           "verb": "Improve",
@@ -866,14 +866,14 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "S",
           "verb": "Improve",
           "amount": 3
         }
       ],
-      "isCaveated": false,
+      "isCaveated": true,
       "fullyHandled": false,
       "note": null,
       "names": [
@@ -890,7 +890,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "A",
           "verb": "Improve",
@@ -900,14 +900,14 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "AP",
           "verb": "Improve",
           "amount": 1
         }
       ],
-      "isCaveated": false,
+      "isCaveated": true,
       "fullyHandled": false,
       "note": null,
       "names": [
@@ -924,7 +924,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "A",
           "verb": "Improve",
@@ -949,7 +949,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "A",
           "verb": "Improve",
@@ -973,7 +973,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "S",
           "verb": "Improve",
@@ -983,7 +983,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "A",
           "verb": "Improve",
@@ -993,7 +993,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "AP",
           "verb": "Improve",
@@ -1003,14 +1003,14 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "D",
           "verb": "Improve",
           "amount": 1
         }
       ],
-      "isCaveated": false,
+      "isCaveated": true,
       "fullyHandled": false,
       "note": null,
       "names": [
@@ -1027,7 +1027,7 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "S",
           "verb": "Improve",
@@ -1037,14 +1037,14 @@
           "kind": "Weapon",
           "selector": {
             "kind": "WeaponClass",
-            "type": 1
+            "type": "Melee"
           },
           "characteristic": "A",
           "verb": "Improve",
           "amount": 3
         }
       ],
-      "isCaveated": false,
+      "isCaveated": true,
       "fullyHandled": false,
       "note": null,
       "names": [
@@ -1068,7 +1068,7 @@
           "amount": 2
         }
       ],
-      "isCaveated": false,
+      "isCaveated": true,
       "fullyHandled": false,
       "note": null,
       "names": [

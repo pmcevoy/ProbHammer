@@ -30,9 +30,10 @@ resolution work — `RuleEffectClassifier`/`CharacteristicEffect`/`Characteristi
 `name-weapon-group-contributions` (archived) — `WeaponContribution`/`AggregateWeaponEntry` now carry
 a real weapon Name and a computed composite display Name. Phase 1 is done (informal spike, no
 OpenSpec change — see below for why). **Phase 2 is done** (`classify-weapon-characteristic-effects`,
-2026-09-10 — see below). Phase 3 is next ready to scope as a real OpenSpec change, now that Phase
-2's own `WeaponCharacteristicEffect`/`WeaponSelector` shape is real rather than speculative; the rest
-stay here until their turn. Don't re-litigate the decisions already made below without new evidence.
+2026-09-10, `IsCaveated` correction 2026-09-11 — see below). Phase 3 is next ready to scope as a real
+OpenSpec change, now that Phase 2's own `WeaponCharacteristicEffect`/`WeaponSelector` shape is real
+rather than speculative; the rest stay here until their turn. Don't re-litigate the decisions already
+made below without new evidence.
 
 - **Phase 1 (done 2026-09-10, informal spike, no OpenSpec change)**: pulled real weapon-effect
   ability text from the live BSData clone via an ad hoc `jq` dump (every `Abilities`/`sharedRules`
@@ -68,8 +69,28 @@ stay here until their turn. Don't re-litigate the decisions already made below w
   as a sibling `CharacteristicEffect` subtype, one shape covering both Attacks and Damage at
   classification time. `RuleEffectClassifier` widened for both real shapes (dominant coordinate-list,
   two-verb anaphora) via two new patterns plus a new `WeaponEffectStart` anchor (see below). A live
-  corpus review found 19 real weapon-characteristic Effect results, all confirmed correct (zero bugs,
-  unlike the original Statline work's 6) — all 19 baselined. `CharacteristicModificationKind`/
+  corpus review found 19 real weapon-characteristic Effect results, initially reported as all
+  confirmed correct (zero bugs, unlike the original Statline work's 6) — all 19 baselined.
+  **Correction (2026-09-11, post-ship user review)**: that "zero bugs" claim was wrong.
+  `IsCaveated` only ever checked text *after* the last contributing match, never text *before* the
+  first one — safe under the plain `SentenceStart` anchor (nothing conditional can precede a true
+  sentence start within the same sentence), but `WeaponEffectStart`'s whole reason for existing is
+  to match *after* a mid-sentence temporal-scope clause, and every real example of that shape has a
+  genuine, unmodeled activation condition ("Once per battle... If it does," / "Each time...") sitting
+  immediately in front of it that `IsCaveated` never inspected. Result: 7 of the 19 baselined
+  abilities (Brutal Raider, Might of Titan ×2, Euphoric Strikes, Mantra of Strength, Chance for
+  Glory, Moment of Glory/Zealot, Master of Combat — 9 baseline rows counting byte-variant
+  duplicates) were wrongly `IsCaveated: false`. Fixed by widening `IsCaveated` to also check the
+  span between the true sentence-start enclosing the earliest contributing match and that match's
+  own start position — a structural check (finds the real sentence boundary, not a phrase list):
+  Brutal Raider's own trigger, "Each time this model's unit ends a Charge move,", doesn't start with
+  "Once per battle" and would have slipped past a hand-maintained denylist. All 9 rows now correctly
+  `IsCaveated: true` and sit in the baseline's "Caveated entries needing review" queue awaiting a
+  human `Note`; Effects stay populated rather than nulled out, matching the same "extract now, never
+  auto-apply while caveated" convention the Statline/InSv work already established. `WeaponType` also
+  picked up `[JsonConverter(typeof(JsonStringEnumConverter))]` in the same pass, mirroring
+  `EffectVerb`'s own convention (the baseline JSON was serializing it as a bare `0`/`1`).
+  `CharacteristicModificationKind`/
   `Resolver`/`Clamp` extended to cover Damage (`Plain` kind, dice-aware arithmetic via
   `DiceExpression`'s existing `+` operator plus a new `ApplyToDice` guaranteed-minimum clamp path);
   `S`/`AP` got their first real proving example against genuine weapon data, `WS`/`BS` did not (see
@@ -99,6 +120,29 @@ stay here until their turn. Don't re-litigate the decisions already made below w
     correctly extract only the real characteristic Effect and correctly flag `IsCaveated`, but the
     keyword grant itself is unextracted (feeds the existing `KeywordEffect`/`AbilityEffect` idea
     below).
+  - **Broader corpus grep, 2026-09-11 (ad hoc, no OpenSpec change)**: a raw text search across the
+    whole live clone for any ability description containing both "characteristic" and "weapon" found
+    29 distinct hits total, against the 19 this change actually baselined - confirming the 19 is a
+    narrow slice (bearer-scoped only, two phrasings, four characteristics), not the full corpus
+    picture. Roughly 15 of the 29 are real additional weapon-characteristic mutations the classifier
+    still doesn't recognize at all (not caveated, not baselined - just silently unclassified),
+    confirming several of the shapes named above with real corpus evidence: **WS/BS** (Doctrina
+    Imperatives' "Improve the Ballistic Skill characteristic..."; a T'au Sept ranged-attack rule; a
+    Sniper-type ability that worsens WS on an *enemy* unit - permanently out of scope per this file's
+    own "debuffing an enemy's weapon" boundary below, not a near-term miss); **ability-flag-qualified
+    selector** (Waaagh!/Void Waaagh!/Martial Ka'tah, "models from your army with this ability");
+    **whole-unit-scoped selector** (World Eaters' and Adeptus Astartes' own Charge abilities,
+    Emperor's Children's Sensational Performance using "this unit's melee weapons" phrasing instead
+    of "weapons equipped by"). Two further real shapes not previously named: a **different amount per
+    characteristic within one coordinate clause** ("add 1 to Attacks... and add 2 to Strength...",
+    distinct from both the shared-amount coordinate list and the two-verb-anaphora pattern - neither
+    existing pattern covers per-characteristic amounts that differ), and a **two-branch conditional**
+    ("add 1..., if Battle-shocked, add 2... instead"). The remaining ~14 of the 29 are not misses:
+    `[MELTA]`/`[CLEAVE]`/`[RAPID FIRE]`/`[BLAST]`/`[DEVASTATING WOUNDS]` core-rule text describing a
+    weapon's own printed characteristic generically (not a bearer mutation), a couple of per-*attack*
+    roll modifiers (a transient concept, distinct from a persistent `WeaponProfile` mutation), and
+    2-3 multi-choice-menu-bundled abilities (the same Doctrina-Imperatives-shaped import-chunking
+    question already noted above, not a new finding).
 - **Phase 3**: the aggregation mechanism — mutate the relevant `WeaponProfile`(s) with a resolved
   `WeaponCharacteristicEffect` before/at `BuildWeapons`' own grouping, and let
   `WeaponProfileEqualityKey` do group split/merge for free (an ability reaching every current

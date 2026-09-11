@@ -234,23 +234,63 @@ public static partial class RuleEffectClassifier
         return new RuleClassification(target, effects, isCaveated);
     }
 
-    /// <summary>The structural caveat signal: the end position of the last regex match that
-    /// contributed to either the classified Target or an extracted Effect, with whatever text remains
-    /// after it (trimmed of whitespace, then a single trailing period) checked for emptiness. A
-    /// non-empty remainder means the text states real content beyond what Target/Effects captured -
-    /// this method never attempts to classify what that content is, only that it exists. Only called
-    /// when at least one Effect was extracted - see <see cref="Classify"/>.</summary>
+    /// <summary>Matches a sentence terminator (a period plus any following whitespace) - used only to
+    /// locate the true <see cref="SentenceStart"/> position enclosing a given match, for
+    /// <see cref="IsCaveated"/>'s own leading-content check below. Deliberately the same "period is
+    /// the only real boundary" rule <see cref="SentenceStart"/>'s own doc comment already states, not
+    /// a new one.</summary>
+    [GeneratedRegex(@"\.\s*")]
+    private static partial Regex SentenceTerminator();
+
+    /// <summary>The structural caveat signal, checked on both sides of the matches that produced a
+    /// Target/Effects classification - not just trailing content (the end position of the last
+    /// contributing match, with whatever text remains after it checked for emptiness), but also
+    /// LEADING content: whatever sits between the true sentence start enclosing the earliest
+    /// contributing match and that match's own start position. A non-empty span on either side means
+    /// the text states real content beyond what Target/Effects captured - this method never attempts
+    /// to classify what that content is, only that it exists. Only called when at least one Effect was
+    /// extracted - see <see cref="Classify"/>.
+    ///
+    /// The leading check matters specifically because of <see cref="WeaponEffectStart"/>: unlike the
+    /// plain <see cref="SentenceStart"/> anchor (where a match's own sentence-start position is by
+    /// definition preceded by nothing but an already-terminated, separate sentence), a
+    /// WeaponEffectStart-anchored match can start mid-sentence, immediately after a ", until the end of
+    /// the phase/turn," clause - and every real corpus example of that shape has a genuine, unmodeled
+    /// activation condition immediately before it ("Once per battle... If it does," / "Each time this
+    /// model's unit ends a Charge move,"). Without this check, that condition silently vanishes rather
+    /// than surfacing as a caveat - confirmed as a real bug via corpus review (7 baselined weapon-
+    /// characteristic Effects wrongly not caveated: Brutal Raider, Might of Titan, Euphoric Strikes,
+    /// Mantra of Strength, Chance for Glory, Moment of Glory/Zealot, Master of Combat). A structural
+    /// check (does real content sit before the match's own sentence-anchored position), not a phrase
+    /// denylist naming "Once per battle"/"Each time" - Brutal Raider's own trigger ("Each time this
+    /// model's unit ends a Charge move,") proves a phrase list would already be incomplete.</summary>
     private static bool IsCaveated(string text, Match? targetMatch, IReadOnlyList<Match> effectMatches)
     {
-        var lastEnd = effectMatches.Select(m => m.Index + m.Length).DefaultIfEmpty(0).Max();
-        if (targetMatch is { } match)
-            lastEnd = Math.Max(lastEnd, match.Index + match.Length);
+        var contributingMatches = targetMatch is { } t ? effectMatches.Append(t) : effectMatches;
+        var lastEnd = 0;
+        var firstStart = text.Length;
+        foreach (var m in contributingMatches)
+        {
+            lastEnd = Math.Max(lastEnd, m.Index + m.Length);
+            firstStart = Math.Min(firstStart, m.Index);
+        }
 
         var remainder = text[lastEnd..].Trim();
         if (remainder.EndsWith('.'))
             remainder = remainder[..^1].TrimEnd();
+        if (remainder.Length > 0)
+            return true;
 
-        return remainder.Length > 0;
+        var sentenceStart = 0;
+        foreach (Match boundary in SentenceTerminator().Matches(text))
+        {
+            var boundaryEnd = boundary.Index + boundary.Length;
+            if (boundaryEnd > firstStart)
+                break;
+            sentenceStart = boundaryEnd;
+        }
+
+        return text[sentenceStart..firstStart].Trim().Length > 0;
     }
 
     /// <summary>Normalizes known-harmless real-corpus authoring variance before matching: a
