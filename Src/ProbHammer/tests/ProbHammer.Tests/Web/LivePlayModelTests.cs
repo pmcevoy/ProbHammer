@@ -116,6 +116,129 @@ public class LivePlayModelTests
     }
 
     [Fact]
+    public void BuildUnitBlock_SharesOneMarkerAcrossAFlaggedStatlineTileAndAFlaggedWeaponValue()
+    {
+        var sharedAbility = new Ability
+        {
+            Name = "Vexilla", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic
+        };
+        var statline = new Statline(
+            M: 6, T: ScalarCharacteristicView.Resolved(4, 5, [sharedAbility]), Sv: 3, W: 2, Ld: 6, Oc: 2);
+        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3,
+            S: ScalarCharacteristicView.Resolved(4, 5, [sharedAbility]), Ap: -1, D: 1);
+
+        var view = new AttachedUnitAggregateView(
+            Name: "Test Unit",
+            IsAttachedUnit: false,
+            Statlines: [new AggregateStatlineEntry("Squad A", "Trooper", statline, 1, 1, [])],
+            Weapons:
+            [
+                new AggregateWeaponEntry(weapon, DiceExpression.Fixed(3), weapon.Name,
+                    [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(3), weapon.Name)])
+            ],
+            Abilities: [],
+            Keywords: new HashSet<string>());
+
+        var block = LivePlayModel.BuildUnitBlock(view);
+
+        block.Statlines.Single().ScalarMarker("T").Should().Be("*");
+        var weaponRow = block.MeleeWeapons.Single();
+        weaponRow.ValueMarker("S").Should().Be("*");
+        weaponRow.FlagLegend.Should().ContainSingle(l => l.Marker == "*" && l.Source.Name == "Vexilla");
+    }
+
+    [Fact]
+    public void BuildUnitBlock_AssignsMarkersInStatlineThenRangedThenMeleeOrder()
+    {
+        var statlineAbility = new Ability
+            { Name = "Statline Source", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
+        var weaponAbility = new Ability
+            { Name = "Weapon Source", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
+        var statline = new Statline(
+            M: 6, T: ScalarCharacteristicView.Resolved(4, 5, [statlineAbility]), Sv: 3, W: 2, Ld: 6, Oc: 2);
+        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3,
+            S: ScalarCharacteristicView.Resolved(4, 5, [weaponAbility]), Ap: -1, D: 1);
+
+        var view = new AttachedUnitAggregateView(
+            Name: "Test Unit",
+            IsAttachedUnit: false,
+            Statlines: [new AggregateStatlineEntry("Squad A", "Trooper", statline, 1, 1, [])],
+            Weapons:
+            [
+                new AggregateWeaponEntry(weapon, DiceExpression.Fixed(3), weapon.Name,
+                    [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(3), weapon.Name)])
+            ],
+            Abilities: [],
+            Keywords: new HashSet<string>());
+
+        var block = LivePlayModel.BuildUnitBlock(view);
+
+        block.Statlines.Single().ScalarMarker("T").Should().Be("*");
+        block.MeleeWeapons.Single().ValueMarker("S").Should().Be("**");
+    }
+
+    [Fact]
+    public void BuildUnitBlock_UnresolvedAbilityReference_GetsANameMarkerDistinctFromValueMarkers()
+    {
+        var caveatedAbility = new Ability
+        {
+            Name = "Furious Charge", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic
+        };
+        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
+
+        var view = new AttachedUnitAggregateView(
+            Name: "Test Unit",
+            IsAttachedUnit: false,
+            Statlines: [new AggregateStatlineEntry("Squad A", "Trooper", new Statline(6, 4, 3, 2, 6, 2), 1, 1, [])],
+            Weapons:
+            [
+                new AggregateWeaponEntry(weapon, DiceExpression.Fixed(3), weapon.Name,
+                    [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(3), weapon.Name)],
+                    UnresolvedAbilities: [caveatedAbility])
+            ],
+            Abilities: [],
+            Keywords: new HashSet<string>());
+
+        var block = LivePlayModel.BuildUnitBlock(view);
+
+        var weaponRow = block.MeleeWeapons.Single();
+        weaponRow.NameMarker.Should().Be("*");
+        weaponRow.ValueMarkers.Should().BeEmpty();
+        weaponRow.FlagLegend.Should().ContainSingle(l => l.Marker == "*" && l.Source.Name == "Furious Charge");
+    }
+
+    [Fact]
+    public void BuildUnitBlock_SingleModelLineUnit_OnlyAFlaggedWeaponEntryShowsABreakdownTrigger()
+    {
+        var caveatedAbility = new Ability
+        {
+            Name = "Furious Charge", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic
+        };
+        var flaggedWeapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
+        var plainWeapon = new MeleeWeapon("Combat knife", A: 1, Ws: 3, S: 3, Ap: 0, D: 1);
+
+        var view = new AttachedUnitAggregateView(
+            Name: "Test Unit",
+            IsAttachedUnit: false,
+            Statlines: [new AggregateStatlineEntry("Squad A", "Trooper", new Statline(6, 4, 3, 2, 6, 2), 1, 1, [])],
+            Weapons:
+            [
+                new AggregateWeaponEntry(flaggedWeapon, DiceExpression.Fixed(3), flaggedWeapon.Name,
+                    [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(3), flaggedWeapon.Name)],
+                    UnresolvedAbilities: [caveatedAbility]),
+                new AggregateWeaponEntry(plainWeapon, DiceExpression.Fixed(1), plainWeapon.Name,
+                    [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(1), plainWeapon.Name)])
+            ],
+            Abilities: [],
+            Keywords: new HashSet<string>());
+
+        var block = LivePlayModel.BuildUnitBlock(view);
+
+        block.MeleeWeapons.Single(w => w.Entry.Profile.Name == "Power sword").ShowsBreakdownTrigger.Should().BeTrue();
+        block.MeleeWeapons.Single(w => w.Entry.Profile.Name == "Combat knife").ShowsBreakdownTrigger.Should().BeFalse();
+    }
+
+    [Fact]
     public void BuildContributionBreakdown_CollapsesSameNameContributions_WhenPerModelAttacksAgree()
     {
         // Real fixture: Crusader Squad's Bolt pistol (A1) is carried by the Neophyte line (x4) and

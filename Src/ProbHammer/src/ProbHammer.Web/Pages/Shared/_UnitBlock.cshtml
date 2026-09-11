@@ -455,18 +455,19 @@
                     var weapon = row.Entry.Profile;
                     var tags = WeaponAbilityTags(weapon);
                     var weaponId = $"w-{i}-r-{w}";
+                    var nameLabel = row.NameMarker is null ? row.Entry.Name : $"{row.Entry.Name}{row.NameMarker}";
                     <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId">
                         <td class="weapon-name">
                             @if (row.ShowsBreakdownTrigger)
                             {
                                 <button type="button" class="weapon-name-toggle" data-weapon-id="@weaponId"
                                         aria-expanded="false">
-                                    @row.Entry.Name
+                                    @nameLabel
                                 </button>
                             }
                             else
                             {
-                                @row.Entry.Name
+                                @nameLabel
                             }
                             @if (tags.Count > 0)
                             {
@@ -491,10 +492,36 @@
                         <td>@(weapon.Range)"</td>
                         <td class="weapon-attacks-value">@row.Entry.TotalAttacks</td>
                         <td>@(weapon.Skill.Value)+</td>
-                        <td>@weapon.S.Value</td>
-                        <td>@weapon.Ap.Value</td>
-                        <td>@weapon.D.Value</td>
+                        @Html.Raw(RenderWeaponValueCell(row, "S", ""))
+                        @Html.Raw(RenderWeaponValueCell(row, "AP", ""))
+                        @Html.Raw(RenderWeaponValueCell(row, "D", ""))
                     </tr>
+                    @if (row.FlagLegend.Count > 0)
+                    {
+                        <tr class="weapon-flag-legend-row @(w % 2 == 1 ? "weapon-row-alt" : "")"
+                            data-weapon-id="@weaponId" hidden>
+                            <td colspan="7">
+                                <div class="statline-flag-legend">
+                                    @foreach (var flag in row.FlagLegend)
+                                    {
+                                        var legendTriggerHtml = WebUtility.HtmlEncode($"{flag.Marker} {AbilityDisplayName(flag.Source)}");
+                                        if (string.IsNullOrWhiteSpace(flag.Source.Text))
+                                        {
+                                            <span
+                                                class="ability-name-line flag-legend-line">@Html.Raw(legendTriggerHtml)</span>
+                                        }
+                                        else
+                                        {
+                                            var (legendTrigger, legendTrailer) = BuildRulePopover(legendTriggerHtml, "ability-name-line flag-legend-line", flag.Source.Text, new HashSet<string>());
+                                            @Html.Raw(legendTrigger)
+                                            @Html.Raw(legendTrailer)
+                                        }
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
                     @foreach (var breakdown in row.Breakdown)
                     {
                         <tr class="weapon-contribution-row @(breakdown.SelectKey == null ? "contribution-merged" : "") @(w % 2 == 1 ? "weapon-row-alt" : "")"
@@ -553,18 +580,19 @@
                     var weapon = row.Entry.Profile;
                     var tags = WeaponAbilityTags(weapon);
                     var weaponId = $"w-{i}-m-{w}";
+                    var nameLabel = row.NameMarker is null ? row.Entry.Name : $"{row.Entry.Name}{row.NameMarker}";
                     <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId">
                         <td class="weapon-name">
                             @if (row.ShowsBreakdownTrigger)
                             {
                                 <button type="button" class="weapon-name-toggle" data-weapon-id="@weaponId"
                                         aria-expanded="false">
-                                    @row.Entry.Name
+                                    @nameLabel
                                 </button>
                             }
                             else
                             {
-                                @row.Entry.Name
+                                @nameLabel
                             }
                             @if (tags.Count > 0)
                             {
@@ -588,10 +616,36 @@
                         </td>
                         <td class="weapon-attacks-value">@row.Entry.TotalAttacks</td>
                         <td>@(weapon.Skill.Value)+</td>
-                        <td>@weapon.S.Value</td>
-                        <td>@weapon.Ap.Value</td>
-                        <td>@weapon.D.Value</td>
+                        @Html.Raw(RenderWeaponValueCell(row, "S", ""))
+                        @Html.Raw(RenderWeaponValueCell(row, "AP", ""))
+                        @Html.Raw(RenderWeaponValueCell(row, "D", ""))
                     </tr>
+                    @if (row.FlagLegend.Count > 0)
+                    {
+                        <tr class="weapon-flag-legend-row @(w % 2 == 1 ? "weapon-row-alt" : "")"
+                            data-weapon-id="@weaponId" hidden>
+                            <td colspan="6">
+                                <div class="statline-flag-legend">
+                                    @foreach (var flag in row.FlagLegend)
+                                    {
+                                        var legendTriggerHtml = WebUtility.HtmlEncode($"{flag.Marker} {AbilityDisplayName(flag.Source)}");
+                                        if (string.IsNullOrWhiteSpace(flag.Source.Text))
+                                        {
+                                            <span
+                                                class="ability-name-line flag-legend-line">@Html.Raw(legendTriggerHtml)</span>
+                                        }
+                                        else
+                                        {
+                                            var (legendTrigger, legendTrailer) = BuildRulePopover(legendTriggerHtml, "ability-name-line flag-legend-line", flag.Source.Text, new HashSet<string>());
+                                            @Html.Raw(legendTrigger)
+                                            @Html.Raw(legendTrailer)
+                                        }
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
                     @foreach (var breakdown in row.Breakdown)
                     {
                         <tr class="weapon-contribution-row @(breakdown.SelectKey == null ? "contribution-merged" : "") @(w % 2 == 1 ? "weapon-row-alt" : "")"
@@ -634,6 +688,20 @@
 
     static string AbilityDisplayName(Ability ability) =>
         ability.Origin == AbilityOrigin.Enhancement ? $"✦ {ability.Name}" : ability.Name;
+
+    // The weapon-table counterpart to RenderScalarTile below - marks the value cell itself rather
+    // than a label, since the weapon table has no per-characteristic label the way a Statline tile
+    // does (render-weapon-characteristic-effects). Unlike RenderScalarTile, no IsCaveated guard is
+    // needed: a WeaponProfile's S/AP/D never starts caveated (see WeaponCharacteristicEffectResolver's
+    // own doc comment), so a populated marker here always means a genuinely resolved mutation.
+    static string RenderWeaponValueCell(WeaponRowViewModel row, string field, string suffix)
+    {
+        var view = LivePlayModel.GetWeaponScalarField(row.Entry.Profile, field);
+        var marker = row.ValueMarker(field);
+        var cssClass = marker is not null ? "weapon-value-flagged" : "";
+        var valueText = WebUtility.HtmlEncode($"{view.Value}{marker}{suffix}");
+        return $"<td class=\"{cssClass}\">{valueText}</td>";
+    }
 
     // Shared renderer for the five ScalarCharacteristicView-backed statline tiles other than OC
     // (which keeps its own bespoke branch for the Battle-shocked override). Covers

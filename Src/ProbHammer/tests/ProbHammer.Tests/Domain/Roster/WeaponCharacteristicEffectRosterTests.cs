@@ -28,7 +28,10 @@ public class WeaponCharacteristicEffectRosterTests
             new RuleClassificationBaselineEntry(
                 Text: boost.Text,
                 Target: new SelfRuleTarget(),
-                Effects: [new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 1)])
+                Effects:
+                [
+                    new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 1)
+                ])
         ]);
 
         var bodyguardDatasheet = new Datasheet(
@@ -71,7 +74,10 @@ public class WeaponCharacteristicEffectRosterTests
             new RuleClassificationBaselineEntry(
                 Text: banner.Text,
                 Target: new AttachedUnitRuleTarget(),
-                Effects: [new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 1)])
+                Effects:
+                [
+                    new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 1)
+                ])
         ]);
 
         var bodyguardDatasheet = new Datasheet(
@@ -124,6 +130,128 @@ public class WeaponCharacteristicEffectRosterTests
         var entry = view.Weapons.Should().ContainSingle().Subject;
         entry.Profile.S.Value.Should().Be((CharacteristicValue)4);
         entry.Profile.S.ContributingAbilities.Should().BeEmpty();
+        entry.UnresolvedAbilities.Should().ContainSingle(a => a.Name == "Furious Charge");
+        entry.Contributions.Single().UnresolvedAbilities.Should().ContainSingle(a => a.Name == "Furious Charge");
+    }
+
+    [Fact]
+    public void ResolvedMutationAndUnresolvedReference_CanCoexistOnOneContribution()
+    {
+        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
+        var resolvedBoost = new Ability
+        {
+            Name = "Blessed Blade",
+            Text = "Improve the Strength characteristic of melee weapons equipped by this model by 1.",
+            Scope = AbilityScope.Model,
+            Origin = AbilityOrigin.Intrinsic
+        };
+        var caveatedBoost = new Ability
+        {
+            Name = "Furious Charge",
+            Text = "Once per battle, if this model made a Charge move this turn, improve the Armour " +
+                   "Penetration characteristic of melee weapons equipped by this model by 1.",
+            Scope = AbilityScope.Model,
+            Origin = AbilityOrigin.Intrinsic
+        };
+        var baseline = RuleClassificationBaseline.FromEntries(
+        [
+            new RuleClassificationBaselineEntry(
+                Text: resolvedBoost.Text,
+                Target: new SelfRuleTarget(),
+                Effects:
+                [
+                    new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 1)
+                ]),
+            new RuleClassificationBaselineEntry(
+                Text: caveatedBoost.Text,
+                Target: new SelfRuleTarget(),
+                Effects:
+                [
+                    new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "AP", EffectVerb.Improve, 1)
+                ],
+                IsCaveated: true)
+        ]);
+        var datasheet = new Datasheet(
+            "Some Unit", factionKeywords: [], keywords: [], abilities: [resolvedBoost, caveatedBoost],
+            statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
+        var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 1)]);
+
+        var view = AttachedUnitAggregator.Build(unit, baseline);
+
+        var entry = view.Weapons.Should().ContainSingle().Subject;
+        entry.Profile.S.Value.Should().Be((CharacteristicValue)5);
+        entry.Profile.S.ContributingAbilities.Should().ContainSingle(a => a.Name == "Blessed Blade");
+        entry.Profile.Ap.Value.Should().Be((CharacteristicValue)(-1)); // AP effect stayed unresolved (caveated)
+        entry.UnresolvedAbilities.Should().ContainSingle(a => a.Name == "Furious Charge");
+    }
+
+    [Fact]
+    public void AggregateWeaponEntry_UnresolvedAbilities_AggregatesAcrossContributionsInFirstEncounteredOrder()
+    {
+        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
+        var firstCaveat = new Ability
+        {
+            Name = "Furious Charge",
+            Text = "Once per battle, if this model made a Charge move this turn, improve the Strength " +
+                   "characteristic of melee weapons equipped by this model by 1.",
+            Scope = AbilityScope.Model,
+            Origin = AbilityOrigin.Intrinsic
+        };
+        var secondCaveat = new Ability
+        {
+            Name = "Vengeful Strike",
+            Text = "Each time this model's unit ends a Charge move, improve the Strength characteristic " +
+                   "of melee weapons equipped by this model by 1.",
+            Scope = AbilityScope.Model,
+            Origin = AbilityOrigin.Intrinsic
+        };
+        var baseline = RuleClassificationBaseline.FromEntries(
+        [
+            new RuleClassificationBaselineEntry(
+                Text: firstCaveat.Text,
+                Target: new SelfRuleTarget(),
+                Effects: [new WeaponCharacteristicEffect(new AllWeapons(), "S", EffectVerb.Improve, 1)],
+                IsCaveated: true),
+            new RuleClassificationBaselineEntry(
+                Text: secondCaveat.Text,
+                Target: new SelfRuleTarget(),
+                Effects: [new WeaponCharacteristicEffect(new AllWeapons(), "S", EffectVerb.Improve, 1)],
+                IsCaveated: true)
+        ]);
+
+        var firstDatasheet = new Datasheet(
+            "First Squad", factionKeywords: [], keywords: [], abilities: [firstCaveat],
+            statlines: [("First Squad", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
+        var firstUnit = new Unit(firstDatasheet, [], [new ModelLine("First Squad", [weapon.Name], count: 1)]);
+
+        var secondDatasheet = new Datasheet(
+            "Second Squad", factionKeywords: [], keywords: [], abilities: [secondCaveat],
+            statlines: [("Second Squad", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: [weapon]);
+        var secondUnit = new Unit(secondDatasheet, [], [new ModelLine("Second Squad", [weapon.Name], count: 1)]);
+
+        var attachedUnit = new AttachedUnit(firstUnit, [secondUnit]);
+
+        var view = AttachedUnitAggregator.Build(attachedUnit, baseline);
+
+        var entry = view.Weapons.Should().ContainSingle().Subject;
+        entry.UnresolvedAbilities.Should().HaveCount(2);
+        entry.UnresolvedAbilities.Select(a => a.Name).Should().Equal("Furious Charge", "Vengeful Strike");
+    }
+
+    [Fact]
+    public void NoCaveatedMatch_ReportsEmptyUnresolvedAbilities()
+    {
+        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
+        var datasheet = new Datasheet(
+            "Some Unit", factionKeywords: [], keywords: [], abilities: [],
+            statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
+        var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 1)]);
+
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.FromEntries([]));
+
+        var entry = view.Weapons.Should().ContainSingle().Subject;
+        entry.UnresolvedAbilities.Should().BeEmpty();
+        entry.Contributions.Single().UnresolvedAbilities.Should().BeEmpty();
     }
 
     [Fact]
@@ -175,7 +303,10 @@ public class WeaponCharacteristicEffectRosterTests
             new RuleClassificationBaselineEntry(
                 Text: boost.Text,
                 Target: new SelfRuleTarget(),
-                Effects: [new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 1)])
+                Effects:
+                [
+                    new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 1)
+                ])
         ]);
         var datasheet = new Datasheet(
             "Some Unit", factionKeywords: [], keywords: [], abilities: [boost],

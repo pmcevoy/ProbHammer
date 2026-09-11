@@ -64,7 +64,12 @@ function initWeaponProvenanceToggles(unitEl) {
             const weaponId = button.dataset.weaponId;
             const expanded = button.getAttribute('aria-expanded') === 'true';
 
-            unitEl.querySelectorAll(`tr.weapon-contribution-row[data-weapon-id="${weaponId}"]`)
+            // .weapon-flag-legend-row is included here (not in recomputeWeaponRow's own
+            // .weapon-contribution-row query) so it expands/collapses with the breakdown without
+            // being mistaken for a real contribution by the selection-filtering group logic below.
+            unitEl.querySelectorAll(
+                `tr.weapon-contribution-row[data-weapon-id="${weaponId}"], ` +
+                `tr.weapon-flag-legend-row[data-weapon-id="${weaponId}"]`)
                 .forEach(row => {
                     row.hidden = expanded;
                 });

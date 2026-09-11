@@ -942,6 +942,32 @@ button.filter-flag:hover { opacity: 0.8; }
 }
 .weapon-contribution-label { padding-left: 1.75rem; }
 
+/* Resolved-value marker: the weapon-table counterpart to .stat-tile-flagged, applied directly to a
+   plain S/AP/D <td> rather than a tile div - the weapon table has no per-characteristic label the
+   way a Statline tile does, so the marker renders inline in the value text itself (e.g. "5*")
+   instead of appended to a label. The second, more specific selector is required, not decorative:
+   the zebra-striping rule above (.weapon-row-alt td, specificity 0,3,3) otherwise wins over the
+   plain rule below it (0,3,1) on every alternating row regardless of source order, silently
+   overriding the amber tint back to the stripe's own --bg fill - confirmed live (every second
+   flagged weapon row rendered its marker text but not its background). Matching the striping rule's
+   own tbody/tr structure brings this rule to 0,4,3, which always wins on both striped and
+   unstriped rows. */
+.live-play-page .weapon-table td.weapon-value-flagged { background: var(--amber-tint); }
+.live-play-page .weapon-table tbody tr.weapon-row-alt td.weapon-value-flagged { background: var(--amber-tint); }
+
+/* Weapon flag legend row: a full-width row nested under an entry's contribution breakdown, reusing
+   .statline-flag-legend's own box (dashed border/bg2/radius) rather than a distinct style. Not
+   .weapon-contribution-row - deliberately excluded from live-play.js's selection-filtering group
+   logic (recomputeWeaponRow), which would otherwise misread it as a bogus, uncounted contribution;
+   its own show/hide is wired separately in initWeaponProvenanceToggles. white-space reset since the
+   table's own td rule defaults to nowrap, which would clip a wrapping legend line. */
+.live-play-page .weapon-table tr.weapon-flag-legend-row td {
+    padding: 0.3rem;
+    white-space: normal;
+    border-bottom: 1px solid var(--border);
+}
+.live-play-page .weapon-table tr.weapon-flag-legend-row .statline-flag-legend { margin-top: 0; }
+
 /* One bordered pill per keyword - matches the GW-app/Wahapedia reference precedent and lets each
    keyword be identified as its own tap target (a joined span can't). */
 .weapon-tags {

@@ -30,10 +30,10 @@ resolution work — `RuleEffectClassifier`/`CharacteristicEffect`/`Characteristi
 `name-weapon-group-contributions` (archived) — `WeaponContribution`/`AggregateWeaponEntry` now carry
 a real weapon Name and a computed composite display Name. Phase 1 is done (informal spike, no
 OpenSpec change — see below for why). **Phase 2 is done** (`classify-weapon-characteristic-effects`,
-2026-09-10, `IsCaveated` correction 2026-09-11 — see below). Phase 3 is next ready to scope as a real
-OpenSpec change, now that Phase 2's own `WeaponCharacteristicEffect`/`WeaponSelector` shape is real
-rather than speculative; the rest stay here until their turn. Don't re-litigate the decisions already
-made below without new evidence.
+2026-09-10, `IsCaveated` correction 2026-09-11 — see below). **Phase 3 is done**
+(`resolve-weapon-characteristic-effects`, archived 2026-09-11 — see below). Phase 4 is next ready to
+scope as a real OpenSpec change; the rest stay here until their turn. Don't re-litigate the decisions
+already made below without new evidence.
 
 - **Phase 1 (done 2026-09-10, informal spike, no OpenSpec change)**: pulled real weapon-effect
   ability text from the live BSData clone via an ad hoc `jq` dump (every `Abilities`/`sharedRules`
@@ -143,17 +143,31 @@ made below without new evidence.
     roll modifiers (a transient concept, distinct from a persistent `WeaponProfile` mutation), and
     2-3 multi-choice-menu-bundled abilities (the same Doctrina-Imperatives-shaped import-chunking
     question already noted above, not a new finding).
-- **Phase 3**: the aggregation mechanism — mutate the relevant `WeaponProfile`(s) with a resolved
-  `WeaponCharacteristicEffect` before/at `BuildWeapons`' own grouping, and let
-  `WeaponProfileEqualityKey` do group split/merge for free (an ability reaching every current
-  contributor identically re-merges into one group; one reaching a single contributor forces it
-  into its own singleton group — both fall out of structural-equality grouping the domain model
-  already has, no new grouping logic needed). Provable in isolation against hand-built fixtures
-  first, same sequencing `InvulnerableSaveEffectResolver` used. Weapon-selector-to-contribution
-  resolution (named-weapon matching needs Phase 0's Name field; class matching already trivial via
-  `WeaponProfile.Type` — confirmed real corpus data only ever produces `WeaponClass`/`AllWeapons`
-  today, never `NamedWeapon`, per Phase 2's own 19-result corpus review). The "does this ability
-  reach every current contributor" evaluation that Phase 4's row-placement tiers depend on.
+- **Phase 3 (done 2026-09-11, `resolve-weapon-characteristic-effects`)**: shipped
+  `WeaponCharacteristicEffectResolver.Resolve` (mirroring `InvulnerableSaveEffectResolver`) plus a
+  `WeaponSelector`-to-`WeaponProfile` matching predicate, and wired both directly into the live
+  `AttachedUnitAggregator.BuildWeapons` — a matched, non-caveated, bearer-scoped baseline entry now
+  mutates the applicable weapon's `S`/`Ap`/`D` field before computing `WeaponProfileEqualityKey`, so
+  existing structural-equality grouping does the split/merge for free, exactly as scoped below. Went
+  straight to live wiring rather than staying an unconsumed standalone resolver first, per direct
+  instruction for that change (a deliberate divergence from the Statline family's own
+  resolver-then-baseline-wiring sequencing). Real, evidence-driven deviation: a caveated baseline
+  entry is deliberately NOT applied here — Phase 2's own corpus review found the weapon-characteristic
+  family's caveats are disproportionately real, unmodeled activation conditions ("Once per battle...
+  If it does,"), and this app has no turn-trigger mechanism to evaluate them, so auto-applying would
+  misrepresent a conditional buff as permanent; only 4 of the 19 baselined entries are uncaveated, and
+  of those only 3 touch a resolvable characteristic (Attacks stays unresolved — see below). Also fixed
+  a real, pre-existing production bug found via this change's own regression run:
+  `AttachedUnitAggregator.ApplyEffect` crashed with `ArgumentOutOfRangeException` on any present
+  ability whose baseline entry carries a `WeaponCharacteristicEffect` with a Self/AttachedUnit target
+  (17 of the 19 real entries already meet that shape), so any roster carrying one of those abilities
+  already crashed `/LivePlay` before this change. **Verified against the real bundled corpus**: no
+  currently-importable ordinary roster produces a visible mutation yet (the 3 remaining uncaveated,
+  resolvable entries are all Crusade-only Battle Honour wargear, already excluded by
+  `IsGameModeGated`) — the mechanism is real and fixture-proven, just not yet exercised end-to-end by
+  live data. **Named but explicitly deferred, not built**: resolving an Attacks (`"A"`) effect —
+  `WeaponProfile.A` stays a plain `DiceExpression`, unretyped; `CharacteristicModificationKinds`
+  already, deliberately, excludes it.
 - **Phase 4 (rendering)**: widen `ShowsBreakdownTrigger` to fire on any weapon-effect ability
   contribution, not just >1 model line. New ability-contribution row (ability-name popover trigger
   + optional resolved delta, e.g. "+1") placed via three tiers mirroring `AggregateAbilityEntry`'s

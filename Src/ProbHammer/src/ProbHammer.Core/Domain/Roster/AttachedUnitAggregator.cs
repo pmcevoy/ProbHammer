@@ -276,6 +276,7 @@ public static class AttachedUnitAggregator
             {
                 var baseProfile = unit.Datasheet.ResolveWeaponProfile(weaponName);
                 var profile = ResolveContributionProfile(baseProfile, unit, modelLine, abilities, baseline);
+                var unresolvedAbilities = FindUnresolvedAbilities(baseProfile, unit, modelLine, abilities, baseline);
                 var key = profile.EqualityKey();
 
                 var contribution = new WeaponContribution(
@@ -284,7 +285,8 @@ public static class AttachedUnitAggregator
                     Count: modelLine.RemainingCount,
                     PerModelAttacks: profile.A,
                     Name: profile.Name,
-                    LoadoutIndex: LoadoutIndexOf(unit, modelLine));
+                    LoadoutIndex: LoadoutIndexOf(unit, modelLine),
+                    UnresolvedAbilities: unresolvedAbilities);
                 var scaledAttacks = profile.A.Scale(modelLine.RemainingCount);
 
                 if (groups.TryGetValue(key, out var existing))
@@ -301,7 +303,8 @@ public static class AttachedUnitAggregator
 
         return groups.Values
             .Select(v =>
-                new AggregateWeaponEntry(v.Profile, v.TotalAttacks, CompositeName(v.Contributions), v.Contributions))
+                new AggregateWeaponEntry(v.Profile, v.TotalAttacks, CompositeName(v.Contributions), v.Contributions,
+                    UnresolvedAbilities: CompositeUnresolvedAbilities(v.Contributions)))
             .ToList();
     }
 
@@ -315,7 +318,7 @@ public static class AttachedUnitAggregator
         IReadOnlyList<AggregateAbilityEntry> abilities, RuleClassificationBaseline baseline)
     {
         var applicableEffects = abilities
-            .Select(a => (Entry: a, Matched: TryGetWeaponEffectEntry(baseline, a.Ability)))
+            .Select(a => (Entry: a, Matched: TryGetWeaponEffectEntry(baseline, a.Ability, isCaveated: false)))
             .Where(x => x.Matched is not null)
             .Where(x => IsBearerOf(x.Entry, x.Matched!.Target, unit.Datasheet.Name, modelLine.StatlineName))
             .SelectMany(x => x.Matched!.Effects.OfType<WeaponCharacteristicEffect>()
@@ -330,18 +333,43 @@ public static class AttachedUnitAggregator
         return resolved;
     }
 
+    // Caveated-branch counterpart to ResolveContributionProfile (design.md D5): identical
+    // IsBearerOf/WeaponSelectorMatches matching against the same unmutated base profile, admitting a
+    // caveated baseline entry instead of a non-caveated one, and never mutating the profile - only
+    // naming the source ability so a caveated match is still visible without evaluating the
+    // activation condition this app has no mechanism for (attached-unit-tracker's "Aggregate Weapon
+    // Count View" requirement).
+    private static IReadOnlyList<Ability> FindUnresolvedAbilities(
+        WeaponProfile profile, Unit unit, ModelLine modelLine,
+        IReadOnlyList<AggregateAbilityEntry> abilities, RuleClassificationBaseline baseline)
+    {
+        return abilities
+            .Select(a => (Entry: a, Matched: TryGetWeaponEffectEntry(baseline, a.Ability, isCaveated: true)))
+            .Where(x => x.Matched is not null)
+            .Where(x => IsBearerOf(x.Entry, x.Matched!.Target, unit.Datasheet.Name, modelLine.StatlineName))
+            .Where(x => x.Matched!.Effects.OfType<WeaponCharacteristicEffect>()
+                .Where(e => e.Characteristic != "A")
+                .Any(e => WeaponSelectorMatches(e.Selector, profile)))
+            .Select(x => x.Entry.Ability)
+            .DistinctBy(a => (a.Name, a.Text))
+            .ToList();
+    }
+
     // A baseline entry's own weapon-characteristic Effects are only ever applied when its
     // classification is NOT caveated - deliberately diverges from TryGetApplicableEntry's own
     // Statline precedent above (which applies regardless of IsCaveated), since this family's
     // caveats are disproportionately real, unmodeled activation conditions rather than harmless
     // trailing flavor text (design.md D4). Same KeywordRuleTarget/UnconditionalRuleTarget exclusion
-    // as the Statline case - no roster-wide predicate evaluation exists.
+    // as the Statline case - no roster-wide predicate evaluation exists. isCaveated selects which
+    // branch a caller wants: false for the applied-mutation path, true for the unresolved-reference
+    // path (FindUnresolvedAbilities, above) - both read the identical Target-scoping rule.
     private static RuleClassificationBaselineEntry? TryGetWeaponEffectEntry(
-        RuleClassificationBaseline baseline, Ability ability)
+        RuleClassificationBaseline baseline, Ability ability, bool isCaveated)
     {
         var normalizedText = RuleEffectClassifier.Normalize(ability.Text);
         return baseline.TryGet(normalizedText, out var entry) &&
-               entry is { IsCaveated: false, Target: SelfRuleTarget or AttachedUnitRuleTarget }
+               entry.IsCaveated == isCaveated &&
+               entry.Target is SelfRuleTarget or AttachedUnitRuleTarget
             ? entry
             : null;
     }
@@ -389,6 +417,12 @@ public static class AttachedUnitAggregator
             _ => $"{string.Join(", ", names[..^1])}, and {names[^1]}"
         };
     }
+
+    // Same order-preserving-distinct convention as CompositeName, but over every contribution's own
+    // UnresolvedAbilities rather than its Name - no join/Oxford-comma step, since the render layer
+    // needs the actual Ability list (for a popover trigger), not a display string.
+    private static IReadOnlyList<Ability> CompositeUnresolvedAbilities(List<WeaponContribution> contributions) =>
+        contributions.SelectMany(c => c.UnresolvedAbilities).DistinctBy(a => (a.Name, a.Text)).ToList();
 
     // Mirrors the same (unfiltered by RemainingCount) statline-name match BuildStatlines uses to
     // build a statline entry's Loadouts list, so this index always lines up with that ModelLine's

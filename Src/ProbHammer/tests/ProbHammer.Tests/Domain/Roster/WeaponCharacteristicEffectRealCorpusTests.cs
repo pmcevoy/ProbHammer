@@ -4,6 +4,7 @@ using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Catalogue.Bsdata;
 using ProbHammer.Core.Domain.Import;
 using ProbHammer.Core.Domain.Roster;
+using ProbHammer.Web.Pages;
 
 namespace ProbHammer.Tests.Domain.Roster;
 
@@ -23,11 +24,18 @@ namespace ProbHammer.Tests.Domain.Roster;
 /// today: the real `AttachedUnitAggregator.ApplyEffect` bug fixed alongside this change (design.md
 /// D8) no longer crashes on Zealot specifically (it would have, before this change - Zealot's own
 /// Target is Self, exactly the shape that threw), and a caveated match correctly leaves the real
-/// printed weapon value untouched.</summary>
+/// printed weapon value untouched.
+///
+/// `render-weapon-characteristic-effects` (this change) extends this same real-corpus pipeline
+/// through to `LivePlayModel.BuildUnitBlock` (task 5.1/5.2): Zealot's caveated match, invisible
+/// end-to-end before this change, now surfaces as a real, visible name-marker + legend on the
+/// Ministorum Priest's Power weapon row - the first real weapon-characteristic-effect result this
+/// project has produced against actual bundled BSData, not just a hand-built fixture.</summary>
 public class WeaponCharacteristicEffectRealCorpusTests
 {
     private static string BundledBsDataRoot([CallerFilePath] string here = "") =>
-        Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "..", "..", "src", "ProbHammer.Web", "BsData"));
+        Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "..", "..", "src", "ProbHammer.Web",
+            "BsData"));
 
     private static string BundledBaselinePath([CallerFilePath] string here = "") =>
         Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "..", "..", "src", "ProbHammer.Web",
@@ -64,5 +72,34 @@ public class WeaponCharacteristicEffectRealCorpusTests
         weapon.Profile.S.IsCaveated.Should().BeFalse();
         weapon.Profile.S.Value.Should().Be((CharacteristicValue)4); // the real printed value, unmutated
         weapon.Profile.S.ContributingAbilities.Should().BeEmpty(); // Zealot is caveated - not applied
+        weapon.UnresolvedAbilities.Should().ContainSingle(a => a.Name == "Zealot");
+    }
+
+    [Fact]
+    public void MinistorumPriestWithZealot_RendersANameMarkerAndLegendNamingZealot()
+    {
+        var parsed = new ParsedArmyList(
+            Name: "Test Army", PointsSpent: 0, Faction: ["Imperium", "Adepta Sororitas"], Detachments: [],
+            ForceDisposition: "Test", BattleSize: "Incursion", PointsLimit: 1000, AttachmentGroups: [],
+            StandaloneUnits:
+            [
+                new ParsedUnit(
+                    "Ministorum Priest",
+                    [new ParsedModelGroup("Ministorum Priest", 1, ["Power weapon"])], [])
+            ]);
+
+        var source = new LocalDiskBsdataCatalogueSource(BundledBsDataRoot());
+        var fileName = BsdataFactionResolver.ResolveStartingFileName(parsed.Faction, source.ListFileNames());
+        var catalogue = ResolvedBsdataCatalogue.Build(source, fileName);
+        var roster = ArmyRosterEnricher.Enrich(parsed, catalogue);
+        var priest = roster.Units.Single();
+        var baseline = RuleClassificationBaseline.Load(BundledBaselinePath());
+
+        var view = AttachedUnitAggregator.Build(priest, baseline);
+        var block = LivePlayModel.BuildUnitBlock(view);
+
+        var weaponRow = block.MeleeWeapons.Should().ContainSingle(w => w.Entry.Profile.Name == "Power weapon").Subject;
+        weaponRow.NameMarker.Should().Be("*");
+        weaponRow.FlagLegend.Should().ContainSingle(l => l.Marker == "*" && l.Source.Name == "Zealot");
     }
 }

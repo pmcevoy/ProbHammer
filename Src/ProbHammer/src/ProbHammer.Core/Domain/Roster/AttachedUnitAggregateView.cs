@@ -27,6 +27,13 @@ public sealed record AggregateStatlineEntry(
 /// <see cref="StatlineName"/> alone, and <see cref="Count"/> is not reliable (two loadouts can
 /// coincidentally share a model count). <c>-1</c> when the statline has only one <c>ModelLine</c>
 /// (no <c>Loadouts</c> rendered at all, so there is nothing to index).
+/// <see cref="UnresolvedAbilities"/> lists every present, bearer-scoped, selector-matched ability
+/// whose checked-in baseline entry is caveated - matched the same way an applied
+/// <c>WeaponCharacteristicEffect</c> would be, but left unapplied, per
+/// <c>AttachedUnitAggregator.ResolveContributionProfile</c>'s own caveated-branch counterpart.
+/// Empty when no caveated match reaches this contribution. Independent of whether this
+/// contribution's own <see cref="PerModelAttacks"/>/<see cref="Name"/> already reflect an applied
+/// mutation from a different, non-caveated ability.
 /// </summary>
 public sealed record WeaponContribution(
     string ComponentName,
@@ -34,19 +41,31 @@ public sealed record WeaponContribution(
     int Count,
     DiceExpression PerModelAttacks,
     string Name,
-    int LoadoutIndex = -1);
+    int LoadoutIndex = -1,
+    IReadOnlyList<Ability>? UnresolvedAbilities = null)
+{
+    public IReadOnlyList<Ability> UnresolvedAbilities { get; init; } = UnresolvedAbilities ?? [];
+}
 
 /// <summary>
 /// <see cref="Profile"/> is retained for its identity fields (Type/Range/Skill/S/Ap/D/ability
 /// flags) - but once a row merges contributions from multiple model-lines, <c>Profile.A</c> and
 /// <c>Profile.Name</c> are each whichever contributor happened to be inserted first and are not
 /// authoritative. Only <see cref="TotalAttacks"/> and <see cref="Name"/> are safe to render.
+/// <see cref="UnresolvedAbilities"/> is the same order-preserving-distinct composite
+/// <see cref="Name"/> already computes, but over every contribution's own
+/// <see cref="WeaponContribution.UnresolvedAbilities"/> instead of its Name - naming every distinct
+/// caveated ability reaching any contribution in this group, empty when none do.
 /// </summary>
 public sealed record AggregateWeaponEntry(
     WeaponProfile Profile,
     DiceExpression TotalAttacks,
     string Name,
-    IReadOnlyList<WeaponContribution> Contributions);
+    IReadOnlyList<WeaponContribution> Contributions,
+    IReadOnlyList<Ability>? UnresolvedAbilities = null)
+{
+    public IReadOnlyList<Ability> UnresolvedAbilities { get; init; } = UnresolvedAbilities ?? [];
+}
 
 /// <summary>
 /// <see cref="StatlineName"/> is null for a Datasheet-sourced or Unit.Enhancements-sourced ability
