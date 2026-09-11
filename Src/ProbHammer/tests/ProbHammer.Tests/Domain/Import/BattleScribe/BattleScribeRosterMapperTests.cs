@@ -269,6 +269,37 @@ public class BattleScribeRosterMapperTests
         lieutenant.Datasheet.Abilities.Select(a => a.Name).Should().NotContain(["Leader", "Support", "Attached Unit"]);
     }
 
+    [Fact]
+    public void SameNameMultiProfileWeapon_IsCountedOnceNotOncePerProfile()
+    {
+        // Real bug found live (2026-09-11, user's own import): Adeptus Custodes' Guardian Spear
+        // exports as two profiles under one wargear selection - a "Melee Weapons" mode and a
+        // "Ranged Weapons" (thrown) mode - both sharing the identical Name "Guardian Spear". Unlike
+        // "Sword of the High Marshals" (MultiProfileWeaponSelection_RetainsEveryResolvedProfile,
+        // above - two profiles with genuinely DISTINCT names), this is one physical weapon copy per
+        // model, not two. Before the fix, CollectWeaponsAndAbilities added the weapon name once per
+        // PROFILE instead of once per distinct name, so a 5-model Custodian Wardens unit reported
+        // Guardian Spear's total Attacks as 50 instead of the correct 25.
+        var json = File.ReadAllText(RealCorpusRosterPath("nr-custodes-talons.json"));
+        BattleScribeRosterFormat.TryParse(json, out var roster).Should().BeTrue();
+        var army = BattleScribeRosterMapper.Map(roster!);
+
+        var wardens = army.Units.SelectMany(u => u.Components)
+            .Single(u => u.Datasheet.Name == "Custodian Wardens");
+        var guardianSpearLines = wardens.ModelLines.Where(ml => ml.Weapons.Contains("Guardian Spear")).ToList();
+        guardianSpearLines.Should().NotBeEmpty();
+        foreach (var line in guardianSpearLines)
+            line.Weapons.Count(w => w == "Guardian Spear").Should().Be(1);
+
+        var view = AttachedUnitAggregator.Build(wardens, RuleClassificationBaseline.Empty);
+        var guardianSpear = view.Weapons.Single(w => w.Name == "Guardian Spear");
+        var totalWardens = guardianSpearLines.Sum(ml => ml.Count);
+        guardianSpear.TotalAttacks.Should().Be(DiceExpression.Fixed(5 * totalWardens));
+    }
+
+    private static string RealCorpusRosterPath(string fileName, [CallerFilePath] string here = "") =>
+        Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "..", "..", "..", "data", fileName));
+
     private static Unit FindUnit(ArmyRoster army, string name) =>
         army.Units.SelectMany(u => u.Components).First(u => u.Name == name && u.Datasheet.Name == name);
 }

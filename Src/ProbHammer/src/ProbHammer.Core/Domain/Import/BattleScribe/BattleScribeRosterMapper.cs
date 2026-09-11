@@ -240,9 +240,20 @@ public static partial class BattleScribeRosterMapper
                     foreach (var profile in weaponProfiles)
                         addWeaponProfile(profile);
 
+                    // A weapon with alternate firing modes (e.g. a thrown/melee-mode spear) exports
+                    // as multiple profiles under one wargear selection, sharing one weapon Name
+                    // across a "Melee Weapons" and a "Ranged Weapons" typeName entry - real example:
+                    // Adeptus Custodes' Guardian Spear. That's one physical weapon copy per model,
+                    // not one copy per profile, so Distinct() here is required - without it, a
+                    // multi-profile-but-same-name weapon was counted twice per model, doubling its
+                    // reported Attacks total (found live: a 5-model Custodian Warden unit reported
+                    // 50 total Attacks for Guardian Spear instead of the correct 25). A weapon whose
+                    // profiles are genuinely distinctly named (e.g. "Sword of the High Marshals -
+                    // Sweep"/"- Strike") is unaffected - Distinct() still yields both names.
+                    var distinctNames = weaponProfiles.Select(p => p.Name).Distinct().ToList();
                     var perModelCount = modelCount == 0 ? 0 : child.Number / modelCount;
                     for (var i = 0; i < perModelCount; i++)
-                        weapons.AddRange(weaponProfiles.Select(p => p.Name));
+                        weapons.AddRange(distinctNames);
                 }
                 else if (abilityProfiles.Count > 0)
                 {
