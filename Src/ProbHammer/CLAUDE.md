@@ -32,7 +32,7 @@ wh40k-army-enricher/
                           rules.md)
 ```
 
-- **Language:** C# 12, `net8.0`, nullable reference types enabled, implicit usings enabled
+- **Language:** C# 14, `net10.0`, nullable reference types enabled, implicit usings enabled
 - **Key dependencies:** `xunit` + `FluentAssertions` + `Moq` (tests)
 - **No third-party XML library** — use `System.Xml.Linq` (XDocument / LINQ to XML)
 

@@ -927,8 +927,8 @@ public sealed record StatlineBlockViewModel(
         get
         {
             var legend = new List<(string, Ability)>();
-            foreach (var field in LivePlayModel.ScalarStatlineFieldOrder)
-                if (ScalarFlagSources.TryGetValue(field, out var source) && ScalarMarker(field) is { } marker)
+            foreach (var fieldName in LivePlayModel.ScalarStatlineFieldOrder)
+                if (ScalarFlagSources.TryGetValue(fieldName, out var source) && ScalarMarker(fieldName) is { } marker)
                     legend.Add((marker, source));
             if (InvulnerableSaveFlagSource is { } insv && InvulnerableSaveMarker is { } im) legend.Add((im, insv));
             return legend;
@@ -1048,8 +1048,8 @@ public sealed record WeaponRowViewModel(
         get
         {
             var legend = new List<(string, Ability)>();
-            foreach (var field in LivePlayModel.WeaponScalarFieldOrder)
-                if (ValueFlagSources?.TryGetValue(field, out var source) == true && ValueMarker(field) is { } marker)
+            foreach (var fieldName in LivePlayModel.WeaponScalarFieldOrder)
+                if (ValueFlagSources?.TryGetValue(fieldName, out var source) == true && ValueMarker(fieldName) is { } marker)
                     legend.Add((marker, source));
             if (NameMarkerSource is { } src && NameMarker is { } nm) legend.Add((nm, src));
             return legend;

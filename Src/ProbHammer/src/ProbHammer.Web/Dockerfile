@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0-noble AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-noble AS build
 WORKDIR /src
 
 COPY ["src/ProbHammer.Web/ProbHammer.Web.csproj", "src/ProbHammer.Web/"]
@@ -9,7 +9,7 @@ RUN dotnet restore "src/ProbHammer.Web/ProbHammer.Web.csproj"
 COPY --link . .
 RUN dotnet publish "src/ProbHammer.Web/ProbHammer.Web.csproj" --no-restore -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-noble-chiseled AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled AS final
 WORKDIR /app
 EXPOSE 8080
 
