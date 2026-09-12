@@ -7,7 +7,7 @@ COPY ["src/ProbHammer.Core/ProbHammer.Core.csproj", "src/ProbHammer.Core/"]
 RUN dotnet restore "src/ProbHammer.Web/ProbHammer.Web.csproj"
 
 COPY --link . .
-RUN dotnet publish "src/ProbHammer.Web/ProbHammer.Web.csproj" --no-restore -c Release -o /app/publish
+RUN dotnet publish "src/ProbHammer.Web/ProbHammer.Web.csproj" --no-restore -c Release -o /app/publish -p:DebugType=none -p:DebugSymbols=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled AS final
 WORKDIR /app
