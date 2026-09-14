@@ -43,7 +43,7 @@ builder.Services.AddScoped<ILivePlayCasualtyService, LivePlayCasualtyService>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession();
 
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options => options.Conventions.AddPageRoute("/Import", ""));
 
 var app = builder.Build();
 
