@@ -5,6 +5,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Google.Cloud.Storage.V1" Version="4.15.0" />
+    <PackageReference Include="Google.Cloud.AspNetCore.DataProtection.Storage" Version="1.0.0-alpha04" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="BSData\" />
     <!--Don't copy the BSData implicitly into the image: we'll link in the Dockerfile-->
     <Content Remove="BsData/**" />

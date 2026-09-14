@@ -198,9 +198,32 @@ LivePlayCasualtyService.SyncAsync()   // loads the session's StoredArmyImport it
                                        // both short-circuit to an empty response.
 ```
 
-`Program.cs` reintroduces `AddDistributedMemoryCache`/`AddSession`/`UseSession` (removed by
-`archive-10e-pipeline`; brought back for per-session `StoredArmyImport` storage, not the old
-`Enricher` cache) and registers `BsdataCatalogueCache` as a singleton over a
+`Program.cs` reintroduces `AddSession`/`UseSession` (removed by `archive-10e-pipeline`; brought
+back for per-session `StoredArmyImport` storage, not the old `Enricher` cache). The
+`IDistributedCache` backing `AddSession` is environment-dependent: `AddDistributedMemoryCache`
+(in-process, gone on restart) unless configuration key `Gcs:BucketName` is set, in which case
+`GoogleCloudStorageDistributedCache` (`Services/GoogleCloudStorageDistributedCache.cs`) backs it
+instead - GCS objects under `sessions/{sessionId}` in the one bucket
+`terraform/cloud-run-iap.tf`'s `google_storage_bucket.state` provisions, so a session survives
+Cloud Run scaling an idle `min_instance_count = 0` service to zero. `Gcs__BucketName` is only set
+by that Terraform (the Cloud Run service's own env var); local `docker compose up` never sets it,
+so local dev is unaffected and needs no GCS credentials. The same bucket, under `dataprotection/`,
+also takes over from the default (otherwise-ephemeral, per-instance) DataProtection key ring via
+`PersistKeysToGoogleCloudStorage` - same conditional, same reasoning: without it, a fresh key on
+every cold start silently invalidates every existing session cookie. `GoogleCloudStorageDistributedCache`
+deliberately ignores `DistributedCacheEntryOptions`' own expiration (Set/Refresh only bump the
+object's `CustomTime`) - a session should keep working across an arbitrarily long gap between
+turns, so GCS's own lifecycle rule (delete unset for 14 days) is storage cleanup only, not
+session-expiry enforcement. Because of that, `AddSession`'s own `IdleTimeout` option (set to 7 days,
+alongside `Cookie.MaxAge`) is largely cosmetic - it feeds `DistributedCacheEntryOptions`, which this
+cache ignores, so it doesn't gate whether a session's GCS-backed data is still readable. Both are set
+only when `Gcs:BucketName` is configured (the same gate as the cache/DataProtection wiring above) -
+local `docker compose up`'s in-memory cache dies with the process regardless of cookie lifetime, so
+it keeps ASP.NET Core's own 20-minute default rather than promising a week it can't deliver. The
+setting that actually matters for a returning player is `Cookie.MaxAge`: the session cookie is non-persistent
+by default (gone once the browser fully closes), so without it a week-old GCS object would be
+unreachable regardless of the bucket's own 14-day retention. `Program.cs` also registers
+`BsdataCatalogueCache` as a singleton over a
 `LocalDiskBsdataCatalogueSource` rooted at `Bsdata:RootDirectory` (default `"BsData"`, resolved
 against `IWebHostEnvironment.ContentRootPath`) — the bundled snapshot at
 `src/ProbHammer.Web/BsData/`, copied into the Docker image as its own layer, not a live GitHub

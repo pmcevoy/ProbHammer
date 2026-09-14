@@ -45,6 +45,42 @@ data "google_project" "current" {
   project_id = var.project_id
 }
 
+# One bucket, two prefixes: DataProtection's key ring (dataprotection/) and the
+# session cache (sessions/) - both need to survive scale-to-zero, neither is worth
+# a second bucket. Session objects aren't deleted on logical expiry by the app
+# itself (no per-entry TTL in GCS); this lifecycle rule is pure storage-cost
+# cleanup for abandoned sessions, not what makes a session "expire".
+resource "google_storage_bucket" "state" {
+  name                        = "${var.project_id}-${var.service_name}-state"
+  location                    = var.region
+  storage_class               = "STANDARD"
+  uniform_bucket_level_access = true
+  force_destroy               = false
+
+  lifecycle_rule {
+    condition {
+      days_since_custom_time = 14
+    }
+    action {
+      type = "Delete"
+    }
+  }
+}
+
+resource "google_service_account" "probhammer" {
+  account_id   = "${var.service_name}-run"
+  display_name = "Cloud Run runtime identity for ${var.service_name}"
+}
+
+# roles/storage.objectAdmin scoped to just this bucket - full read/write/delete on
+# objects (covers both the key ring and the session cache), no bucket-config or
+# IAM-management rights, nothing outside this bucket.
+resource "google_storage_bucket_iam_member" "probhammer_state_access" {
+  bucket = google_storage_bucket.state.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.probhammer.email}"
+}
+
 resource "google_project_service" "run" {
   service            = "run.googleapis.com"
   disable_on_destroy = false
@@ -55,9 +91,9 @@ resource "google_project_service" "iap" {
   disable_on_destroy = false
 }
 
-# min=0/max=1: scales to zero when idle to minimize cost; accepts the session/
-# DataProtection-key loss on cold start discussed separately (GCS-backed
-# persistence is a follow-up, not yet wired into this config).
+# min=0/max=1: scales to zero when idle to minimize cost; the DataProtection key
+# ring and session cache both persist to google_storage_bucket.state (wired via
+# the Gcs__BucketName env var below) so scale-to-zero no longer loses either.
 resource "google_cloud_run_v2_service" "probhammer" {
   name     = var.service_name
   location = var.region
@@ -69,8 +105,15 @@ resource "google_cloud_run_v2_service" "probhammer" {
   iap_enabled = true
 
   template {
+    service_account = google_service_account.probhammer.email
+
     containers {
       image = var.image
+
+      env {
+        name  = "Gcs__BucketName"
+        value = google_storage_bucket.state.name
+      }
     }
 
     scaling {
@@ -79,7 +122,11 @@ resource "google_cloud_run_v2_service" "probhammer" {
     }
   }
 
-  depends_on = [google_project_service.run, google_project_service.iap]
+  depends_on = [
+    google_project_service.run,
+    google_project_service.iap,
+    google_storage_bucket_iam_member.probhammer_state_access,
+  ]
 }
 
 # Equivalent to:

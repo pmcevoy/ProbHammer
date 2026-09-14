@@ -1,5 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Google.Cloud.Storage.V1;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Caching.Distributed;
 using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Catalogue.Bsdata;
 using ProbHammer.Core.Domain.Import;
@@ -40,8 +43,40 @@ builder.Services.AddSingleton<IPhaseTurnStore, PhaseTurnStore>();
 builder.Services.AddSingleton<IRazorPartialRenderer, RazorPartialRenderer>();
 builder.Services.AddScoped<ILivePlayCasualtyService, LivePlayCasualtyService>();
 
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession();
+// Gcs:BucketName (Gcs__BucketName in Cloud Run - see terraform/cloud-run-iap.tf) is only set in
+// the deployed environment. Local `docker compose up` leaves it unset, so it keeps the previous
+// in-memory session/ephemeral-keys behaviour with no GCS credentials required.
+var gcsBucketName = builder.Configuration["Gcs:BucketName"];
+if (string.IsNullOrEmpty(gcsBucketName))
+{
+    builder.Services.AddDistributedMemoryCache();
+}
+else
+{
+    var storageClient = StorageClient.Create();
+    builder.Services.AddSingleton<IDistributedCache>(
+        new GoogleCloudStorageDistributedCache(storageClient, gcsBucketName));
+    builder.Services.AddDataProtection()
+        .PersistKeysToGoogleCloudStorage(gcsBucketName, "dataprotection/keys.xml");
+}
+
+// The 7-day session lifetime only makes sense where the session data itself actually survives that
+// long (the GCS-backed cache, gated the same way above) - local docker compose's in-memory cache
+// dies with the process regardless, so it keeps ASP.NET Core's own 20-minute default rather than
+// promising a week it can't deliver. IdleTimeout is largely inert even when set here -
+// GoogleCloudStorageDistributedCache never reads DistributedCacheEntryOptions, so it doesn't gate
+// whether a session's GCS-backed data is still readable (the bucket's own lifecycle rule does that -
+// see cloud-run-iap.tf). What actually determines whether a returning player still has a session is
+// the cookie itself: it defaults to a non-persistent browser-session cookie (gone once the browser
+// fully closes), so Cookie.MaxAge is what actually carries it across a real week-long gap.
+builder.Services.AddSession(options =>
+{
+    if (string.IsNullOrEmpty(gcsBucketName))
+        return;
+
+    options.IdleTimeout = TimeSpan.FromDays(7);
+    options.Cookie.MaxAge = TimeSpan.FromDays(7);
+});
 
 builder.Services.AddRazorPages(options => options.Conventions.AddPageRoute("/Import", ""));
 

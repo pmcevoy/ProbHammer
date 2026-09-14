@@ -40,7 +40,7 @@ public class LivePlayModel(
     {
         var import = sessionStore.Load(HttpContext.Session);
         if (import is null)
-            return RedirectToPage("/Import");
+            return LocalRedirect("/Import");
 
         var result = rosterProvider.Build(import);
         Units = BuildUnitBlocks(result.Roster, ruleClassificationBaseline);
