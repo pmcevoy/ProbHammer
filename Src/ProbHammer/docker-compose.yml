@@ -1,5 +1,6 @@
 services:
   web:
+    image: ghcr.io/pmcevoy/probhammer:${BUILD_TAG:-latest}
     build:
       context: .
       dockerfile: src/ProbHammer.Web/Dockerfile
@@ -7,6 +8,3 @@ services:
       - "8080:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-    volumes:
-      - ./src/ProbHammer.Web/BsData:/app/BsData:ro
-      - ./src/ProbHammer.Web/Data:/app/Data:ro

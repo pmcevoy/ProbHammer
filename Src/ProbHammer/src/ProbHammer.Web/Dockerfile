@@ -12,9 +12,12 @@ RUN dotnet publish "src/ProbHammer.Web/ProbHammer.Web.csproj" --no-restore -c Re
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled AS final
 WORKDIR /app
 EXPOSE 8080
+LABEL org.opencontainers.image.source=https://github.com/pmcevoy/probhammer
 
-# BsData/ and Data/ are not baked in - docker-compose.yml bind-mounts them at
-# these same paths, keeping the pushed image small.
+#Baking in app data so that we don't need to manage an external volume while running in CloudRun
+COPY --link src/ProbHammer.Web/BsData/ /app/BsData/
+COPY --link src/ProbHammer.Web/Data/ /app/Data/
+
 COPY --link --from=build /app/publish .
 
 ENTRYPOINT ["dotnet", "ProbHammer.Web.dll"]
