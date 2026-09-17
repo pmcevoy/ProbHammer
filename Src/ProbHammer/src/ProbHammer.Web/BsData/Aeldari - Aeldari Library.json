@@ -2,6 +2,8 @@
   "catalogue": {
     "name": "Aeldari - Aeldari Library",
     "id": "dfcf-1214-b57-2205",
+    "authorContact": "Dunamis55",
+    "authorName": "BSData Developers",
     "battleScribeVersion": 2.03,
     "gameSystemId": "sys-352e-adc2-7639-d610",
     "gameSystemRevision": 1,
@@ -390,6 +392,14 @@
       {"name": "Dragon Knights", "id": "7e9f-a8a5-aff4-8308", "hidden": false},
       {"name": "Leystalker", "id": "fa37-45b2-1e66-4218", "hidden": false},
       {"name": "Stonesinger", "id": "8e48-52a2-7a37-a3fc", "hidden": false}
+    ],
+    "profileTypes": [
+      {
+        "name": "Vanguard of the Dark City",
+        "id": "b373-2ee7-11fe-9d96",
+        "hidden": false,
+        "characteristicTypes": [{"name": "Description", "id": "0515-ce53-4ea7-e6e4"}]
+      }
     ],
     "publications": [
       {"name": "Codex: Aeldari", "id": "442c-a37c-3908-d701", "publicationDate": "08/02/2025", "publisher": "Codex: Aeldari", "shortName": "C:Aeldari"},
@@ -7209,6 +7219,40 @@
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
               }
             ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
+              }
+            ]
           }
         ],
         "modifiers": [
@@ -9951,6 +9995,40 @@
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
               }
             ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
+              }
+            ]
           }
         ],
         "modifiers": [
@@ -10024,7 +10102,7 @@
             ]
           },
           {
-            "name": "Transport",
+            "name": "Falcon",
             "id": "da78-79ae-395d-f521",
             "hidden": false,
             "typeId": "74f8-5443-9d6d-1f1e",
@@ -12133,6 +12211,40 @@
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
               }
             ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
+              }
+            ]
           }
         ],
         "modifiers": [
@@ -13381,6 +13493,40 @@
                 "type": "append",
                 "value": "(Legendary)",
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
+              }
+            ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
               }
             ]
           }
@@ -15678,6 +15824,40 @@
                 "type": "append",
                 "value": "(Legendary)",
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
+              }
+            ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
               }
             ]
           }
@@ -19223,6 +19403,40 @@
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
               }
             ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
+              }
+            ]
           }
         ],
         "modifiers": [
@@ -22030,7 +22244,7 @@
             "characteristics": [
               {
                 "name": "Description",
-                "$text": "This model can be attached to the following units:\n- **CORSAIR REAVER BAND**\n- **CORSAIR VOIDREAVERS**\n- **CORSAIR VOIDSCARRED**\n- **GUARDIAN DEFENDERS**\n- **STORM GUARDIANS**\n- **YNNARI INCUBI**\n- **YNNARI KABALITE WARRIORS**\n- **YNNARI WYCHES**\n\nYou can attach this unit to one of the above units, even if Yvraine has already been attached to it. If you do, and that Bodyguard unit is destroyed, the Leader units attached to it become separate units, with their original Starting Strengths.",
+                "$text": "This model can be attached to the following units:\n- **CORSAIR REAVER BAND**\n- **CORSAIR VOIDREAVERS**\n- **CORSAIR VOIDSCARRED**\n- **GUARDIAN DEFENDERS**\n- **STORM GUARDIANS**\n- **YNNARI KABALITE WARRIORS**\n- **YNNARI WYCHES**\n\nYou can attach this unit to one of the above units, even if Yvraine has already been attached to it. If you do, and that Bodyguard unit is destroyed, the Leader units attached to it become separate units, with their original Starting Strengths.",
                 "typeId": "9b8f-694b-e5e-b573"
               }
             ]
@@ -24415,6 +24629,40 @@
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
               }
             ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
+              }
+            ]
           }
         ],
         "modifiers": [
@@ -26465,6 +26713,40 @@
                 "type": "append",
                 "value": "(Legendary)",
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
+              }
+            ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
               }
             ]
           }
@@ -37320,13 +37602,13 @@
             "name": "Aethersails",
             "id": "56f2-83c1-b537-4f8",
             "hidden": false,
-            "typeId": "9cc3-6d83-4dd3-9b64",
-            "typeName": "Abilities",
+            "typeId": "b373-2ee7-11fe-9d96",
+            "typeName": "Vanguard of the Dark City",
             "characteristics": [
               {
                 "name": "Description",
                 "$text": "While one or more ^^**Drukhari**^^ units are embarked within this model, you can re-roll Advance and Charge rolls made for this model.",
-                "typeId": "9b8f-694b-e5e-b573"
+                "typeId": "0515-ce53-4ea7-e6e4"
               }
             ]
           },
@@ -37367,7 +37649,7 @@
             "characteristics": [
               {
                 "name": "Description",
-                "$text": "At the start of your Command phase, select one of the abilities in the Vanguard of the Dark City section (see left) for this model. Until the start of your next Command phase, this model has that ability.",
+                "$text": "At the start of your Command phase, select one of the abilities in the Vanguard of the Dark City section for this model. Until the start of your next Command phase, this model has that ability.",
                 "typeId": "9b8f-694b-e5e-b573"
               }
             ]
@@ -37376,13 +37658,13 @@
             "name": "Masters of the Shadowed Sky",
             "id": "fc02-97e0-e204-bf1c",
             "hidden": false,
-            "typeId": "9cc3-6d83-4dd3-9b64",
-            "typeName": "Abilities",
+            "typeId": "b373-2ee7-11fe-9d96",
+            "typeName": "Vanguard of the Dark City",
             "characteristics": [
               {
                 "name": "Description",
                 "$text": "At the end of your Command phase, if this model is within range of an objective marker you control, and if one or more ^^**Kabalite Warriors**^^ units are embarked within it, that objective marker remains under your control until your opponent's Level of Control over that objective marker is greater than yours at the end of a phase.",
-                "typeId": "9b8f-694b-e5e-b573"
+                "typeId": "0515-ce53-4ea7-e6e4"
               }
             ]
           },
@@ -37390,13 +37672,13 @@
             "name": "Speed of the Kill",
             "id": "1ea1-be46-313b-d0dd",
             "hidden": false,
-            "typeId": "9cc3-6d83-4dd3-9b64",
-            "typeName": "Abilities",
+            "typeId": "b373-2ee7-11fe-9d96",
+            "typeName": "Vanguard of the Dark City",
             "characteristics": [
               {
                 "name": "Description",
                 "$text": "Each time a ^^**Wyches**^^ unit disembarks from this model (excluding Emergency Disembarkations), models in that ^^**Wyches**^^ unit must be setup wholly within 6\" of this model.",
-                "typeId": "9b8f-694b-e5e-b573"
+                "typeId": "0515-ce53-4ea7-e6e4"
               }
             ]
           },
@@ -37404,13 +37686,13 @@
             "name": "Visions of Butchery",
             "id": "6737-688c-ed8b-236c",
             "hidden": false,
-            "typeId": "9cc3-6d83-4dd3-9b64",
-            "typeName": "Abilities",
+            "typeId": "b373-2ee7-11fe-9d96",
+            "typeName": "Vanguard of the Dark City",
             "characteristics": [
               {
                 "name": "Description",
                 "$text": "While one or more ^^**Wracks**^^ units are embarked within this model, for each ^^**Wracks**^^ model embarked within this model, add 1 to the Attacks characteristic of this model's Bladevanes and chainsnares.",
-                "typeId": "9b8f-694b-e5e-b573"
+                "typeId": "0515-ce53-4ea7-e6e4"
               }
             ]
           }
@@ -44391,6 +44673,40 @@
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
               }
             ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
+              }
+            ]
           }
         ],
         "modifiers": [
@@ -44734,6 +45050,40 @@
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
               }
             ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
+              }
+            ]
           }
         ],
         "modifiers": [
@@ -45071,6 +45421,40 @@
                 "type": "append",
                 "value": "(Legendary)",
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
+              }
+            ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
               }
             ]
           }
@@ -45799,6 +46183,40 @@
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
               }
             ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
+              }
+            ]
           }
         ],
         "modifiers": [
@@ -46124,6 +46542,40 @@
                 "type": "append",
                 "value": "(Legendary)",
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
+              }
+            ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
               }
             ]
           }
@@ -48909,6 +49361,40 @@
                 "type": "append",
                 "value": "(Legendary)",
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
+              }
+            ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
               }
             ]
           }
@@ -53288,6 +53774,40 @@
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
               }
             ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
+              }
+            ]
           }
         ],
         "modifiers": [
@@ -53334,7 +53854,7 @@
         ],
         "profiles": [
           {
-            "name": "Transport",
+            "name": "Firestorm",
             "id": "aa40-684c-a923-ec5d",
             "hidden": false,
             "typeId": "74f8-5443-9d6d-1f1e",
@@ -53729,6 +54249,40 @@
                 "type": "append",
                 "value": "(Legendary)",
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
+              }
+            ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
               }
             ]
           }
@@ -54128,6 +54682,40 @@
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
               }
             ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
+              }
+            ]
           }
         ],
         "modifiers": [
@@ -54522,6 +55110,40 @@
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
               }
             ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
+              }
+            ]
           }
         ],
         "modifiers": [
@@ -54900,6 +55522,40 @@
                 "type": "append",
                 "value": "(Legendary)",
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
+              }
+            ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
               }
             ]
           }
@@ -57802,6 +58458,40 @@
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
               }
             ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
+              }
+            ]
           }
         ],
         "modifiers": [
@@ -58866,6 +59556,40 @@
                 "type": "append",
                 "value": "(Legendary)",
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
+              }
+            ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
               }
             ]
           }
@@ -63334,6 +64058,40 @@
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
               }
             ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
+              }
+            ]
           }
         ],
         "modifiers": [
@@ -63758,6 +64516,40 @@
                 "type": "append",
                 "value": "(Legendary)",
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
+              }
+            ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
               }
             ]
           }
@@ -67960,6 +68752,40 @@
                 "type": "append",
                 "value": "(Legendary)",
                 "conditions": [{"childId": "2dbf-4d49-5d74-85c9", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 50}]
+              }
+            ]
+          },
+          {
+            "comment": "Armoured Warhost detachment modifiers",
+            "type": "and",
+            "conditions": [
+              {
+                "childId": "a27b-ac32-f0fd-8111",
+                "childName": "Armoured Warhost",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ],
+            "modifiers": [
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "annotation",
+                "join": ", ",
+                "skipIfPresent": "Skilled Crews",
+                "type": "append",
+                "value": "Skilled Crews"
+              },
+              {
+                "affects": "self.entries.recursive.profiles.Ranged Weapons",
+                "field": "7f1b-8591-2fcf-d01c",
+                "join": ", ",
+                "skipIfPresent": "ASSAULT",
+                "type": "append",
+                "value": "ASSAULT"
               }
             ]
           }
@@ -81792,11 +82618,12 @@
                         "affects": "self.entries.group.recursive.profiles.Unit",
                         "field": "annotation",
                         "join": ", ",
+                        "scope": "root-entry",
                         "skipIfPresent": "Voidstone",
                         "type": "append",
                         "value": "Voidstone"
                       },
-                      {"affects": "self.entries.group.recursive.profiles.Unit", "field": "55a7-5b54-c60d-11dc", "type": "set", "value": "5+"}
+                      {"affects": "self.entries.group.recursive.profiles.Unit", "field": "55a7-5b54-c60d-11dc", "scope": "root-entry", "type": "set", "value": "5+"}
                     ]
                   }
                 ],

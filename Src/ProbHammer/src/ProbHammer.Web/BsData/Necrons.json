@@ -6,7 +6,7 @@
     "gameSystemId": "sys-352e-adc2-7639-d610",
     "gameSystemRevision": 1,
     "library": false,
-    "revision": 18,
+    "revision": 22,
     "type": "catalogue",
     "xmlns": "http://www.battlescribe.net/schema/catalogueSchema",
     "catalogueLinks": [{"name": "Unaligned Forces", "id": "2660-21-2feb-f1c5", "importRootEntries": true, "targetId": "581a-46b9-5b86-44b7", "type": "catalogue"}],
@@ -461,31 +461,6 @@
       {
         "name": "Skorpekh Destroyers",
         "id": "97f2-7658-2cd-8f4b",
-        "hidden": false,
-        "constraints": [{"id": "4363-bd37-61aa-e46c", "field": "selections", "includeChildSelections": true, "scope": "force", "shared": true, "type": "max", "value": 3}],
-        "modifiers": [
-          {
-            "field": "4363-bd37-61aa-e46c",
-            "type": "set",
-            "value": 2,
-            "conditions": [
-              {
-                "childId": "d62d-db22-4893-4bc0",
-                "childName": "1. Incursion (1000 Point limit)",
-                "field": "selections",
-                "includeChildSelections": true,
-                "scope": "force",
-                "shared": true,
-                "type": "atLeast",
-                "value": 1
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "name": "Triarch Stalker",
-        "id": "1124-c60-ce6-631",
         "hidden": false,
         "constraints": [{"id": "4363-bd37-61aa-e46c", "field": "selections", "includeChildSelections": true, "scope": "force", "shared": true, "type": "max", "value": 3}],
         "modifiers": [
@@ -2341,7 +2316,7 @@
             "hidden": false,
             "typeId": "9cc3-6d83-4dd3-9b64",
             "typeName": "Abilities",
-            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units:\n■ IMMORTALS\n■ NECRON WARRIORS\n", "typeId": "9b8f-694b-e5e-b573"}]
+            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units: IMMORTALS, NECRON WARRIORS\n", "typeId": "9b8f-694b-e5e-b573"}]
           }
         ],
         "selectionEntries": [
@@ -2448,13 +2423,7 @@
             "hidden": false,
             "typeId": "9cc3-6d83-4dd3-9b64",
             "typeName": "Abilities",
-            "characteristics": [
-              {
-                "name": "Description",
-                "$text": "This model can be attached to the following units:\n■ IMMORTALS\n■ LYCHGUARD\n■ NECRON WARRIORS",
-                "typeId": "9b8f-694b-e5e-b573"
-              }
-            ]
+            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units: IMMORTALS, LYCHGUARD, NECRON WARRIORS", "typeId": "9b8f-694b-e5e-b573"}]
           },
           {
             "name": "Grand Strategist",
@@ -2693,7 +2662,7 @@
             "hidden": false,
             "typeId": "9cc3-6d83-4dd3-9b64",
             "typeName": "Abilities",
-            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units:\n■ IMMORTALS", "typeId": "9b8f-694b-e5e-b573"}]
+            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units: IMMORTALS", "typeId": "9b8f-694b-e5e-b573"}]
           },
           {
             "name": "Lord of the Pyrrhian Eternals",
@@ -2909,7 +2878,7 @@
             "characteristics": [
               {
                 "name": "Description",
-                "$text": "This model can be attached to the following units:\n■ IMMORTALS\n■ LYCHGUARD\n■ NECRON WARRIORS\nYou can attach this model to one of the above units even if NEMESOR ZAHNDREKH has already been attached to it. If it is, and that Bodyguard unit is destroyed, the Leader units attached to it become separate units, with their original Starting Strengths.",
+                "$text": "This model can be attached to the following units: IMMORTALS, LYCHGUARD, NECRON WARRIORS\n\nYou can attach this model to one of the above units even if NEMESOR ZAHNDREKH has already been attached to it. If it is, and that Bodyguard unit is destroyed, the Leader units attached to it become separate units, with their original Starting Strengths.",
                 "typeId": "9b8f-694b-e5e-b573"
               }
             ]
@@ -3315,13 +3284,7 @@
             "hidden": false,
             "typeId": "9cc3-6d83-4dd3-9b64",
             "typeName": "Abilities",
-            "characteristics": [
-              {
-                "name": "Description",
-                "$text": "This model can be attached to the following units:\n■ IMMORTALS\n■ LYCHGUARD\n■ NECRON WARRIORS",
-                "typeId": "9b8f-694b-e5e-b573"
-              }
-            ]
+            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units: IMMORTALS, LYCHGUARD, NECRON WARRIORS", "typeId": "9b8f-694b-e5e-b573"}]
           },
           {
             "name": "Nemesor Zahndrekh",
@@ -3487,13 +3450,7 @@
             "hidden": false,
             "typeId": "9cc3-6d83-4dd3-9b64",
             "typeName": "Abilities",
-            "characteristics": [
-              {
-                "name": "Description",
-                "$text": "This model can be attached to the following units:\n■ IMMORTALS\n■ LYCHGUARD\n■ NECRON WARRIORS",
-                "typeId": "9b8f-694b-e5e-b573"
-              }
-            ]
+            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units: IMMORTALS, LYCHGUARD, NECRON WARRIORS", "typeId": "9b8f-694b-e5e-b573"}]
           },
           {
             "name": "Trazyn the Infinite",
@@ -3776,7 +3733,7 @@
             "hidden": false,
             "typeId": "9cc3-6d83-4dd3-9b64",
             "typeName": "Abilities",
-            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units:\n■ IMMORTALS\n■ NECRON WARRIORS", "typeId": "9b8f-694b-e5e-b573"}]
+            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units: IMMORTALS, NECRON WARRIORS", "typeId": "9b8f-694b-e5e-b573"}]
           },
           {
             "name": "Royal Warden",
@@ -4155,7 +4112,7 @@
             "hidden": false,
             "typeId": "9cc3-6d83-4dd3-9b64",
             "typeName": "Abilities",
-            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units:\n■ SKORPEKH DESTROYERS", "typeId": "9b8f-694b-e5e-b573"}]
+            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units: SKORPEKH DESTROYERS", "typeId": "9b8f-694b-e5e-b573"}]
           },
           {
             "name": "Skorpekh Lord",
@@ -4545,7 +4502,7 @@
             "characteristics": [
               {
                 "name": "Description",
-                "$text": "This model can be attached to the following units:\n■ LOKHUST DESTROYERS\n■ LOKHUST HEAVY DESTROYERS",
+                "$text": "This model can be attached to the following units: LOKHUST DESTROYERS, LOKHUST HEAVY DESTROYERS",
                 "typeId": "9b8f-694b-e5e-b573"
               }
             ]
@@ -4824,12 +4781,15 @@
             "type": "selectionEntryGroup"
           }
         ],
-        "infoGroups": [
+        "infoLinks": [
+          {"name": "Detachment Rules", "id": "e5f9-7cf3-e422-ee2a", "hidden": false, "targetId": "4ee-d749-4ddc-323d", "type": "infoGroup"},
+          {"name": "Reanimation Protocols", "id": "ac3c-ab5d-892d-1134", "hidden": false, "targetId": "a511-d9ca-17d0-42c5", "type": "rule"},
           {
             "name": "Leader",
-            "id": "c000-b95c-36b7-62b3",
+            "id": "c998-1955-4e1b-a04f",
             "hidden": false,
-            "infoLinks": [{"name": "Leader", "id": "c998-1955-4e1b-a04f", "hidden": false, "targetId": "b4dd-3e1f-41cb-218f", "type": "rule"}],
+            "targetId": "b4dd-3e1f-41cb-218f",
+            "type": "rule",
             "modifiers": [
               {
                 "field": "hidden",
@@ -4861,28 +4821,8 @@
                   }
                 ]
               }
-            ],
-            "profiles": [
-              {
-                "name": "Leader",
-                "id": "2192-eee-9c40-fb31",
-                "hidden": false,
-                "typeId": "9cc3-6d83-4dd3-9b64",
-                "typeName": "Abilities",
-                "characteristics": [
-                  {
-                    "name": "Description",
-                    "$text": "This model can be attached to the following units:\n■ IMMORTALS\n■ LYCHGUARD\n■ NECRON WARRIORS",
-                    "typeId": "9b8f-694b-e5e-b573"
-                  }
-                ]
-              }
             ]
           }
-        ],
-        "infoLinks": [
-          {"name": "Detachment Rules", "id": "e5f9-7cf3-e422-ee2a", "hidden": false, "targetId": "4ee-d749-4ddc-323d", "type": "infoGroup"},
-          {"name": "Reanimation Protocols", "id": "ac3c-ab5d-892d-1134", "hidden": false, "targetId": "a511-d9ca-17d0-42c5", "type": "rule"}
         ],
         "modifierGroups": [
           {
@@ -5066,6 +5006,46 @@
                 "name": "Description",
                 "$text": "While this model is leading a unit, you can target that unit with Stratagems even when it is Battle-shocked.",
                 "typeId": "9b8f-694b-e5e-b573"
+              }
+            ]
+          },
+          {
+            "name": "Leader",
+            "id": "2192-eee-9c40-fb31",
+            "hidden": false,
+            "typeId": "9cc3-6d83-4dd3-9b64",
+            "typeName": "Abilities",
+            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units: IMMORTALS, LYCHGUARD, NECRON WARRIORS", "typeId": "9b8f-694b-e5e-b573"}],
+            "modifiers": [
+              {
+                "field": "hidden",
+                "type": "set",
+                "value": true,
+                "conditionGroups": [
+                  {
+                    "type": "or",
+                    "conditions": [
+                      {
+                        "childId": "4745-b5f1-4375-e3bb",
+                        "field": "selections",
+                        "includeChildSelections": true,
+                        "scope": "model-or-unit",
+                        "shared": true,
+                        "type": "greaterThan",
+                        "value": 0
+                      },
+                      {
+                        "childId": "0183-9dc7-816f-fe8c",
+                        "field": "selections",
+                        "includeChildSelections": true,
+                        "scope": "model-or-unit",
+                        "shared": true,
+                        "type": "greaterThan",
+                        "value": 0
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -5736,7 +5716,6 @@
             "name": "Leader",
             "id": "40ba-3ad2-bab0-3b85",
             "hidden": false,
-            "infoLinks": [{"name": "Leader", "id": "26e8-dad1-ac3f-4b26", "hidden": false, "targetId": "b4dd-3e1f-41cb-218f", "type": "rule"}],
             "modifiers": [
               {
                 "field": "hidden",
@@ -5768,29 +5747,52 @@
                   }
                 ]
               }
-            ],
-            "profiles": [
-              {
-                "name": "Leader",
-                "id": "a39f-6d97-5dac-8f37",
-                "hidden": false,
-                "typeId": "9cc3-6d83-4dd3-9b64",
-                "typeName": "Abilities",
-                "characteristics": [
-                  {
-                    "name": "Description",
-                    "$text": "This model can be attached to the following units:\n■ IMMORTALS\n■ LYCHGUARD\n■ NECRON WARRIORS",
-                    "typeId": "9b8f-694b-e5e-b573"
-                  }
-                ]
-              }
             ]
           }
         ],
         "infoLinks": [
           {"name": "Detachment Rules", "id": "5fde-9e66-380-1aed", "hidden": false, "targetId": "4ee-d749-4ddc-323d", "type": "infoGroup"},
           {"name": "Reanimation Protocols", "id": "e5c5-9468-2f96-e54b", "hidden": false, "targetId": "a511-d9ca-17d0-42c5", "type": "rule"},
-          {"name": "My Will Be Done", "id": "2c2f-0ed2-3e0e-1b0d", "hidden": false, "targetId": "95f2-8c65-7342-354d", "type": "profile"}
+          {"name": "My Will Be Done", "id": "2c2f-0ed2-3e0e-1b0d", "hidden": false, "targetId": "95f2-8c65-7342-354d", "type": "profile"},
+          {
+            "name": "Leader",
+            "id": "26e8-dad1-ac3f-4b26",
+            "hidden": false,
+            "targetId": "b4dd-3e1f-41cb-218f",
+            "type": "rule",
+            "modifiers": [
+              {
+                "field": "hidden",
+                "type": "set",
+                "value": true,
+                "conditionGroups": [
+                  {
+                    "type": "or",
+                    "conditions": [
+                      {
+                        "childId": "4745-b5f1-4375-e3bb",
+                        "field": "selections",
+                        "includeChildSelections": true,
+                        "scope": "model-or-unit",
+                        "shared": true,
+                        "type": "greaterThan",
+                        "value": 0
+                      },
+                      {
+                        "childId": "0183-9dc7-816f-fe8c",
+                        "field": "selections",
+                        "includeChildSelections": true,
+                        "scope": "model-or-unit",
+                        "shared": true,
+                        "type": "greaterThan",
+                        "value": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         ],
         "modifierGroups": [
           {
@@ -5912,7 +5914,7 @@
                 "childName": "Destroyer Ankh",
                 "field": "selections",
                 "includeChildSelections": true,
-                "scope": "parent",
+                "scope": "self",
                 "shared": true,
                 "type": "atLeast",
                 "value": 1
@@ -5971,6 +5973,46 @@
                 "name": "Description",
                 "$text": "Each time an attack is allocated to this model, subtract 1 from that attack’s Damage characteristic.",
                 "typeId": "9b8f-694b-e5e-b573"
+              }
+            ]
+          },
+          {
+            "name": "Leader",
+            "id": "a39f-6d97-5dac-8f37",
+            "hidden": false,
+            "typeId": "9cc3-6d83-4dd3-9b64",
+            "typeName": "Abilities",
+            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units: IMMORTALS, LYCHGUARD, NECRON WARRIORS", "typeId": "9b8f-694b-e5e-b573"}],
+            "modifiers": [
+              {
+                "field": "hidden",
+                "type": "set",
+                "value": true,
+                "conditionGroups": [
+                  {
+                    "type": "or",
+                    "conditions": [
+                      {
+                        "childId": "4745-b5f1-4375-e3bb",
+                        "field": "selections",
+                        "includeChildSelections": true,
+                        "scope": "model-or-unit",
+                        "shared": true,
+                        "type": "greaterThan",
+                        "value": 0
+                      },
+                      {
+                        "childId": "0183-9dc7-816f-fe8c",
+                        "field": "selections",
+                        "includeChildSelections": true,
+                        "scope": "model-or-unit",
+                        "shared": true,
+                        "type": "greaterThan",
+                        "value": 0
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -6537,7 +6579,7 @@
             "characteristics": [
               {
                 "name": "Description",
-                "$text": "This model can be attached to the following units:\n■ CANOPTEK WRAITHS\n■ IMMORTALS\n■ NECRON WARRIORS",
+                "$text": "This model can be attached to the following units: CANOPTEK WRAITHS, IMMORTALS, NECRON WARRIORS",
                 "typeId": "9b8f-694b-e5e-b573"
               }
             ]
@@ -6907,7 +6949,7 @@
             "hidden": false,
             "typeId": "9cc3-6d83-4dd3-9b64",
             "typeName": "Abilities",
-            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units:\n■ IMMORTALS\n■ NECRON WARRIORS", "typeId": "9b8f-694b-e5e-b573"}]
+            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units: IMMORTALS, NECRON WARRIORS", "typeId": "9b8f-694b-e5e-b573"}]
           },
           {
             "name": "Psychomancer",
@@ -7336,7 +7378,7 @@
             "hidden": false,
             "typeId": "9cc3-6d83-4dd3-9b64",
             "typeName": "Abilities",
-            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units:\n■ IMMORTALS\n■ NECRON WARRIORS\n", "typeId": "9b8f-694b-e5e-b573"}]
+            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units: IMMORTALS, NECRON WARRIORS\n", "typeId": "9b8f-694b-e5e-b573"}]
           },
           {
             "name": "Chronomancer",
@@ -7722,7 +7764,7 @@
             "hidden": false,
             "typeId": "9cc3-6d83-4dd3-9b64",
             "typeName": "Abilities",
-            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units:\n■ IMMORTALS\n■ NECRON WARRIORS\n", "typeId": "9b8f-694b-e5e-b573"}]
+            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units: IMMORTALS, NECRON WARRIORS\n", "typeId": "9b8f-694b-e5e-b573"}]
           },
           {
             "name": "Plasmancer",
@@ -11652,13 +11694,15 @@
           {"name": "Faction: Necrons", "id": "5ad6-3bf4-64e7-84e1", "primary": false, "targetId": "ee0-cf31-4fb5-6b26"},
           {"name": "Vehicle", "id": "1f00-db54-34f2-c8ec", "primary": true, "targetId": "dbd4-63-af05-998"},
           {"name": "Walker", "id": "91e-5735-c8eb-d421", "primary": false, "targetId": "6dda-e157-334d-e93a"},
-          {"name": "Triarch Stalker", "id": "60a6-fad1-1eaa-af6e", "primary": false, "targetId": "1124-c60-ce6-631"},
-          {"name": "Frame", "id": "d737-1335-03ca-c7e2", "hidden": false, "primary": false, "targetId": "b927-8eeb-7cc3-8dec"}
+          {"name": "Frame", "id": "d737-1335-03ca-c7e2", "hidden": false, "primary": false, "targetId": "b927-8eeb-7cc3-8dec"},
+          {"name": "Stalker", "id": "eabc-ecbf-92ff-ae8f", "hidden": false, "primary": false, "targetId": "bf46-75ca-d761-cbf3"},
+          {"name": "Triarch", "id": "4d43-6e85-4bee-fe49", "hidden": false, "primary": false, "targetId": "8ddf-88ca-8b98-89b7"}
         ],
         "constraints": [
           {"id": "5b52-79ca-2f5e-95c3", "field": "75bb-ded1-c86d-bdf0", "includeChildSelections": false, "scope": "self", "shared": true, "type": "max", "value": 3},
           {"id": "9652-fbd4-ab39-a784", "field": "716d-91b7-d55a-1022", "includeChildSelections": true, "scope": "self", "shared": true, "type": "max", "value": 0},
-          {"id": "6fa0-a43f-a7a5-e006", "field": "716d-91b7-d55a-1022", "includeChildSelections": true, "scope": "self", "shared": true, "type": "min", "value": 0}
+          {"id": "6fa0-a43f-a7a5-e006", "field": "716d-91b7-d55a-1022", "includeChildSelections": true, "scope": "self", "shared": true, "type": "min", "value": 0},
+          {"id": "7dce-3d35-13a2-c07e", "field": "selections", "includeChildSelections": true, "scope": "force", "shared": true, "type": "max", "value": 3}
         ],
         "costs": [
           {"name": "pts", "typeId": "51b2-306e-1021-d207", "value": 110},
@@ -11840,6 +11884,23 @@
                     ]
                   }
                 ]
+              }
+            ]
+          },
+          {
+            "field": "7dce-3d35-13a2-c07e",
+            "type": "set",
+            "value": 2,
+            "conditions": [
+              {
+                "childId": "d62d-db22-4893-4bc0",
+                "childName": "1. Incursion (1000 Point limit)",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
               }
             ]
           }
@@ -23487,12 +23548,16 @@
             "type": "selectionEntryGroup"
           }
         ],
-        "infoGroups": [
+        "infoLinks": [
+          {"name": "Detachment Rules", "id": "7245-1194-8609-4339", "hidden": false, "targetId": "4ee-d749-4ddc-323d", "type": "infoGroup"},
+          {"name": "Reanimation Protocols", "id": "f542-a8af-c9f7-5eda", "hidden": false, "targetId": "a511-d9ca-17d0-42c5", "type": "rule"},
+          {"name": "My Will Be Done", "id": "5b03-dbbd-8e81-2ce4", "hidden": false, "targetId": "95f2-8c65-7342-354d", "type": "profile"},
           {
             "name": "Leader",
-            "id": "aba3-11a5-5e77-3658",
+            "id": "2fb0-894f-7e5b-534a",
             "hidden": false,
-            "infoLinks": [{"name": "Leader", "id": "2fb0-894f-7e5b-534a", "hidden": false, "targetId": "b4dd-3e1f-41cb-218f", "type": "rule"}],
+            "targetId": "b4dd-3e1f-41cb-218f",
+            "type": "rule",
             "modifiers": [
               {
                 "field": "hidden",
@@ -23524,29 +23589,8 @@
                   }
                 ]
               }
-            ],
-            "profiles": [
-              {
-                "name": "Leader",
-                "id": "28b0-a7ad-6aaa-8032",
-                "hidden": false,
-                "typeId": "9cc3-6d83-4dd3-9b64",
-                "typeName": "Abilities",
-                "characteristics": [
-                  {
-                    "name": "Description",
-                    "$text": "This model can be attached to the following units:\n■ IMMORTALS\n■ LYCHGUARD\n■ NECRON WARRIORS",
-                    "typeId": "9b8f-694b-e5e-b573"
-                  }
-                ]
-              }
             ]
           }
-        ],
-        "infoLinks": [
-          {"name": "Detachment Rules", "id": "7245-1194-8609-4339", "hidden": false, "targetId": "4ee-d749-4ddc-323d", "type": "infoGroup"},
-          {"name": "Reanimation Protocols", "id": "f542-a8af-c9f7-5eda", "hidden": false, "targetId": "a511-d9ca-17d0-42c5", "type": "rule"},
-          {"name": "My Will Be Done", "id": "5b03-dbbd-8e81-2ce4", "hidden": false, "targetId": "95f2-8c65-7342-354d", "type": "profile"}
         ],
         "modifierGroups": [
           {
@@ -23727,6 +23771,46 @@
                 "name": "Description",
                 "$text": "Each time this model's unit Advances, do not make an Advance roll for it. Instead, until the end of the phase, add 6\" to the Move characteristic of models in that unit. In addition, each time a model in that unit makes a Normal, Advance or Fall Back move, until that move is finished, it can move horizontally through models and terrain features (it cannot finish a move on top of another model or its base).",
                 "typeId": "9b8f-694b-e5e-b573"
+              }
+            ]
+          },
+          {
+            "name": "Leader",
+            "id": "28b0-a7ad-6aaa-8032",
+            "hidden": false,
+            "typeId": "9cc3-6d83-4dd3-9b64",
+            "typeName": "Abilities",
+            "characteristics": [{"name": "Description", "$text": "This model can be attached to the following units: IMMORTALS, LYCHGUARD, NECRON WARRIORS", "typeId": "9b8f-694b-e5e-b573"}],
+            "modifiers": [
+              {
+                "field": "hidden",
+                "type": "set",
+                "value": true,
+                "conditionGroups": [
+                  {
+                    "type": "or",
+                    "conditions": [
+                      {
+                        "childId": "4745-b5f1-4375-e3bb",
+                        "field": "selections",
+                        "includeChildSelections": true,
+                        "scope": "model-or-unit",
+                        "shared": true,
+                        "type": "greaterThan",
+                        "value": 0
+                      },
+                      {
+                        "childId": "0183-9dc7-816f-fe8c",
+                        "field": "selections",
+                        "includeChildSelections": true,
+                        "scope": "model-or-unit",
+                        "shared": true,
+                        "type": "greaterThan",
+                        "value": 0
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -25230,7 +25314,7 @@
             "characteristics": [
               {
                 "name": "Description",
-                "$text": "This model can be attached to the following units: ^^**Canoptek Macrocytes, Immortals, Necron Warriors^^**. \n",
+                "$text": "This model can be attached to the following units: CANOPTEK MACROCYTES, IMMORTALS, NECRON WARRIORS\n",
                 "typeId": "9b8f-694b-e5e-b573"
               }
             ]
@@ -25360,14 +25444,7 @@
           {"name": "Detachment Rules", "id": "af08-5b4c-4157-371a", "hidden": false, "targetId": "4ee-d749-4ddc-323d", "type": "infoGroup"},
           {"name": "Deep Strike", "id": "5774-548b-ac97-2ee5", "hidden": false, "targetId": "7cb5-dd6b-dd87-ad3b", "type": "rule"},
           {"name": "Fights First", "id": "8b05-ea13-aefe-e4a4", "hidden": false, "targetId": "24-c886-e8ba-5a89", "type": "rule"},
-          {
-            "name": "Feel No Pain",
-            "id": "09c6-240a-cf21-85ac",
-            "hidden": false,
-            "targetId": "9bf4-280f-bbe2-6fbb",
-            "type": "rule",
-            "modifiers": [{"field": "name", "type": "append", "value": "5+"}]
-          }
+          {"name": "Feel No Pain 5+*", "id": "09c6-240a-cf21-85ac", "hidden": false, "targetId": "faec-8b1b-5a21-0087", "type": "rule"}
         ],
         "modifierGroups": [
           {
