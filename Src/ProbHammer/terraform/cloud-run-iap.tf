@@ -30,8 +30,8 @@ variable "service_name" {
   default     = "liveplay"
 }
 
-variable "image" {
-  description = "Container image to deploy, e.g. ghcr.io/pmcevoy/probhammer:2026-09-14"
+variable "BUILD_TAG" {
+  description = "Docker tag used in image"
   type        = string
 }
 
@@ -108,7 +108,7 @@ resource "google_cloud_run_v2_service" "probhammer" {
     service_account = google_service_account.probhammer.email
 
     containers {
-      image = var.image
+      image = "ghcr.io/pmcevoy/probhammer:${var.BUILD_TAG}"
 
       env {
         name  = "Gcs__BucketName"
