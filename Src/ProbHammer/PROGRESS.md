@@ -21,6 +21,51 @@ follow-up until the base Android import bug is fixed first. No code for this has
 
 ## Recently Completed
 
+- OpenSpec change `retire-weapon-keyword-flags` implemented (17/17 tasks), not yet archived:
+  removes every typed ability flag and the `Anti` dictionary from `WeaponProfile`/
+  `WeaponProfileEqualityKey` (`Torrent`, `Blast`, `Melta`, `RapidFire`, `SustainedHits`,
+  `LethalHits`, `DevastatingWounds`, `TwinLinked`, `IndirectFire`, `Pistol`, `IgnoresCover`,
+  `Assault`, `Anti`) — `KeywordsText` becomes the sole representation of a weapon's ability
+  keywords. Motivated by a real, repeatedly-hit bug class: BSData renaming/adding a keyword
+  (`Pistol`→`Close-Quarters`, a bare `Cleave N`) silently vanished from `/LivePlay` with no
+  unresolved/dimmed chip at all, since `WeaponAbilityTags()` rendered only from the typed flags,
+  never `KeywordsText` — contradicting `datasheet-catalogue`'s own "verbatim keyword text"
+  requirement, which was speced correctly but never implemented that way.
+  - `WeaponKeywordParser` reduced to plain tokenization (split on `,`, trim, drop empty, `"-"`/
+    blank → empty) — `TryRecognize`/`UnrecognizedTokens` and every regex pattern removed.
+  - `WeaponProfileEqualityKey` now groups by a case-folded, deduplicated, sorted-then-joined
+    normalization of `KeywordsText` (`RuleGlossary.NormalizeToken`, a new public wrapper around
+    `RuleGlossary.Normalize`) instead of by named flags — fixes a real false-split risk (BSData's
+    own inconsistent casing, e.g. Orks mixing `"CLOSE-QUARTERS"`/`"Close-Quarters"` for one
+    identical rule).
+  - `_UnitBlock.cshtml`'s two weapon-tag render sites now read `weapon.KeywordsText` directly; the
+    flag-reconstructing `WeaponAbilityTags` helper is gone.
+  - `bsdata-corpus-scan`'s weapon-keyword scan (`WeaponKeywordScanTests`) repointed from
+    flag-recognition to `RuleGlossary` resolution (a per-file `RuleGlossary.Build(closure)`); its
+    allowlist was cleared (every prior entry described the retired flag vocabulary) and re-seeded
+    fresh from a real corpus run: 19 tokens genuinely don't resolve (down from 45), split between
+    weapon-specific named abilities with no BSData rule/sharedRule at all, and target-conditional
+    suffix variants (`"...: Monster/Vehicle"`) of a mechanic that resolves fine under its bare
+    name.
+  - Verified live against the real repro (`data/nr-export-orks-close-quarters-cleave.json`), both
+    via a local `dotnet run` and a rebuilt `docker compose` container: the Slugga's
+    `CLOSE-QUARTERS`/`LETHAL HITS: non-MONSTER/VEHICLE` and the Beastchoppa's `CLEAVE 1` all now
+    render as chips (dimmed/unresolved, since this particular NewRecruit export carries no rule
+    text for them — see below), never silently missing. **Follow-up finding, not a bug in this
+    change**: the identical tokens render as clickable, resolved popovers when the same army is
+    imported via the GW-app text pipeline instead (confirmed directly) — a real,
+    pipeline-specific data-completeness gap in NewRecruit's own export (it simply never included
+    rule text for these weapon keywords in this capture), not a `BattleScribeRuleGlossaryBuilder`
+    bug — see `.claude/domain-model/battlescribe-import-pipeline.md`'s new note. Worth knowing
+    before leaning further on the NewRecruit/BattleScribe pipeline over the GW-app one.
+  - Full solution build clean; 658 tests pass (13 skipped, unchanged convention), plus the
+    repurposed corpus scan passing explicitly against the live clone.
+  - Docs: `.claude/domain-model/bsdata-json-ingestion.md` rewritten (flag removal, `EqualityKey`
+    normalization, repointed corpus-scan section); `.claude/domain-model/battlescribe-import-
+    pipeline.md` gained the NewRecruit-completeness note above; this file's now-fully-resolved
+    "Known Issues"/"Next Session Prompt" weapon-keyword entries removed rather than left as stale
+    pointers.
+
 - OpenSpec change `apply-rule-effect-baseline` implemented (20/20 tasks, not yet archived): retires
   `StatlineFlagRule`/`ShieldDomeStatlineFlagRule`/`VexillaStatlineFlagRule`/`StatlineFlagRuleCatalogue`/
   `StatlineFlagRuleScope` (deleted) in favor of the checked-in, human-verified
@@ -1581,19 +1626,6 @@ follow-up until the base Android import bug is fixed first. No code for this has
   Deff Rolla Battle Fortress [Legends] `2D6`), which `WeaponProfile.S: int` can't represent. Needs a
   decision: leave failing / round to `DiceExpression.ExpectedValue()` / widen `S` to
   `DiceExpression`. Tracked (not resolved) by `CharacteristicResolutionScanTests`'s allowlist.
-- The weapon-keyword-token scan (`WeaponKeywordScanTests`) found several tokens worth a dedicated
-  future `WeaponKeywordParser` fix rather than staying allowlisted forever: a handful of case/
-  punctuation variants of an already-recognized token (e.g. `"Devastating wounds"`, `"Ignores
-  cover"`, `"Rapid fire 2"` — parser vocabulary is case-sensitive); dice-valued variants of an
-  int-only mechanic (`"Rapid Fire D3"`/`"D6"`/`"D6+3"`, `"Sustained Hits D3"` — same class of gap as
-  the Ork Strength issue above); and real, widespread core mechanics with no flag at all yet
-  (`"Extra Attacks"` 150+ occurrences, `"Psychic"`/`"PSYCHIC"` ~280 combined, `"Lance"` ~70, `"One
-  Shot"` ~30+). `ANTI-non‑MONSTER/VEHICLE 2+` (Aeldari's Stone Stave) also uses a U+2011
-  non-breaking hyphen instead of ASCII `-`, plus a dual slash-separated exclusion target — a
-  different targeting shape from the modeled Anti-X mechanic, not a simple spelling fix. BSData
-  keywords are confirmed to be added mid-edition, so this needs periodic re-scanning via
-  `WeaponKeywordScanTests`, not a one-time fix.
-
 ---
 
 ## Spec Debt
@@ -1656,10 +1688,5 @@ are all implemented, archived, and synced to main specs; both permanent scans pa
 clone. Other candidate follow-ups surfaced by prior sessions, none scoped or agreed yet — raise with
 the user before starting any of them:
 
-- Triage the "Known Issues" weapon-keyword findings into real `WeaponKeywordParser` fixes: a
-  case-insensitivity pass for the existing exact-match vocabulary, widening `RapidFire`/
-  `SustainedHits` to `DiceExpression` (same representation question as the parked Ork Strength
-  issue), and deciding whether `Extra Attacks`/`Psychic`/`Lance`/`One Shot` are common enough to
-  earn dedicated `WeaponProfile` flags.
 - The Ork dice-Strength `WeaponProfile.S` representation decision — same class of problem as the
   now-resolved `Statline.InSv` gap, deliberately handled separately.

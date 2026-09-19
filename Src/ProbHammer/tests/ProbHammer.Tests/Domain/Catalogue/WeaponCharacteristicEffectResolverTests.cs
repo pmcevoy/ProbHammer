@@ -14,7 +14,7 @@ public class WeaponCharacteristicEffectResolverTests
     };
 
     private static MeleeWeapon PlainMeleeWeapon() =>
-        new("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1) { LethalHits = true };
+        new("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1) { KeywordsText = ["Lethal Hits"] };
 
     [Fact]
     public void ImproveEffect_RaisesTheTargetedCharacteristic()
@@ -85,7 +85,7 @@ public class WeaponCharacteristicEffectResolverTests
         result.A.Should().Be(weapon.A);
         result.Ap.Should().Be(weapon.Ap);
         result.D.Should().Be(weapon.D);
-        result.LethalHits.Should().Be(weapon.LethalHits);
+        result.KeywordsText.Should().Equal(weapon.KeywordsText);
     }
 
     [Fact]

@@ -347,18 +347,18 @@ public class AttachedUnitAggregatorTests
         var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
 
         view.Weapons.Should().HaveCount(2);
-        var lethalHitsCopy = view.Weapons.Single(w => w.Profile.LethalHits);
-        var plainCopy = view.Weapons.Single(w => !w.Profile.LethalHits);
+        var lethalHitsCopy = view.Weapons.Single(w => w.Profile.KeywordsText.Contains("Lethal Hits"));
+        var plainCopy = view.Weapons.Single(w => !w.Profile.KeywordsText.Contains("Lethal Hits"));
 
         lethalHitsCopy.TotalAttacks.Should().Be(DiceExpression.Fixed(12)); // 4 x A3
         plainCopy.TotalAttacks.Should().Be(DiceExpression.Fixed(7)); // 1 x A7
     }
 
     [Fact]
-    public void WeaponView_WeaponsDifferingOnlyByPistolAssaultOrIgnoresCover_StaySeparate()
+    public void WeaponView_WeaponsDifferingOnlyByKeywordsText_StaySeparate()
     {
         // Regression test: WeaponProfileEqualityKey previously omitted Pistol/Assault/IgnoresCover,
-        // so weapons identical on Type/Skill/S/Ap/D but carrying different keyword flags (e.g. a
+        // so weapons identical on Type/Skill/S/Ap/D but carrying different keyword text (e.g. a
         // Bolt pistol and an Astartes shotgun) silently merged into one row with a meaningless
         // summed total.
         var datasheet = new Datasheet(
@@ -369,9 +369,9 @@ public class AttachedUnitAggregatorTests
             statlines: [("Scout", new Statline(6, 4, 4, 2, 6, 1))],
             weaponProfiles:
             [
-                new RangedWeapon("Bolt pistol", 12, 1, 3, 4, 0, 1) { Pistol = true },
-                new RangedWeapon("Astartes shotgun", 18, 2, 3, 4, 0, 1) { Assault = true },
-                new RangedWeapon("Suppressive carbine", 18, 1, 3, 4, 0, 1) { IgnoresCover = true }
+                new RangedWeapon("Bolt pistol", 12, 1, 3, 4, 0, 1) { KeywordsText = ["Pistol"] },
+                new RangedWeapon("Astartes shotgun", 18, 2, 3, 4, 0, 1) { KeywordsText = ["Assault"] },
+                new RangedWeapon("Suppressive carbine", 18, 1, 3, 4, 0, 1) { KeywordsText = ["Ignores Cover"] }
             ]);
         var unit = new Unit(
             datasheet, [],

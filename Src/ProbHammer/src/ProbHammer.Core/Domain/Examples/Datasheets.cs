@@ -17,11 +17,7 @@ public static class Datasheets
                 new RangedWeapon("Ferocity",
                     24, 2, 2, 5, -1, 2)
                 {
-                    DevastatingWounds = true,
-                    Anti = new Dictionary<string, int>
-                    {
-                        ["Infantry"] = 4
-                    }
+                    KeywordsText = ["Devastating Wounds", "Anti-infantry 4+"]
                 },
                 new MeleeWeapon("➤ Sword of the High Marshals - sweep",
                     12, 2, 6, -3, 1),
@@ -75,7 +71,7 @@ public static class Datasheets
             ],
             weaponProfiles:
             [
-                new RangedWeapon("Bolt Pistol", 12, 1, 3, 4, 0, 1) { Pistol = true },
+                new RangedWeapon("Bolt Pistol", 12, 1, 3, 4, 0, 1) { KeywordsText = ["Pistol"] },
                 new MeleeWeapon("Master-crafted power weapon", 5, 2, 5, -2, 2)
             ],
             abilities: new[]
@@ -124,7 +120,7 @@ public static class Datasheets
             ],
             weaponProfiles:
             [
-                new RangedWeapon("Bolt Pistol", 12, 1, 2, 4, 0, 1) { Pistol = true },
+                new RangedWeapon("Bolt Pistol", 12, 1, 2, 4, 0, 1) { KeywordsText = ["Pistol"] },
                 new MeleeWeapon("Master-crafted power weapon", 5, 2, 5, -2, 2),
                 new MeleeWeapon("Close combat weapon", 5, 2, 4, 0, 1)
             ],
@@ -175,10 +171,10 @@ public static class Datasheets
             [
                 new RangedWeapon("Combi-weapon", 24, 1, 3, 4, 0, 1)
                 {
-                    DevastatingWounds = true, RapidFire = 1, Anti = new Dictionary<string, int> { ["INFANTRY"] = 4 }
+                    KeywordsText = ["Devastating Wounds", "Rapid Fire 1", "Anti-infantry 4+"]
                 },
                 new MeleeWeapon("Master-crafted power weapon", 7, 2, 5, -2, 2)
-                    { LethalHits = true },
+                    { KeywordsText = ["Lethal Hits"] },
                 new MeleeWeapon("Close combat weapon", 5, 2, 4, 0, 1)
             ],
             abilities: new[]
@@ -228,7 +224,7 @@ public static class Datasheets
             ],
             weaponProfiles:
             [
-                new RangedWeapon("Heavy bolt pistol", 18, 1, 3, 4, -1, 1) { Pistol = true },
+                new RangedWeapon("Heavy bolt pistol", 18, 1, 3, 4, -1, 1) { KeywordsText = ["Pistol"] },
                 new MeleeWeapon("Astartes chainsword", 4, 3, 4, -1, 1)
             ],
             abilities: new[]
@@ -263,14 +259,14 @@ public static class Datasheets
             weaponProfiles:
             [
                 new MeleeWeapon("Master-crafted power weapon", 3, 2, 5, -2, 2)
-                    { LethalHits = true },
+                    { KeywordsText = ["Lethal Hits"] },
                 new RangedWeapon("Pyre pistol", 12, DiceExpression.D6, 0, 4, 0, 1)
-                    { Pistol = true, Torrent = true, IgnoresCover = true },
+                    { KeywordsText = ["Pistol", "Torrent", "Ignores Cover"] },
 
-                new RangedWeapon("Bolt pistol", 12, 1, 3, 4, 0, 1) { Pistol = true },
-                new RangedWeapon("Heavy Bolt pistol", 18, 1, 3, 4, -1, 1) { Pistol = true },
+                new RangedWeapon("Bolt pistol", 12, 1, 3, 4, 0, 1) { KeywordsText = ["Pistol"] },
+                new RangedWeapon("Heavy Bolt pistol", 18, 1, 3, 4, -1, 1) { KeywordsText = ["Pistol"] },
                 new MeleeWeapon("Close combat weapon", 3, 3, 4, 0, 1),
-                new MeleeWeapon("Astartes chainsword", 4, 3, 4, -1, 1) { SustainedHits = 1 },
+                new MeleeWeapon("Astartes chainsword", 4, 3, 4, -1, 1) { KeywordsText = ["Sustained Hits 1"] },
                 new MeleeWeapon("Power fist", 3, 3, 8, -2, 2)
             ],
             abilities: new[]
@@ -319,7 +315,8 @@ public static class Datasheets
             ],
             weaponProfiles:
             [
-                new RangedWeapon("Rapid-fire battle cannon", 72, DiceExpression.D6 + 3, 3, 9, -2, 3) { Blast = true },
+                new RangedWeapon("Rapid-fire battle cannon", 72, DiceExpression.D6 + 3, 3, 9, -2, 3)
+                    { KeywordsText = ["Blast"] },
                 new MeleeWeapon("Reaper chainsword", A: 8, Ws: 3, S: 12, Ap: -3, D: 3)
             ],
             abilities: [invulnerableSaveAbility],
@@ -357,7 +354,7 @@ public static class Datasheets
             ],
             weaponProfiles:
             [
-                new RangedWeapon("Shuriken Pistol", 12, 1, 2, 4, -1, 1) { Assault = true, Pistol = true },
+                new RangedWeapon("Shuriken Pistol", 12, 1, 2, 4, -1, 1) { KeywordsText = ["Assault", "Pistol"] },
                 new MeleeWeapon("Aeldari power sword", A: 4, Ws: 2, S: 4, Ap: -2, D: 1)
             ],
             abilities: [invulnerableSaveAbility],
@@ -406,10 +403,10 @@ public static class Datasheets
             ],
             weaponProfiles:
             [
-                new RangedWeapon("Storm Bolter", 24, 2, 3, 4, 0, 1) { RapidFire = 2 },
+                new RangedWeapon("Storm Bolter", 24, 2, 3, 4, 0, 1) { KeywordsText = ["Rapid Fire 2"] },
                 new MeleeWeapon("Armoured hull", A: 3, Ws: 4, S: 6, Ap: 0, D: 1),
-                new RangedWeapon("Multi-melta", 18, 2, 3, 9, -4, DiceExpression.D6) { Melta = 2 },
-                new RangedWeapon("Heavy Bolt pistol", 18, 1, 3, 4, -1, 1) { Pistol = true }
+                new RangedWeapon("Multi-melta", 18, 2, 3, 9, -4, DiceExpression.D6) { KeywordsText = ["Melta 2"] },
+                new RangedWeapon("Heavy Bolt pistol", 18, 1, 3, 4, -1, 1) { KeywordsText = ["Pistol"] }
             ],
             abilities: new[]
             {
@@ -462,10 +459,10 @@ public static class Datasheets
             ],
             weaponProfiles:
             [
-                new RangedWeapon("Bolt pistol", 12, 1, 3, 4, 0, 1) { Pistol = true },
+                new RangedWeapon("Bolt pistol", 12, 1, 3, 4, 0, 1) { KeywordsText = ["Pistol"] },
                 new MeleeWeapon("Close combat weapon", 2, 3, 4, 0, 1),
                 new MeleeWeapon("Astartes chainsword", 4, 3, 4, -1, 1),
-                new RangedWeapon("Astartes shotgun", 18, 2, 3, 4, 0, 1) { Assault = true }
+                new RangedWeapon("Astartes shotgun", 18, 2, 3, 4, 0, 1) { KeywordsText = ["Assault"] }
             ],
             abilities: new[]
             {
@@ -510,8 +507,8 @@ public static class Datasheets
             ],
             weaponProfiles:
             [
-                new RangedWeapon("Heavy bolt pistol", 18, 1, 3, 4, -1, 1) { Pistol = true },
-                new MeleeWeapon("Master-crafted power weapon", 3, 2, 5, -2, 2) { LethalHits = true }
+                new RangedWeapon("Heavy bolt pistol", 18, 1, 3, 4, -1, 1) { KeywordsText = ["Pistol"] },
+                new MeleeWeapon("Master-crafted power weapon", 3, 2, 5, -2, 2) { KeywordsText = ["Lethal Hits"] }
             ],
             abilities: new[]
             {

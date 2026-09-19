@@ -499,7 +499,7 @@
                 {
                     var row = unit.RangedWeapons[w];
                     var weapon = row.Entry.Profile;
-                    var tags = WeaponAbilityTags(weapon);
+                    var tags = weapon.KeywordsText;
                     var weaponId = $"w-{i}-r-{w}";
                     var nameLabel = row.NameMarker is null ? row.Entry.Name : $"{row.Entry.Name}{row.NameMarker}";
                     <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId">
@@ -644,7 +644,7 @@
                 {
                     var row = unit.MeleeWeapons[w];
                     var weapon = row.Entry.Profile;
-                    var tags = WeaponAbilityTags(weapon);
+                    var tags = weapon.KeywordsText;
                     var weaponId = $"w-{i}-m-{w}";
                     var nameLabel = row.NameMarker is null ? row.Entry.Name : $"{row.Entry.Name}{row.NameMarker}";
                     <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId">
@@ -830,25 +830,5 @@
     // just blend into a solid blob.
     static string SkullSvgIcon(string cssClass) =>
         $"<svg class=\"{cssClass}\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M8,1 C4.7,1 2,3.6 2,6.8 C2,8.7 3,10.3 4.5,11.3 L4.5,13 C4.5,13.6 5,14 5.5,14 L10.5,14 C11,14 11.5,13.6 11.5,13 L11.5,11.3 C13,10.3 14,8.7 14,6.8 C14,3.6 11.3,1 8,1 Z M7,6.7 A1.3,1.3 0 1,0 4.4,6.7 A1.3,1.3 0 1,0 7,6.7 Z M11.6,6.7 A1.3,1.3 0 1,0 9,6.7 A1.3,1.3 0 1,0 11.6,6.7 Z M7.4,7.6 L8.6,7.6 L8,9 Z\" /></svg>";
-
-    static List<string> WeaponAbilityTags(WeaponProfile w)
-    {
-        var tags = new List<string>();
-        if (w.Torrent) tags.Add("TORRENT");
-        if (w.Blast) tags.Add("BLAST");
-        if (w.Melta > 0) tags.Add($"MELTA {w.Melta}");
-        if (w.RapidFire > 0) tags.Add($"RAPID FIRE {w.RapidFire}");
-        if (w.SustainedHits > 0) tags.Add($"SUSTAINED HITS {w.SustainedHits}");
-        if (w.LethalHits) tags.Add("LETHAL HITS");
-        if (w.DevastatingWounds) tags.Add("DEVASTATING WOUNDS");
-        if (w.TwinLinked) tags.Add("TWIN-LINKED");
-        if (w.IndirectFire) tags.Add("INDIRECT FIRE");
-        if (w.Pistol) tags.Add("PISTOL");
-        if (w.IgnoresCover) tags.Add("IGNORES COVER");
-        if (w.Assault) tags.Add("ASSAULT");
-        foreach (var (keyword, threshold) in w.Anti)
-            tags.Add($"ANTI-{keyword.ToUpperInvariant()} {threshold}+");
-        return tags;
-    }
 
 }

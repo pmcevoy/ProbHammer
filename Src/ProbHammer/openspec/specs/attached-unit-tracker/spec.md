@@ -116,10 +116,11 @@ in its Datasheet's declared order.
 
 ### Requirement: Aggregate Weapon Count View
 The Attached Unit aggregate view SHALL aggregate weapons across all component Units by structural
-profile equality (matching weapon Type, Skill, Strength, AP, Damage, and every ability/keyword flag
-the weapon carries — including but not limited to Torrent, Blast, Melta, Rapid Fire, Sustained
-Hits, Lethal Hits, Devastating Wounds, Twin-Linked, Indirect Fire, Pistol, Ignores Cover, Assault,
-and Anti — excluding Name, Range, and Attacks — Attacks stays excluded from this grouping identity
+profile equality (matching weapon Type, Skill, Strength, AP, Damage, and the weapon's keyword
+text — its `KeywordsText` token list, compared as a case-folded, trimmed, order-independent set,
+so a difference in token order or casing alone does not split what should be one aggregated entry
+while any real difference in the keyword set still does — excluding Name, Range, and Attacks —
+Attacks stays excluded from this grouping identity
 regardless of any ability affecting it, since it is the quantity being aggregated, not part of a
 weapon's structural identity), and SHALL report a total Attacks value computed by summing each
 contributing model-line's per-model Attacks scaled by that model-line's remaining count. Each
@@ -207,8 +208,11 @@ without inspecting every contribution.
 - **THEN** the aggregate view shows them as two separate entries, each with its own total Attacks
 
 #### Scenario: Weapons differing only by a targeting/eligibility keyword are not combined
-- **WHEN** two weapons match on Type, Skill, Strength, AP, and Damage, but differ in a keyword flag such as Pistol, Assault, or Ignores Cover
-- **THEN** the aggregate view shows them as two separate entries, each with its own total Attacks — a targeting/eligibility keyword is as much a part of the weapon's identity as a damage-modifying one
+- **WHEN** two weapons match on Type, Skill, Strength, AP, and Damage, but differ in their keyword
+  text (e.g. one carries `"Pistol"`, `"Assault"`, or `"Ignores Cover"` and the other doesn't)
+- **THEN** the aggregate view shows them as two separate entries, each with its own total Attacks —
+  a targeting/eligibility keyword is as much a part of the weapon's identity as a damage-modifying
+  one
 
 #### Scenario: Contributions are retained on a merged entry
 - **WHEN** two or more model-lines contribute to the same aggregated weapon entry

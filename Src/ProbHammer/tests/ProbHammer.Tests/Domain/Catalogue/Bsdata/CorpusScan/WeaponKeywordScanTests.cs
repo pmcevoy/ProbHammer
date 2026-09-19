@@ -1,3 +1,4 @@
+using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Catalogue.Bsdata;
 using ProbHammer.Core.Domain.Catalogue.Bsdata.Json;
 
@@ -9,7 +10,10 @@ namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 /// (not through <see cref="BsdataDatasheetMapper.BuildDatasheet"/>, which has no way to enumerate
 /// every weapon profile it resolves - see Datasheet.ResolveWeaponProfile's deliberate
 /// on-demand-only shape) so an unrelated characteristic-resolution failure elsewhere on the same
-/// entry never blocks this scan from seeing that entry's weapons.
+/// entry never blocks this scan from seeing that entry's weapons. Since `retire-weapon-keyword-
+/// flags`, tracks tokens that don't resolve against that same closure's own <see
+/// cref="RuleGlossary"/> - the thing that actually affects what a player sees on `/LivePlay` - not
+/// tokens unrecognized by a flag vocabulary that no longer exists.
 /// </summary>
 public class WeaponKeywordScanTests
 {
@@ -26,6 +30,7 @@ public class WeaponKeywordScanTests
                 BsdataNameResolver.BuildIdIndex(closure),
                 BsdataNameResolver.BuildGroupIdIndex(closure),
                 BsdataNameResolver.BuildProfileIdIndex(closure),
+                RuleGlossary.Build(closure),
                 fileName,
                 occurrencesByToken);
 
@@ -52,12 +57,14 @@ public class WeaponKeywordScanTests
         IReadOnlyDictionary<string, BsSelectionEntry> idIndex,
         IReadOnlyDictionary<string, BsSelectionEntryGroup> groupIdIndex,
         IReadOnlyDictionary<string, BsProfile> profileIdIndex,
+        RuleGlossary glossary,
         string fileName,
         Dictionary<string, List<string>> occurrencesByToken)
     {
         public IReadOnlyDictionary<string, BsSelectionEntry> IdIndex { get; } = idIndex;
         public IReadOnlyDictionary<string, BsSelectionEntryGroup> GroupIdIndex { get; } = groupIdIndex;
         public IReadOnlyDictionary<string, BsProfile> ProfileIdIndex { get; } = profileIdIndex;
+        public RuleGlossary Glossary { get; } = glossary;
         public string FileName { get; } = fileName;
         public Dictionary<string, List<string>> OccurrencesByToken { get; } = occurrencesByToken;
         public HashSet<string> VisitedEntryIds { get; } = new(StringComparer.OrdinalIgnoreCase);
@@ -123,12 +130,21 @@ public class WeaponKeywordScanTests
             return;
 
         var keywordsText = profile.CharacteristicText("Keywords") ?? "-";
-        foreach (var token in WeaponKeywordParser.UnrecognizedTokens(keywordsText))
+        var tokenized = WeaponKeywordParser.Apply(ProbeWeapon, keywordsText).KeywordsText;
+        foreach (var token in tokenized)
         {
+            if (ctx.Glossary.TryResolve(token) is not null)
+                continue;
+
             if (!ctx.OccurrencesByToken.TryGetValue(token, out var occurrences))
                 ctx.OccurrencesByToken[token] = occurrences = [];
 
             occurrences.Add($"{ctx.FileName} :: '{profile.Name}'");
         }
     }
+
+    /// <summary>Throwaway concrete instance threaded through <see cref="WeaponKeywordParser.Apply"/>
+    /// purely to satisfy its signature - <c>WeaponProfile</c> is abstract, and only the resulting
+    /// <c>KeywordsText</c> tokenization matters here.</summary>
+    private static readonly RangedWeapon ProbeWeapon = new("", 0, 0, 0, 0, 0, 0);
 }

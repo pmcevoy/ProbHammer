@@ -107,3 +107,18 @@ RuleGlossary.BuildFrom(IEnumerable<RuleDefinition>) -> RuleGlossary
 
 `StoredArmyImport`/`TextArmyImport`/`BattleScribeArmyImport` live in `Domain.Import` itself — see
 "Session-Backed Import" in army-list-import-pipeline.md.
+
+**Weapon-keyword popovers over a NewRecruit-sourced roster are only as complete as that roster's
+own exported `rules`.** Every one of a weapon's `KeywordsText` tokens renders as a chip
+(`_UnitBlock.cshtml`), but whether a given chip is *clickable* depends entirely on
+`BattleScribeRuleGlossaryBuilder.Build` finding a matching rule definition somewhere in the
+roster's own `rules` arrays — it already walks every nested wargear selection's own `rules` (its
+own doc comment names `Sustained Hits`/`Anti` as the intended case), so a chip renders unresolved
+(dimmed) only when NewRecruit's own export never included rule text for that keyword, not because
+of a mapping gap here. Confirmed on a real capture, `data/nr-export-orks-close-quarters-
+cleave.json`: the Slugga's `CLOSE-QUARTERS`/`LETHAL HITS: non-MONSTER/VEHICLE` and the
+Beastchoppa's `CLEAVE 1` all render dimmed, since that roster's own JSON contains only 6 rule
+definitions total (`Da Boss`, `Feel No Pain 5+`, `Support`, `Unstoppable Momentum`, `Waaagh!`,
+`War Cry`), none of them for these weapon keywords — the same tokens resolve and render as
+clickable popovers when the identical army is imported via the GW-app text pipeline instead,
+whose `RuleGlossary` is built from the full BSData catalogue rather than a per-roster rule subset.

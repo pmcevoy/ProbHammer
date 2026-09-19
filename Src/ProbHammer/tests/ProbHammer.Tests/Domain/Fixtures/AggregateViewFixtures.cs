@@ -12,7 +12,8 @@ public static class AggregateViewFixtures
     /// Mirrors the real fixture scenario in Examples/Units.cs's SwordBretheren_Marshal().</summary>
     public static AttachedUnit WeaponAggregationAttachedUnit()
     {
-        var bodyguardWeapon = new MeleeWeapon("Master-crafted power weapon", 3, 2, 5, -2, 2) { LethalHits = true };
+        var bodyguardWeapon = new MeleeWeapon("Master-crafted power weapon", 3, 2, 5, -2, 2)
+            { KeywordsText = ["Lethal Hits"] };
         var bodyguardDatasheet = new Datasheet(
             name: "Sword Brethren Squad",
             factionKeywords: ["ADEPTUS ASTARTES"],
@@ -24,7 +25,8 @@ public static class AggregateViewFixtures
             bodyguardDatasheet, [],
             [new ModelLine("Sword Brother", [bodyguardWeapon.Name], count: 4)]);
 
-        var leaderWeapon = new MeleeWeapon("Master-crafted power weapon", 7, 2, 5, -2, 2) { LethalHits = true };
+        var leaderWeapon = new MeleeWeapon("Master-crafted power weapon", 7, 2, 5, -2, 2)
+            { KeywordsText = ["Lethal Hits"] };
         var leaderDatasheet = new Datasheet(
             name: "Marshal",
             factionKeywords: ["ADEPTUS ASTARTES"],
@@ -40,11 +42,12 @@ public static class AggregateViewFixtures
     }
 
     /// <summary>Bodyguard and attached Leader each carry a same-named weapon whose structural
-    /// profile differs only by LethalHits - proves the two copies are NOT combined, each keeping
-    /// its own total Attacks.</summary>
+    /// profile differs only by the Lethal Hits keyword - proves the two copies are NOT combined,
+    /// each keeping its own total Attacks.</summary>
     public static AttachedUnit DifferentlyModifiedWeaponsAttachedUnit()
     {
-        var bodyguardWeapon = new MeleeWeapon("Master-crafted power weapon", 3, 2, 5, -2, 2) { LethalHits = true };
+        var bodyguardWeapon = new MeleeWeapon("Master-crafted power weapon", 3, 2, 5, -2, 2)
+            { KeywordsText = ["Lethal Hits"] };
         var bodyguardDatasheet = new Datasheet(
             name: "Sword Brethren Squad",
             factionKeywords: ["ADEPTUS ASTARTES"],
@@ -56,7 +59,7 @@ public static class AggregateViewFixtures
             bodyguardDatasheet, [],
             [new ModelLine("Sword Brother", [bodyguardWeapon.Name], count: 4)]);
 
-        var leaderWeapon = new MeleeWeapon("Master-crafted power weapon", 7, 2, 5, -2, 2); // no LethalHits
+        var leaderWeapon = new MeleeWeapon("Master-crafted power weapon", 7, 2, 5, -2, 2); // no Lethal Hits
         var leaderDatasheet = new Datasheet(
             name: "Marshal",
             factionKeywords: ["ADEPTUS ASTARTES"],
@@ -79,7 +82,13 @@ public static class AggregateViewFixtures
             name: "Crusader Squad",
             factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY", "BATTLELINE"],
-            abilities: [new Ability { Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic }],
+            abilities:
+            [
+                new Ability
+                {
+                    Name = "Righteous Zeal", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic
+                }
+            ],
             statlines: [("Initiate", new Statline(6, 4, 3, 2, 6, 2))],
             weaponProfiles: []);
         var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Initiate", [], count: 5)]);
@@ -92,7 +101,11 @@ public static class AggregateViewFixtures
             statlines: [("Chaplain", new Statline(6, 4, 3, 4, 6, 1))],
             weaponProfiles: []);
 
-        var ironHalo = new Ability { Name = "Iron Halo", Text = "This model has a 4+ invulnerable save.", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
+        var ironHalo = new Ability
+        {
+            Name = "Iron Halo", Text = "This model has a 4+ invulnerable save.", Scope = AbilityScope.Model,
+            Origin = AbilityOrigin.Intrinsic
+        };
         var leaderLine = new ModelLine("Chaplain", [], count: 1, abilities: [ironHalo]);
         var leader = new Unit(leaderDatasheet, [ironHalo], [leaderLine]);
 

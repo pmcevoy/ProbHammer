@@ -10,39 +10,34 @@ public class WeaponKeywordParserTests
     private static RangedWeapon BareRanged() => new("Test Weapon", 12, 1, 4, 4, 0, 1);
 
     [Fact]
-    public void Multiple_comma_separated_recognized_tokens()
+    public void Multiple_comma_separated_tokens_are_split_and_trimmed()
     {
         // Real data: Imperium - Black Templars.json
         var result = WeaponKeywordParser.Apply(BareRanged(), "Anti-infantry 4+, Devastating Wounds");
 
-        result.DevastatingWounds.Should().BeTrue();
-        result.Anti.Should().ContainKey("infantry").WhoseValue.Should().Be(4);
         result.KeywordsText.Should().Equal("Anti-infantry 4+", "Devastating Wounds");
     }
 
     [Fact]
-    public void Value_carrying_token()
+    public void A_single_token_is_retained_verbatim()
     {
         var result = WeaponKeywordParser.Apply(BareRanged(), "Sustained Hits 1");
 
-        result.SustainedHits.Should().Be(1);
         result.KeywordsText.Should().Equal("Sustained Hits 1");
     }
 
     [Fact]
-    public void Ignores_cover_pistol_torrent_all_set_independently()
+    public void Every_token_is_retained_verbatim_regardless_of_whether_it_is_a_known_mechanic()
     {
-        // Real data: Imperium - Black Templars.json
-        var result = WeaponKeywordParser.Apply(BareRanged(), "Ignores Cover, Pistol, Torrent");
+        // Real data: Imperium - Black Templars.json - none of these correspond to a formerly-typed
+        // flag; tokenization never distinguishes recognized from unrecognized tokens.
+        var result = WeaponKeywordParser.Apply(BareRanged(), "Anti-Character 5+, Precision, Cleave, Close Combat");
 
-        result.IgnoresCover.Should().BeTrue();
-        result.Pistol.Should().BeTrue();
-        result.Torrent.Should().BeTrue();
-        result.KeywordsText.Should().Equal("Ignores Cover", "Pistol", "Torrent");
+        result.KeywordsText.Should().Equal("Anti-Character 5+", "Precision", "Cleave", "Close Combat");
     }
 
     [Fact]
-    public void No_keywords_dash_produces_no_flags_and_empty_verbatim_list()
+    public void No_keywords_dash_produces_an_empty_verbatim_list()
     {
         var result = WeaponKeywordParser.Apply(BareMelee(), "-");
 
@@ -51,59 +46,18 @@ public class WeaponKeywordParserTests
     }
 
     [Fact]
-    public void Token_with_no_corresponding_flag_is_retained_verbatim_without_asserting_a_flag()
+    public void Blank_keywords_text_produces_an_empty_verbatim_list()
     {
-        // Real data: Imperium - Black Templars.json
-        var result = WeaponKeywordParser.Apply(BareRanged(), "Anti-Character 5+, Precision");
+        var result = WeaponKeywordParser.Apply(BareMelee(), "");
 
-        result.Anti.Should().ContainKey("character").WhoseValue.Should().Be(5);
-        result.KeywordsText.Should().Contain("Precision");
-        // No existing WeaponProfile flag corresponds to Precision - nothing to assert false on
-        // beyond confirming every other flag stayed at its bare default.
-        result.Torrent.Should().BeFalse();
-        result.Blast.Should().BeFalse();
-        result.Pistol.Should().BeFalse();
+        result.KeywordsText.Should().BeEmpty();
     }
 
     [Fact]
-    public void Alternate_spelling_of_an_existing_flag_is_not_inferred()
+    public void Empty_entries_between_commas_are_dropped()
     {
-        var result = WeaponKeywordParser.Apply(BareMelee(), "Cleave");
+        var result = WeaponKeywordParser.Apply(BareMelee(), "Pistol, , Torrent");
 
-        result.Blast.Should().BeFalse();
-        result.KeywordsText.Should().Equal("Cleave");
-
-        var closeCombat = WeaponKeywordParser.Apply(BareRanged(), "Close Combat");
-        closeCombat.Pistol.Should().BeFalse();
-        closeCombat.KeywordsText.Should().Equal("Close Combat");
-    }
-
-    [Fact]
-    public void A_keyword_that_also_maps_to_a_flag_is_still_retained_verbatim()
-    {
-        var result = WeaponKeywordParser.Apply(BareMelee(), "Devastating Wounds");
-
-        result.DevastatingWounds.Should().BeTrue();
-        result.KeywordsText.Should().Equal("Devastating Wounds");
-    }
-
-    [Fact]
-    public void UnrecognizedTokens_is_empty_when_every_token_is_recognized()
-    {
-        WeaponKeywordParser.UnrecognizedTokens("Anti-infantry 4+, Devastating Wounds, Pistol")
-            .Should().BeEmpty();
-    }
-
-    [Fact]
-    public void UnrecognizedTokens_returns_only_the_unrecognized_tokens_from_a_mixed_list()
-    {
-        WeaponKeywordParser.UnrecognizedTokens("Devastating Wounds, Hazardous, Precision, Cleave, Close Combat")
-            .Should().Equal("Hazardous", "Precision", "Cleave", "Close Combat");
-    }
-
-    [Fact]
-    public void UnrecognizedTokens_is_empty_for_no_keywords()
-    {
-        WeaponKeywordParser.UnrecognizedTokens("-").Should().BeEmpty();
+        result.KeywordsText.Should().Equal("Pistol", "Torrent");
     }
 }

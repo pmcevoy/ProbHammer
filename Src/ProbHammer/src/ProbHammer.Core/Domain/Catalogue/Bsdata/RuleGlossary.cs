@@ -95,6 +95,12 @@ public sealed partial class RuleGlossary
     public RuleDefinition? TryResolve(string nameOrAlias) =>
         _byNormalizedKey.TryGetValue(Normalize(nameOrAlias), out var definition) ? definition : null;
 
+    /// <summary>Exposes <see cref="Normalize"/> for use outside glossary resolution -
+    /// <see cref="WeaponProfile.EqualityKey"/> normalizes <c>KeywordsText</c> tokens the same way
+    /// so keyword-equality and glossary-resolution can't drift apart on what counts as "the same
+    /// token".</summary>
+    public static string NormalizeToken(string text) => Normalize(text);
+
     // A generic mechanic's Name/Alias appears bare in the glossary (e.g. "Sustained Hits"/
     // "SUSTAINED HITS", "Anti"/"ANTI"), but real ability/weapon text always appends a value or
     // (for Anti only) a target category to it (e.g. "SUSTAINED HITS 1", "ANTI-VEHICLE 3+") -

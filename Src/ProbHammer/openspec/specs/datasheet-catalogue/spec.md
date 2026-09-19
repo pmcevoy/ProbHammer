@@ -194,28 +194,28 @@ they would if no candidate existed.
 
 ### Requirement: Weapon Profile Verbatim Keyword Text
 A WeaponProfile SHALL retain the exact keyword text supplied by its source data, in source order,
-independent of whether any individual keyword also corresponds to one of WeaponProfile's existing
-typed ability flags. Rendering of a weapon's keywords SHALL read this verbatim record rather than
-being reconstructed from the typed ability flags, so that a keyword whose meaning is not yet
-understood is never silently omitted, and a keyword that is a context-dependent alternate spelling
-of an already-modeled flag is never rendered as the flag's own canonical wording instead of its
-actual source wording.
+as its sole representation of the weapon's ability keywords — WeaponProfile SHALL NOT carry any
+separate typed ability flag derived from this text. Rendering of a weapon's keywords, and any
+structural comparison between two weapons' keyword sets, SHALL read this verbatim record directly,
+so that a keyword whose meaning is not yet understood is never silently omitted, and no keyword is
+ever rendered or compared under some other canonical wording instead of its actual source wording.
 
 #### Scenario: A keyword that also maps to an existing flag is still retained verbatim
-- **WHEN** a weapon's source keyword text includes `"Devastating Wounds"`, which also sets the
-  existing `DevastatingWounds` flag
-- **THEN** the produced WeaponProfile both has `DevastatingWounds` set AND retains
-  `"Devastating Wounds"` in its verbatim keyword text
+- **WHEN** a weapon's source keyword text includes a token such as `"Devastating Wounds"` that
+  names a widely-understood mechanic
+- **THEN** the produced WeaponProfile retains `"Devastating Wounds"` in its verbatim keyword text
+  exactly as written — WeaponProfile has no separate `DevastatingWounds` flag for this or any
+  other token to also set
 
 #### Scenario: A keyword with no corresponding flag is retained verbatim
-- **WHEN** a weapon's source keyword text includes a token with no corresponding WeaponProfile
-  flag (e.g. `"Hazardous"`, `"Precision"`, or `"Heavy"`)
-- **THEN** the produced WeaponProfile retains that token in its verbatim keyword text, without
-  asserting any existing typed ability flag on its behalf
+- **WHEN** a weapon's source keyword text includes a token with no widely-understood meaning
+  (e.g. `"Hazardous"`, `"Precision"`, or `"Heavy"`)
+- **THEN** the produced WeaponProfile retains that token in its verbatim keyword text, with no
+  flag of any kind ever asserted on its behalf, by this token or any other
 
 #### Scenario: A context-dependent alternate spelling of an existing flag is retained verbatim, unaltered
-- **WHEN** a melee weapon's source keyword text includes `"Cleave"` (the melee-context equivalent
-  of `Blast`)
+- **WHEN** a melee weapon's source keyword text includes `"Cleave"` (a mechanic unrelated to
+  `"Blast"` beyond both being value-carrying keywords)
 - **THEN** the produced WeaponProfile retains `"Cleave"` in its verbatim keyword text exactly as
-  written, and rendering of that weapon's keywords shows `"Cleave"`, never `"Blast"`, regardless
-  of whether the `Blast` flag is ever set on this weapon's behalf
+  written, and rendering of that weapon's keywords shows `"Cleave"`, never `"Blast"` or any other
+  keyword's own wording

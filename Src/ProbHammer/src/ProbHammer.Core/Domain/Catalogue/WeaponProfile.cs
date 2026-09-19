@@ -43,55 +43,45 @@ public abstract record WeaponProfile(
     /// own field removes that failure mode structurally.</summary>
     public abstract ScalarCharacteristicView Skill { get; }
 
-    public bool Torrent { get; init; }
-    public bool Blast { get; init; }
-    public int Melta { get; init; } // 0 = absent
-    public int RapidFire { get; init; } // 0 = absent
-    public int SustainedHits { get; init; } // 0 = absent
-    public bool LethalHits { get; init; }
-    public bool DevastatingWounds { get; init; }
-    public bool TwinLinked { get; init; }
-    public bool IndirectFire { get; init; }
-    public bool Pistol { get; init; }
-    public bool IgnoresCover { get; init; }
-    public bool Assault { get; init; }
-    public IReadOnlyDictionary<string, int> Anti { get; init; } = new Dictionary<string, int>();
-
     /// <summary>
-    ///     Exact source keyword text, in source order, independent of whether any individual
-    ///     keyword also corresponds to one of this profile's typed ability flags above.
-    ///     Rendering of a weapon's keywords must read this verbatim record rather than being
-    ///     reconstructed from the typed flags: an unrecognized token, or a context-dependent
-    ///     alternate spelling of an already-modeled flag, must never be silently dropped or
-    ///     rendered under the flag's own canonical wording instead.
+    ///     Exact source keyword text, in source order. The sole representation of a weapon's
+    ///     ability keywords - rendering must read this verbatim record so an unrecognized or
+    ///     newly-added BSData keyword is never silently dropped.
     /// </summary>
     public IReadOnlyList<string> KeywordsText { get; init; } = [];
 
     /// <summary>
     ///     Structural equality for aggregation purposes: (Type, Skill, Strength, Ap, Damage, and
-    ///     every ability/keyword flag). Excludes Name/Range/Attacks - count/attacks are the
+    ///     a normalized keyword set). Excludes Name/Range/Attacks - count/attacks are the
     ///     quantity being aggregated, not part of the profile's identity. Mirrors
-    ///     SimulationAdapter.WeaponGroupKey. Every ability property on WeaponProfile must appear
-    ///     here - two weapons differing in any one keyword (e.g. Pistol vs Assault) are different
-    ///     profiles and must not be merged, even if their damage-relevant stats coincide.
+    ///     SimulationAdapter.WeaponGroupKey. Two weapons differing in any real keyword are
+    ///     different profiles and must not be merged, even if their damage-relevant stats
+    ///     coincide.
     /// </summary>
     public WeaponProfileEqualityKey EqualityKey()
     {
         return new WeaponProfileEqualityKey(
             Type, Skill, S, Ap, D,
-            Torrent, Blast, Melta, RapidFire,
-            SustainedHits, LethalHits, DevastatingWounds,
-            TwinLinked, IndirectFire, Pistol, IgnoresCover, Assault,
-            NormaliseAnti(Anti),
-            string.Join("", KeywordsText));
+            NormaliseKeywords(KeywordsText));
     }
 
-    private static string NormaliseAnti(IReadOnlyDictionary<string, int> anti)
+    /// <summary>
+    ///     Case-folded, trimmed, deduplicated, sorted-then-joined representation of
+    ///     <see cref="KeywordsText"/> - order and casing differences that don't change the actual
+    ///     keyword set must not split what should be one aggregated entry, while any real
+    ///     difference in keywords still must. Normalized the same way
+    ///     <see cref="Bsdata.RuleGlossary"/> does (lowercase, strip non-alphanumerics) so
+    ///     keyword-equality and glossary-resolution can't drift apart on what counts as "the same
+    ///     token".
+    /// </summary>
+    private static string NormaliseKeywords(IReadOnlyList<string> keywordsText)
     {
-        return anti.Count == 0
-            ? ""
-            : string.Join(",", anti.OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
-                .Select(kv => $"{kv.Key}:{kv.Value}"));
+        var normalized = keywordsText
+            .Select(Bsdata.RuleGlossary.NormalizeToken)
+            .Where(token => token.Length > 0)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(token => token, StringComparer.Ordinal);
+        return string.Join(",", normalized);
     }
 }
 
@@ -101,17 +91,4 @@ public sealed record WeaponProfileEqualityKey(
     ScalarCharacteristicView S,
     ScalarCharacteristicView Ap,
     ScalarCharacteristicView D,
-    bool Torrent,
-    bool Blast,
-    int Melta,
-    int RapidFire,
-    int SustainedHits,
-    bool LethalHits,
-    bool DevastatingWounds,
-    bool TwinLinked,
-    bool IndirectFire,
-    bool Pistol,
-    bool IgnoresCover,
-    bool Assault,
-    string Anti,
-    string KeywordsText);
+    string Keywords);

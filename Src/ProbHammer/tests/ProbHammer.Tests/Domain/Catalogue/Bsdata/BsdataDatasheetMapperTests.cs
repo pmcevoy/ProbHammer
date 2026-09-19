@@ -43,7 +43,6 @@ public class BsdataDatasheetMapperTests
         fistOfDorn.D.Value.Should().Be(
             new ProbHammer.Core.Domain.Catalogue.DiceCharacteristicValue(ProbHammer.Core.Domain.Catalogue.DiceExpression
                 .Fixed(3)));
-        fistOfDorn.DevastatingWounds.Should().BeTrue();
         fistOfDorn.KeywordsText.Should().Equal("Devastating Wounds");
 
         // "Leader" is excluded (datasheet-catalogue's "Attachment-Eligibility Abilities Are

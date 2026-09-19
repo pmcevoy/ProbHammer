@@ -781,9 +781,10 @@ either section entirely when it has no entries. Within each section, entries SHA
 descending expected value of their aggregated `TotalAttacks`. Each entry SHALL show its name (the
 composite display Name computed from every distinct weapon Name merged into it — see the Aggregate
 Weapon Count View requirement — not an arbitrary single contributor's Name), Skill, Strength, AP,
-Damage, the aggregated total Attacks value, and any active ability keywords, each rendered as its
-own bordered chip immediately alongside the entry's name rather than in a separate column or joined
-with other keywords into a single bracketed group. Ranged weapon entries SHALL additionally show
+Damage, the aggregated total Attacks value, and one chip per token in its keyword text
+(`Profile.KeywordsText`), each rendered as its own bordered chip immediately alongside the entry's
+name rather than in a separate column or joined with other keywords into a single bracketed group.
+Ranged weapon entries SHALL additionally show
 Range; Melee weapon entries SHALL NOT show a Range value, since it is always the fixed literal
 "Melee" for that weapon type and carries no information beyond the section it's already listed
 under. No entry's default (collapsed) rendering SHALL display a raw per-model Attacks value
@@ -912,10 +913,11 @@ affects the other weapon section of the same unit block.
   value
 
 #### Scenario: Ability tags render inline next to the weapon name
-- **WHEN** a weapon entry's `Profile` has more than one active ability flag (e.g. both `Torrent`
-  and `Pistol` and `IgnoresCover`)
-- **THEN** the rendered entry shows three separate chips immediately alongside the weapon's name —
-  one per keyword — not one chip containing all three joined together
+- **WHEN** a weapon entry's `Profile.KeywordsText` has more than one token (e.g. `"Torrent"`,
+  `"Pistol"`, and `"Ignores Cover"`, or a token this system has never seen before)
+- **THEN** the rendered entry shows one separate chip per token, immediately alongside the weapon's
+  name, showing that token's exact source text — not one chip containing all of them joined
+  together, and never a chip omitted because the token's meaning is unrecognized
 
 #### Scenario: A keyword chip with no matching glossary entry is not interactive
 - **WHEN** a weapon keyword chip's underlying tag text has no matching entry in the glossary (per
