@@ -31,7 +31,7 @@ public class StatlineFlagRuleTests
     private static Unit ImpulsorWithShieldDome()
     {
         var datasheet = new Datasheet(
-            "Impulsor", factionKeywords: [], keywords: [], abilities: [],
+            "Impulsor", keywords: [], abilities: [],
             statlines: [("Impulsor", new Statline(12, 9, 3, 11, 6, 2))], weaponProfiles: []);
         return new Unit(datasheet, [], [new ModelLine("Impulsor", [], count: 1, abilities: [ShieldDome])]);
     }
@@ -82,7 +82,7 @@ public class StatlineFlagRuleTests
     {
         var mismatched = ShieldDome with { Text = "The bearer has a 4+ invulnerable save." };
         var datasheet = new Datasheet(
-            "Impulsor", factionKeywords: [], keywords: [], abilities: [],
+            "Impulsor", keywords: [], abilities: [],
             statlines: [("Impulsor", new Statline(12, 9, 3, 11, 6, 2))], weaponProfiles: []);
         var unit = new Unit(datasheet, [], [new ModelLine("Impulsor", [], count: 1, abilities: [mismatched])]);
 
@@ -97,13 +97,13 @@ public class StatlineFlagRuleTests
     private static AttachedUnit CustodianGuardWithVexilla()
     {
         var bodyguardDatasheet = new Datasheet(
-            "Custodian Guard", factionKeywords: [], keywords: [], abilities: [],
+            "Custodian Guard", keywords: [], abilities: [],
             statlines: [("Custodian Guard", new Statline(6, 6, 2, 4, 7, 2))], weaponProfiles: []);
         var bodyguard = new Unit(bodyguardDatasheet, [],
             [new ModelLine("Custodian Guard", [], count: 4, abilities: [Vexilla])]);
 
         var wardenDatasheet = new Datasheet(
-            "Custodian Warden", factionKeywords: [], keywords: [], abilities: [],
+            "Custodian Warden", keywords: [], abilities: [],
             statlines: [("Custodian Warden", new Statline(6, 6, 2, 5, 7, 2))], weaponProfiles: []);
         var warden = new Unit(wardenDatasheet, [], [new ModelLine("Custodian Warden", [], count: 1)]);
 
@@ -165,7 +165,7 @@ public class StatlineFlagRuleTests
                 Effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)])
         ]);
         var datasheet = new Datasheet(
-            "Sword Brethren Squad", factionKeywords: [], keywords: [], abilities: [],
+            "Sword Brethren Squad", keywords: [], abilities: [],
             statlines: [("Sword Brother", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: []);
         var unit = new Unit(datasheet, [],
             [new ModelLine("Sword Brother", [], count: 1, abilities: [keywordScoped])]);
@@ -196,7 +196,7 @@ public class StatlineFlagRuleTests
                 Effects: [new ScalarCharacteristicEffect("T", EffectVerb.Improve, 1)])
         ]);
         var datasheet = new Datasheet(
-            "Some Unit", factionKeywords: [], keywords: [], abilities: [],
+            "Some Unit", keywords: [], abilities: [],
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: []);
         var unit = new Unit(datasheet, [],
             [new ModelLine("Some Unit", [], count: 1, abilities: [unconditional])]);
@@ -235,7 +235,7 @@ public class StatlineFlagRuleTests
                 Effects: [new ScalarCharacteristicEffect("W", EffectVerb.Improve, 2)])
         ]);
         var datasheet = new Datasheet(
-            "Custodian Guard", factionKeywords: [], keywords: [], abilities: [],
+            "Custodian Guard", keywords: [], abilities: [],
             statlines: [("Custodian Guard", new Statline(6, 6, 2, 4, 7, 2))], weaponProfiles: []);
         var unit = new Unit(datasheet, [],
             [new ModelLine("Custodian Guard", [], count: 1, abilities: [abilityA, abilityB])]);

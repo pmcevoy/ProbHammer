@@ -56,8 +56,7 @@ public static class Datasheets
             [
                 "INFANTRY", "CHARACTER", "EPIC HERO", "GRENADES", "IMPERIUM", "TACITUS", "CHAPTER MASTER",
                 "HIGH MARSHAL HELBRECHT"
-            ],
-            factionKeywords: ["APEPTUS ASTARTES", "BLACK TEMPLARS"]
+            ]
         );
     }
 
@@ -105,8 +104,7 @@ public static class Datasheets
             keywords:
             [
                 "INFANTRY", "CHARACTER", "GRENADES", "IMPERIUM", "TACITUS", "ANCIENT", "CRUSADE ANCIENT"
-            ],
-            factionKeywords: ["APEPTUS ASTARTES", "BLACK TEMPLARS"]
+            ]
         );
     }
 
@@ -154,8 +152,7 @@ public static class Datasheets
             keywords:
             [
                 "INFANTRY", "CHARACTER", "GRENADES", "IMPERIUM", "TACITUS", "LIEUTENANT"
-            ],
-            factionKeywords: ["APEPTUS ASTARTES"]
+            ]
         );
     }
 
@@ -208,8 +205,7 @@ public static class Datasheets
             keywords:
             [
                 "INFANTRY", "CHARACTER", "GRENADES", "IMPERIUM", "TACITUS", "CAPTAIN", "MARSHAL"
-            ],
-            factionKeywords: ["APEPTUS ASTARTES", "BLACK TEMPLARS"]
+            ]
         );
     }
 
@@ -241,8 +237,7 @@ public static class Datasheets
             keywords:
             [
                 "INFANTRY", "BATTLELINE", "GRENADES", "IMPERIUM", "TACITUS", "ASSAULT INTERCESSOR SQUARD"
-            ],
-            factionKeywords: ["APEPTUS ASTARTES"]
+            ]
         );
     }
 
@@ -283,8 +278,7 @@ public static class Datasheets
             keywords:
             [
                 "INFANTRY", "BATTLELINE", "GRENADES", "IMPERIUM", "TACITUS", "CRUSADER SQUAD"
-            ],
-            factionKeywords: ["APEPTUS ASTARTES", "BLACK TEMPLARS"]
+            ]
         );
     }
 
@@ -320,8 +314,7 @@ public static class Datasheets
                 new MeleeWeapon("Reaper chainsword", A: 8, Ws: 3, S: 12, Ap: -3, D: 3)
             ],
             abilities: [invulnerableSaveAbility],
-            keywords: ["VEHICLE", "TITANIC", "IMPERIUM", "QUESTORIS", "CANIS REX"],
-            factionKeywords: ["IMPERIUM", "IMPERIAL KNIGHTS"]
+            keywords: ["VEHICLE", "TITANIC", "IMPERIUM", "QUESTORIS", "CANIS REX"]
         );
     }
 
@@ -358,8 +351,7 @@ public static class Datasheets
                 new MeleeWeapon("Aeldari power sword", A: 4, Ws: 2, S: 4, Ap: -2, D: 1)
             ],
             abilities: [invulnerableSaveAbility],
-            keywords: ["INFANTRY", "AELDARI", "HOWLING BANSHEES"],
-            factionKeywords: ["AELDARI", "ASURYANI"]
+            keywords: ["INFANTRY", "AELDARI", "HOWLING BANSHEES"]
         );
     }
 
@@ -388,8 +380,7 @@ public static class Datasheets
                 new MeleeWeapon("Guardian spear", A: 4, Ws: 3, S: 6, Ap: -1, D: 2)
             ],
             abilities: [],
-            keywords: ["VEHICLE"],
-            factionKeywords: ["UNALIGNED FORCES"]
+            keywords: ["VEHICLE"]
         );
     }
 
@@ -443,8 +434,7 @@ public static class Datasheets
             keywords:
             [
                 "VEHICLE", "TRANSPORT", "DEDICATED TRANSPORT", "IMPERIUM", "FRAME", "IMPULSOR"
-            ],
-            factionKeywords: ["APEPTUS ASTARTES", "BLACK TEMPLARS"]
+            ]
         );
     }
 
@@ -492,8 +482,7 @@ public static class Datasheets
             keywords:
             [
                 "INFANTRY", "GRENADES", "SMOKE", "IMPERIUM", "SCOUT SQUARD"
-            ],
-            factionKeywords: ["APEPTUS ASTARTES"]
+            ]
         );
     }
 
@@ -524,8 +513,7 @@ public static class Datasheets
             keywords:
             [
                 "INFANTRY", "GRENADES", "IMPERIUM", "TACITUS", "SWORD BRETHEREN SQUARD"
-            ],
-            factionKeywords: ["APEPTUS ASTARTES", "BLACK TEMPLARS"]
+            ]
         );
     }
 

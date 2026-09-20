@@ -87,7 +87,6 @@ public static partial class BsdataDatasheetMapper
 
         return new Datasheet(
             entry.Name,
-            factionKeywords: [],
             keywords: MapCategoryLinks(entry.CategoryLinks),
             abilities: context.Abilities,
             statlines: context.Statlines,

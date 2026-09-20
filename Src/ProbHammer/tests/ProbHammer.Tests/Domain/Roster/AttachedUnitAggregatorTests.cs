@@ -43,7 +43,7 @@ public class AttachedUnitAggregatorTests
     {
         var statline = new Statline(6, 4, 3, 2, 6, 2);
         var datasheet = new Datasheet(
-            "Test Squad", factionKeywords: [], keywords: [], abilities: [],
+            "Test Squad", keywords: [], abilities: [],
             statlines: [("Sergeant", statline), ("Trooper", statline), ("Never Taken", statline)],
             weaponProfiles: []);
         var unit = new Unit(
@@ -102,7 +102,7 @@ public class AttachedUnitAggregatorTests
             Scope = AbilityScope.Unit, Origin = AbilityOrigin.OptionalGrant
         };
         var datasheet = new Datasheet(
-            "Custodian Wardens", factionKeywords: [], keywords: [], abilities: [],
+            "Custodian Wardens", keywords: [], abilities: [],
             statlines: [("Custodian Warden", statline)], weaponProfiles: []);
         var unit = new Unit(
             datasheet, [],
@@ -130,7 +130,7 @@ public class AttachedUnitAggregatorTests
         var statline = new Statline(5, 6, 3, 2, 6, 2);
         var plagueKnives = new MeleeWeapon("Plague knives", 3, 3, 4, 0, 1);
         var datasheet = new Datasheet(
-            "Plague Marines", factionKeywords: [], keywords: [], abilities: [],
+            "Plague Marines", keywords: [], abilities: [],
             statlines: [("Plague Marine", statline)], weaponProfiles: [plagueKnives]);
         var unit = new Unit(
             datasheet, [],
@@ -180,19 +180,19 @@ public class AttachedUnitAggregatorTests
     {
         var chaplainStatline = new Statline(6, 5, 3, 4, 6, 1);
         var chaplainDatasheet = new Datasheet(
-            "Chaplain", factionKeywords: [], keywords: [], abilities: [],
+            "Chaplain", keywords: [], abilities: [],
             statlines: [("Chaplain", chaplainStatline)], weaponProfiles: []);
         var chaplain = new Unit(chaplainDatasheet, [], [new ModelLine("Chaplain", [], count: 1)]);
 
         var ancientStatline = new Statline(6, 4, 3, 4, 6, 1);
         var ancientDatasheet = new Datasheet(
-            "Ancient", factionKeywords: [], keywords: [], abilities: [],
+            "Ancient", keywords: [], abilities: [],
             statlines: [("Ancient", ancientStatline)], weaponProfiles: []);
         var ancient = new Unit(ancientDatasheet, [], [new ModelLine("Ancient", [], count: 1)]);
 
         var bodyguardStatline = new Statline(6, 4, 3, 2, 6, 2);
         var bodyguardDatasheet = new Datasheet(
-            "Crusader Squad", factionKeywords: [], keywords: [], abilities: [],
+            "Crusader Squad", keywords: [], abilities: [],
             statlines: [("Sword Brother", bodyguardStatline), ("Initiate", bodyguardStatline)],
             weaponProfiles: []);
         var bodyguard = new Unit(
@@ -212,7 +212,7 @@ public class AttachedUnitAggregatorTests
     {
         var statline = new Statline(6, 4, 3, 2, 6, 2);
         var datasheet = new Datasheet(
-            "Test Squad", factionKeywords: [], keywords: [], abilities: [],
+            "Test Squad", keywords: [], abilities: [],
             statlines: [("Sergeant", statline), ("Trooper", statline)], weaponProfiles: []);
         var unit = new Unit(
             datasheet, [],
@@ -228,13 +228,13 @@ public class AttachedUnitAggregatorTests
     {
         var bodyguardStatline = new Statline(6, 4, 3, 2, 6, 2);
         var bodyguardDatasheet = new Datasheet(
-            "Crusader Squad", factionKeywords: [], keywords: [], abilities: [],
+            "Crusader Squad", keywords: [], abilities: [],
             statlines: [("Guardian", bodyguardStatline)], weaponProfiles: []);
         var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Guardian", [], count: 3)]);
 
         var leaderStatline = new Statline(6, 5, 3, 4, 6, 1);
         var leaderDatasheet = new Datasheet(
-            "Ancient", factionKeywords: [], keywords: [], abilities: [],
+            "Ancient", keywords: [], abilities: [],
             statlines: [("Guardian", leaderStatline)], weaponProfiles: []);
         var leader = new Unit(leaderDatasheet, [], [new ModelLine("Guardian", [], count: 1)]);
 
@@ -363,7 +363,6 @@ public class AttachedUnitAggregatorTests
         // summed total.
         var datasheet = new Datasheet(
             name: "Scout Squad",
-            factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY"],
             abilities: [],
             statlines: [("Scout", new Statline(6, 4, 4, 2, 6, 1))],
@@ -408,7 +407,6 @@ public class AttachedUnitAggregatorTests
         var combatRifle = new RangedWeapon("Combat rifle", 24, 1, 3, 4, -1, 1);
         var datasheet = new Datasheet(
             name: "Intercessor Squad",
-            factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY"],
             abilities: [],
             statlines: [("Intercessor", new Statline(6, 4, 3, 2, 6, 2))],
@@ -431,7 +429,6 @@ public class AttachedUnitAggregatorTests
         var autoRifle = new RangedWeapon("Auto rifle", 24, 1, 3, 4, -1, 1);
         var datasheet = new Datasheet(
             name: "Intercessor Squad",
-            factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY"],
             abilities: [],
             statlines: [("Intercessor", new Statline(6, 4, 3, 2, 6, 2))],
@@ -485,7 +482,7 @@ public class AttachedUnitAggregatorTests
     public void AbilityView_AbilitiesAreNotCombinedAcrossComponents()
     {
         var bodyguardDatasheet = new Datasheet(
-            "Crusader Squad", factionKeywords: [], keywords: [],
+            "Crusader Squad", keywords: [],
             abilities:
             [
                 new Ability
@@ -497,7 +494,7 @@ public class AttachedUnitAggregatorTests
         var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Guardian", [], count: 3)]);
 
         var leaderDatasheet = new Datasheet(
-            "Ancient", factionKeywords: [], keywords: [],
+            "Ancient", keywords: [],
             abilities:
             [
                 new Ability
@@ -522,7 +519,7 @@ public class AttachedUnitAggregatorTests
     public void AbilityView_DatasheetSourcedAbilityPersistsWhileAnyModelLineRemains()
     {
         var datasheet = new Datasheet(
-            "Crusader Squad", factionKeywords: [], keywords: [],
+            "Crusader Squad", keywords: [],
             abilities:
             [
                 new Ability
@@ -551,7 +548,7 @@ public class AttachedUnitAggregatorTests
             Name = "Oathbound Exemplar", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Enhancement
         };
         var datasheet = new Datasheet(
-            "Marshal", factionKeywords: [], keywords: [], abilities: [],
+            "Marshal", keywords: [], abilities: [],
             statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: []);
         var unit = new Unit(datasheet, [enhancement], [new ModelLine("Marshal", [], count: 1)]);
 
@@ -569,7 +566,7 @@ public class AttachedUnitAggregatorTests
             Name = "Oathbound Exemplar", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Enhancement
         };
         var datasheet = new Datasheet(
-            "Marshal", factionKeywords: [], keywords: [], abilities: [],
+            "Marshal", keywords: [], abilities: [],
             statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: []);
         var unit = new Unit(datasheet, [enhancement], [new ModelLine("Marshal", [], count: 1)]);
         unit.ModelLines[0].RemoveCasualties(1);
@@ -583,7 +580,7 @@ public class AttachedUnitAggregatorTests
     public void AbilityView_ReportsNoEnhancementEntry_WhenNoneAreApplied()
     {
         var datasheet = new Datasheet(
-            "Marshal", factionKeywords: [], keywords: [], abilities: [],
+            "Marshal", keywords: [], abilities: [],
             statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: []);
         var unit = new Unit(datasheet, [], [new ModelLine("Marshal", [], count: 1)]);
 
@@ -598,12 +595,12 @@ public class AttachedUnitAggregatorTests
         var vow = new Ability
             { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
         var bodyguardDatasheet = new Datasheet(
-            "Crusader Squad", factionKeywords: [], keywords: [], abilities: [vow],
+            "Crusader Squad", keywords: [], abilities: [vow],
             statlines: [("Guardian", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
         var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Guardian", [], count: 3)]);
 
         var leaderDatasheet = new Datasheet(
-            "Ancient", factionKeywords: [], keywords: [], abilities: [vow],
+            "Ancient", keywords: [], abilities: [vow],
             statlines: [("Ancient", new Statline(6, 5, 3, 4, 6, 1))], weaponProfiles: []);
         var leader = new Unit(leaderDatasheet, [], [new ModelLine("Ancient", [], count: 1)]);
 
@@ -622,17 +619,17 @@ public class AttachedUnitAggregatorTests
         var vow = new Ability
             { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
         var bodyguardDatasheet = new Datasheet(
-            "Crusader Squad", factionKeywords: [], keywords: [], abilities: [vow],
+            "Crusader Squad", keywords: [], abilities: [vow],
             statlines: [("Guardian", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
         var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Guardian", [], count: 3)]);
 
         var leaderOneDatasheet = new Datasheet(
-            "Ancient", factionKeywords: [], keywords: [], abilities: [vow],
+            "Ancient", keywords: [], abilities: [vow],
             statlines: [("Ancient", new Statline(6, 5, 3, 4, 6, 1))], weaponProfiles: []);
         var leaderOne = new Unit(leaderOneDatasheet, [], [new ModelLine("Ancient", [], count: 1)]);
 
         var leaderTwoDatasheet = new Datasheet(
-            "Chaplain", factionKeywords: [], keywords: [], abilities: [], // no Templar Vows here
+            "Chaplain", keywords: [], abilities: [], // no Templar Vows here
             statlines: [("Chaplain", new Statline(6, 5, 3, 4, 6, 1))], weaponProfiles: []);
         var leaderTwo = new Unit(leaderTwoDatasheet, [], [new ModelLine("Chaplain", [], count: 1)]);
 
@@ -650,12 +647,12 @@ public class AttachedUnitAggregatorTests
         var vow = new Ability
             { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
         var bodyguardDatasheet = new Datasheet(
-            "Crusader Squad", factionKeywords: [], keywords: [], abilities: [vow],
+            "Crusader Squad", keywords: [], abilities: [vow],
             statlines: [("Guardian", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
         var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Guardian", [], count: 3)]);
 
         var leaderDatasheet = new Datasheet(
-            "Ancient", factionKeywords: [], keywords: [], abilities: [vow],
+            "Ancient", keywords: [], abilities: [vow],
             statlines: [("Ancient", new Statline(6, 5, 3, 4, 6, 1))], weaponProfiles: []);
         var leader = new Unit(leaderDatasheet, [], [new ModelLine("Ancient", [], count: 1)]);
 
@@ -679,7 +676,7 @@ public class AttachedUnitAggregatorTests
         // triggered for a standalone Unit (only ever one component), even though an army-wide
         // fact is just as much one there.
         var datasheet = new Datasheet(
-            "Impulsor", factionKeywords: [], keywords: [],
+            "Impulsor", keywords: [],
             abilities:
             [
                 new Ability
@@ -703,12 +700,12 @@ public class AttachedUnitAggregatorTests
         var vow = new Ability
             { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule };
         var bodyguardDatasheet = new Datasheet(
-            "Crusader Squad", factionKeywords: [], keywords: [], abilities: [vow],
+            "Crusader Squad", keywords: [], abilities: [vow],
             statlines: [("Guardian", new Statline(6, 4, 3, 2, 6, 2))], weaponProfiles: []);
         var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Guardian", [], count: 3)]);
 
         var leaderDatasheet = new Datasheet(
-            "Ancient", factionKeywords: [], keywords: [], abilities: [vow],
+            "Ancient", keywords: [], abilities: [vow],
             statlines: [("Ancient", new Statline(6, 5, 3, 4, 6, 1))], weaponProfiles: []);
         var leader = new Unit(leaderDatasheet, [], [new ModelLine("Ancient", [], count: 1)]);
 

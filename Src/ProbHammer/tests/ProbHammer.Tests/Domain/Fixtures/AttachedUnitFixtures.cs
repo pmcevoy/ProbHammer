@@ -11,7 +11,6 @@ public static class AttachedUnitFixtures
 
         return new Datasheet(
             name: name,
-            factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["CHARACTER", "INFANTRY", "IMPERIUM", name.ToUpperInvariant()],
             abilities: [],
             statlines: [(name, statline)],
@@ -24,7 +23,6 @@ public static class AttachedUnitFixtures
 
         return new Datasheet(
             name: "Servitor",
-            factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY", "SERVITOR"],
             abilities: [],
             statlines: [("Servitor", statline)],

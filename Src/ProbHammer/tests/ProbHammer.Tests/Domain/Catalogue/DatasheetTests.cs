@@ -12,7 +12,6 @@ public class DatasheetTests
         var datasheet = DatasheetFixtures.AssaultIntercessorSquad();
 
         datasheet.Name.Should().Be("Assault Intercessor Squad");
-        datasheet.FactionKeywords.Should().Contain("ADEPTUS ASTARTES");
         datasheet.Keywords.Should().Contain("BATTLELINE");
         datasheet.Abilities.Should().ContainSingle(a => a.Name == "Shock Assault");
     }
@@ -85,7 +84,6 @@ public class DatasheetTests
         var statline = new Statline(6, 4, 3, 2, 6, 2);
         var datasheet = new Datasheet(
             "Test Squad",
-            factionKeywords: [],
             keywords: [],
             abilities: [],
             statlines:
@@ -111,7 +109,6 @@ public class DatasheetTests
         };
         var datasheet = new Datasheet(
             "Impulsor",
-            factionKeywords: [],
             keywords: [],
             abilities: [],
             statlines: [],
@@ -127,7 +124,6 @@ public class DatasheetTests
     {
         var datasheet = new Datasheet(
             "Impulsor",
-            factionKeywords: [],
             keywords: [],
             abilities: [],
             statlines: [],
@@ -148,7 +144,6 @@ public class DatasheetTests
             { Name = "Thirst for Glory", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Enhancement };
         var datasheet = new Datasheet(
             "Crusade Ancient",
-            factionKeywords: [],
             keywords: [],
             abilities: [intrinsic],
             statlines: [],
@@ -164,7 +159,6 @@ public class DatasheetTests
         var statline = new Statline(6, 4, 3, 2, 6, 2);
         var datasheet = new Datasheet(
             "Masters of the Maelstrom",
-            factionKeywords: [],
             keywords: [],
             abilities: [],
             statlines:
@@ -192,7 +186,7 @@ public class DatasheetTests
         var kept = new Ability
             { Name = "Shock Assault", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic };
         var datasheet = new Datasheet(
-            "Test Squad", factionKeywords: [], keywords: [],
+            "Test Squad", keywords: [],
             abilities: [leader, support, attachedUnit, kept],
             statlines: [], weaponProfiles: []);
 

@@ -153,7 +153,6 @@ public static partial class BattleScribeRosterMapper
 
         var datasheet = new Datasheet(
             top.Name,
-            factionKeywords: [],
             keywords: MapCategories(top.Categories),
             abilities: intrinsicAbilities.Concat(coreRuleAbilities).ToList(),
             statlines: statlines,

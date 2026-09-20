@@ -16,7 +16,6 @@ public static class AggregateViewFixtures
             { KeywordsText = ["Lethal Hits"] };
         var bodyguardDatasheet = new Datasheet(
             name: "Sword Brethren Squad",
-            factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY"],
             abilities: [],
             statlines: [("Sword Brother", new Statline(6, 4, 3, 3, 6, 1))],
@@ -29,7 +28,6 @@ public static class AggregateViewFixtures
             { KeywordsText = ["Lethal Hits"] };
         var leaderDatasheet = new Datasheet(
             name: "Marshal",
-            factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["CHARACTER", "INFANTRY"],
             abilities: [],
             statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))],
@@ -50,7 +48,6 @@ public static class AggregateViewFixtures
             { KeywordsText = ["Lethal Hits"] };
         var bodyguardDatasheet = new Datasheet(
             name: "Sword Brethren Squad",
-            factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY"],
             abilities: [],
             statlines: [("Sword Brother", new Statline(6, 4, 3, 3, 6, 1))],
@@ -62,7 +59,6 @@ public static class AggregateViewFixtures
         var leaderWeapon = new MeleeWeapon("Master-crafted power weapon", 7, 2, 5, -2, 2); // no Lethal Hits
         var leaderDatasheet = new Datasheet(
             name: "Marshal",
-            factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["CHARACTER", "INFANTRY"],
             abilities: [],
             statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))],
@@ -80,7 +76,6 @@ public static class AggregateViewFixtures
     {
         var bodyguardDatasheet = new Datasheet(
             name: "Crusader Squad",
-            factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY", "BATTLELINE"],
             abilities:
             [
@@ -95,7 +90,6 @@ public static class AggregateViewFixtures
 
         var leaderDatasheet = new Datasheet(
             name: "Chaplain",
-            factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["CHARACTER", "INFANTRY"],
             abilities: [],
             statlines: [("Chaplain", new Statline(6, 4, 3, 4, 6, 1))],

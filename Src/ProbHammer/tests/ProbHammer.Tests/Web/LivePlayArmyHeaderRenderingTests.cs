@@ -54,7 +54,6 @@ public class LivePlayArmyHeaderRenderingTests : IClassFixture<WebApplicationFact
         var statline = new Statline(6, 4, 3, 2, 6, 1);
         var datasheet = new Datasheet(
             name: name,
-            factionKeywords: [],
             keywords: [],
             abilities: [ability],
             statlines: [(name, statline)],

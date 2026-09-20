@@ -12,7 +12,6 @@ public static class DatasheetFixtures
         
         return new Datasheet(
             name: "Sword Brethren Squad",
-            factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY", "SWORD BRETHREN SQUAD"],
             abilities: [new Ability { Name = "Exploit their cowardice", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic }],
             statlines: [("Sword Brother", bro)],
@@ -30,7 +29,6 @@ public static class DatasheetFixtures
 
         return new Datasheet(
             name: "Assault Intercessor Squad",
-            factionKeywords: ["ADEPTUS ASTARTES"],
             keywords: ["INFANTRY", "BATTLELINE", "ASSAULT INTERCESSOR SQUAD"],
             abilities: [new Ability { Name = "Shock Assault", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic }],
             statlines: [("Assault Intercessor", troop), ("Assault Intercessor Sergeant", sergeant)],
@@ -52,7 +50,6 @@ public static class DatasheetFixtures
 
         return new Datasheet(
             name: "Chaos Space Marines",
-            factionKeywords: ["CHAOS", "HERETIC ASTARTES"],
             keywords: ["INFANTRY", "BATTLELINE"],
             abilities: [],
             statlines: statlines,
@@ -70,7 +67,6 @@ public static class DatasheetFixtures
 
         return new Datasheet(
             name: "Crusader Squad",
-            factionKeywords: ["ADEPTUS ASTARTES", "BLACK TEMPLARS"],
             keywords: ["INFANTRY", "BATTLELINE"],
             abilities: [],
             statlines: [("Initiate", statline)],

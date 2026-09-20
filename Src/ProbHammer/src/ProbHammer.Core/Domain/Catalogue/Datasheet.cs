@@ -13,7 +13,6 @@ namespace ProbHammer.Core.Domain.Catalogue;
 public sealed class Datasheet
 {
     public string Name { get; }
-    public IReadOnlySet<string> FactionKeywords { get; }
     public IReadOnlySet<string> Keywords { get; }
     public IReadOnlyList<Ability> Abilities { get; }
     public IReadOnlyList<(string Name, Statline Statline)> Statlines { get; }
@@ -69,7 +68,6 @@ public sealed class Datasheet
     /// accident of insertion order.</summary>
     public Datasheet(
         string name,
-        IEnumerable<string> factionKeywords,
         IEnumerable<string> keywords,
         IEnumerable<Ability> abilities,
         IReadOnlyList<(string Name, Statline Statline)> statlines,
@@ -79,7 +77,6 @@ public sealed class Datasheet
         IEnumerable<CharacteristicModifierCandidate>? characteristicModifierCandidates = null)
     {
         Name = name;
-        FactionKeywords = new HashSet<string>(factionKeywords, StringComparer.OrdinalIgnoreCase);
         Keywords = new HashSet<string>(keywords, StringComparer.OrdinalIgnoreCase);
         Abilities = abilities.Where(a => !IsExcludedFromGeneralAbilityWalk(a.Name)).ToList();
         Statlines = statlines;

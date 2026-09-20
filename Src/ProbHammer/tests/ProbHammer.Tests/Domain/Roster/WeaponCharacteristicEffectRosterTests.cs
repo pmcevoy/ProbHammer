@@ -35,12 +35,12 @@ public class WeaponCharacteristicEffectRosterTests
         ]);
 
         var bodyguardDatasheet = new Datasheet(
-            "Sword Brethren Squad", factionKeywords: [], keywords: [], abilities: [],
+            "Sword Brethren Squad", keywords: [], abilities: [],
             statlines: [("Sword Brother", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Sword Brother", [weapon.Name], count: 4)]);
 
         var leaderDatasheet = new Datasheet(
-            "Marshal", factionKeywords: [], keywords: [], abilities: [boost],
+            "Marshal", keywords: [], abilities: [boost],
             statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: [weapon]);
         var leader = new Unit(leaderDatasheet, [], [new ModelLine("Marshal", [weapon.Name], count: 1)]);
 
@@ -81,13 +81,13 @@ public class WeaponCharacteristicEffectRosterTests
         ]);
 
         var bodyguardDatasheet = new Datasheet(
-            "Sword Brethren Squad", factionKeywords: [], keywords: [], abilities: [],
+            "Sword Brethren Squad", keywords: [], abilities: [],
             statlines: [("Sword Brother", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var bodyguard = new Unit(bodyguardDatasheet, [],
             [new ModelLine("Sword Brother", [weapon.Name], count: 4, abilities: [banner])]);
 
         var leaderDatasheet = new Datasheet(
-            "Marshal", factionKeywords: [], keywords: [], abilities: [],
+            "Marshal", keywords: [], abilities: [],
             statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: [weapon]);
         var leader = new Unit(leaderDatasheet, [], [new ModelLine("Marshal", [weapon.Name], count: 1)]);
 
@@ -121,7 +121,7 @@ public class WeaponCharacteristicEffectRosterTests
                 IsCaveated: true)
         ]);
         var datasheet = new Datasheet(
-            "Some Unit", factionKeywords: [], keywords: [], abilities: [conditional],
+            "Some Unit", keywords: [], abilities: [conditional],
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 1)]);
 
@@ -172,7 +172,7 @@ public class WeaponCharacteristicEffectRosterTests
                 IsCaveated: true)
         ]);
         var datasheet = new Datasheet(
-            "Some Unit", factionKeywords: [], keywords: [], abilities: [resolvedBoost, caveatedBoost],
+            "Some Unit", keywords: [], abilities: [resolvedBoost, caveatedBoost],
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 1)]);
 
@@ -220,12 +220,12 @@ public class WeaponCharacteristicEffectRosterTests
         ]);
 
         var firstDatasheet = new Datasheet(
-            "First Squad", factionKeywords: [], keywords: [], abilities: [firstCaveat],
+            "First Squad", keywords: [], abilities: [firstCaveat],
             statlines: [("First Squad", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var firstUnit = new Unit(firstDatasheet, [], [new ModelLine("First Squad", [weapon.Name], count: 1)]);
 
         var secondDatasheet = new Datasheet(
-            "Second Squad", factionKeywords: [], keywords: [], abilities: [secondCaveat],
+            "Second Squad", keywords: [], abilities: [secondCaveat],
             statlines: [("Second Squad", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: [weapon]);
         var secondUnit = new Unit(secondDatasheet, [], [new ModelLine("Second Squad", [weapon.Name], count: 1)]);
 
@@ -243,7 +243,7 @@ public class WeaponCharacteristicEffectRosterTests
     {
         var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
         var datasheet = new Datasheet(
-            "Some Unit", factionKeywords: [], keywords: [], abilities: [],
+            "Some Unit", keywords: [], abilities: [],
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 1)]);
 
@@ -274,7 +274,7 @@ public class WeaponCharacteristicEffectRosterTests
                 Effects: [new WeaponCharacteristicEffect(new AllWeapons(), "S", EffectVerb.Improve, 1)])
         ]);
         var datasheet = new Datasheet(
-            "Some Unit", factionKeywords: [], keywords: [], abilities: [boost],
+            "Some Unit", keywords: [], abilities: [boost],
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))],
             weaponProfiles: [meleeWeapon, rangedWeapon]);
         var unit = new Unit(datasheet, [],
@@ -309,7 +309,7 @@ public class WeaponCharacteristicEffectRosterTests
                 ])
         ]);
         var datasheet = new Datasheet(
-            "Some Unit", factionKeywords: [], keywords: [], abilities: [boost],
+            "Some Unit", keywords: [], abilities: [boost],
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))],
             weaponProfiles: [meleeWeapon, rangedWeapon]);
         var unit = new Unit(datasheet, [],
@@ -343,7 +343,7 @@ public class WeaponCharacteristicEffectRosterTests
                 Effects: [new WeaponCharacteristicEffect(new NamedWeapon("Power sword"), "S", EffectVerb.Improve, 1)])
         ]);
         var datasheet = new Datasheet(
-            "Some Unit", factionKeywords: [], keywords: [], abilities: [boost],
+            "Some Unit", keywords: [], abilities: [boost],
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))],
             weaponProfiles: [swordWeapon, axeWeapon]);
         var unit = new Unit(datasheet, [],
@@ -385,7 +385,7 @@ public class WeaponCharacteristicEffectRosterTests
                 ])
         ]);
         var datasheet = new Datasheet(
-            "Some Unit", factionKeywords: [], keywords: [], abilities: [zealousFury],
+            "Some Unit", keywords: [], abilities: [zealousFury],
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 1)]);
 
@@ -422,7 +422,7 @@ public class WeaponCharacteristicEffectRosterTests
                 ])
         ]);
         var datasheet = new Datasheet(
-            "Some Unit", factionKeywords: [], keywords: [], abilities: [boost],
+            "Some Unit", keywords: [], abilities: [boost],
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 2)]);
 
@@ -462,12 +462,12 @@ public class WeaponCharacteristicEffectRosterTests
         ]);
 
         var bodyguardDatasheet = new Datasheet(
-            "Sword Brethren Squad", factionKeywords: [], keywords: [], abilities: [],
+            "Sword Brethren Squad", keywords: [], abilities: [],
             statlines: [("Sword Brother", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Sword Brother", [weapon.Name], count: 4)]);
 
         var leaderDatasheet = new Datasheet(
-            "Marshal", factionKeywords: [], keywords: [], abilities: [boost],
+            "Marshal", keywords: [], abilities: [boost],
             statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: [weapon]);
         var leader = new Unit(leaderDatasheet, [], [new ModelLine("Marshal", [weapon.Name], count: 1)]);
 
@@ -508,7 +508,7 @@ public class WeaponCharacteristicEffectRosterTests
                 ])
         ]);
         var datasheet = new Datasheet(
-            "Some Unit", factionKeywords: [], keywords: [], abilities: [hybrid],
+            "Some Unit", keywords: [], abilities: [hybrid],
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 1)]);
 
