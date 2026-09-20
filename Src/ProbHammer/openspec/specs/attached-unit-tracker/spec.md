@@ -307,23 +307,28 @@ without inspecting every contribution.
 
 ### Requirement: Aggregate Ability View
 The Attached Unit aggregate view SHALL report abilities per present component Unit, without
-combining or deduplicating across components, with one exception: every present component's own
-Army Rule-origin Ability entries SHALL be promoted into a single entry per distinct Name, belonging
-to no single component, rather than reported per contributing component. This promotion SHALL
-apply unconditionally — including when only one present component currently contributes that Name
-— since an Army Rule-origin Ability is an army-wide fact regardless of how many components in a
+combining or deduplicating across components, with two exceptions. First, every present component's
+own Army Rule-origin Ability entries SHALL be promoted into a single entry per distinct Name,
+belonging to no single component, rather than reported per contributing component. This promotion
+SHALL apply unconditionally — including when only one present component currently contributes that
+Name — since an Army Rule-origin Ability is an army-wide fact regardless of how many components in a
 given roster happen to reference it, not a fact contingent on being shared by two or more of them.
-For every other case, the aggregate view SHALL report abilities from three sources: the
-component's Datasheet-level Abilities (not tied to any one model-line), the component's own
-resolved Enhancements, and abilities carried by any of the component's own present model-lines
-(e.g. granted by an Enhancement). Datasheet-level Abilities and resolved Enhancements are both
-reported the same way — not tied to any one model-line. Each reported entry SHALL carry the owning
-component's name (absent only for the deduplicated Core Rule case above), the Ability itself, and
-— only for model-line-sourced abilities — the name of the specific statline that bears it;
-Datasheet-sourced and Enhancement-sourced abilities carry no statline name, since they belong to
-the component as a whole rather than to any one of its statlines. This applies uniformly to both
-Model-scoped and Unit-scoped abilities — the Ability's own Scope alone determines which of the two
-an entry is; the reporting rule itself does not depend on Scope.
+Second, every Ability in the combat unit's own `InboundAbilities` (per `roster-model`'s Inbound
+Detachment-Rule Abilities) SHALL be reported once each, belonging to no single component — this
+source is read directly from the `ICombatUnit` as a whole, not derived from or promoted out of any
+per-component entry, and is reported regardless of how many (if any) present components' own
+keywords contributed to the roster-enrichment match that produced it. For every other case, the
+aggregate view SHALL report abilities from three sources: the component's Datasheet-level Abilities
+(not tied to any one model-line), the component's own resolved Enhancements, and abilities carried
+by any of the component's own present model-lines (e.g. granted by an Enhancement). Datasheet-level
+Abilities and resolved Enhancements are both reported the same way — not tied to any one
+model-line. Each reported entry SHALL carry the owning component's name (absent only for the
+deduplicated Army Rule case and the `InboundAbilities` case above), the Ability itself, and — only
+for model-line-sourced abilities — the name of the specific statline that bears it; Datasheet-sourced
+and Enhancement-sourced abilities carry no statline name, since they belong to the component as a
+whole rather than to any one of its statlines. This applies uniformly to both Model-scoped and
+Unit-scoped abilities — the Ability's own Scope alone determines which of the two an entry is; the
+reporting rule itself does not depend on Scope.
 
 #### Scenario: Unit-scoped ability appears in the combined list
 - **WHEN** a component Unit has a Unit-scoped Ability, whether Datasheet-sourced or carried by one
@@ -351,7 +356,7 @@ an entry is; the reporting rule itself does not depend on Scope.
 
 #### Scenario: Abilities are not combined across components
 - **WHEN** two different component Units of an AttachedUnit each have an Ability with the same
-  Name, and that Ability's Origin is not Core Rule
+  Name, and that Ability's Origin is not Army Rule
 - **THEN** the aggregate view reports them as two separate entries, one per component, never
   combined into one
 
@@ -405,6 +410,18 @@ an entry is; the reporting rule itself does not depend on Scope.
 - **WHEN** every component that contributed to a promoted Army Rule ability has every one of
   its model-lines reach a remaining count of 0
 - **THEN** the promoted entry no longer appears in the aggregate view
+
+#### Scenario: An inbound Detachment-rule ability is reported belonging to no single component
+- **WHEN** a combat unit's `InboundAbilities` contains one matched `Ability`
+- **THEN** the aggregate view reports it belonging to no single component, the same position an
+  Army Rule promotion occupies, regardless of which (if any) of the unit's own present components
+  contributed the matched keyword
+
+#### Scenario: An inbound Detachment-rule ability disappears once the whole combat unit is gone
+- **WHEN** every component of a combat unit carrying a matched inbound `Ability` has every one of
+  its model-lines reach a remaining count of 0
+- **THEN** that inbound entry no longer appears in the aggregate view, the same liveness treatment
+  every other reported source already has
 
 ### Requirement: Half-Strength Determination
 A combat unit's starting strength SHALL be the sum of every one of its components' model-lines'

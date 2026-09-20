@@ -122,13 +122,19 @@ public static class AttachedUnitAggregator
 
     // A baseline entry whose own classified target this capability can't yet apply (KeywordRuleTarget/
     // UnconditionalRuleTarget - no roster-wide predicate evaluation exists) produces no match at all,
-    // the same outcome as an ability matching no baseline entry.
+    // the same outcome as an ability matching no baseline entry - EXCEPT a DetachmentRule-origin
+    // ability (statline-flag-rules' Target-Scoped Application exception): its own keyword-scoped
+    // target has already been evaluated against the resolved roster by
+    // DetachmentRuleInboundAbilityResolver before it was ever attached as a present ability here, so
+    // re-excluding it for being KeywordRuleTarget-classified would just undo that already-completed
+    // match.
     private static RuleClassificationBaselineEntry? TryGetApplicableEntry(RuleClassificationBaseline baseline,
         Ability ability)
     {
         var normalizedText = RuleEffectClassifier.Normalize(ability.Text);
         return baseline.TryGet(normalizedText, out var entry) &&
-               entry.Target is SelfRuleTarget or AttachedUnitRuleTarget
+               (entry.Target is SelfRuleTarget or AttachedUnitRuleTarget ||
+                ability.Origin == AbilityOrigin.DetachmentRule)
             ? entry
             : null;
     }
@@ -136,15 +142,18 @@ public static class AttachedUnitAggregator
     // SelfRuleTarget applies to the matched ability's own (ComponentName, StatlineName): one specific
     // model-line when StatlineName is set, the whole component when it's null (a Datasheet-level or
     // Enhancement-sourced ability). AttachedUnitRuleTarget applies to every row regardless, since the
-    // matched ability is already confirmed present on this ICombatUnit. Takes the raw bearer identity
-    // rather than a full AggregateStatlineEntry so both the Statline call site (above) and
-    // BuildWeapons' own weapon-contribution call site (below) can share this one check - a weapon
-    // contribution carries the same (ComponentName, StatlineName) shape a statline entry does, just
-    // not wrapped in that record.
+    // matched ability is already confirmed present on this ICombatUnit - a DetachmentRule-origin
+    // ability resolves the same unconditional way (design.md D4): its own eligibility was already
+    // decided by the roster-wide keyword match that attached it, so this check doesn't re-derive
+    // scope from its own classified Target. Takes the raw bearer identity rather than a full
+    // AggregateStatlineEntry so both the Statline call site (above) and BuildWeapons' own
+    // weapon-contribution call site (below) can share this one check - a weapon contribution carries
+    // the same (ComponentName, StatlineName) shape a statline entry does, just not wrapped in that
+    // record.
     private static bool IsBearerOf(AggregateAbilityEntry abilityEntry, RuleTarget target,
         string componentName, string? statlineName)
     {
-        if (target is AttachedUnitRuleTarget)
+        if (target is AttachedUnitRuleTarget || abilityEntry.Ability.Origin == AbilityOrigin.DetachmentRule)
             return true;
 
         return abilityEntry.StatlineName is not null
@@ -495,7 +504,26 @@ public static class AttachedUnitAggregator
                 entries.Add(new AggregateAbilityEntry(component.Datasheet.Name, modelLine.StatlineName, ability));
         }
 
-        return PromoteArmyRuleAbilities(entries);
+        var result = PromoteArmyRuleAbilities(entries).ToList();
+
+        // InboundAbilities is a fact about the whole combat unit, not any one component - reported
+        // once each, belonging to no single component (the same slot an Army Rule promotion
+        // occupies), but only while some component is still present (mirrors PromoteArmyRuleAbilities'
+        // own liveness rule, since this source has no per-component IsPresent gate of its own).
+        // ContributingComponentNames is set to every one of the combat unit's own component names
+        // (not just currently-present ones) rather than left empty - LivePlayModel.
+        // BuildWholeUnitAbilitySpans (the page layer's own separate liveness check for this same
+        // ComponentName-null shape) derives IsFullyDead by filtering statline blocks down to this
+        // list and calling .All() on the result; an empty list makes that filter match nothing,
+        // and .All() on an empty sequence is vacuously true - which wrongly marked this entry
+        // data-dead/collapsed even while every component was alive. Listing every component here
+        // makes that check correctly require every component of the whole unit to be dead first.
+        if (combatUnit.Components.Any(c => c.IsPresent))
+            result.AddRange(combatUnit.InboundAbilities.Select(ability =>
+                new AggregateAbilityEntry(ComponentName: null, StatlineName: null, ability,
+                    ContributingComponentNames: combatUnit.Components.Select(c => c.Datasheet.Name).ToList())));
+
+        return result;
     }
 
     /// <summary>An ArmyRule-origin ability (see AbilityOrigin.ArmyRule - a Core rule whose own

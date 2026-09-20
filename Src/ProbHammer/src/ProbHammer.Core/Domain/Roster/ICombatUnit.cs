@@ -1,3 +1,5 @@
+using ProbHammer.Core.Domain.Catalogue;
+
 namespace ProbHammer.Core.Domain.Roster;
 
 /// <summary>
@@ -29,4 +31,11 @@ public interface ICombatUnit
     /// (a casualty adjustment, a half-strength change); only an explicit player action changes
     /// it.</summary>
     bool IsBattleShocked { get; set; }
+
+    /// <summary>Player-invisible, set once during roster enrichment (see
+    /// <see cref="DetachmentRuleInboundAbilityResolver"/>) and never recomputed at render time -
+    /// the same "settable post-construction, read everywhere" shape as
+    /// <see cref="IsHalfStrengthOverride"/>/<see cref="IsBattleShocked"/>, defaulting to empty.
+    /// Every entry carries <see cref="AbilityOrigin.DetachmentRule"/>.</summary>
+    IReadOnlyList<Ability> InboundAbilities { get; set; }
 }

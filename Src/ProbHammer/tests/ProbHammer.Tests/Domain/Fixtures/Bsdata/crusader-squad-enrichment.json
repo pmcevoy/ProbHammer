@@ -9,6 +9,7 @@
         "id": "e-squad",
         "name": "Crusader Squad",
         "type": "unit",
+        "categoryLinks": [ { "name": "Sword Brethren Squad" } ],
         "profiles": [],
         "selectionEntries": [
           {
@@ -115,7 +116,10 @@
             "id": "e-test-detachment",
             "name": "Test Detachment",
             "type": "upgrade",
-            "profiles": [], "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": [], "rules": []
+            "profiles": [], "selectionEntries": [], "selectionEntryGroups": [], "entryLinks": [], "infoLinks": [],
+            "rules": [
+              { "id": "r-faith-fuelled-resolve", "name": "Faith-Fuelled Resolve", "description": "Friendly SWORD BRETHREN SQUAD units have +1 OC." }
+            ]
           }
         ],
         "selectionEntryGroups": [], "entryLinks": [], "infoLinks": []

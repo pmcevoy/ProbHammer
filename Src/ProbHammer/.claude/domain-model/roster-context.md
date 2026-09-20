@@ -33,6 +33,14 @@ ICombatUnit
                                      // on a *passed* subsequent test, so this is a plain persistent
                                      // latch the player clears themselves (the app has no turn-
                                      // tracking concept to auto-reset it against anyway).
+  InboundAbilities: IReadOnlyList<Ability>   // apply-detachment-rule-keyword-targets - mutable,
+                                     // defaults to empty, set once during roster enrichment by
+                                     // DetachmentRuleInboundAbilityResolver.Apply (called from
+                                     // ArmyRosterProvider.Build, see army-list-import-pipeline.md)
+                                     // and never recomputed at render time - same "settable
+                                     // post-construction, read everywhere" shape as
+                                     // IsHalfStrengthOverride/IsBattleShocked. Every entry carries
+                                     // Origin DetachmentRule, Scope Unit.
 ```
 
 **Pure functions (not stored state):**
@@ -177,7 +185,14 @@ AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ab
   a popover's title bar) — see `_UnitBlock.cshtml`'s `AbilityDisplayName` helper. Renders in the
   merged abilities column (`live-play-landscape-only`) since `Ability.Scope` is always `Unit` for
   every BSData-resolved ability; a genuine per-Enhancement Model/Unit scope is deferred
-  (`.claude/vnext-ideas.md`).
+  (`.claude/vnext-ideas.md`). Since `apply-detachment-rule-keyword-targets`, `BuildAbilities` also
+  appends one entry per `combatUnit.InboundAbilities` (`ComponentName: null, StatlineName: null` —
+  the same "belongs to no single component" slot an Army Rule promotion occupies), read directly
+  from the `ICombatUnit` rather than derived from any per-component entry, and reported regardless
+  of which (if any) present component contributed the keyword that produced the match — but only
+  while some component of the combat unit is still present (`combatUnit.Components.Any(c =>
+  c.IsPresent)`), since this source has no per-component `IsPresent` gate of its own to fall through
+  the way the rest of `BuildAbilities` naturally does.
 - `Keywords` — wired directly to `KeywordResolution.EffectiveKeywords`.
 
 `AttachedUnitAggregator.Build` computes one `RemainingCount > 0`-filtered `presentLines` list from

@@ -1,3 +1,5 @@
+using ProbHammer.Core.Domain.Catalogue;
+
 namespace ProbHammer.Core.Domain.Roster;
 
 /// <summary>
@@ -19,6 +21,10 @@ public sealed class AttachedUnit(Unit bodyguard, IEnumerable<Unit> attached) : I
     /// <summary>One flag for the whole AttachedUnit - see
     /// <see cref="ICombatUnit.IsBattleShocked"/>.</summary>
     public bool IsBattleShocked { get; set; }
+
+    /// <summary>One list for the whole AttachedUnit - see
+    /// <see cref="ICombatUnit.InboundAbilities"/>.</summary>
+    public IReadOnlyList<Ability> InboundAbilities { get; set; } = [];
 
     /// <summary>
     /// Humanized join of the Bodyguard's name with the Attached units' names: none attached

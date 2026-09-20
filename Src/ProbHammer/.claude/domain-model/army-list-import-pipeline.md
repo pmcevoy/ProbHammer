@@ -156,6 +156,48 @@ BattleScribeRosterMapper.MapDetachment(selection) -> ResolvedDetachment
                                        // fixes.
 ```
 
+### Detachment Rule Keyword Target Resolution (`apply-detachment-rule-keyword-targets`)
+
+Full requirements: `openspec/changes/apply-detachment-rule-keyword-targets/`. Once every unit and
+Detachment rule text is resolved (either pipeline), matches each Detachment rule's own text against
+the resolved roster's units, so a rule like Marshal's Household's "Faith-Fuelled Resolve" ("Friendly
+SWORD BRETHREN SQUAD units have +1 OC.") - previously reference-only text printed in the Army Header
+- is actually applied to the matching unit(s).
+
+```
+DetachmentRuleInboundAbilityResolver.Apply(units: IReadOnlyList<ICombatUnit>,
+    detachments: IReadOnlyList<ResolvedDetachment>, baseline: RuleClassificationBaseline)
+                                       // Domain.Roster, independent of Domain.Catalogue.Bsdata (same
+                                       // precedent as ArmyRuleNameLookup/
+                                       // InvulnerableSaveCaveatClassifier) - so one implementation
+                                       // serves both import pipelines. For each DetachmentRule across
+                                       // every ResolvedDetachment, normalizes its Text
+                                       // (RuleEffectClassifier.Normalize) and looks it up via
+                                       // baseline.TryGet - never a live RuleEffectClassifier.Classify
+                                       // call, mirroring AttachedUnitAggregator.
+                                       // ApplyStatlineFlagRules's own lookup convention. When a match
+                                       // exists and its Target is a KeywordRuleTarget, appends one
+                                       // synthesized Ability (Name/Text verbatim from the
+                                       // DetachmentRule, Scope Unit, Origin DetachmentRule - see
+                                       // AbilityOrigin's own doc comment) to InboundAbilities for
+                                       // every unit whose KeywordResolution.EffectiveKeywords
+                                       // contains that keyword. A rule with no baseline entry, or
+                                       // whose matched Target is not KeywordRuleTarget
+                                       // (SelfRuleTarget/UnconditionalRuleTarget - no meaningful
+                                       // "self" to bind to for an abstract army-level rule, or no
+                                       // confirmed real example yet), attaches nothing.
+```
+
+Downstream consumption: `AttachedUnitAggregator.BuildAbilities` reads `InboundAbilities` as a second
+"reported once, belonging to no single component" source (see "Roster Context" in
+roster-context.md's `Abilities` section); `AttachedUnitAggregator.TryGetApplicableEntry`/`IsBearerOf`
+(the `statline-flag-rules` bearer-scope check) treat a `DetachmentRule`-origin ability as
+WholeUnit-scoped regardless of its own baseline entry's classified `Target`, since its own
+keyword-scoped target has already been evaluated against the resolved roster by this resolver before
+it was ever attached as a present ability. `AttachedUnitAggregator.BuildWeapons`' own separate
+bearer-scope check is untouched - no real Detachment-rule baseline entry classified so far carries a
+`WeaponCharacteristicEffect`.
+
 ### Session-Backed Import (`ProbHammer.Web`)
 
 `ISessionArmyListStore`/`IArmyRosterProvider` are not hard-typed to `ParsedArmyList` — they
@@ -173,7 +215,16 @@ ISessionArmyListStore.Save(ISession, StoredArmyImport)
                                        // ArmyRoster from storage.
 
 IArmyRosterProvider.Build(StoredArmyImport) -> ArmyRosterBuildResult
-                                       // see interface's own doc comment
+                                       // see interface's own doc comment. Since
+                                       // apply-detachment-rule-keyword-targets, calls
+                                       // DetachmentRuleInboundAbilityResolver.Apply(roster.Units,
+                                       // roster.Detachments, baseline) once, after either pipeline's
+                                       // BuildFromText/BuildFromBattleScribe has already constructed
+                                       // its own ArmyRoster - one shared call site for both
+                                       // pipelines, mutating each matched unit's InboundAbilities in
+                                       // place (see "Roster Context" in roster-context.md).
+                                       // ArmyRosterProvider gained a RuleClassificationBaseline
+                                       // constructor parameter (already a registered DI singleton).
 
 ImportModel (/Import Razor Page)      // paste box + submit - see class's own doc comment (format
                                        // detection via BattleScribeRosterFormat.TryParse - see

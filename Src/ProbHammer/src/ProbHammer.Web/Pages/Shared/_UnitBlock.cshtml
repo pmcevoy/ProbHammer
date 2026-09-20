@@ -187,11 +187,15 @@
                 </span>
             </summary>
             @{
-                // A deduplicated Core Rule ability (e.g. "Templar Vows") belongs to no single
-                // component - it gets its own dedicated grid row above every component's own
-                // rows, rather than spanning through them the way a component-wide ability does.
-                // rowOffset shifts every other row down by one to make room for it; with none,
-                // the grid is laid out exactly as before this change.
+                // Every ComponentName-null ability (an Army Rule promotion, e.g. "Templar Vows",
+                // and/or - since apply-detachment-rule-keyword-targets - an inbound Detachment-rule
+                // ability, e.g. "Faith-Fuelled Resolve") belongs to no single component, and all of
+                // them stack together in ONE dedicated grid row above every component's own rows
+                // (never spanning through them, unlike a component-wide ability) - the same
+                // "one cell holding a list of ability lines" shape a single component's own
+                // Datasheet-abilities cell already uses, not one cell per ability.
+                // LivePlayModel.BuildWholeUnitAbilitySpans guarantees at most one entry in
+                // unit.WholeUnitAbilitySpans, so rowOffset only ever needs to reserve 0 or 1 rows.
                 var rowOffset = unit.WholeUnitAbilitySpans.Any() ? 1 : 0;
             }
             <div class="statline-grid">

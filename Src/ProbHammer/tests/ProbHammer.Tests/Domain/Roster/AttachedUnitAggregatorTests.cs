@@ -718,6 +718,55 @@ public class AttachedUnitAggregatorTests
         view.Abilities.Should().NotContain(e => e.Ability.Name == "Templar Vows");
     }
 
+    private static Ability FaithFuelledResolve => new()
+    {
+        Name = "Faith-Fuelled Resolve",
+        Text = "Friendly SWORD BRETHREN SQUAD units have +1 OC.",
+        Scope = AbilityScope.Unit,
+        Origin = AbilityOrigin.DetachmentRule
+    };
+
+    [Fact]
+    public void AbilityView_AnInboundDetachmentRuleAbility_IsReportedBelongingToNoSingleComponent()
+    {
+        var datasheet = new Datasheet(
+            "Sword Brethren Squad", keywords: [], abilities: [],
+            statlines: [("Sword Brother", new Statline(6, 4, 3, 3, 6, 2))], weaponProfiles: []);
+        var unit = new Unit(datasheet, [], [new ModelLine("Sword Brother", [], count: 4)])
+        {
+            InboundAbilities = [FaithFuelledResolve]
+        };
+
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+
+        var entry = view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Faith-Fuelled Resolve").Subject;
+        entry.ComponentName.Should().BeNull();
+        entry.StatlineName.Should().BeNull();
+        // Regression: an empty ContributingComponentNames made LivePlayModel.BuildWholeUnitAbilitySpans'
+        // own IsFullyDead check (.All() over a now-empty filtered sequence) vacuously true, hiding
+        // this entry behind "run-collapsed" CSS even while the unit was fully alive - see
+        // LivePlayAbilityRenderingTests' matching regression test for the rendering-layer half of
+        // this. Must list every one of the combat unit's own components, not just present ones.
+        entry.ContributingComponentNames.Should().Equal("Sword Brethren Squad");
+    }
+
+    [Fact]
+    public void AbilityView_AnInboundDetachmentRuleAbility_DisappearsOnceTheWholeCombatUnitIsGone()
+    {
+        var datasheet = new Datasheet(
+            "Sword Brethren Squad", keywords: [], abilities: [],
+            statlines: [("Sword Brother", new Statline(6, 4, 3, 3, 6, 2))], weaponProfiles: []);
+        var unit = new Unit(datasheet, [], [new ModelLine("Sword Brother", [], count: 4)])
+        {
+            InboundAbilities = [FaithFuelledResolve]
+        };
+        unit.ModelLines[0].RemoveCasualties(4);
+
+        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+
+        view.Abilities.Should().NotContain(e => e.Ability.Name == "Faith-Fuelled Resolve");
+    }
+
     [Fact]
     public void NameView_ForAPlainUnit_IsWiredToTheUnitsName()
     {

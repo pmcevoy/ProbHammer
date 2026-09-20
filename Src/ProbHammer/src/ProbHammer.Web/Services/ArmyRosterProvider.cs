@@ -1,3 +1,4 @@
+using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Catalogue.Bsdata;
 using ProbHammer.Core.Domain.Import;
 using ProbHammer.Core.Domain.Import.BattleScribe;
@@ -27,18 +28,30 @@ public interface IArmyRosterProvider
 /// one, without needing to know which pipeline produced it.</summary>
 public sealed record ArmyRosterBuildResult(ArmyRoster Roster, RuleGlossary Glossary);
 
-public sealed class ArmyRosterProvider(BsdataCatalogueCache cache, IBsdataCatalogueSource source) : IArmyRosterProvider
+public sealed class ArmyRosterProvider(
+    BsdataCatalogueCache cache,
+    IBsdataCatalogueSource source,
+    RuleClassificationBaseline baseline)
+    : IArmyRosterProvider
 {
-    public ArmyRosterBuildResult Build(StoredArmyImport import) => import switch
+    public ArmyRosterBuildResult Build(StoredArmyImport import)
     {
-        TextArmyImport text => BuildFromText(text.ParsedArmyList),
-        BattleScribeArmyImport battleScribe => BuildFromBattleScribe(battleScribe),
-        _ => throw new ArgumentOutOfRangeException(nameof(import), import, "Unrecognized StoredArmyImport variant.")
-    };
+        var result = import switch
+        {
+            TextArmyImport text => BuildFromText(text.ParsedArmyList),
+            BattleScribeArmyImport battleScribe => BuildFromBattleScribe(battleScribe),
+            _ => throw new ArgumentOutOfRangeException(nameof(import), import,
+                "Unrecognized StoredArmyImport variant.")
+        };
+
+        DetachmentRuleInboundAbilityResolver.Apply(result.Roster.Units, result.Roster.Detachments, baseline);
+        return result;
+    }
 
     private ArmyRosterBuildResult BuildFromText(ParsedArmyList parsedArmyList)
     {
-        var startingFile = BsdataFactionResolver.ResolveStartingFileName(parsedArmyList.Faction, source.ListFileNames());
+        var startingFile =
+            BsdataFactionResolver.ResolveStartingFileName(parsedArmyList.Faction, source.ListFileNames());
         var catalogue = cache.GetOrBuild(startingFile);
         var roster = ArmyRosterEnricher.Enrich(parsedArmyList, catalogue);
         return new ArmyRosterBuildResult(roster, catalogue.Glossary);

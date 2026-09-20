@@ -132,6 +132,70 @@ public class LivePlayAbilityRenderingTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
+    public async Task TwoSimultaneousComponentLessAbilities_StackInOneCell()
+    {
+        // Real-corpus case (apply-detachment-rule-keyword-targets): an Army Rule promotion
+        // ("Templar Vows") and an InboundAbilities entry ("Faith-Fuelled Resolve") are both
+        // ComponentName-null "belongs to no single component" entries, and a unit can now carry
+        // both at once - the first real case this project has seen with more than one such entry
+        // on the same unit. They must stack together in ONE cell (the same "one cell holding a
+        // list of ability lines" shape a single component's own Datasheet-abilities cell already
+        // uses), not render as two separate cells each claiming their own grid row.
+        var vow = new Ability
+            { Name = "Templar Vows", Text = "...", Scope = AbilityScope.Unit, Origin = AbilityOrigin.CoreRule };
+        var inboundAbility = new Ability
+        {
+            Name = "Faith-Fuelled Resolve", Text = "...", Scope = AbilityScope.Unit,
+            Origin = AbilityOrigin.DetachmentRule
+        };
+        var html = await RenderAsync([
+            new AggregateAbilityEntry(
+                ComponentName: null, StatlineName: null, Ability: vow, ContributingComponentNames: ["Test Unit"]),
+            new AggregateAbilityEntry(
+                ComponentName: null, StatlineName: null, Ability: inboundAbility,
+                ContributingComponentNames: ["Test Unit"])
+        ]);
+
+        html.Should().Contain("Templar Vows");
+        html.Should().Contain("Faith-Fuelled Resolve");
+        // Only one whole-unit cell, both abilities inside it, both at grid-row 1.
+        var wholeUnitCellCount = System.Text.RegularExpressions.Regex.Matches(html, "spans-whole-unit").Count;
+        wholeUnitCellCount.Should().Be(1);
+        html.Should().Contain("grid-row: 1;");
+        // The lone statline row shifts down by exactly 1 (one merged cell, not one per ability),
+        // landing on row 2.
+        html.Should().Contain("grid-row: 2;").And.NotContain("grid-row: 3;");
+    }
+
+    [Fact]
+    public async Task AComponentLessAbility_WithContributingComponentNamesSetToEveryComponent_IsNotDataDead()
+    {
+        // Regression: apply-detachment-rule-keyword-targets' InboundAbilities entry is
+        // ComponentName-null with no per-component "who actually contributed" tracking of its own,
+        // unlike an Army Rule promotion - it must still list every one of the combat unit's own
+        // component names in ContributingComponentNames (not []), since
+        // LivePlayModel.BuildWholeUnitAbilitySpans derives IsFullyDead by filtering statline blocks
+        // down to that list and calling .All() on the result - an empty list makes the filter match
+        // nothing, and .All() on an empty sequence is vacuously true, wrongly marking a fully-alive
+        // entry data-dead/run-collapsed (invisible) despite the unit's own statline showing
+        // RemainingCount: 1.
+        var inboundAbility = new Ability
+        {
+            Name = "Faith-Fuelled Resolve", Text = "...", Scope = AbilityScope.Unit,
+            Origin = AbilityOrigin.DetachmentRule
+        };
+        var html = await RenderAsync([
+            new AggregateAbilityEntry(
+                ComponentName: null, StatlineName: null, Ability: inboundAbility,
+                ContributingComponentNames: ["Test Unit"])
+        ]);
+
+        html.Should().Contain("Faith-Fuelled Resolve");
+        html.Should().NotContain("run-collapsed");
+        html.Should().Contain("data-dead=\"false\"");
+    }
+
+    [Fact]
     public async Task WithNoComponentLessAbility_RowsAreNotShifted()
     {
         var intrinsic = new Ability

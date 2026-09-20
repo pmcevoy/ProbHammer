@@ -796,35 +796,51 @@ public class LivePlayModel(
         return (adjustedBlocks, spans);
     }
 
-    // A ComponentName-null entry (see AttachedUnitAggregator.PromoteArmyRuleAbilities)
-    // belongs to no single component - grouped by Ability.Name (there can in principle be more
-    // than one distinct deduplicated ability on the same unit) rather than by component, since
-    // there's no per-component run range to key off. IsFullyDead reads the entry's own
-    // ContributingComponentNames - true only once every run belonging to any of those components
-    // is itself fully dead, matching the "hidden only once every contributing component is fully
-    // dead" rule (distinct from ComponentAbilitySpanViewModel's own single-component rule).
+    // Every ComponentName-null entry (an Army Rule promotion - AttachedUnitAggregator.
+    // PromoteArmyRuleAbilities - or, since apply-detachment-rule-keyword-targets, an
+    // InboundAbilities-sourced entry) belongs to no single component, so - unlike
+    // BuildComponentAbilitySpans, which genuinely has one span per component - there is no
+    // meaningful key to split multiple such abilities across separate cells by: they all render
+    // stacked in ONE cell, the same "one cell holding a list of ability lines" shape a single
+    // component's own Datasheet-abilities cell already uses. Deduped by Ability.Name first (keeps
+    // the pre-existing safety net against two raw entries somehow sharing an identical name -
+    // PromoteArmyRuleAbilities already guarantees this for its own Army Rule source, but a second,
+    // independent source isn't deduped against it) before flattening into the one merged list -
+    // returns an empty list, not a one-element list of an empty span, when there is nothing to
+    // show, so callers never need to distinguish those two states. IsFullyDead is true only once
+    // every component named by ANY contained entry's own ContributingComponentNames (the union
+    // across all of them) is itself fully dead - the cell stays visible as long as at least one of
+    // its contained abilities is still relevant.
     private static IReadOnlyList<WholeUnitAbilitySpanViewModel> BuildWholeUnitAbilitySpans(
-        IReadOnlyList<StatlineBlockViewModel> statlineBlocks, IReadOnlyList<AggregateAbilityEntry> abilities) =>
-        abilities
+        IReadOnlyList<StatlineBlockViewModel> statlineBlocks, IReadOnlyList<AggregateAbilityEntry> abilities)
+    {
+        var wholeUnitEntries = abilities
             .Where(a => a.ComponentName == null)
             .GroupBy(a => a.Ability.Name, StringComparer.OrdinalIgnoreCase)
-            .Select(group =>
-            {
-                var contributingComponents = group.First().ContributingComponentNames
-                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-                var isFullyDead = statlineBlocks
-                    .Where(block => contributingComponents.Contains(block.Entries[0].ComponentName))
-                    .All(block => block.IsFullyDead);
-
-                return new WholeUnitAbilitySpanViewModel(
-                    ModelAbilities: group.Where(a => a.Ability.Scope == AbilityScope.Model).Select(a => a.Ability)
-                        .ToList(),
-                    UnitAbilities: group.Where(a => a.Ability.Scope == AbilityScope.Unit).Select(a => a.Ability)
-                        .ToList(),
-                    IsFullyDead: isFullyDead);
-            })
+            .Select(group => group.First())
             .ToList();
+
+        if (wholeUnitEntries.Count == 0)
+            return [];
+
+        var contributingComponents = wholeUnitEntries
+            .SelectMany(a => a.ContributingComponentNames)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var isFullyDead = statlineBlocks
+            .Where(block => contributingComponents.Contains(block.Entries[0].ComponentName))
+            .All(block => block.IsFullyDead);
+
+        return
+        [
+            new WholeUnitAbilitySpanViewModel(
+                ModelAbilities: wholeUnitEntries.Where(a => a.Ability.Scope == AbilityScope.Model)
+                    .Select(a => a.Ability).ToList(),
+                UnitAbilities: wholeUnitEntries.Where(a => a.Ability.Scope == AbilityScope.Unit)
+                    .Select(a => a.Ability).ToList(),
+                IsFullyDead: isFullyDead)
+        ];
+    }
 }
 
 /// <summary>Identifies one model-line - or one specific loadout within a multi-loadout statline
@@ -949,13 +965,18 @@ public sealed record ComponentAbilitySpanViewModel(
     IReadOnlyList<Ability> UnitAbilities,
     bool IsFullyDead);
 
-/// <summary>A deduplicated Core Rule ability shared by two or more present components of one
-/// AttachedUnit (see AggregateAbilityEntry.ComponentName == null) - belongs to no single
-/// component, rendered in its own dedicated grid row above every component's statline rows
-/// (never spanning through them, unlike ComponentAbilitySpanViewModel). <see cref="IsFullyDead"/>
-/// is true only once every one of the entry's own ContributingComponentNames has no present
-/// statline block left - computed once in <see cref="LivePlayModel.BuildWholeUnitAbilitySpans"/>.
-/// </summary>
+/// <summary>Every ComponentName-null ability (see AggregateAbilityEntry.ComponentName == null - a
+/// deduplicated Army Rule promotion and/or, since apply-detachment-rule-keyword-targets, an
+/// InboundAbilities-sourced entry) on one AttachedUnit, merged into a single cell - belongs to no
+/// single component, rendered in its own dedicated grid row above every component's statline rows
+/// (never spanning through them, unlike ComponentAbilitySpanViewModel). Unlike
+/// ComponentAbilitySpanViewModel (one instance per component), at most one instance of this record
+/// is ever built for a given unit (see <see cref="LivePlayModel.BuildWholeUnitAbilitySpans"/>) -
+/// <see cref="ModelAbilities"/>/<see cref="UnitAbilities"/> stack every contained ability's own line
+/// within that one cell, the same shape a single component's own Datasheet-abilities cell already
+/// uses. <see cref="IsFullyDead"/> is true only once every component named by any contained
+/// ability's own ContributingComponentNames (the union across all of them) has no present statline
+/// block left.</summary>
 public sealed record WholeUnitAbilitySpanViewModel(
     IReadOnlyList<Ability> ModelAbilities,
     IReadOnlyList<Ability> UnitAbilities,
@@ -1049,7 +1070,8 @@ public sealed record WeaponRowViewModel(
         {
             var legend = new List<(string, Ability)>();
             foreach (var fieldName in LivePlayModel.WeaponScalarFieldOrder)
-                if (ValueFlagSources?.TryGetValue(fieldName, out var source) == true && ValueMarker(fieldName) is { } marker)
+                if (ValueFlagSources?.TryGetValue(fieldName, out var source) == true &&
+                    ValueMarker(fieldName) is { } marker)
                     legend.Add((marker, source));
             if (NameMarkerSource is { } src && NameMarker is { } nm) legend.Add((nm, src));
             return legend;

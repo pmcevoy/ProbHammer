@@ -29,5 +29,12 @@ public enum AbilityOrigin
     /// even for a standalone Unit with only one component - since it's an army-wide fact
     /// regardless of how many components in a given roster happen to reference it, not merely
     /// "shared by coincidence."</summary>
-    ArmyRule
+    ArmyRule,
+
+    /// <summary>A synthesized Ability produced by matching a selected Detachment's own rule text
+    /// (a <c>DetachmentRule</c>, not a Datasheet) against the resolved roster's units - see
+    /// <see cref="ProbHammer.Core.Domain.Roster.DetachmentRuleInboundAbilityResolver"/>. Unlike
+    /// every other value, this one is never produced by Datasheet resolution at all - it only ever
+    /// enters an <c>ICombatUnit.InboundAbilities</c> list.</summary>
+    DetachmentRule
 }

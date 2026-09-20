@@ -27,4 +27,6 @@ public sealed class Unit : ICombatUnit
     public bool IsHalfStrengthOverride { get; set; }
 
     public bool IsBattleShocked { get; set; }
+
+    public IReadOnlyList<Ability> InboundAbilities { get; set; } = [];
 }

@@ -179,6 +179,41 @@ public class StatlineFlagRuleTests
     }
 
     [Fact]
+    public void DetachmentRuleOriginAbility_AppliesAsWholeUnitScoped_DespiteItsOwnKeywordClassifiedTarget()
+    {
+        var inboundAbility = new Ability
+        {
+            Name = "Faith-Fuelled Resolve",
+            Text = "Friendly SWORD BRETHREN SQUAD units have +1 OC.",
+            Scope = AbilityScope.Unit,
+            Origin = AbilityOrigin.DetachmentRule
+        };
+        var baseline = RuleClassificationBaseline.FromEntries(
+        [
+            new RuleClassificationBaselineEntry(
+                Text: inboundAbility.Text,
+                Target: new KeywordRuleTarget("SWORD BRETHREN SQUAD"),
+                Effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)])
+        ]);
+        var bodyguardDatasheet = new Datasheet(
+            "Sword Brethren Squad", keywords: [], abilities: [],
+            statlines: [("Sword Brother", new Statline(6, 4, 3, 3, 6, 2))], weaponProfiles: []);
+        var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Sword Brother", [], count: 4)]);
+        var leaderDatasheet = new Datasheet(
+            "Ancient", keywords: [], abilities: [],
+            statlines: [("Ancient", new Statline(6, 5, 3, 4, 6, 1))], weaponProfiles: []);
+        var leader = new Unit(leaderDatasheet, [], [new ModelLine("Ancient", [], count: 1)]);
+        var attachedUnit = new AttachedUnit(bodyguard, [leader]) { InboundAbilities = [inboundAbility] };
+
+        var view = AttachedUnitAggregator.Build(attachedUnit, baseline);
+
+        view.Statlines.Should().HaveCount(2);
+        view.Statlines.Should().OnlyContain(s => s.Statline.Oc.ContributingAbilities.Count == 1);
+        view.Statlines.Should().ContainSingle(s => s.StatlineName == "Sword Brother" && s.Statline.Oc.Value == 3);
+        view.Statlines.Should().ContainSingle(s => s.StatlineName == "Ancient" && s.Statline.Oc.Value == 2);
+    }
+
+    [Fact]
     public void UnconditionallyRosterWideBaselineMatch_ProducesNoFlaggedValue()
     {
         var unconditional = new Ability

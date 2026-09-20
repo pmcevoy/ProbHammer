@@ -4,6 +4,60 @@ Defensive knowledge accumulated during development. Import this file when debugg
 
 ---
 
+## `WholeUnitAbilitySpans` — a ComponentName-null Ability Entry's Own Liveness and Merged Cell
+
+Two related gotchas found live (post-ship, via direct user report, in two rounds) while wiring
+`apply-detachment-rule-keyword-targets`, both triggered by the same root cause: before this change,
+`AggregateAbilityEntry(ComponentName: null, ...)` was produced by exactly one source
+(`AttachedUnitAggregator.PromoteArmyRuleAbilities`, an Army Rule promotion like "Templar Vows"), so a
+unit could only ever carry **one** such entry at a time. `InboundAbilities`
+(`AttachedUnitAggregator.BuildAbilities`) is a second, independent source of the same shape, so a
+unit can now carry **two or more** simultaneously (e.g. "Templar Vows" + "Faith-Fuelled Resolve") —
+the first real case this project has seen, and both `LivePlayModel`'s and `_UnitBlock.cshtml`'s
+existing code silently assumed "at most one" in two different places:
+
+1. **Vacuous `.All()` on empty `ContributingComponentNames`.** `LivePlayModel.
+   BuildWholeUnitAbilitySpans` derives a `WholeUnitAbilitySpanViewModel.IsFullyDead` by filtering
+   `statlineBlocks` down to `entry.ContributingComponentNames` and calling `.All(...)` on the result.
+   An `InboundAbilities`-sourced entry originally built with `ContributingComponentNames: []` (there
+   is no per-component "who actually contributed" concept for this source, unlike an Army Rule
+   promotion) made that filter match nothing — and `Enumerable.All` on an **empty** sequence is
+   vacuously `true` in .NET, so `IsFullyDead` silently evaluated `true` for a fully-alive unit. This
+   drove `data-dead="true"`/the `run-collapsed` CSS class, hiding the ability entirely even though
+   the rest of its effect (e.g. Faith-Fuelled Resolve's OC bump, applied independently upstream) still
+   worked — confirmed live: the OC tile read correctly, but the ability's own name never rendered.
+   Fixed by listing **every** one of the combat unit's own component names (not just currently-present
+   ones) in `ContributingComponentNames` when building this source's entries, matching the Army Rule
+   promotion's own shape.
+2. **`BuildWholeUnitAbilitySpans` grouped `ComponentName: null` entries by `Ability.Name`, producing
+   one `WholeUnitAbilitySpanViewModel` (one rendered cell) per distinct name.** A first attempt at
+   fixing the resulting visual collision (giving each span its own `grid-row`, via a per-span loop
+   index) was itself wrong per direct user correction: two or more whole-unit-scoped abilities should
+   render **stacked inside one cell**, the same "one cell holding a list of ability lines" shape a
+   single component's own Datasheet-abilities cell already uses — not one cell per ability. Every
+   `ComponentName: null` entry belongs to no single component in the first place, so there is no
+   meaningful key (unlike `BuildComponentAbilitySpans`, which genuinely has one span per component) to
+   split them across separate cells by. Fixed by collapsing `BuildWholeUnitAbilitySpans` to return at
+   most one merged `WholeUnitAbilitySpanViewModel` (still deduped by `Ability.Name` first, as a safety
+   net against two raw entries sharing an identical name, but flattened into one list rather than
+   grouped into separate ones) — `_UnitBlock.cshtml` correspondingly went back to a plain
+   `@foreach`/`grid-row: 1` over a list that now only ever holds 0 or 1 items, rather than an indexed
+   loop assigning each entry its own row. `IsFullyDead` for the merged cell is the union of every
+   contained ability's own `ContributingComponentNames`, `.All()`-checked the same way as before — the
+   cell stays visible as long as at least one contained ability is still relevant.
+
+Both fixes are covered by regression tests: `AttachedUnitAggregatorTests.
+AbilityView_AnInboundDetachmentRuleAbility_IsReportedBelongingToNoSingleComponent` (asserts
+`ContributingComponentNames`) and `LivePlayAbilityRenderingTests.
+TwoSimultaneousComponentLessAbilities_StackInOneCell` /
+`AComponentLessAbility_WithContributingComponentNamesSetToEveryComponent_IsNotDataDead` (through the
+real Razor render). Any future third `ComponentName: null` source should re-check both of these —
+neither bug was caught by the pre-existing test suite, since no prior test exercised more than one
+simultaneous whole-unit-scoped ability on the same unit; only a real-app check against a real capture
+surfaced them, in two separate rounds.
+
+---
+
 ## AP Sign Convention
 
 AP is stored as a **negative integer** matching the game value (e.g. AP-2 → `-2`). This

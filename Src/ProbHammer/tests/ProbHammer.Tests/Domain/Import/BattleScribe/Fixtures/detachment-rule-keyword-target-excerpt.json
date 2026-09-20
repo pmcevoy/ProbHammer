@@ -1,0 +1,58 @@
+{
+  "roster": {
+    "xmlns": "http://www.battlescribe.net/schema/rosterSchema",
+    "name": "Test Army",
+    "costs": [{ "name": "pts", "value": 500 }],
+    "costLimits": [{ "name": "pts", "value": 1000 }],
+    "forces": [
+      {
+        "catalogueName": "Imperium - Black Templars",
+        "rules": [],
+        "selections": [
+          {
+            "id": "detachment-group",
+            "name": "Detachment",
+            "number": 1,
+            "type": "upgrade",
+            "selections": [
+              {
+                "id": "marshals-household",
+                "name": "Marshal's Household",
+                "number": 1,
+                "type": "upgrade",
+                "rules": [
+                  {
+                    "id": "r-faith-fuelled-resolve",
+                    "name": "Faith-Fuelled Resolve",
+                    "description": "Friendly SWORD BRETHREN SQUAD units have +1 OC."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "sword-brethren-squad",
+            "name": "Sword Brethren Squad",
+            "number": 1,
+            "type": "unit",
+            "categories": [{ "name": "Sword Brethren Squad" }],
+            "profiles": [
+              {
+                "name": "Sword Brethren Squad",
+                "typeName": "Unit",
+                "characteristics": [
+                  { "name": "M", "$text": "6\"" },
+                  { "name": "T", "$text": "4" },
+                  { "name": "Sv", "$text": "3+" },
+                  { "name": "W", "$text": "3" },
+                  { "name": "LD", "$text": "6+" },
+                  { "name": "OC", "$text": "2" }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

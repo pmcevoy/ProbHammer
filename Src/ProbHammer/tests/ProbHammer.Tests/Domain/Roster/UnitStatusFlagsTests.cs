@@ -30,6 +30,22 @@ public class UnitStatusFlagsTests
     }
 
     [Fact]
+    public void Unit_InboundAbilitiesDefaultsToEmpty()
+    {
+        var unit = UnitFixtures.SwordBrethrenSquadUniform();
+
+        unit.InboundAbilities.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AttachedUnit_InboundAbilitiesDefaultsToEmpty()
+    {
+        var attachedUnit = AttachedUnitFixtures.DefaultAttachedUnit();
+
+        attachedUnit.InboundAbilities.Should().BeEmpty();
+    }
+
+    [Fact]
     public void SettingHalfStrengthOverride_DoesNotAffectBattleShocked()
     {
         var unit = UnitFixtures.SwordBrethrenSquadUniform();
