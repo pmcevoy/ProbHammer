@@ -1,0 +1,532 @@
+[
+  {
+    "hash": "48ff027f66a893d20fcd235733518e9397b45a20c959d612524cbe37e6551221",
+    "text": "**^^Tyranids^^** model only. The bearer has the Feel No Pain 5+ ability. At the start of any turn, if the bearer has fewer than its starting number of wounds remaining, until the end of the battle, it has the Feel No Pain 4+ ability instead.",
+    "expectedClassification": {
+      "target": { "kind": "Self" },
+      "effects": [
+        {
+          "effect": { "kind": "FeelNoPain", "value": 5, "qualifier": null },
+          "residualConditionBucket": "none",
+          "conditionText": null
+        },
+        {
+          "effect": { "kind": "FeelNoPain", "value": 4, "qualifier": null },
+          "residualConditionBucket": "evaluable-now",
+          "conditionText": "The bearer has fewer than its starting number of wounds remaining"
+        }
+      ],
+      "choiceGroups": [],
+      "phases": [],
+      "turnOwnership": null,
+      "usageLimit": null,
+      "coverageStatus": "complete",
+      "unclassifiedResidue": null
+    }
+  },
+  {
+    "hash": "e6b97302778e5cdebcd3e2220eff530399e01dbb70387ed3625c3a1484aceba2",
+    "text": "Models in this unit have the Feel No Pain 4+ ability against mortal wounds.",
+    "expectedClassification": {
+      "target": { "kind": "AttachedUnit" },
+      "effects": [
+        {
+          "effect": { "kind": "FeelNoPain", "value": 4, "qualifier": "mortal wounds" },
+          "residualConditionBucket": "none",
+          "conditionText": null
+        }
+      ],
+      "choiceGroups": [],
+      "phases": [],
+      "turnOwnership": null,
+      "usageLimit": null,
+      "coverageStatus": "complete",
+      "unclassifiedResidue": null
+    }
+  },
+  {
+    "hash": "9e124ed94fe194278b63c64cb808af292131a9e4104d2b0340fb023c1aadfbed",
+    "text": "Melee weapons equipped by this model have the [Precision] ability.",
+    "expectedClassification": {
+      "target": { "kind": "Self" },
+      "effects": [
+        {
+          "effect": {
+            "kind": "WeaponKeywordGrant",
+            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "keyword": "[Precision]"
+          },
+          "residualConditionBucket": "none",
+          "conditionText": null
+        }
+      ],
+      "choiceGroups": [],
+      "phases": [],
+      "turnOwnership": null,
+      "usageLimit": null,
+      "coverageStatus": "complete",
+      "unclassifiedResidue": null
+    }
+  },
+  {
+    "hash": "652bff5291b4959f40745558bb7621bd74c72164f277e82a8cd5e0bc4fcf785b",
+    "text": "The bearer has the Infiltrators ability.",
+    "expectedClassification": {
+      "target": { "kind": "Self" },
+      "effects": [
+        {
+          "effect": { "kind": "NamedAbilityGrant", "abilityName": "Infiltrators" },
+          "residualConditionBucket": "none",
+          "conditionText": null
+        }
+      ],
+      "choiceGroups": [],
+      "phases": [],
+      "turnOwnership": null,
+      "usageLimit": null,
+      "coverageStatus": "complete",
+      "unclassifiedResidue": null
+    }
+  },
+  {
+    "hash": "dfeec38d64af1538dc23a44c02c5f0de77ff1bbaeb020630a7c6a7bb755f8676",
+    "text": "Once per battle, at the start of the Fight phase, this model can use this ability. If it does, until the end of the phase, add 3 to the Attacks characteristic of melee weapons equipped by this model and those weapons have the [DEVASTATING WOUNDS] ability.",
+    "expectedClassification": {
+      "target": { "kind": "Self" },
+      "effects": [
+        {
+          "effect": {
+            "kind": "WeaponCharacteristic",
+            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "characteristic": "A",
+            "verb": "improve",
+            "amount": 3
+          },
+          "residualConditionBucket": "none",
+          "conditionText": null
+        },
+        {
+          "effect": {
+            "kind": "WeaponKeywordGrant",
+            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "keyword": "[DEVASTATING WOUNDS]"
+          },
+          "residualConditionBucket": "none",
+          "conditionText": null
+        }
+      ],
+      "choiceGroups": [],
+      "phases": ["fight"],
+      "turnOwnership": null,
+      "usageLimit": "Once per battle",
+      "coverageStatus": "complete",
+      "unclassifiedResidue": null
+    }
+  },
+  {
+    "hash": "edec19b4efd2914a1cef083f34a6e883fa0dfe217c4fcef81a2bc82f9dcdf730",
+    "text": "Each time a **^^Harlequins^^** model from your army makes a Charge move, it can move through enemy models.",
+    "expectedClassification": {
+      "target": { "kind": "Keyword", "keyword": "HARLEQUINS" },
+      "effects": [],
+      "choiceGroups": [],
+      "phases": [],
+      "turnOwnership": null,
+      "usageLimit": null,
+      "coverageStatus": "unclassifiable",
+      "unclassifiedResidue": "Grants the ability to move through enemy models during a Charge move - no movement/terrain-interaction effect kind exists in this schema"
+    }
+  },
+  {
+    "hash": "c35dd0990b64d3f27d3fa4e6ad444f8f452891b8149933f83061593df8de0e95",
+    "text": "The bearer has a 4+ invulnerable save against ranged attacks, and a 5+ invulnerable save against melee attacks.",
+    "expectedClassification": {
+      "target": { "kind": "Self" },
+      "effects": [
+        {
+          "effect": { "kind": "InvulnerableSave", "meleeInSv": 5, "rangedInSv": 4 },
+          "residualConditionBucket": "none",
+          "conditionText": null
+        }
+      ],
+      "choiceGroups": [],
+      "phases": [],
+      "turnOwnership": null,
+      "usageLimit": null,
+      "coverageStatus": "complete",
+      "unclassifiedResidue": null
+    }
+  },
+  {
+    "hash": "45dfcdf4629c6a927a29592106157a6d850b37a49a1a3716635ce8c5f168ad9e",
+    "text": "Add 1 to the Objective Control characteristic of models in the bearer's unit.",
+    "expectedClassification": {
+      "target": { "kind": "AttachedUnit" },
+      "effects": [
+        {
+          "effect": { "kind": "Scalar", "characteristic": "Oc", "verb": "improve", "amount": 1 },
+          "residualConditionBucket": "none",
+          "conditionText": null
+        }
+      ],
+      "choiceGroups": [],
+      "phases": [],
+      "turnOwnership": null,
+      "usageLimit": null,
+      "coverageStatus": "complete",
+      "unclassifiedResidue": null
+    }
+  },
+  {
+    "hash": "068712df82b277767ac5e878dc2ba39adc8b38d8f4334c37fdb7096e87ac20dd",
+    "text": "While this model is within range of an objective marker and/or within 6\" of the centre of the battlefield, this model has the Feel No Pain 4+ ability.",
+    "expectedClassification": {
+      "target": { "kind": "Self" },
+      "effects": [
+        {
+          "effect": { "kind": "FeelNoPain", "value": 4, "qualifier": null },
+          "residualConditionBucket": "never",
+          "conditionText": "This model is within range of an objective marker and/or within 6\" of the centre of the battlefield"
+        }
+      ],
+      "choiceGroups": [],
+      "phases": [],
+      "turnOwnership": null,
+      "usageLimit": null,
+      "coverageStatus": "complete",
+      "unclassifiedResidue": null
+    }
+  },
+  {
+    "hash": "6aaf4f91fa7003f016651d8c1ca02180e571a5d16d589d12eec7b751f42f8c53",
+    "text": "Once per battle, at the start of any phase, this unit can use this ability. If it does, until the end of the phase, models in this unit have the Feel No Pain 4+ ability.",
+    "expectedClassification": {
+      "target": { "kind": "AttachedUnit" },
+      "effects": [
+        {
+          "effect": { "kind": "FeelNoPain", "value": 4, "qualifier": null },
+          "residualConditionBucket": "none",
+          "conditionText": null
+        }
+      ],
+      "choiceGroups": [],
+      "phases": [],
+      "turnOwnership": null,
+      "usageLimit": "Once per battle",
+      "coverageStatus": "complete",
+      "unclassifiedResidue": null
+    }
+  },
+  {
+    "hash": "8c1ee9f7e35528a6ffe9fee88f2c59b55def03c4026b1ec8a399c3fb6c1575be",
+    "text": "Each time this model is selected to shoot, it can use this ability. If it does, until the end of the phase, its ranged weapons have the [DEVASTATING WOUNDS] and [HAZARDOUS] abilities.",
+    "expectedClassification": {
+      "target": { "kind": "Self" },
+      "effects": [
+        {
+          "effect": {
+            "kind": "WeaponKeywordGrant",
+            "selector": { "kind": "WeaponClass", "type": "Ranged" },
+            "keyword": "[DEVASTATING WOUNDS]"
+          },
+          "residualConditionBucket": "none"
+        },
+        {
+          "effect": {
+            "kind": "WeaponKeywordGrant",
+            "selector": { "kind": "WeaponClass", "type": "Ranged" },
+            "keyword": "[HAZARDOUS]"
+          },
+          "residualConditionBucket": "none"
+        }
+      ],
+      "choiceGroups": [],
+      "phases": ["shooting"],
+      "coverageStatus": "complete"
+    }
+  },
+  {
+    "hash": "852a664207cd0dbd936a73f398487802a67aff2ae96d2266a08508802b338593",
+    "text": "In the Fight phase, if this unit made a charge move this turn, this unit's melee attacks have **[LETHAL HITS]**.",
+    "expectedClassification": {
+      "target": { "kind": "AttachedUnit" },
+      "effects": [
+        {
+          "effect": {
+            "kind": "WeaponKeywordGrant",
+            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "keyword": "[LETHAL HITS]"
+          },
+          "residualConditionBucket": "never",
+          "conditionText": "This unit made a Charge move this turn"
+        }
+      ],
+      "choiceGroups": [],
+      "phases": ["fight"],
+      "coverageStatus": "complete"
+    }
+  },
+  {
+    "hash": "61371de3f61c5af7db0ca608010baca54d67854ab5dab6b7f6e155bfcf286ef6",
+    "text": "Once per battle, in your Command phase, this model can use this ability. If it does, until the end of the turn, add 2 to the Damage characteristic of weapons equipped by this model.",
+    "expectedClassification": {
+      "target": { "kind": "Self" },
+      "effects": [
+        {
+          "effect": {
+            "kind": "WeaponCharacteristic",
+            "selector": { "kind": "AllWeapons" },
+            "characteristic": "D",
+            "verb": "improve",
+            "amount": 2
+          },
+          "residualConditionBucket": "none"
+        }
+      ],
+      "choiceGroups": [],
+      "phases": ["command"],
+      "turnOwnership": "mine",
+      "usageLimit": "Once per battle",
+      "coverageStatus": "complete"
+    }
+  },
+  {
+    "hash": "1a710b60ec9faf55a2be3d0a11f42175ced6911fbb008e6fa948627c00a0a64c",
+    "text": "At the start of your opponent's Shooting phase, you can roll one D6: on a 1, this **^^Psyker^^**'s unit suffers D3 mortal wounds; on a 2+, until the end of the phase, models in this **^^Psyker^^**'s unit have a 4+ invulnerable save.",
+    "expectedClassification": {
+      "target": { "kind": "AttachedUnit" },
+      "effects": [
+        {
+          "effect": { "kind": "InvulnerableSave", "meleeInSv": 4, "rangedInSv": 4 },
+          "residualConditionBucket": "never",
+          "conditionText": "On a D6 roll of 2+"
+        }
+      ],
+      "choiceGroups": [],
+      "phases": ["shooting"],
+      "turnOwnership": "theirs",
+      "coverageStatus": "partial",
+      "unclassifiedResidue": "On a D6 roll of 1, the unit suffers D3 mortal wounds instead - no mortal-wound-infliction effect kind exists in this schema"
+    }
+  },
+  {
+    "hash": "5f014b89b5c4bc67c36acc01782732a92407dbc205a95d196b1f496ac9709221",
+    "text": "Once per battle, when this model is selected to shoot, it can use this ability. If it does, until the end of the phase, its Payback weapon has an Attacks characteristic of 6 and the **[SUSTAINED HITS 3]** ability instead of the **[SUSTAINED HITS 1]** ability.",
+    "expectedClassification": {
+      "target": { "kind": "Self" },
+      "effects": [
+        {
+          "effect": {
+            "kind": "WeaponCharacteristic",
+            "selector": { "kind": "NamedWeapon", "name": "Payback" },
+            "characteristic": "A",
+            "verb": "set",
+            "amount": 6
+          },
+          "residualConditionBucket": "none"
+        },
+        {
+          "effect": {
+            "kind": "WeaponKeywordGrant",
+            "selector": { "kind": "NamedWeapon", "name": "Payback" },
+            "keyword": "[SUSTAINED HITS 3]",
+            "replacesKeyword": "[SUSTAINED HITS 1]"
+          },
+          "residualConditionBucket": "none"
+        }
+      ],
+      "choiceGroups": [],
+      "phases": ["shooting"],
+      "usageLimit": "Once per battle",
+      "coverageStatus": "complete"
+    }
+  },
+  {
+    "hash": "299ba6c494685d115e3b404017a7faf394aeabdf9199c728f2ad76456fe99c49",
+    "text": "^^**Heretic Astartes**^^ models from your army lose the Dark Pacts ability. Ranged weapons equipped by **^^Heretic Astartes**^^ models from your army have the [ASSAULT] ability.\n\nWhen mustering your army, you cannot use the Cults of the Dark Gods rule.",
+    "expectedClassification": {
+      "target": { "kind": "Keyword", "keyword": "HERETIC ASTARTES" },
+      "effects": [
+        {
+          "effect": { "kind": "NamedAbilityRemoval", "abilityName": "Dark Pacts" },
+          "residualConditionBucket": "none"
+        },
+        {
+          "effect": {
+            "kind": "WeaponKeywordGrant",
+            "selector": { "kind": "WeaponClass", "type": "Ranged" },
+            "keyword": "[ASSAULT]"
+          },
+          "residualConditionBucket": "none"
+        }
+      ],
+      "choiceGroups": [],
+      "phases": [],
+      "coverageStatus": "partial",
+      "unclassifiedResidue": "Army-construction restriction: the Cults of the Dark Gods rule cannot be used when mustering the army"
+    }
+  },
+  {
+    "hash": "793fea0f0402f3ddf14d075964a81366c37f0934343cf6a674e2c1dc8612e61c",
+    "text": "Each time this unit is selected to fight, select one of the following abilities to apply to melee weapons equipped by models in this unit until the end of the phase:\n- Sustained Hits 1\n- Lethal Hits\n\nIf this unit made a Charge move this turn, until the end of the phase, select both abilities above to apply to melee weapons equipped by models in this unit instead.",
+    "expectedClassification": {
+      "target": { "kind": "AttachedUnit" },
+      "effects": [
+        {
+          "effect": {
+            "kind": "WeaponKeywordGrant",
+            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "keyword": "Sustained Hits 1"
+          },
+          "residualConditionBucket": "none",
+          "choiceBranch": { "group": 0, "option": 0 }
+        },
+        {
+          "effect": {
+            "kind": "WeaponKeywordGrant",
+            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "keyword": "Lethal Hits"
+          },
+          "residualConditionBucket": "none",
+          "choiceBranch": { "group": 0, "option": 1 }
+        }
+      ],
+      "choiceGroups": [
+        {
+          "minSelect": 1,
+          "maxSelect": 2,
+          "options": [
+            "Sustained Hits 1: melee weapons gain Sustained Hits 1",
+            "Lethal Hits: melee weapons gain Lethal Hits"
+          ],
+          "conditionText": "Select both if this unit made a Charge move this turn"
+        }
+      ],
+      "phases": ["fight"],
+      "coverageStatus": "complete"
+    }
+  },
+  {
+    "hash": "47b918cf9f492e59f7928b4a20df2c904973160104a7e8a0a9c412ee9c8df7a3",
+    "text": "If your Army Faction is ^^**Heretic Astartes**^^, each time a unit with this ability is selected to shoot or fight, it can make a Dark Pact. If it does, it must first take a Leadership test before any effects of the Dark Pact are resolved; if that test is failed, that unit suffers D3 mortal wounds. Then, select one of the following abilities for that unit's weapons to gain until the end of the phase:\n■ [LETHAL HITS]\n■ [SUSTAINED HITS 1]",
+    "expectedClassification": {
+      "target": { "kind": "AttachedUnit" },
+      "effects": [
+        {
+          "effect": {
+            "kind": "WeaponKeywordGrant",
+            "selector": { "kind": "AllWeapons" },
+            "keyword": "[LETHAL HITS]"
+          },
+          "residualConditionBucket": "none",
+          "conditionText": null,
+          "choiceBranch": { "group": 0, "option": 0 }
+        },
+        {
+          "effect": {
+            "kind": "WeaponKeywordGrant",
+            "selector": { "kind": "AllWeapons" },
+            "keyword": "[SUSTAINED HITS 1]"
+          },
+          "residualConditionBucket": "none",
+          "conditionText": null,
+          "choiceBranch": { "group": 0, "option": 1 }
+        }
+      ],
+      "choiceGroups": [
+        { "minSelect": 1, "maxSelect": 1, "options": ["[LETHAL HITS]", "[SUSTAINED HITS 1]"] }
+      ],
+      "phases": ["shooting", "fight"],
+      "turnOwnership": null,
+      "usageLimit": null,
+      "coverageStatus": "partial",
+      "unclassifiedResidue": "Inflicts D3 mortal wounds on the unit if a Leadership test taken before the ability resolves is failed - no mortal-wound-infliction effect kind exists in this schema"
+    }
+  },
+  {
+    "hash": "e91de766e14cc38082cf36791e335e96317a690eaf94d87a10b48e4e909899a3",
+    "text": "EMPEROR'S CHAMPION model only. At the start of the first battle round, you can select up to three of the following abilities. This model has those abilities until the end of the battle:\n\n▪ Instrument of the God‑Emperor (Once per battle, per army):\n   In the Fight phase, when this unit is selected to fight, if this unit is engaged with an enemy CHARACTER unit, you can use this ability. If you do, this model's melee attacks have [DEVASTATING WOUNDS].\n\n▪ Foreseen Paths of the Unholy: This unit has ‑3\" detection range.\n\n▪ Vision of Momentous Brutality: This model's melee attacks have +2 A.\n\n▪ Augury of Retribution: Melee attacks that target this unit have [HAZARDOUS].\n\n▪ Omen of Sacred Intervention: When you target this unit with the Heroic Intervention stratagem, that use is ‑1 CP.\n\n▪ Harbinger of Judgement: When an enemy unit (excluding MONSTER/VEHICLE units) engaged with this model is selected to make a fall‑back move, roll one D6:\n    ▫ On a 2+, that enemy unit suffers D6 mortal wounds.",
+    "expectedClassification": {
+      "target": { "kind": "Self" },
+      "effects": [
+        {
+          "effect": {
+            "kind": "WeaponKeywordGrant",
+            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "keyword": "[DEVASTATING WOUNDS]"
+          },
+          "residualConditionBucket": "never",
+          "conditionText": "Once per battle, per army; only while this unit is engaged with an enemy Character unit, in the Fight phase when selected to fight",
+          "choiceBranch": { "group": 0, "option": 0 }
+        },
+        {
+          "effect": {
+            "kind": "WeaponCharacteristic",
+            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "characteristic": "A",
+            "verb": "improve",
+            "amount": 2
+          },
+          "residualConditionBucket": "none",
+          "conditionText": null,
+          "choiceBranch": { "group": 0, "option": 2 }
+        }
+      ],
+      "choiceGroups": [
+        {
+          "minSelect": 0,
+          "maxSelect": 3,
+          "options": [
+            "Instrument of the God-Emperor: this model's melee attacks have [DEVASTATING WOUNDS]",
+            "Foreseen Paths of the Unholy: this unit has -3\" detection range",
+            "Vision of Momentous Brutality: this model's melee attacks have +2 Attacks",
+            "Augury of Retribution: melee attacks that target this unit have [HAZARDOUS]",
+            "Omen of Sacred Intervention: targeting this unit with the Heroic Intervention stratagem costs 1 fewer CP",
+            "Harbinger of Judgement: D6 mortal wounds on a 2+ when an engaged enemy unit falls back"
+          ]
+        }
+      ],
+      "phases": [],
+      "turnOwnership": null,
+      "usageLimit": null,
+      "coverageStatus": "partial",
+      "unclassifiedResidue": "4 of the 6 options have no effect-kind representation: Foreseen Paths (a detection-range modifier), Augury of Retribution (a keyword granted to an enemy's attacks against this unit), Omen of Sacred Intervention (a stratagem CP-cost change), and Harbinger of Judgement (mortal wounds on a dice roll)"
+    }
+  },
+  {
+    "hash": "e4c3b6f940319d05d2458af7aa2bf32c251a0e5c79d8224193f84cfa67d5ab73",
+    "text": "If your Army Faction is ^^Adeptus Astartes^^, at the start of the first battle round, select one of the following Vows to be active for ^^Adeptus Astartes^^ units from your army. While a Vow is active for your army, that unit has the associated ability below. \n\n**Abhor the Witch, Destroy the Witch**\n■ Each time this unit declares a charge, if one or more targets of that charge have the ^^Psyker^^ keyword, you can re-roll the Charge roll. Melee weapons equipped by models in this unit have the **[PRECISION]** ability while targeting ^^Psyker^^ units. \n\n**Accept Any Challenge, No Matter the Odds**\n■ Each time a model in this unit makes a melee attack, if the Strength characteristic of that attack is less than or equal to the Toughness characteristic of the target, add 1 to the wound roll\n\n**Suffer Not the Unclean to Live**\n■ This unit is eligible to declare a charge in a turn in which it Fell Back, and each time a model in this unit makes a Pile-in or Consolidation move, it does not need to end that move closer to the closest enemy model, provided it ends that move as close as possible to the nearest enemy unit. \n\n**Uphold the Honour of the Emperor**\nIf this unit has the ^^Infantry^^ keyword:\n■ At the end of your Command phase, if this unit is within range of an objective marker you control, that objective marker remains under your control until your opponent's level of control over that objective marker is greater than yours at the end of the phase. \n■ If the mission you are playing features Actions, this unit is eligible to start to perform an Action in a turn in which it Advanced.",
+    "expectedClassification": {
+      "target": { "kind": "Keyword", "keyword": "ADEPTUS ASTARTES" },
+      "effects": [
+        {
+          "effect": {
+            "kind": "WeaponKeywordGrant",
+            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "keyword": "[PRECISION]"
+          },
+          "residualConditionBucket": "never",
+          "conditionText": "While targeting Psyker units",
+          "choiceBranch": { "group": 0, "option": 0 }
+        }
+      ],
+      "choiceGroups": [
+        {
+          "minSelect": 1,
+          "maxSelect": 1,
+          "options": [
+            "Abhor the Witch, Destroy the Witch: re-roll Charge rolls against Psykers, and melee weapons have [PRECISION] while targeting Psyker units",
+            "Accept Any Challenge, No Matter the Odds: add 1 to the wound roll if the attacker's Strength is less than or equal to the target's Toughness",
+            "Suffer Not the Unclean to Live: eligible to declare a charge after Falling Back, and Pile-in/Consolidation moves don't need to end closer to the closest enemy model",
+            "Uphold the Honour of the Emperor: for Infantry units, retains contested objective control at the end of your Command phase, and eligible to perform an Action after Advancing"
+          ]
+        }
+      ],
+      "phases": [],
+      "turnOwnership": null,
+      "usageLimit": null,
+      "coverageStatus": "partial",
+      "unclassifiedResidue": "Made once, at the start of the first battle round - not one of this schema's usageLimit values, and not any of the five named phases either. Vow 1's own re-roll-the-Charge-roll clause has no effect kind (reroll mechanics aren't modeled); Vows 2-4 have no effect-kind representation at all (a to-wound-roll modifier, charge-after-Fall-Back/Pile-in-Consolidation exemptions, objective-control retention, and Action-after-Advance eligibility)"
+    }
+  }
+]

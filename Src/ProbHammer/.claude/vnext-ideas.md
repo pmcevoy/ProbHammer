@@ -19,6 +19,25 @@ record, not this file).
   one unioned set.
 - **Split `wwwroot/css/site.css` into a `/LivePlay`-only stylesheet** — it still ships dead 10e
   selectors interleaved with the live rules.
+- **A Feel No Pain stat box, mirroring InSv's.** Given how common Feel No Pain grants are in the
+  corpus (153+ hits), a dedicated box beneath the M/T/Sv/W/Ld/Oc row — same treatment as the
+  invulnerable-save box — could surface it the way InSv already is. Purely an idea, no display
+  field exists today.
+- **Suppress a bare glossary-tag ability entry whose Name carries no concrete value.** Confirmed via
+  real BSData (Custodian Wardens): a datasheet can link the shared, valueless `"Feel No Pain"` rule
+  directly as its own ability-list entry (a keyword tag, no append-name modifier) — unconditionally
+  useless to display ("this unit has some Feel No Pain-ish thing, value withheld"), regardless of
+  whether another ability on the same unit happens to state the value elsewhere in its own prose
+  (e.g. Custodian Wardens' "Living Fortress": "...have the Feel No Pain 4+ ability"). No cross-
+  ability reconciliation needed — this is a plain per-record check against the closed template-
+  family list (same "This ability always takes the form..." regex already used to detect the
+  family) plus "this occurrence's own Name has no value suffix," fully determinable from the corpus
+  alone, independent of whether `classify-abilities-via-llm-batch` classification succeeds. A
+  companion idea considered and dropped: a classifier-emitted "hide this ability" effect kind —
+  rejected as conflating a mechanical effect (what the rules text does) with a display/consume-time
+  decision (whether to render an entry); if a classifier-side signal ever turns out to be needed
+  here after all, it belongs on the existing `CoverageStatus`/`UnclassifiedResidue` open question in
+  `classify-abilities-via-llm-batch/design.md`, not a new effect kind.
 
 ## `WeaponProfile`-targeting rule effects — deferred coverage
 
@@ -33,9 +52,9 @@ resolved — candidates for a future phase, not scoped anywhere yet:
 - A two-branch conditional ("add 1..., if Battle-shocked, add 2... instead").
 - A `Set`-verb-shaped effect, and a dice-valued amount (`WeaponCharacteristicEffect.Amount` is `int`
   today).
-- Two "...and those weapons have the [KEYWORD] ability" anaphora continuations — correctly extract
-  the characteristic Effect and flag `IsCaveated`, but leave the keyword grant itself unextracted
-  (feeds the `KeywordEffect`/`AbilityEffect` idea below).
+- The "...and those weapons have the [KEYWORD] ability" anaphora continuation (weapon keyword
+  grant) — see `openspec/changes/classify-abilities-via-llm-batch/` for the current exploration
+  covering this, plus Feel No Pain and closed-vocabulary named-ability grants.
 
 **Permanent boundaries, not tasks**: an effect debuffing an *enemy's* weapon is unresolvable until
 the attacker/defender two-roster half of the app exists (no opposing-roster concept today).
@@ -64,10 +83,18 @@ design, not as a gap to eventually close.
   instead of silently extracting nothing. A detection gate for "text mentions invulnerable save"
   exists (`RuleEffectClassifier.MayStateInvulnerableSave`) but the marker type itself doesn't;
   extending this to the six Statline scalars needs an equivalent gate for each first.
-- **`KeywordEffect`/`AbilityEffect`** — sibling types to `CharacteristicEffect` for rules that
-  grant a keyword or a separate ability rather than mutate a stat.
-- **LLM-assisted prose classification.** An offline, batch pass to help discover known-phrasing
-  candidates for the text classifier, feeding a human-reviewed table. Not started.
+- **Replacing `RuleEffectClassifier`'s regex-pattern classification with an LLM-based (Haiku,
+  Batch API) offline pipeline** — supersedes both the `KeywordEffect`/`AbilityEffect` idea and the
+  older "LLM-assisted prose classification" idea above with one converged direction, following a
+  real corpus review that found Feel No Pain grants (153 hits, zero existing representation) as
+  the largest real gap, plus closed-vocabulary named-ability grants and the weapon-keyword-grant
+  anaphora case above. Built as two standalone tools
+  (`openspec/changes/classify-abilities-via-llm-batch/`,
+  `tools/AbilityPipeline/{Extractor,Classifier}/`): the extractor's corpus walk, schema (generated
+  from the classifier's own POCOs), prompt v1, and a real-corpus-verified few-shot set are all in
+  place and wired end-to-end through the Batch API request boundary. Still open: actually submitting
+  the real ~3,823-hash corpus run (needs an Anthropic API key + the ~$4-5 one-time cost authorized),
+  and the review-at-scale workflow once real output exists to review.
 - **Detachment-rule structural-modifier detection.** A real minority of Detachments carry a
   structured per-unit stat modifier gated by the same selection condition as the Detachment
   itself — could render as an orphaned per-unit ability instead of only the army-wide header

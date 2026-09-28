@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>ProbHammer.Tools.AbilityPipeline.Classifier</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Deliberately no ProjectReference to ProbHammer.Core - see design.md: this schema is free to
+       change shape between every prompt-version iteration without touching or recompiling the
+       main solution. -->
+  <ItemGroup>
+    <PackageReference Include="Anthropic" Version="12.50.0" />
+  </ItemGroup>
+
+</Project>

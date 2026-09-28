@@ -14,8 +14,29 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProbHammer.Tests", "tests\ProbHammer.Tests\ProbHammer.Tests.csproj", "{6A12B8E4-219B-4A15-A8B3-F3C29CF5378C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{07C2787E-EAC7-C090-1BA3-A61EC2A24D84}"
+	ProjectSection(SolutionItems) = preProject
+		tools\AbilityPipeline\fewshot\examples.json = tools\AbilityPipeline\fewshot\examples.json
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RuleEffectClassificationReport", "tools\RuleEffectClassificationReport\RuleEffectClassificationReport.csproj", "{9954FC20-A557-47F5-A2C4-A9FB87FC22B9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extractor", "tools\AbilityPipeline\Extractor\Extractor.csproj", "{EC40F3A4-08B8-439D-8854-988013CC8F03}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Classifier", "tools\AbilityPipeline\Classifier\Classifier.csproj", "{4B7E11BF-1B16-4F52-855B-0861A1304DBA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prompts", "prompts", "{22173918-B1B8-468F-9148-01C4BB03DEA1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1", "v1", "{B77CC126-EACA-4B2C-A359-B3000CBC0D72}"
+	ProjectSection(SolutionItems) = preProject
+		tools\AbilityPipeline\prompts\v1\named-ability-allowlist.json = tools\AbilityPipeline\prompts\v1\named-ability-allowlist.json
+		tools\AbilityPipeline\prompts\v1\schema.json = tools\AbilityPipeline\prompts\v1\schema.json
+		tools\AbilityPipeline\prompts\v1\system-prompt.md = tools\AbilityPipeline\prompts\v1\system-prompt.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fewshot", "fewshot", "{46B2038F-FA7C-4702-AF08-C26CD4B85C19}"
+	ProjectSection(SolutionItems) = preProject
+		tools\AbilityPipeline\fewshot\examples.json = tools\AbilityPipeline\fewshot\examples.json
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,6 +96,30 @@ Global
 		{9954FC20-A557-47F5-A2C4-A9FB87FC22B9}.Release|x64.Build.0 = Release|Any CPU
 		{9954FC20-A557-47F5-A2C4-A9FB87FC22B9}.Release|x86.ActiveCfg = Release|Any CPU
 		{9954FC20-A557-47F5-A2C4-A9FB87FC22B9}.Release|x86.Build.0 = Release|Any CPU
+		{EC40F3A4-08B8-439D-8854-988013CC8F03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC40F3A4-08B8-439D-8854-988013CC8F03}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC40F3A4-08B8-439D-8854-988013CC8F03}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EC40F3A4-08B8-439D-8854-988013CC8F03}.Debug|x64.Build.0 = Debug|Any CPU
+		{EC40F3A4-08B8-439D-8854-988013CC8F03}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EC40F3A4-08B8-439D-8854-988013CC8F03}.Debug|x86.Build.0 = Debug|Any CPU
+		{EC40F3A4-08B8-439D-8854-988013CC8F03}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC40F3A4-08B8-439D-8854-988013CC8F03}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC40F3A4-08B8-439D-8854-988013CC8F03}.Release|x64.ActiveCfg = Release|Any CPU
+		{EC40F3A4-08B8-439D-8854-988013CC8F03}.Release|x64.Build.0 = Release|Any CPU
+		{EC40F3A4-08B8-439D-8854-988013CC8F03}.Release|x86.ActiveCfg = Release|Any CPU
+		{EC40F3A4-08B8-439D-8854-988013CC8F03}.Release|x86.Build.0 = Release|Any CPU
+		{4B7E11BF-1B16-4F52-855B-0861A1304DBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B7E11BF-1B16-4F52-855B-0861A1304DBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B7E11BF-1B16-4F52-855B-0861A1304DBA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4B7E11BF-1B16-4F52-855B-0861A1304DBA}.Debug|x64.Build.0 = Debug|Any CPU
+		{4B7E11BF-1B16-4F52-855B-0861A1304DBA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4B7E11BF-1B16-4F52-855B-0861A1304DBA}.Debug|x86.Build.0 = Debug|Any CPU
+		{4B7E11BF-1B16-4F52-855B-0861A1304DBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B7E11BF-1B16-4F52-855B-0861A1304DBA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B7E11BF-1B16-4F52-855B-0861A1304DBA}.Release|x64.ActiveCfg = Release|Any CPU
+		{4B7E11BF-1B16-4F52-855B-0861A1304DBA}.Release|x64.Build.0 = Release|Any CPU
+		{4B7E11BF-1B16-4F52-855B-0861A1304DBA}.Release|x86.ActiveCfg = Release|Any CPU
+		{4B7E11BF-1B16-4F52-855B-0861A1304DBA}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -84,5 +129,10 @@ Global
 		{D61D312B-879C-4A1C-80EC-43FAB80C62D7} = {1FC8E68B-B62A-4390-8312-00F94D747321}
 		{6A12B8E4-219B-4A15-A8B3-F3C29CF5378C} = {5249A117-428C-41CA-8EF5-6AB37964611F}
 		{9954FC20-A557-47F5-A2C4-A9FB87FC22B9} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
+		{EC40F3A4-08B8-439D-8854-988013CC8F03} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
+		{4B7E11BF-1B16-4F52-855B-0861A1304DBA} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
+		{22173918-B1B8-468F-9148-01C4BB03DEA1} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
+		{B77CC126-EACA-4B2C-A359-B3000CBC0D72} = {22173918-B1B8-468F-9148-01C4BB03DEA1}
+		{46B2038F-FA7C-4702-AF08-C26CD4B85C19} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 	EndGlobalSection
 EndGlobal
