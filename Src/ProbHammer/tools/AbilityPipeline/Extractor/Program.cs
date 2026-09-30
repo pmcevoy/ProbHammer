@@ -34,10 +34,14 @@ public static class Program
         }
 
         var previous = AbilityCorpusFile.Load(outputPath);
-        var occurrences = CorpusWalker.Walk(clonePath, Console.Out).ToList();
+        var vocabulary = new CorpusVocabulary();
+        var occurrences = CorpusWalker.Walk(clonePath, Console.Out, vocabulary).ToList();
         var aggregation = AbilityCorpusAggregator.Aggregate(occurrences, DateOnly.FromDateTime(DateTime.UtcNow));
         var merged = AbilityCorpusFile.Merge(previous, aggregation.FreshRecords);
         AbilityCorpusFile.Save(outputPath, merged);
+        var vocabularyPath = Path.Combine(Path.GetDirectoryName(outputPath)!, "vocabulary.json");
+        vocabulary.Save(vocabularyPath);
+        Console.WriteLine($"Wrote corpus vocabulary to '{vocabularyPath}'.");
 
         PrintSummary(clonePath, outputPath, previous, aggregation, merged);
         return 0;

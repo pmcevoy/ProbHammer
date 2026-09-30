@@ -5,7 +5,7 @@ namespace ProbHammer.Tools.AbilityPipeline.Classifier.Models;
 /// <summary>Every effect shape this pipeline's schema can state - the three existing
 /// <c>CharacteristicEffect</c> shapes (Scalar/InvulnerableSave/Weapon-characteristic, mirrored
 /// standalone) plus the three real corpus-confirmed gaps this change exists to capture: Feel No
-/// Pain grants, weapon-scoped keyword grants, and closed-vocabulary named-ability grants. See
+/// Pain grants, weapon-scoped keyword grants, and named-ability grants. See
 /// design.md's "New Effect kinds" decision.</summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
 [JsonDerivedType(typeof(ScalarEffect), "Scalar")]
@@ -54,11 +54,10 @@ public sealed record WeaponKeywordGrantEffect(WeaponSelector Selector, string Ke
     : ClassificationEffect;
 
 /// <summary>A grant of a whole separate named ability (e.g. "this model has the Stealth ability").
-/// AbilityName is a verbatim string, gated at review time by a checked-in, human-reviewed allowlist
-/// (mirrors ArmyRuleNameLookup/a weapon-keyword allowlist) - fail-closed on any name outside it, per
-/// design.md Principle #5.</summary>
+/// AbilityName is verbatim, value included (e.g. Scouts 9"); <see cref="NameResolver"/> checks it
+/// against BSData's ability names at collect.</summary>
 public sealed record NamedAbilityGrantEffect(string AbilityName) : ClassificationEffect;
 
-/// <summary>Removes a named ability (e.g. "lose the Dark Pacts ability"). No allowlist, unlike a grant:
-/// a removal only acts on an ability the unit already displays, so an unmatched name is inert.</summary>
+/// <summary>Removes a named ability (e.g. "lose the Dark Pacts ability"). Not resolved at collect: a
+/// removal only acts on an ability the unit already displays, so an unmatched name is inert.</summary>
 public sealed record NamedAbilityRemovalEffect(string AbilityName) : ClassificationEffect;

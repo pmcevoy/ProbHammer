@@ -19,6 +19,15 @@ public sealed record ClassificationRecord
     public required string Model { get; init; }
     public required DateTimeOffset ClassifiedAt { get; init; }
     public required ClassificationResult Classification { get; init; }
+    public NameResolution? Resolution { get; init; }
+
+    /// <summary>The model's coverage, demoted from <c>complete</c> to <c>partial</c> when a name failed
+    /// to resolve - kept separate so <see cref="Classification"/> stays exactly what the model said.</summary>
+    public CoverageStatus EffectiveCoverageStatus =>
+        Resolution is { Unresolved.Count: > 0 } && Classification.CoverageStatus == CoverageStatus.Complete
+            ? CoverageStatus.Partial
+            : Classification.CoverageStatus;
+
     public ReviewStatus ReviewStatus { get; init; } = ReviewStatus.Pending;
     public string? ReviewerNote { get; init; }
 }

@@ -36,8 +36,8 @@ around this rather than another round of hand-tuned regex.
   (`prompts/v<N>/system-prompt.md` + `schema.json`); few-shot examples live in one shared file
   (`fewshot/examples.json`), independent of prompt-wording iteration.
 - **New classification vocabulary** captured by Stage 2's schema: `FeelNoPainCharacteristicEffect`,
-  a weapon-scoped keyword-grant effect, and a closed-vocabulary named-ability-grant effect - plus
-  (see design.md's explicit decision) `Phase`/`TurnOwnership` extracted as their own fields and a
+  a weapon-scoped keyword-grant effect, and a named-ability-grant effect - plus
+  (see design.md's explicit decision) `Phases`/`TurnOwnership` extracted as their own fields and a
   3-way `ResidualConditionBucket` (`none` / `evaluable-now` / `never`) per effect, superseding a
   plain `IsCaveated` bool for this pipeline's own output.
 - **File-based storage throughout**, deliberately not a database - chosen for direct hand-editability

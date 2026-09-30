@@ -17,7 +17,7 @@ public static class CorpusWalker
 {
     public const string ExcludedFileName = "Warhammer 40,000.json";
 
-    public static IEnumerable<RawOccurrence> Walk(string clonePath, TextWriter log)
+    public static IEnumerable<RawOccurrence> Walk(string clonePath, TextWriter log, CorpusVocabulary vocabulary)
     {
         var source = new LocalDiskBsdataCatalogueSource(clonePath);
         var fileNames = source.ListFileNames()
@@ -46,15 +46,21 @@ public static class CorpusWalker
             var profileIndex = BsdataNameResolver.BuildProfileIdIndex(closure);
 
             foreach (var rule in closure.Files[0].Catalogue.Rules)
+            {
+                CountRuleNames(vocabulary, rule.Name, rule.Alias);
                 yield return new RawOccurrence(rule.Name, rule.Description, SourceKinds.RawSharedRule,
                     $"{fileName} :: rule '{rule.Name}'");
+            }
 
             if (!scannedSharedRules && closure.GameSystem is not null)
             {
                 scannedSharedRules = true;
                 foreach (var rule in closure.GameSystem.SharedRules)
+                {
+                    CountRuleNames(vocabulary, rule.Name, rule.Alias);
                     yield return new RawOccurrence(rule.Name, rule.Description, SourceKinds.RawSharedRule,
                         $"(game system) :: shared rule '{rule.Name}'");
+                }
             }
 
             foreach (var detachmentEntry in BsdataNameResolver.ResolveDetachmentEntries(closure))
@@ -86,6 +92,8 @@ public static class CorpusWalker
                     continue;
                 }
 
+                CountDatasheetNames(vocabulary, datasheet);
+
                 foreach (var ability in datasheet.Abilities)
                     yield return new RawOccurrence(ability.Name, ability.Text, SourceKinds.ForOrigin(ability.Origin),
                         $"{fileName} :: '{entry.Name}' ability '{ability.Name}'");
@@ -100,6 +108,31 @@ public static class CorpusWalker
                     }
                 }
             }
+        }
+    }
+
+    private static void CountRuleNames(CorpusVocabulary vocabulary, string name, IEnumerable<string> aliases)
+    {
+        CorpusVocabulary.Count(vocabulary.AbilityNames, name);
+        foreach (var alias in aliases)
+            CorpusVocabulary.Count(vocabulary.AbilityNames, alias);
+    }
+
+    private static void CountDatasheetNames(CorpusVocabulary vocabulary, Datasheet datasheet)
+    {
+        foreach (var keyword in datasheet.Keywords)
+            CorpusVocabulary.Count(vocabulary.UnitKeywords, keyword);
+
+        foreach (var ability in datasheet.Abilities)
+            CorpusVocabulary.Count(vocabulary.AbilityNames, ability.Name);
+        foreach (var optionalName in datasheet.OptionalAbilityNames)
+            CorpusVocabulary.Count(vocabulary.AbilityNames, optionalName);
+
+        foreach (var weaponName in datasheet.WeaponNames)
+        {
+            CorpusVocabulary.Count(vocabulary.WeaponNames, weaponName);
+            foreach (var keyword in datasheet.ResolveWeaponProfile(weaponName).KeywordsText)
+                CorpusVocabulary.Count(vocabulary.WeaponKeywords, keyword);
         }
     }
 }

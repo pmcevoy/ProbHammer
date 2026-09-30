@@ -38,6 +38,10 @@ record, not this file).
   decision (whether to render an entry); if a classifier-side signal ever turns out to be needed
   here after all, it belongs on the existing `CoverageStatus`/`UnclassifiedResidue` open question in
   `classify-abilities-via-llm-batch/design.md`, not a new effect kind.
+- **Battle-round awareness in the phase/turn tracker.** The tracker knows My Turn/Their Turn but
+  not who goes first in a round, so "at the start/end of the battle round" abilities (~28/~11
+  corpus texts) light up in both players' Command/Fight phases. Tracking the first player (or a
+  round boundary) would let them light up only in the right turn.
 
 ## `WeaponProfile`-targeting rule effects — deferred coverage
 
@@ -95,6 +99,13 @@ design, not as a gap to eventually close.
   place and wired end-to-end through the Batch API request boundary. Still open: actually submitting
   the real ~3,823-hash corpus run (needs an Anthropic API key + the ~$4-5 one-time cost authorized),
   and the review-at-scale workflow once real output exists to review.
+- **Unit keyword grants/removals as a classified effect kind.** e.g. "Friendly BULLGRYN SQUAD/OGRYN
+  SQUAD/RATLINGS units have ABHUMAN", "the bearer has the Grenades keyword", "loses the Smoke
+  keyword" — a few dozen corpus texts (Grenades, Smoke, PENITENT, Officer, Soul Forge, a Faction
+  keyword replacement, ~4 losses), classified as residue today. Matters because keywords feed
+  `KeywordTarget` and Stratagem eligibility. Would need a `UnitKeywordGrant { keyword,
+  replacesKeyword? }` (plus removal), an any-of `KeywordTarget` (slash = OR), and roster-build
+  ordering that applies keyword grants before resolving keyword-targeted effects.
 - **Detachment-rule structural-modifier detection.** A real minority of Detachments carry a
   structured per-unit stat modifier gated by the same selection condition as the Detachment
   itself — could render as an orphaned per-unit ability instead of only the army-wide header

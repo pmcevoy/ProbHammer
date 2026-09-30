@@ -82,8 +82,7 @@ was left out and why.
 
 ### Requirement: Feel No Pain, weapon keyword, and named-ability grant recognition
 The classification schema SHALL be able to represent a Feel No Pain grant (with an optional
-qualifier), a weapon-scoped keyword grant, and a closed-vocabulary named-ability grant, as distinct
-result shapes.
+qualifier), a weapon-scoped keyword grant, and a named-ability grant, as distinct result shapes.
 
 #### Scenario: A Feel No Pain grant with a qualifier
 - **WHEN** an ability's text grants a Feel No Pain value restricted to a specific damage-type
@@ -105,8 +104,49 @@ result shapes.
 
 #### Scenario: A named-ability removal
 - **WHEN** an ability's text removes a named ability (e.g. "lose the Dark Pacts ability")
-- **THEN** the classification records the verbatim removed ability name, with no allowlist
-  restriction
+- **THEN** the classification records the verbatim removed ability name
+
+### Requirement: Keyword targets require every listed keyword
+A keyword-filtered target SHALL record a list of keywords, every one of which a unit must have.
+
+#### Scenario: A faction plus unit-type target
+- **WHEN** an ability's text addresses "a friendly Leagues of Votann Infantry unit"
+- **THEN** the target records the keywords `LEAGUES OF VOTANN` and `INFANTRY` separately, not one
+  fused keyword
+
+### Requirement: Vocabulary resolution at collect
+When collecting results, the classifier SHALL resolve every name drawn from BSData's vocabulary -
+weapon keywords (granted and replaced), granted ability names, named-weapon selector names, and
+target keywords - against the extracted corpus, storing the canonical form alongside the verbatim
+text. A name that doesn't resolve SHALL demote the record's effective coverage from `complete` to
+`partial` and be listed with the record, while the model's own classification stays unchanged.
+
+#### Scenario: A weapon keyword in rules-text form
+- **WHEN** a classification grants the weapon keyword `"[ANTI-VEHICLE 4+]"`
+- **THEN** the record keeps that verbatim text and also stores BSData's own spelling of the keyword,
+  including its value
+
+#### Scenario: An unrecognized weapon keyword
+- **WHEN** a granted weapon keyword matches no weapon keyword in the corpus
+- **THEN** the record's effective coverage status is `partial` and the keyword is listed as unresolved
+
+#### Scenario: A granted ability outside any fixed list
+- **WHEN** a classification grants an ability such as `"Scouts 9\""` that resolves against the rules
+  glossary or BSData ability names
+- **THEN** the grant is kept, with no allowlist restriction
+
+#### Scenario: An unresolvable granted ability
+- **WHEN** a granted ability name resolves against neither the rules glossary nor BSData ability
+  names
+- **THEN** the record's effective coverage status is `partial` and the ability is listed as unresolved
+
+#### Scenario: A plural weapon name
+- **WHEN** a named-weapon selector records `"heavy bolters"`
+- **THEN** it resolves to the corpus weapon name `Heavy bolter`
+
+#### Scenario: A fused target keyword
+- **WHEN** a target keyword such as `"LEAGUES OF VOTANN INFANTRY"` matches no BSData unit keyword
+- **THEN** the record's effective coverage status is `partial`
 
 ### Requirement: Choice groups
 The classification schema SHALL represent a "select N of the following" choice as a group with a
@@ -126,8 +166,10 @@ ordinary effects tagged with the option they belong to.
 
 ### Requirement: Condition triage per effect
 Each classified effect SHALL carry a condition bucket of `none`, `evaluable-now`, or `never`, and the
-classification as a whole SHALL separately record every phase in which the ability is activated, its
-turn ownership, and its usage limit (e.g. "Once per battle").
+classification as a whole SHALL separately record every phase in which the player needs to see the
+ability - both when it is used and when its effects apply - its turn ownership, and its usage limit
+(`Once per battle`, `Once per battle round`, `Twice per battle`, `Once per turn`, or
+`Once per phase`).
 
 #### Scenario: A phase-restricted effect
 - **WHEN** an ability's text restricts an effect to a specific game phase and turn ownership
@@ -138,6 +180,29 @@ turn ownership, and its usage limit (e.g. "Once per battle").
 - **WHEN** an ability's text is activated in more than one phase (e.g. "each time this unit is
   selected to shoot or fight")
 - **THEN** the classification records every one of those phases
+
+#### Scenario: Declared in one phase, effective in others
+- **WHEN** an ability is declared in the Command phase and improves attacks by melee and ranged
+  weapons
+- **THEN** the classification records the Command, Shooting, and Fight phases
+
+#### Scenario: A passive effect
+- **WHEN** an ability states no activation but modifies a phase-bound roll (e.g. "add 1 to Advance
+  and Charge rolls")
+- **THEN** the classification records the phases those rolls happen in (Movement and Charge)
+
+#### Scenario: A ranged-only attack modifier
+- **WHEN** an ability modifies the Hit roll of a ranged attack
+- **THEN** the classification records the Shooting phase only
+
+#### Scenario: An ability tied to a Stratagem
+- **WHEN** an ability modifies how a named core Stratagem resolves (e.g. Fire Overwatch)
+- **THEN** the classification records that Stratagem's own phase and turn ownership, from the
+  prompt's Stratagem timing table
+
+#### Scenario: A battle-round usage limit
+- **WHEN** an ability's text says "once per battle round"
+- **THEN** the classification records the usage limit `Once per battle round`
 
 #### Scenario: A roster-derivable condition
 - **WHEN** an ability's effect is gated by a condition determinable from the roster's own tracked

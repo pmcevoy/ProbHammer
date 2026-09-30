@@ -9,20 +9,21 @@ using ProbHammer.Tools.AbilityPipeline.Classifier.Models;
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-const string promptVersion = "v1";
+const string promptVersion = "v2";
 const Model model = Model.ClaudeSonnet5;
 
 var dataDir = Path.Combine(RepoRoot(), "tools", "AbilityPipeline", "data");
 var corpusPath = Path.Combine(dataDir, "ability-corpus.json");
 var classificationsPath = Path.Combine(dataDir, "classifications.json");
 var pendingBatchPath = Path.Combine(dataDir, "pending-batch.json");
+var vocabularyPath = Path.Combine(dataDir, "vocabulary.json");
 var promptDir = Path.Combine(RepoRoot(), "tools", "AbilityPipeline", "prompts", promptVersion);
 var fewShotPath = Path.Combine(RepoRoot(), "tools", "AbilityPipeline", "fewshot", "examples.json");
 
 if (args.Length == 0)
 {
     Console.WriteLine(
-        "Usage: Classifier <submit [N|hash1,hash2,...]|collect|status|schema|check-fewshot|preview <hash>|report [file]>");
+        "Usage: Classifier <submit [N|hash1,hash2,...]|collect|resolve|status|schema|check-fewshot|preview <hash>|report [file]>");
     return 1;
 }
 
@@ -30,6 +31,7 @@ return args[0] switch
 {
     "submit" => await SubmitAsync(),
     "collect" => await CollectAsync(),
+    "resolve" => ResolveAll(),
     "status" => await StatusAsync(),
     "schema" => WriteSchema(),
     "check-fewshot" => CheckFewShot(),
@@ -41,7 +43,7 @@ return args[0] switch
 int Unknown()
 {
     Console.WriteLine(
-        $"Unknown command '{args[0]}'. Use submit, collect, status, schema, check-fewshot, preview, or report.");
+        $"Unknown command '{args[0]}'. Use submit, collect, resolve, status, schema, check-fewshot, preview, or report.");
     return 1;
 }
 
@@ -57,7 +59,7 @@ int Report(string sourcePath)
     foreach (var status in Enum.GetValues<CoverageStatus>())
     {
         var subset = records
-            .Where(kvp => kvp.Value.Classification.CoverageStatus == status)
+            .Where(kvp => kvp.Value.EffectiveCoverageStatus == status)
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         var path = Path.Combine(outDir, $"{baseName}.{status.ToString().ToLowerInvariant()}.json");
         ClassificationFile.Save(path, subset);
@@ -65,6 +67,28 @@ int Report(string sourcePath)
     }
 
     return 0;
+}
+
+// Re-applies name resolution to every existing record - after a vocabulary refresh, or to records
+// collected before resolution existed. Classification itself is untouched, so this is idempotent.
+int ResolveAll()
+{
+    if (LoadResolver() is not { } resolver)
+        return 1;
+
+    var records = ClassificationFile.Load(classificationsPath)
+        .ToDictionary(kvp => kvp.Key, kvp => kvp.Value with { Resolution = resolver.Resolve(kvp.Value.Classification) });
+    ClassificationFile.Save(classificationsPath, records);
+    return Report(classificationsPath);
+}
+
+NameResolver? LoadResolver()
+{
+    if (File.Exists(vocabularyPath))
+        return new NameResolver(CorpusVocabulary.Load(vocabularyPath));
+
+    Console.WriteLine($"No vocabulary file at '{vocabularyPath}' - run the Extractor first.");
+    return null;
 }
 
 int Preview()
@@ -207,6 +231,9 @@ async Task<int> CollectAsync()
         return 1;
     }
 
+    if (LoadResolver() is not { } resolver)
+        return 1;
+
     using var client = NewClient();
     var batch = await client.Messages.Batches.Retrieve(pending.BatchId, new BatchRetrieveParams());
 
@@ -288,6 +315,7 @@ async Task<int> CollectAsync()
             Model = pending.Model,
             ClassifiedAt = DateTimeOffset.UtcNow,
             Classification = classification,
+            Resolution = resolver.Resolve(classification),
             ReviewStatus = ReviewStatus.Pending
         };
         succeeded++;

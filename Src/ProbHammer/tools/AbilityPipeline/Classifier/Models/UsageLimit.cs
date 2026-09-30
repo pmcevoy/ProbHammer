@@ -11,6 +11,12 @@ public enum UsageLimit
     [JsonStringEnumMemberName("Once per battle")]
     OncePerBattle,
 
+    [JsonStringEnumMemberName("Twice per battle")]
+    TwicePerBattle,
+
+    [JsonStringEnumMemberName("Once per battle round")]
+    OncePerBattleRound,
+
     [JsonStringEnumMemberName("Once per turn")]
     OncePerTurn,
 

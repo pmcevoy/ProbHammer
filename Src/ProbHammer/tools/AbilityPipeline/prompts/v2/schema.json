@@ -1,0 +1,431 @@
+{
+  "type": "object",
+  "properties": {
+    "target": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "anyOf": [
+        {
+          "properties": {
+            "kind": {
+              "const": "Self"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "AttachedUnit"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "Keyword"
+            },
+            "keywords": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "keywords"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "Unconditional"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "effect": {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "anyOf": [
+              {
+                "properties": {
+                  "kind": {
+                    "const": "Scalar"
+                  },
+                  "characteristic": {
+                    "type": "string"
+                  },
+                  "verb": {
+                    "enum": [
+                      "improve",
+                      "worsen",
+                      "set"
+                    ]
+                  },
+                  "amount": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "characteristic",
+                  "verb",
+                  "amount"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "const": "InvulnerableSave"
+                  },
+                  "meleeInSv": {
+                    "type": "integer"
+                  },
+                  "rangedInSv": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "meleeInSv",
+                  "rangedInSv"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "const": "WeaponCharacteristic"
+                  },
+                  "selector": {
+                    "type": "object",
+                    "required": [
+                      "kind"
+                    ],
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "kind": {
+                            "const": "AllWeapons"
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "properties": {
+                          "kind": {
+                            "const": "WeaponClass"
+                          },
+                          "type": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "type"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "properties": {
+                          "kind": {
+                            "const": "NamedWeapon"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "name"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "characteristic": {
+                    "type": "string"
+                  },
+                  "verb": {
+                    "enum": [
+                      "improve",
+                      "worsen",
+                      "set"
+                    ]
+                  },
+                  "amount": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "selector",
+                  "characteristic",
+                  "verb",
+                  "amount"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "const": "FeelNoPain"
+                  },
+                  "value": {
+                    "type": "integer"
+                  },
+                  "qualifier": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "value",
+                  "qualifier"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "const": "WeaponKeywordGrant"
+                  },
+                  "selector": {
+                    "type": "object",
+                    "required": [
+                      "kind"
+                    ],
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "kind": {
+                            "const": "AllWeapons"
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "properties": {
+                          "kind": {
+                            "const": "WeaponClass"
+                          },
+                          "type": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "type"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "properties": {
+                          "kind": {
+                            "const": "NamedWeapon"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "name"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "keyword": {
+                    "type": "string"
+                  },
+                  "replacesKeyword": {
+                    "type": "string",
+                    "default": null
+                  }
+                },
+                "required": [
+                  "kind",
+                  "selector",
+                  "keyword"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "const": "NamedAbilityGrant"
+                  },
+                  "abilityName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "abilityName"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "const": "NamedAbilityRemoval"
+                  },
+                  "abilityName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "abilityName"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "residualConditionBucket": {
+            "enum": [
+              "none",
+              "evaluable-now",
+              "never"
+            ]
+          },
+          "conditionText": {
+            "type": "string"
+          },
+          "choiceBranch": {
+            "type": "object",
+            "properties": {
+              "group": {
+                "type": "integer"
+              },
+              "option": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "group",
+              "option"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "effect",
+          "residualConditionBucket"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "choiceGroups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "minSelect": {
+            "type": "integer"
+          },
+          "maxSelect": {
+            "type": "integer"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "conditionText": {
+            "type": "string",
+            "default": null
+          }
+        },
+        "required": [
+          "minSelect",
+          "maxSelect",
+          "options"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "phases": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "command",
+          "movement",
+          "shooting",
+          "charge",
+          "fight"
+        ]
+      }
+    },
+    "turnOwnership": {
+      "enum": [
+        "mine",
+        "theirs",
+        null
+      ]
+    },
+    "usageLimit": {
+      "enum": [
+        "Once per battle",
+        "Twice per battle",
+        "Once per battle round",
+        "Once per turn",
+        "Once per phase",
+        null
+      ]
+    },
+    "coverageStatus": {
+      "enum": [
+        "complete",
+        "partial",
+        "unclassifiable"
+      ]
+    },
+    "unclassifiedResidue": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "target",
+    "effects",
+    "choiceGroups",
+    "phases",
+    "turnOwnership",
+    "usageLimit",
+    "coverageStatus"
+  ],
+  "additionalProperties": false
+}

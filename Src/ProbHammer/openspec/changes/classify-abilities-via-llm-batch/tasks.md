@@ -31,7 +31,8 @@
       (min/max, option labels, optional `ConditionText` for a conditionally larger count),
       `Phases` (every activation phase), `TurnOwnership`/`UsageLimit`, and
       `CoverageStatus`/`UnclassifiedResidue` - revised 2026-09-28, see design.md's "Model and prompt
-      review" section
+      review" section; `Phases` redefined and `KeywordTarget` made a list 2026-09-30 (tasks 4.0.1,
+      4.0.7)
 - [x] 2.3 Define the Batch API request/response plumbing: one request per un-cached hash, `custom_id`
       = hash, structured output (`strict: true` tool use) validated against the schema above -
       implemented via the Anthropic .NET SDK's native `OutputConfig`/`StructuredOutput.CreateJsonFormat<T>()`
@@ -70,13 +71,36 @@
 - [x] 3.4 Seed the named-ability-grant allowlist with the closed vocabulary already confirmed by
       corpus frequency (Fights First, Stealth, Lone Operative, Deep Strike, Infiltrators) -
       `tools/AbilityPipeline/prompts/v1/named-ability-allowlist.json`, each entry's real "has/have the
-      X ability" grant occurrence count confirmed against the corpus (9-31 hits each)
+      X ability" grant occurrence count confirmed against the corpus (9-31 hits each) - superseded
+      2026-09-30: the allowlist is retired in favour of collect-time resolution (task 4.0.5)
 
 ## 4. First corpus run
 
-- [ ] 4.0 Run a ~50-record random sample on Sonnet 5 under prompt v1: check the `complete` records in
+- [x] 4.0 Run a ~50-record random sample on Sonnet 5 under prompt v1: check the `complete` records in
       the `by-coverage` split, confirm `collect` reports non-zero cache reads, and fix any prompt or
-      few-shot issues found before 4.1
+      few-shot issues found before 4.1 - done 2026-09-30: 8/4/38 complete/partial/unclassifiable,
+      caching confirmed, every record reviewed by the user; fixes are 4.0.1-4.0.8 (see design.md's
+      "Sample review, 2026-09-30")
+- [x] 4.0.1 Create prompt v2 (`prompts/v2/`): redefine `phases` as every phase the player needs to
+      see the ability, with the worked examples from design.md, plus few-shot updates where an
+      existing example's phases change under the new definition
+- [x] 4.0.2 Add the core-Stratagem timing table to the v2 prompt (both names per renamed Stratagem)
+- [x] 4.0.3 Add `Once per battle round` and `Twice per battle` to `UsageLimit`; regenerate
+      `schema.json`
+- [x] 4.0.4 Build the shared collect-time resolution step (verbatim + canonical form stored, an
+      unresolved name demotes the record to `partial` with the name in its residue), and use it
+      first for weapon keywords (`keyword`, `replacesKeyword`) against the corpus's weapon
+      `KeywordsText` tokens, keeping the value
+- [x] 4.0.5 Retire the named-ability allowlist: delete `named-ability-allowlist.json` and the
+      prompt's allowlist sentence; resolve granted names through 4.0.4's step against `RuleGlossary`
+      and BSData ability names - confirm `RuleGlossary.Normalize` handles a trailing `9"`
+      (`Scouts 9"`)
+- [ ] 4.0.6 Re-run the same 50-record sample under v2 and compare against the v1 results before 4.1
+- [x] 4.0.7 Make `KeywordTarget` an all-of `keywords` list; prompt tells the model to split a
+      faction-plus-type target into separate keywords (slash-OR stays residue); update the
+      keyword-target few-shot examples
+- [x] 4.0.8 Resolve `NamedWeapon` names (case- and singular/plural-tolerant) and target keywords
+      through 4.0.4's step
 - [ ] 4.1 Submit a Batch API job against every hash in `ability-corpus.json` under prompt `v1`
 - [ ] 4.2 Poll for completion and write results into `tools/AbilityPipeline/data/classifications.json`,
       each record stamped with `hash`, `promptVersion`, `model`, `classifiedAt`, and a

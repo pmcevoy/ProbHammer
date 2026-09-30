@@ -17,7 +17,7 @@
         }
       ],
       "choiceGroups": [],
-      "phases": [],
+      "phases": ["shooting", "fight"],
       "turnOwnership": null,
       "usageLimit": null,
       "coverageStatus": "complete",
@@ -61,7 +61,7 @@
         }
       ],
       "choiceGroups": [],
-      "phases": [],
+      "phases": ["fight"],
       "turnOwnership": null,
       "usageLimit": null,
       "coverageStatus": "complete",
@@ -127,10 +127,10 @@
     "hash": "edec19b4efd2914a1cef083f34a6e883fa0dfe217c4fcef81a2bc82f9dcdf730",
     "text": "Each time a **^^Harlequins^^** model from your army makes a Charge move, it can move through enemy models.",
     "expectedClassification": {
-      "target": { "kind": "Keyword", "keyword": "HARLEQUINS" },
+      "target": { "kind": "Keyword", "keywords": ["HARLEQUINS"] },
       "effects": [],
       "choiceGroups": [],
-      "phases": [],
+      "phases": ["charge"],
       "turnOwnership": null,
       "usageLimit": null,
       "coverageStatus": "unclassifiable",
@@ -150,7 +150,7 @@
         }
       ],
       "choiceGroups": [],
-      "phases": [],
+      "phases": ["shooting", "fight"],
       "turnOwnership": null,
       "usageLimit": null,
       "coverageStatus": "complete",
@@ -190,7 +190,7 @@
         }
       ],
       "choiceGroups": [],
-      "phases": [],
+      "phases": ["shooting", "fight"],
       "turnOwnership": null,
       "usageLimit": null,
       "coverageStatus": "complete",
@@ -210,7 +210,7 @@
         }
       ],
       "choiceGroups": [],
-      "phases": [],
+      "phases": ["shooting", "fight"],
       "turnOwnership": null,
       "usageLimit": "Once per battle",
       "coverageStatus": "complete",
@@ -284,7 +284,7 @@
         }
       ],
       "choiceGroups": [],
-      "phases": ["command"],
+      "phases": ["command", "shooting", "fight"],
       "turnOwnership": "mine",
       "usageLimit": "Once per battle",
       "coverageStatus": "complete"
@@ -345,7 +345,7 @@
     "hash": "299ba6c494685d115e3b404017a7faf394aeabdf9199c728f2ad76456fe99c49",
     "text": "^^**Heretic Astartes**^^ models from your army lose the Dark Pacts ability. Ranged weapons equipped by **^^Heretic Astartes**^^ models from your army have the [ASSAULT] ability.\n\nWhen mustering your army, you cannot use the Cults of the Dark Gods rule.",
     "expectedClassification": {
-      "target": { "kind": "Keyword", "keyword": "HERETIC ASTARTES" },
+      "target": { "kind": "Keyword", "keywords": ["HERETIC ASTARTES"] },
       "effects": [
         {
           "effect": { "kind": "NamedAbilityRemoval", "abilityName": "Dark Pacts" },
@@ -361,7 +361,7 @@
         }
       ],
       "choiceGroups": [],
-      "phases": [],
+      "phases": ["shooting"],
       "coverageStatus": "partial",
       "unclassifiedResidue": "Army-construction restriction: the Cults of the Dark Gods rule cannot be used when mustering the army"
     }
@@ -486,7 +486,7 @@
           ]
         }
       ],
-      "phases": [],
+      "phases": ["command", "movement", "charge", "fight"],
       "turnOwnership": null,
       "usageLimit": null,
       "coverageStatus": "partial",
@@ -497,7 +497,7 @@
     "hash": "e4c3b6f940319d05d2458af7aa2bf32c251a0e5c79d8224193f84cfa67d5ab73",
     "text": "If your Army Faction is ^^Adeptus Astartes^^, at the start of the first battle round, select one of the following Vows to be active for ^^Adeptus Astartes^^ units from your army. While a Vow is active for your army, that unit has the associated ability below. \n\n**Abhor the Witch, Destroy the Witch**\n■ Each time this unit declares a charge, if one or more targets of that charge have the ^^Psyker^^ keyword, you can re-roll the Charge roll. Melee weapons equipped by models in this unit have the **[PRECISION]** ability while targeting ^^Psyker^^ units. \n\n**Accept Any Challenge, No Matter the Odds**\n■ Each time a model in this unit makes a melee attack, if the Strength characteristic of that attack is less than or equal to the Toughness characteristic of the target, add 1 to the wound roll\n\n**Suffer Not the Unclean to Live**\n■ This unit is eligible to declare a charge in a turn in which it Fell Back, and each time a model in this unit makes a Pile-in or Consolidation move, it does not need to end that move closer to the closest enemy model, provided it ends that move as close as possible to the nearest enemy unit. \n\n**Uphold the Honour of the Emperor**\nIf this unit has the ^^Infantry^^ keyword:\n■ At the end of your Command phase, if this unit is within range of an objective marker you control, that objective marker remains under your control until your opponent's level of control over that objective marker is greater than yours at the end of the phase. \n■ If the mission you are playing features Actions, this unit is eligible to start to perform an Action in a turn in which it Advanced.",
     "expectedClassification": {
-      "target": { "kind": "Keyword", "keyword": "ADEPTUS ASTARTES" },
+      "target": { "kind": "Keyword", "keywords": ["ADEPTUS ASTARTES"] },
       "effects": [
         {
           "effect": {
@@ -522,11 +522,11 @@
           ]
         }
       ],
-      "phases": [],
+      "phases": ["command", "charge", "fight"],
       "turnOwnership": null,
       "usageLimit": null,
       "coverageStatus": "partial",
-      "unclassifiedResidue": "Made once, at the start of the first battle round - not one of this schema's usageLimit values, and not any of the five named phases either. Vow 1's own re-roll-the-Charge-roll clause has no effect kind (reroll mechanics aren't modeled); Vows 2-4 have no effect-kind representation at all (a to-wound-roll modifier, charge-after-Fall-Back/Pile-in-Consolidation exemptions, objective-control retention, and Action-after-Advance eligibility)"
+      "unclassifiedResidue": "Made once, at the start of the first battle round - not one of this schema's usageLimit values. Vow 1's own re-roll-the-Charge-roll clause has no effect kind (reroll mechanics aren't modeled); Vows 2-4 have no effect-kind representation at all (a to-wound-roll modifier, charge-after-Fall-Back/Pile-in-Consolidation exemptions, objective-control retention, and Action-after-Advance eligibility)"
     }
   }
 ]

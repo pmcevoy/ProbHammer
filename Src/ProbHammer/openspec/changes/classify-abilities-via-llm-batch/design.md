@@ -72,8 +72,10 @@ explicit here so a fresh session building this doesn't need to rediscover them:*
 4. **Target and Effect stay independent axes** (who it applies to vs. what it does) - don't let a
    schema iteration collapse them back into one field for convenience.
 5. **Fail-closed on ambiguity** - an unrecognized token/qualifier/name is left unclassified, never
-   guessed. Applies to the named-ability-grant allowlist and the weapon-keyword-grant vocabulary the
-   same way it already applies throughout `RuleEffectClassifier`.
+   guessed. For names taken from BSData's own vocabulary (weapon keywords, granted ability names,
+   `NamedWeapon` names, target keywords) this is enforced deterministically at `collect`, by
+   resolving each name against the corpus - not by a closed list in the prompt (revised
+   2026-09-30, see "Sample review").
 6. Never silently claim full understanding of partially-understood text - the entire
    `ResidualConditionBucket`/`ConditionText`/`UsageLimit` design above is this principle's evolution,
    not a replacement of it.
@@ -166,8 +168,9 @@ they're using it - directly player-assertable, same as the existing `IsBattleSho
 a usage limit gates the ability's own activation as a whole (same placement reasoning as Phase/
 TurnOwnership), and it must compose independently of `ResidualConditionBucket` (an ability could be
 both once-per-battle AND separately carry a roster-derivable sub-condition, as two orthogonal
-facts). Closed, small vocabulary (`"Once per battle"` / `"Once per turn"` / `"Once per phase"` /
-`null`) - a rulebook-level mechanical concept, not BSData content that grows with new codexes, so
+facts). Closed, small vocabulary (`"Once per battle"` / `"Once per battle round"` / `"Twice per
+battle"` / `"Once per turn"` / `"Once per phase"` / `null` - the two middle values added
+2026-09-30) - a rulebook-level mechanical concept, not BSData content that grows with new codexes, so
 this is closer to `EffectVerb`'s closed-enum convention than to the open-vocabulary lesson governing
 weapon keywords and named-ability grants.
 
@@ -201,11 +204,12 @@ FeelNoPainCharacteristicEffect(int Value, string? Qualifier)
 
 WeaponKeywordGrantEffect(WeaponSelector Selector, string Keyword)
     // Keyword: verbatim string - directly required by retire-weapon-keyword-flags's own lesson
-    // (a closed enum silently drops a renamed/new BSData keyword)
+    // (a closed enum silently drops a renamed/new BSData keyword); canonicalized to BSData's own
+    // spelling at collect, verbatim kept alongside (2026-09-30)
 
 NamedAbilityGrantEffect(string AbilityName)
-    // AbilityName: verbatim string, gated by a checked-in, human-reviewed allowlist (mirrors
-    // ArmyRuleNameLookup/WeaponKeywordAllowlist), not a C# enum
+    // AbilityName: verbatim string, resolved against RuleGlossary/BSData ability names at collect
+    // (2026-09-30 - replaced the original prompt-side allowlist)
 ```
 
 **Old tool left alone.** `RuleEffectClassifier`/`tools/RuleEffectClassificationReport/` keep running
@@ -417,7 +421,7 @@ test output, so editing it in place loses nothing):
   targets; Sonnet fixed all but the targets. `MaxTokens` 2048 -> 8192 (adaptive thinking tokens count
   against it).
 - **`phase` -> `phases` (array).** It's the *activation* phase - LivePlay's phase tracker uses it to
-  remind the player to invoke the ability. ~26 corpus records activate in two phases ("selected to
+  remind the player to invoke the ability. [Redefined 2026-09-30 - see "Sample review".] ~26 corpus records activate in two phases ("selected to
   shoot or fight", "Shooting phase or the Fight phase"), including Dark Pacts.
 - **`conditionText` only for gates the structured fields don't capture** (required for
   `evaluable-now`/`never`, null for `none`) - no longer repeats `phases`/`turnOwnership`/
@@ -486,3 +490,117 @@ lost; regenerate as normal once `submit` actually runs against real records.
 **Nothing in this change has been committed to git yet** - the entire `tools/AbilityPipeline/` tree,
 this change's `openspec/` folder, and the two `.claude/` doc edits from this session are all
 uncommitted working-tree changes (confirmed via `git status`, 2026-09-26).
+
+## Sample review, 2026-09-30 (task 4.0)
+
+The 50-record Sonnet 5 sample (batch `msgbatch_018jwawUyXEV4nB8Sv23Dd6p`, seed 20260928) came back
+8 `complete` / 4 `partial` / 38 `unclassifiable`, 0 failures. Prompt caching works (cacheRead 769k
+vs. 5k uncached input; ~447 output tokens per record). The user reviewed every record. Residues were
+honest schema gaps (re-rolls, hit/wound-roll modifiers, effects on enemy units, healing, CP), and no
+`complete` record stated a wrong effect - the findings below are about phases, vocabulary, and
+names. They ship as **prompt v2**, not an in-place v1 edit: the sample's records are stamped v1, and
+the incremental selector only reclassifies on a version change, so v2 is what lets the same 50
+hashes be re-run and compared.
+
+**`phases` = every phase in which the player needs to see the ability** - both when it's used and
+when its effects apply. Replaces the activation-only definition: the phase tracker is meant to draw
+attention to abilities relevant to the current phase (the intended UI is the ability's button
+changing colour), and an ability declared in the Command phase that buffs attacks is no use if it's
+only highlighted in the Command phase. Worked examples for the prompt:
+- Declared in Command, +1 Attacks to melee and ranged weapons -> `["command","shooting","fight"]`.
+- An event only possible in one phase implies it: "each time this model ends a Charge move" ->
+  `["charge"]`.
+- Passive roll modifiers: "add 1 to Advance and Charge rolls" -> `["movement","charge"]`.
+- Anything in the attack sequence (an attack targeting this unit, a Hit/Wound roll, saving throw, or
+  Damage) -> `["shooting","fight"]`; "ranged attack" narrows to `["shooting"]`, "melee attack" to
+  `["fight"]`. No `movement` for Fire Overwatch shots - it would light up every ranged buff in the
+  opponent's Movement phase.
+- "Start of the battle round" -> `command`, "end of the battle round" -> `fight`, both with
+  `turnOwnership` null: the tracker doesn't know who goes first, and over-reminding in both turns
+  beats missing it (round awareness parked in `.claude/vnext-ideas.md`).
+- "Start of your turn" -> `command`/`mine`; "at the end of your (opponent's) turn" -> `fight`/
+  `mine` (`theirs`). "Until the end of your turn" is a duration and sets nothing.
+- Triggers that aren't phase-bound ("when this model is destroyed") -> `[]`.
+
+Considered and rejected as over-modelling: separate activation vs. effect phases, per-effect
+`activePhases`, and a `trigger { phases, turnOwnership, usageLimit, text }` object (the rules'
+own term, and the most faithful shape). Nothing consumes the distinction yet, every extra field is
+one more thing an unreviewed `complete` record can get wrong, and hash-keyed re-classification is
+cheap if a richer shape is ever needed.
+
+**Core-Stratagem timing table in the prompt.** ~177 of 3,823 texts mention a Stratagem, ~78 by
+name. The ability text never states the Stratagem's own timing, so the model can't infer phases.
+Timings supplied by the user from the 11e core rules (not in BSData; not taken from memory, which
+is edition-stale). Each row lists both names where 11e renamed a Stratagem, since ability texts lag
+the rename:
+
+| Stratagem | `phases` | `turnOwnership` |
+|---|---|---|
+| Fire Overwatch (32 texts) | movement | theirs |
+| Heroic Intervention (14) | charge | theirs |
+| Rapid Ingress (12) | movement | theirs |
+| Grenade / Explosives (7 / 1) | shooting | mine |
+| Command Re-roll (4) | `[]` | null |
+| Tank Shock / Crushing Impact (2 / 2) | charge | mine |
+
+Generic mentions (~36 CP-cost reductions, ~20 CP gains, ~15 "targeted with a Stratagem") need no
+row.
+
+**`usageLimit` gains "Once per battle round" (49 texts) and "Twice per battle" (7)** - both
+surfaced as residue.
+
+**Target keywords are an all-of list.** `KeywordTarget { keyword }` -> `KeywordTarget { keywords }`,
+a unit needing every listed keyword. "a friendly Leagues of Votann Infantry unit" means LEAGUES OF
+VOTANN *and* INFANTRY; the sample recorded it as one fused keyword. ~63 targets are a faction plus a
+unit type, against ~429 single keywords (rough pattern count). A slash-separated list ("BULLGRYN
+SQUAD/OGRYN SQUAD/RATLINGS") is OR, not AND, and stays residue - it belongs with the unit-keyword-
+grant idea in `.claude/vnext-ideas.md`.
+
+**Names from BSData's vocabulary are resolved at `collect`, failing closed.** The prompt keeps
+recording names verbatim (Haiku normalizing keywords was one of its failures), and one shared
+deterministic step resolves them against the corpus, storing the canonical form alongside the
+verbatim one. An unresolvable name demotes the record to `partial` with the name in its residue:
+- **Weapon keywords** (`keyword`, `replacesKeyword`): strip `^^`/`**`/brackets, match case-
+  insensitively against the corpus's weapon `KeywordsText` tokens, keep the value ("Sustained Hits
+  1" - so `RuleGlossary.NormalizeToken`, which drops values, can't be used alone). Sample issues:
+  `"[LETHAL HITS]"` vs. BSData's `"Lethal Hits"`, verbatim lowercase `"[sustained hits 1]"`, and a
+  valued `"[BLAST 1]"` for a keyword BSData normally writes bare.
+- **Granted ability names**: resolved against `RuleGlossary` and BSData ability names. **This
+  retires the named-ability allowlist** (`prompts/v1/named-ability-allowlist.json`). The allowlist
+  mixed up "did the text grant X" with "does the app understand X", and dropped real grants - Scouts
+  alone has 36 (6" x30, 9" x8, 7" x5, 5"/8" x1), more than any allowlisted name. The value stays in
+  the name (`"Scouts 9\""`), as weapon keywords do; the consuming app decides which grants it acts on.
+- **`NamedWeapon` names**: resolved against the corpus's weapon names, tolerant of case and
+  singular/plural (sample: `"heavy bolters"` -> `Heavy bolter`). Checked against the whole corpus,
+  not one unit's weapons - classification is deduplicated by text and doesn't know which datasheet
+  it came from, so a per-unit match is the consuming app's job.
+- **Target keywords**: each must be a real BSData unit keyword, which also catches a fused keyword.
+
+**Parked in `.claude/vnext-ideas.md`, not in scope:** unit keyword grants and removals (ABHUMAN,
+Grenades, Smoke, Markerlight) with an any-of target; battle-round awareness in the phase tracker.
+
+**As implemented (2026-09-30):**
+- **Vocabulary comes from the extractor.** The classifier still doesn't reference
+  `ProbHammer.Core`, so the extractor's corpus walk also writes `data/vocabulary.json`: every
+  spelling of each weapon keyword, weapon name, unit keyword, and ability/rule name (incl. glossary
+  aliases), with occurrence counts. The classifier's `NameResolver` matches ignoring case, markup and
+  punctuation; the canonical form is the most common spelling. Weapon names also try dropping a
+  plural `s`/`es`; an ability name with a value not listed verbatim falls back to its base name and
+  keeps the value (`Scouts 10"` -> `Scouts` + `10"`).
+- **The model's output is never rewritten.** Each record gets a separate `resolution` (resolved
+  names with canonical forms, plus unresolved names), and `effectiveCoverageStatus` demotes
+  `complete` to `partial` when anything is unresolved. `report` splits by the effective status. A new
+  `resolve` command re-applies resolution to existing records, idempotently, after a vocabulary
+  refresh.
+- **Sample findings from the real vocabulary:** `BLAST 1` is a real BSData keyword (33 spellings as
+  `BLAST 1`), and `Wolf Guard Weapon` a real weapon name - both resolve. Every name in the v1 sample
+  resolves; the fused Votann keyword can only be caught on v2 output, which records a list.
+- **`RuleGlossary.Normalize` doesn't strip an inch value**: `Scouts 9"` normalizes to `scouts9`, not
+  `scouts`, so a granted `Scouts 9"` won't resolve to the Scouts popover. That's `ProbHammer.Core`,
+  out of this change's scope - the change that consumes these grants in LivePlay needs to extend its
+  trailing-value pattern to `\d+"`.
+- **Few-shot phases under the new definition:** Feel No Pain / invulnerable-save grants and the
+  weapon grants take their attack phases; Feel No Pain against mortal wounds, Objective Control and
+  Infiltrators stay `[]`; the Command-phase +2 Damage example is `["command", "shooting", "fight"]`;
+  the two first-battle-round choice abilities take `command` plus the union of their options'
+  phases.
