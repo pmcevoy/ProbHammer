@@ -1,0 +1,462 @@
+{
+  "0cc06c90858746c8759294799e930f7e621e2ff74d8d8c33511830f286d62a79": {
+    "Hash": "0cc06c90858746c8759294799e930f7e621e2ff74d8d8c33511830f286d62a79",
+    "Text": "Each time a model in this unit makes a melee attack with its Wolf Guard weapon, if it made a Charge move this turn, add 1 to the Damage characteristic of that attack",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1583515+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponCharacteristic",
+            "Selector": {
+              "kind": "NamedWeapon",
+              "Name": "Wolf Guard weapon"
+            },
+            "Characteristic": "D",
+            "Verb": "improve",
+            "Amount": 1
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "The attacking model made a Charge move this turn",
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "fight"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "WeaponName",
+          "Verbatim": "Wolf Guard weapon",
+          "Canonical": "Wolf Guard Weapon"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "32e188ce851867d0bdf6707ac44827c67ab7afeecc7daee8cfe8a906e1097e29": {
+    "Hash": "32e188ce851867d0bdf6707ac44827c67ab7afeecc7daee8cfe8a906e1097e29",
+    "Text": "**KELERMORPH/REDUCTUS SABOTEUR** model only. This unit's ranged attacks have +2 **S**.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1567367+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponCharacteristic",
+            "Selector": {
+              "kind": "WeaponClass",
+              "Type": "Ranged"
+            },
+            "Characteristic": "S",
+            "Verb": "improve",
+            "Amount": 2
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "4927591f80e453d8105f9484e7d8be5b067d231e234304befbeba0dd89d7c5d9": {
+    "Hash": "4927591f80e453d8105f9484e7d8be5b067d231e234304befbeba0dd89d7c5d9",
+    "Text": "Each time a model in this model's unit makes an attack that targets a Monster or Vehicle unit, that\nattack has the [LETHAL HITS] ability. Each time a model in this model's unit makes an attack that targets any other unit, that attack has the [SUSTAINED HITS 1] ability.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1595313+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponKeywordGrant",
+            "Selector": {
+              "kind": "AllWeapons"
+            },
+            "Keyword": "[LETHAL HITS]",
+            "ReplacesKeyword": null
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "When the attack targets a Monster or Vehicle unit",
+          "ChoiceBranch": null
+        },
+        {
+          "Effect": {
+            "kind": "WeaponKeywordGrant",
+            "Selector": {
+              "kind": "AllWeapons"
+            },
+            "Keyword": "[SUSTAINED HITS 1]",
+            "ReplacesKeyword": null
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "When the attack targets any other unit",
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting",
+        "fight"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "WeaponKeyword",
+          "Verbatim": "[LETHAL HITS]",
+          "Canonical": "Lethal Hits"
+        },
+        {
+          "Kind": "WeaponKeyword",
+          "Verbatim": "[SUSTAINED HITS 1]",
+          "Canonical": "Sustained Hits 1"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "53831dd58b67f9398f884210e1a05e9930d3bd4b5c40e1e2a6cf5ece5a0ac814": {
+    "Hash": "53831dd58b67f9398f884210e1a05e9930d3bd4b5c40e1e2a6cf5ece5a0ac814",
+    "Text": "(Once per battle, per unit): In your Shooting phase, when this unit is **selected to shoot**, you can use this ability. If you do, this unit's ranged attacks have **[INDIRECT FIRE]**.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1030725+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponKeywordGrant",
+            "Selector": {
+              "kind": "WeaponClass",
+              "Type": "Ranged"
+            },
+            "Keyword": "[INDIRECT FIRE]",
+            "ReplacesKeyword": null
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": "mine",
+      "UsageLimit": "Once per battle",
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "WeaponKeyword",
+          "Verbatim": "[INDIRECT FIRE]",
+          "Canonical": "Indirect Fire"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "785a164e06a3cfd2d8f4b1718f1972032619e76dd8a004879974507439e65916": {
+    "Hash": "785a164e06a3cfd2d8f4b1718f1972032619e76dd8a004879974507439e65916",
+    "Text": "Models in the bearer's unit have the Scouts 9\" ability.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1571185+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "NamedAbilityGrant",
+            "AbilityName": "Scouts 9\""
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "AbilityName",
+          "Verbatim": "Scouts 9\"",
+          "Canonical": "Scouts 9\""
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "9ed4ceeb7bbb5927bcbb4beda5faf0875a785f52d9581602c204a224d3dc573f": {
+    "Hash": "9ed4ceeb7bbb5927bcbb4beda5faf0875a785f52d9581602c204a224d3dc573f",
+    "Text": "In your Shooting phase, when this unit is selected to shoot you can select one non-**MONSTER/VEHICLE** enemy unit visible to it. While making attacks, this unit's heavy bolters that targeted that selected unit have **[BLAST 1]**.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1355323+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponKeywordGrant",
+            "Selector": {
+              "kind": "NamedWeapon",
+              "Name": "heavy bolters"
+            },
+            "Keyword": "[BLAST 1]",
+            "ReplacesKeyword": null
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "Only while targeting the one non-Monster/Vehicle enemy unit selected when this unit was selected to shoot",
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": "mine",
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "WeaponName",
+          "Verbatim": "heavy bolters",
+          "Canonical": "Heavy bolter"
+        },
+        {
+          "Kind": "WeaponKeyword",
+          "Verbatim": "[BLAST 1]",
+          "Canonical": "BLAST 1"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "ca757d506f18a3d9a2f5f6132d89b989b9d2b201849962156aa987b33558e619": {
+    "Hash": "ca757d506f18a3d9a2f5f6132d89b989b9d2b201849962156aa987b33558e619",
+    "Text": "^^**Leagues of Votann Transport^^** units from your army have the following ability:\n\n**Firebase Control (Aura):** While a friendly ^^**Leagues of Votann Infantry^^** unit is wholly within 6\" of this ^^**Transport^^**, ranged weapons equipped by models in that ^^**Infantry^^** unit have the [^^**sustained hits 1^^**] ability.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1145693+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Keyword",
+        "Keywords": [
+          "LEAGUES OF VOTANN",
+          "INFANTRY"
+        ]
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponKeywordGrant",
+            "Selector": {
+              "kind": "WeaponClass",
+              "Type": "Ranged"
+            },
+            "Keyword": "[SUSTAINED HITS 1]",
+            "ReplacesKeyword": null
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "While the unit is wholly within 6\" of a friendly Leagues of Votann Transport unit",
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "UnitKeyword",
+          "Verbatim": "LEAGUES OF VOTANN",
+          "Canonical": "Leagues of Votann"
+        },
+        {
+          "Kind": "UnitKeyword",
+          "Verbatim": "INFANTRY",
+          "Canonical": "Infantry"
+        },
+        {
+          "Kind": "WeaponKeyword",
+          "Verbatim": "[SUSTAINED HITS 1]",
+          "Canonical": "Sustained Hits 1"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "cdce816c5c63a78474656dcac57b7d0c6e57d21aa9ad38cd82dc83a7cd8841ce": {
+    "Hash": "cdce816c5c63a78474656dcac57b7d0c6e57d21aa9ad38cd82dc83a7cd8841ce",
+    "Text": "Ranged weapons equipped by the bearer have the [ANTI-VEHICLE 4+] ability.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1364528+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponKeywordGrant",
+            "Selector": {
+              "kind": "WeaponClass",
+              "Type": "Ranged"
+            },
+            "Keyword": "[ANTI-VEHICLE 4+]",
+            "ReplacesKeyword": null
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "WeaponKeyword",
+          "Verbatim": "[ANTI-VEHICLE 4+]",
+          "Canonical": "Anti-Vehicle 4+"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "de0f6d5fccfede259431670b11fde977db18bf624e08962cc728d2c5227ed13c": {
+    "Hash": "de0f6d5fccfede259431670b11fde977db18bf624e08962cc728d2c5227ed13c",
+    "Text": "While this model is within 3\" of one or more friendly **^^Slaanesh Infantry^^**, this model has the Lone Operative ability.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1592084+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "NamedAbilityGrant",
+            "AbilityName": "Lone Operative"
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "This model is within 3\" of one or more friendly Slaanesh Infantry models",
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "AbilityName",
+          "Verbatim": "Lone Operative",
+          "Canonical": "Lone Operative"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  }
+}

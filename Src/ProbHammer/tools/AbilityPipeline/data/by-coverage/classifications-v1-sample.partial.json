@@ -1,0 +1,156 @@
+{
+  "63aa66ca74a9cdf8a5b885a3b2abf82b5e86db85c84139d41d4d7c1acb061eb9": {
+    "Hash": "63aa66ca74a9cdf8a5b885a3b2abf82b5e86db85c84139d41d4d7c1acb061eb9",
+    "Text": "Each time a **^^Squadron^^** unit from your army Advances, do not make an Advance roll for it; until the end of the phase, add 6\" to the Move characteristics of models in that unit, and when making that Advance move, that unit can move within Engagement Range of enemy models but cannot end that move within Engagement Range of enemy models.",
+    "PromptVersion": "v1",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-09-29T17:42:50.924593+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Keyword",
+        "Keywords": null
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "Scalar",
+            "Characteristic": "M",
+            "Verb": "improve",
+            "Amount": 6
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "movement"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "partial",
+      "UnclassifiedResidue": "No Advance roll is made (replaced by a flat 6\" bonus) and the unit can move within Engagement Range of enemy models (but not end there) during that Advance move - no effect kind exists for waiving a dice roll or for movement/engagement-range interactions"
+    },
+    "Resolution": null,
+    "EffectiveCoverageStatus": "partial",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "950a1f733b82d65543d53aff7fe3e61dfdd53763473b12ddf6ce86369c0a95f8": {
+    "Hash": "950a1f733b82d65543d53aff7fe3e61dfdd53763473b12ddf6ce86369c0a95f8",
+    "Text": "in your Shooting phase, after this unit has shot, select one enemy unit hit by one or more of those attacks. Until the end of the turn, each time a friendly **^^Genestealer Cults^^** unit makes an attack that targets that enemy unit, improve the Armour Penetration characteristic of that attack by 1. The same enemy unit can only be affected by this ability once per turn.",
+    "PromptVersion": "v1",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-09-29T17:42:50.917664+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Keyword",
+        "Keywords": null
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponCharacteristic",
+            "Selector": {
+              "kind": "AllWeapons"
+            },
+            "Characteristic": "AP",
+            "Verb": "improve",
+            "Amount": 1
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "Only applies to attacks made against a specific enemy unit selected after this unit shoots, until the end of the turn",
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": "mine",
+      "UsageLimit": null,
+      "CoverageStatus": "partial",
+      "UnclassifiedResidue": "Requires selecting one enemy unit hit by this unit's shooting attacks as the qualifying target, and the same enemy unit can only be affected by this ability once per turn - these selection/targeting mechanics have no representation in this schema"
+    },
+    "Resolution": null,
+    "EffectiveCoverageStatus": "partial",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "b089f46fe6b5aa2a54dc77072a942c5c03dede9be3bff2d2084b3fd3114953a1": {
+    "Hash": "b089f46fe6b5aa2a54dc77072a942c5c03dede9be3bff2d2084b3fd3114953a1",
+    "Text": "While an ^^**Adeptus Astartes**^^ unit from your army is Battle-shocked, change the Objective Control characteristic of models in that unit to 1, instead of 0.\nIn your Command phase, select one ^^**Adeptus Astartes^^** unit from your army; until the start of your next Command phase, add 1 to the Objective Control characteristic of models in that unit.",
+    "PromptVersion": "v1",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-09-29T17:42:50.9052664+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Keyword",
+        "Keywords": null
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "Scalar",
+            "Characteristic": "Oc",
+            "Verb": "set",
+            "Amount": 1
+          },
+          "ResidualConditionBucket": "evaluable-now",
+          "ConditionText": "This unit is Battle-shocked",
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "command"
+      ],
+      "TurnOwnership": "mine",
+      "UsageLimit": null,
+      "CoverageStatus": "partial",
+      "UnclassifiedResidue": "In your Command phase, you select one Adeptus Astartes unit from your army to add 1 to its Objective Control characteristic until your next Command phase - this per-phase player selection of a single unit among many eligible ones cannot be represented by the target/effect model, which only supports static keyword-wide or unconditional targeting"
+    },
+    "Resolution": null,
+    "EffectiveCoverageStatus": "partial",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "cc7cf880001f9f1ba2f1c9ee265588ca872b6acd4decc3616f05f4a5cfca0272": {
+    "Hash": "cc7cf880001f9f1ba2f1c9ee265588ca872b6acd4decc3616f05f4a5cfca0272",
+    "Text": "The bearer has a Save characteristic of 2+. In addition, once per battle, at the start of either player's Command phase, the bearer can use this Enhancement. If it does, the bearer regains up to D6 lost wounds.",
+    "PromptVersion": "v1",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-09-29T17:42:50.8849764+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "Scalar",
+            "Characteristic": "Sv",
+            "Verb": "set",
+            "Amount": 2
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "command"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": "Once per battle",
+      "CoverageStatus": "partial",
+      "UnclassifiedResidue": "Once per battle, the bearer can regain up to D6 lost wounds - no healing/wound-recovery effect kind exists in this schema"
+    },
+    "Resolution": null,
+    "EffectiveCoverageStatus": "partial",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  }
+}

@@ -1,0 +1,1707 @@
+{
+  "0b16cc566536c56aa5394bdba3c35cb2264dc60ca860db9ce111d856d294a896": {
+    "Hash": "0b16cc566536c56aa5394bdba3c35cb2264dc60ca860db9ce111d856d294a896",
+    "Text": "In your Fight phase, when you select this model's unit to fight, you can spend 1 of your Pain tokens to Empower this model's unit. While that unit is Empowered, each time a model in that unit makes a melee attack, add 1 to the Wound roll.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1348136+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "fight"
+      ],
+      "TurnOwnership": "mine",
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Spending a Pain token to Empower the unit, granting a +1 to Wound roll modifier for melee attacks made by models in the unit - no effect kind exists for wound-roll modifiers or the Pain token resource mechanic"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "0cc06c90858746c8759294799e930f7e621e2ff74d8d8c33511830f286d62a79": {
+    "Hash": "0cc06c90858746c8759294799e930f7e621e2ff74d8d8c33511830f286d62a79",
+    "Text": "Each time a model in this unit makes a melee attack with its Wolf Guard weapon, if it made a Charge move this turn, add 1 to the Damage characteristic of that attack",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1583515+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponCharacteristic",
+            "Selector": {
+              "kind": "NamedWeapon",
+              "Name": "Wolf Guard weapon"
+            },
+            "Characteristic": "D",
+            "Verb": "improve",
+            "Amount": 1
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "The attacking model made a Charge move this turn",
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "fight"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "WeaponName",
+          "Verbatim": "Wolf Guard weapon",
+          "Canonical": "Wolf Guard Weapon"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "0d82ae75486f9837480b3a49bb2d1e4d2fd2f05dec05779a4c25fff87b3c05e9": {
+    "Hash": "0d82ae75486f9837480b3a49bb2d1e4d2fd2f05dec05779a4c25fff87b3c05e9",
+    "Text": "In your Movement phase when you select this model's unit to Advance, or in your Charge phase before you make a Charge roll for this model's unit, you can spend 1 Pain token to Empower that unit. While that unit is Empowered, you can re-roll Advance and Charge rolls made for that unit.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1390014+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "movement",
+        "charge"
+      ],
+      "TurnOwnership": "mine",
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Spending a Pain token to grant re-rolls of Advance and Charge rolls for the unit - no resource-spending or re-roll effect kind exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "1e683cb8e85ff86af95d21a8eef5b914c35083e327a00866cd29915a73c3c65b": {
+    "Hash": "1e683cb8e85ff86af95d21a8eef5b914c35083e327a00866cd29915a73c3c65b",
+    "Text": "Each time this model ends a Charge move, you can select one enemy unit within Engagement Range of this model and roll one D6: on a 2-5, that enemy unit suffers D3 mortal wounds; on a 6, that enemy unit suffers D3+3 mortal wounds.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1376257+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "charge"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Inflicts D3 or D3+3 mortal wounds (based on a D6 roll) on an enemy unit within Engagement Range - this is an effect on an enemy unit, and no mortal-wound-infliction effect kind exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "32e188ce851867d0bdf6707ac44827c67ab7afeecc7daee8cfe8a906e1097e29": {
+    "Hash": "32e188ce851867d0bdf6707ac44827c67ab7afeecc7daee8cfe8a906e1097e29",
+    "Text": "**KELERMORPH/REDUCTUS SABOTEUR** model only. This unit's ranged attacks have +2 **S**.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1567367+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponCharacteristic",
+            "Selector": {
+              "kind": "WeaponClass",
+              "Type": "Ranged"
+            },
+            "Characteristic": "S",
+            "Verb": "improve",
+            "Amount": 2
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "40619fba036002167e0cfab19b735548b5ee7996994aea8ebc756ed3ee9e4365": {
+    "Hash": "40619fba036002167e0cfab19b735548b5ee7996994aea8ebc756ed3ee9e4365",
+    "Text": "Each time you select this unit for the Fire Overwatch Stratagem, hits are scored on unmodified Hit rolls of 4+ when resolving that Stratagem.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1254584+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "movement"
+      ],
+      "TurnOwnership": "theirs",
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Changes the Hit roll threshold required to score hits when resolving the Fire Overwatch Stratagem - no effect kind for modifying hit-roll thresholds exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "4927591f80e453d8105f9484e7d8be5b067d231e234304befbeba0dd89d7c5d9": {
+    "Hash": "4927591f80e453d8105f9484e7d8be5b067d231e234304befbeba0dd89d7c5d9",
+    "Text": "Each time a model in this model's unit makes an attack that targets a Monster or Vehicle unit, that\nattack has the [LETHAL HITS] ability. Each time a model in this model's unit makes an attack that targets any other unit, that attack has the [SUSTAINED HITS 1] ability.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1595313+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponKeywordGrant",
+            "Selector": {
+              "kind": "AllWeapons"
+            },
+            "Keyword": "[LETHAL HITS]",
+            "ReplacesKeyword": null
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "When the attack targets a Monster or Vehicle unit",
+          "ChoiceBranch": null
+        },
+        {
+          "Effect": {
+            "kind": "WeaponKeywordGrant",
+            "Selector": {
+              "kind": "AllWeapons"
+            },
+            "Keyword": "[SUSTAINED HITS 1]",
+            "ReplacesKeyword": null
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "When the attack targets any other unit",
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting",
+        "fight"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "WeaponKeyword",
+          "Verbatim": "[LETHAL HITS]",
+          "Canonical": "Lethal Hits"
+        },
+        {
+          "Kind": "WeaponKeyword",
+          "Verbatim": "[SUSTAINED HITS 1]",
+          "Canonical": "Sustained Hits 1"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "4d20e7cfad82986847cf503a21663e7b8931ef80480c2ccb1822dd6b2705f7ea": {
+    "Hash": "4d20e7cfad82986847cf503a21663e7b8931ef80480c2ccb1822dd6b2705f7ea",
+    "Text": "Add 1 to Advance and Charge rolls made for this unit.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1038913+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "movement",
+        "charge"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Adds 1 to Advance and Charge rolls - no modifier-to-roll effect kind exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "4e384a5d8ec08048ea51ea89fcf785a85d7d8a60a5f9b77f2f83b52cfcedd6c3": {
+    "Hash": "4e384a5d8ec08048ea51ea89fcf785a85d7d8a60a5f9b77f2f83b52cfcedd6c3",
+    "Text": "Each time a model from your army uses its Bondsman ability, if no other model from your army has used that Bondsman ability that turn, you can select up to three friendly **^^Armiger^^** models (instead of one) within 12\" of that model, or within 15\" of that model while your army is Honoured (you still cannot select a model that is already being affected by a Bondsman ability). Until the start of your next Command phase, those models are affected by that Bondsman ability.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1624736+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Unconditional"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Modifies how many/which models the Bondsman ability can select and its range, based on board distance and army state - no effect kind in this schema covers selection range/count modifications for another ability"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "528b7142ca5b9c6d1622f34053f20164744edcb94f7707ee5431202f8f98da36": {
+    "Hash": "528b7142ca5b9c6d1622f34053f20164744edcb94f7707ee5431202f8f98da36",
+    "Text": "This model cannot be your ^^Warlord^^ and cannot be given Enhancements.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.135099+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "States this model cannot be the Warlord and cannot be given Enhancements - no effect kind exists for army-construction eligibility restrictions like this"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "53831dd58b67f9398f884210e1a05e9930d3bd4b5c40e1e2a6cf5ece5a0ac814": {
+    "Hash": "53831dd58b67f9398f884210e1a05e9930d3bd4b5c40e1e2a6cf5ece5a0ac814",
+    "Text": "(Once per battle, per unit): In your Shooting phase, when this unit is **selected to shoot**, you can use this ability. If you do, this unit's ranged attacks have **[INDIRECT FIRE]**.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1030725+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponKeywordGrant",
+            "Selector": {
+              "kind": "WeaponClass",
+              "Type": "Ranged"
+            },
+            "Keyword": "[INDIRECT FIRE]",
+            "ReplacesKeyword": null
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": "mine",
+      "UsageLimit": "Once per battle",
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "WeaponKeyword",
+          "Verbatim": "[INDIRECT FIRE]",
+          "Canonical": "Indirect Fire"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "58d07e0445dd523962e1b910b82a5f434dda66f7e0a323a0cff2307a8ef5fb9c": {
+    "Hash": "58d07e0445dd523962e1b910b82a5f434dda66f7e0a323a0cff2307a8ef5fb9c",
+    "Text": "Once per battle round, at the start of any phase, you can select one friendly ASTRA MILITARUM INFANTRY or ASTRA MILITARUM MOUNTED unit that is Battle-shocked and within 12\" of this model. If you do, one model in that unit is destroyed, and that unit is then no longer Battle-shocked.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1265099+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Keyword",
+        "Keywords": [
+          "ASTRA MILITARUM"
+        ]
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "command",
+        "movement",
+        "shooting",
+        "charge",
+        "fight"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": "Once per battle round",
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Targets a selected friendly ASTRA MILITARUM INFANTRY or ASTRA MILITARUM MOUNTED unit (an 'or' alternation between two keyword sets, which this schema cannot represent) that is Battle-shocked and within 12\" of this model - a positional/status-based selection condition. The effect itself (one model in that unit is destroyed, and the unit is no longer Battle-shocked) has no corresponding effect kind in this schema (model destruction and battle-shock removal are not modeled)."
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "UnitKeyword",
+          "Verbatim": "ASTRA MILITARUM",
+          "Canonical": "Astra Militarum"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "594b83710757ec95974b0025fb2ea2640927814981319bd5d2c4c8ca75e31795": {
+    "Hash": "594b83710757ec95974b0025fb2ea2640927814981319bd5d2c4c8ca75e31795",
+    "Text": "After both players have deployed their armies, you can redeploy this model's unit and one other friendly **^^T'au Empire^^** unit. When doing so, any of those units can be placed into Strategic Reserves, regardless of how many units are already in Strategic Reserves.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1392625+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Allows redeploying this unit and another friendly T'au Empire unit after deployment, and placing them into Strategic Reserves regardless of limits - no effect kind for redeployment/reserves mechanics exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "5f72f941c7ec28d1141ae919e76cbf5fe6aaa18a433959525fbce03644826318": {
+    "Hash": "5f72f941c7ec28d1141ae919e76cbf5fe6aaa18a433959525fbce03644826318",
+    "Text": "If your Army Faction is **TYRANIDS**, once per battle, in either player's Command phase, if one or more units from your army with this ability are on the battlefield, you can unleash the Shadow in the Warp. When you do, each enemy unit on the battlefield must take a Battle‑shock test. Each time an enemy unit takes such a Battle‑shock test, if it is within 6\" of one or more **SYNAPSE** units from your army, subtract 1 from that test.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1251609+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "command"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": "Once per battle",
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Forces every enemy unit to take a Battle-shock test, and applies a -1 modifier to that test for enemy units within 6\" of friendly Synapse units - both are effects on enemy units, which this schema cannot represent as effects on the player's own army"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "603f946af4dbe28b83c76ae07115b05fda2a0359168b68e4d8ae16ba726a5941": {
+    "Hash": "603f946af4dbe28b83c76ae07115b05fda2a0359168b68e4d8ae16ba726a5941",
+    "Text": "After both players have deployed their armies, you can redeploy this unit and one friendly **^^Imperial Knights Armiger^^** unit.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1381634+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Allows redeploying this unit and a friendly Imperial Knights Armiger unit after deployment - no redeployment/positioning effect kind exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "61dcf5e36acb433905cde8657dd327746ebe656b8b4f3f04787a407b35ff58a7": {
+    "Hash": "61dcf5e36acb433905cde8657dd327746ebe656b8b4f3f04787a407b35ff58a7",
+    "Text": "Each time you target this model with the Overwatch Stratagem just after an enemy unit that can Fly starts or ends a Normal, Advance or Fall Back move, when resolving that Stratagem, in addition to shooting that enemy unit, you can select up to three additional enemy units within 24\" of this model that can Fly; this model can also shoot at each of those units with its Icarus stormcannons (provided each one is an eligible target), but when doing so, an unmodified Hit roll of 6 is required to score a hit.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1367781+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "movement"
+      ],
+      "TurnOwnership": "theirs",
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Modifies the Fire Overwatch Stratagem to allow targeting up to three additional Flying enemy units within 24\" and requires an unmodified Hit roll of 6 against those additional targets - no effect kind exists for expanding Stratagem targeting or imposing a hit-roll requirement"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "63aa66ca74a9cdf8a5b885a3b2abf82b5e86db85c84139d41d4d7c1acb061eb9": {
+    "Hash": "63aa66ca74a9cdf8a5b885a3b2abf82b5e86db85c84139d41d4d7c1acb061eb9",
+    "Text": "Each time a **^^Squadron^^** unit from your army Advances, do not make an Advance roll for it; until the end of the phase, add 6\" to the Move characteristics of models in that unit, and when making that Advance move, that unit can move within Engagement Range of enemy models but cannot end that move within Engagement Range of enemy models.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1342066+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Keyword",
+        "Keywords": [
+          "SQUADRON"
+        ]
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "Scalar",
+            "Characteristic": "M",
+            "Verb": "improve",
+            "Amount": 6
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "movement"
+      ],
+      "TurnOwnership": "mine",
+      "UsageLimit": null,
+      "CoverageStatus": "partial",
+      "UnclassifiedResidue": "Advance roll is skipped entirely (no dice-roll-skipping effect kind), and the unit is allowed to move within Engagement Range without ending inside it during that Advance move - no effect kind exists for engagement-range movement permissions"
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "UnitKeyword",
+          "Verbatim": "SQUADRON",
+          "Canonical": "Squadron"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "partial",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "6bfa46e8c0e026302c77ba78dc02257035932e8c35d4196cbe2c51ceef9fd566": {
+    "Hash": "6bfa46e8c0e026302c77ba78dc02257035932e8c35d4196cbe2c51ceef9fd566",
+    "Text": "**T'AU EMPIRE BATTLESUIT** model only. Each time you target the bearer's unit with a Stratagem, roll one D6: on a 4+, you gain 1CP.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1379061+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Grants 1 CP on a D6 roll of 4+ when the bearer's unit is targeted by a Stratagem - no effect kind for CP gain or dice-roll-gated triggers exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "6e6fd458b7d9a1333c74a14c3c7485a7997c8784ba159238b69513b7dea6c69e": {
+    "Hash": "6e6fd458b7d9a1333c74a14c3c7485a7997c8784ba159238b69513b7dea6c69e",
+    "Text": "Enemy units that are set up on the battlefield as Reinforcements cannot be set up within 12\" horizontally of this model.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1345355+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Restricts enemy Reinforcements from being set up within 12\" of this model - an effect on enemy units' deployment, which this schema does not cover"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "6efbe13f79db6e0b9c9ae0579a5932502e1c2292247a0edffb68df51edbe8f98": {
+    "Hash": "6efbe13f79db6e0b9c9ae0579a5932502e1c2292247a0edffb68df51edbe8f98",
+    "Text": "While a CHARACTER is leading this unit, each time an attack targets this unit, if the Strength characteristic of that attack is greater than the Toughness characteristic of this unit, subtract 1 from the Wound roll.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.115808+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting",
+        "fight"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Subtracts 1 from the Wound roll (while a Character leads this unit and the attack's Strength exceeds this unit's Toughness) - no wound-roll-modifier effect kind exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "6f07fc28e92e74dd4174ae529a982f1497e78b8a1d40637a080722ca9735a4b3": {
+    "Hash": "6f07fc28e92e74dd4174ae529a982f1497e78b8a1d40637a080722ca9735a4b3",
+    "Text": "Once per battle round, after a Hit roll, a Wound roll or a saving throw is made for this model, you can change the result of that roll to a 6.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1618036+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting",
+        "fight"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": "Once per battle round",
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Allows changing the result of a Hit roll, Wound roll, or saving throw to a 6 - no dice-roll-manipulation effect kind exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "762469cf62ea62687067e8aedaad447470e5845dcebdb9eeca4ad24ee740f0ff": {
+    "Hash": "762469cf62ea62687067e8aedaad447470e5845dcebdb9eeca4ad24ee740f0ff",
+    "Text": "If this model is equipped with a Cult Sniper Rifle, In your opponent's Movement phase, if an enemy unit ends a move within 8” of this unit, if this unit is not within Engagement Range of one or more enemy units, this unit can make a Normal move of up to 6”.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1578288+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "movement"
+      ],
+      "TurnOwnership": "theirs",
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Grants this unit the ability to make a Normal move of up to 6\" when conditions are met (equipped with Cult Sniper Rifle, an enemy unit ends a move within 8\", and this unit is not within Engagement Range) - no movement-grant effect kind exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "76cdb47e8226d912f530924545af5beca746e4789427659b8aa3ca58bf5e816b": {
+    "Hash": "76cdb47e8226d912f530924545af5beca746e4789427659b8aa3ca58bf5e816b",
+    "Text": "Friendly **BULLGRYN SQUAD/OGRYN SQUAD/RATLINGS** units have **ABHUMAN**.\n- Friendly **COMMISSAR** models can:\n-- Issue the Take Aim! Order.\n-- Issue 1 Order to a friendly **ABHUMAN** unit.\nThis **detachment** has the **ABHUMAN** tag and cannot be taken with another **ABHUMAN detachment**.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1560601+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Unconditional"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Target is any of Bullgryn Squad/Ogryn Squad/Ratlings units - a slash-joined keyword set this schema cannot represent. Grants ABHUMAN keyword (keyword grant, not an ability), Commissar model order-issuing abilities, and detachment-level tag/exclusivity rules have no representable effect kinds"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "77369a595a192aab9cb7a3d2c514d9c32dbe4a514e65665e6e79c7074ada7ae9": {
+    "Hash": "77369a595a192aab9cb7a3d2c514d9c32dbe4a514e65665e6e79c7074ada7ae9",
+    "Text": "Gravis Model only. The first time the bearer is destroyed, roll on D6 at the end of the phase. On a 2+ set the bearer back on the battlefield, as close as possible to where it was destroyed and not within Engagement Range of any enemy units, with its full wounds remaining.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1598014+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": "Once per battle",
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Revives the destroyed bearer on a D6 roll of 2+ at the end of the phase, placing it back on the battlefield with full wounds - no reviving/healing effect kind exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "785a164e06a3cfd2d8f4b1718f1972032619e76dd8a004879974507439e65916": {
+    "Hash": "785a164e06a3cfd2d8f4b1718f1972032619e76dd8a004879974507439e65916",
+    "Text": "Models in the bearer's unit have the Scouts 9\" ability.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1571185+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "NamedAbilityGrant",
+            "AbilityName": "Scouts 9\""
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "AbilityName",
+          "Verbatim": "Scouts 9\"",
+          "Canonical": "Scouts 9\""
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "7cc121e4f4a461dc1905e352bd044891f536b92748a56bac2d5291448d06e54c": {
+    "Hash": "7cc121e4f4a461dc1905e352bd044891f536b92748a56bac2d5291448d06e54c",
+    "Text": "Each time the bearer's unit is set up on the battlefield, each enemy unit within 6” of the bearer's unit (or within 12” if the bearer's unit was set up using the Deep Strike ability) takes a Battle‑shock test.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1268539+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Forces enemy units within range to take a Battle-shock test when the bearer's unit is set up - this is an effect imposed on enemy units, which this schema cannot represent as an effect on the player's own army"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "7dd56b234b13aa281201cd25face8b1d704fff4d43ff517374a4ec46b7b7fee9": {
+    "Hash": "7dd56b234b13aa281201cd25face8b1d704fff4d43ff517374a4ec46b7b7fee9",
+    "Text": " At the end of your opponent's Fight phase, select one visible enemy unit (excluding AIRCRAFT/Lone Operative units) within 24\" of this unit. That enemy unit is slowed until the end of your opponent's next Movement phase:\n\n\n▪ While a unit is slowed, in your opponent's Movement phase, when that unit is selected to move, unless that unit remains stationary, roll one D6:\n    ▫ On a 1-4, that unit suffers D3 mortal wounds and that unit has -2\" M.\n    ▫ On a 5-6, that unit suffers 2D3 mortal wounds and that unit has -3\" M.'",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1586775+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "fight",
+        "movement"
+      ],
+      "TurnOwnership": "theirs",
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Entire effect targets an enemy unit (slows it, inflicting mortal wounds and a Movement penalty on a D6 roll) rather than the player's own units - enemy-unit effects have no representation in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "7f98062c5c8b175361c5dc19ad61275d9dc274c7c82d37a102d689f2bd01f3ec": {
+    "Hash": "7f98062c5c8b175361c5dc19ad61275d9dc274c7c82d37a102d689f2bd01f3ec",
+    "Text": "Each time this model makes a ranged attack that targets a unit that can Fly, add 1 to the Hit roll",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1361722+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Adds 1 to the Hit roll for ranged attacks against units that can Fly - no hit-roll-modifier effect kind exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "8a48552045a080027bdc67fe60af127114a631924e99940966cb562d7e93f05b": {
+    "Hash": "8a48552045a080027bdc67fe60af127114a631924e99940966cb562d7e93f05b",
+    "Text": "Twice per battle, after this unit has performed an Act of Faith, you gain 1 Miracle dice.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1008104+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": "Twice per battle",
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Grants 1 Miracle dice after performing an Act of Faith - no effect kind exists for Miracle dice or Acts of Faith in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "9427f23d4bf4b5faed1585fa1729e37d26bdce358bdb4199c83a1adcad92b9ec": {
+    "Hash": "9427f23d4bf4b5faed1585fa1729e37d26bdce358bdb4199c83a1adcad92b9ec",
+    "Text": "Each time this model makes a ranged attack that targets the closest eligible target, add 1 to the Hit roll.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1257644+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Adds 1 to the Hit roll for ranged attacks against the closest eligible target - no hit-roll-modifier effect kind exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "950a1f733b82d65543d53aff7fe3e61dfdd53763473b12ddf6ce86369c0a95f8": {
+    "Hash": "950a1f733b82d65543d53aff7fe3e61dfdd53763473b12ddf6ce86369c0a95f8",
+    "Text": "in your Shooting phase, after this unit has shot, select one enemy unit hit by one or more of those attacks. Until the end of the turn, each time a friendly **^^Genestealer Cults^^** unit makes an attack that targets that enemy unit, improve the Armour Penetration characteristic of that attack by 1. The same enemy unit can only be affected by this ability once per turn.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1154518+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Keyword",
+        "Keywords": [
+          "GENESTEALER CULTS"
+        ]
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponCharacteristic",
+            "Selector": {
+              "kind": "AllWeapons"
+            },
+            "Characteristic": "AP",
+            "Verb": "improve",
+            "Amount": 1
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "Only against the one enemy unit selected after this unit shot, until the end of the turn",
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting",
+        "fight"
+      ],
+      "TurnOwnership": "mine",
+      "UsageLimit": null,
+      "CoverageStatus": "partial",
+      "UnclassifiedResidue": "The selected enemy unit can only be affected by this ability once per turn - a restriction on the target, not representable as a usage limit on the ability itself"
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "UnitKeyword",
+          "Verbatim": "GENESTEALER CULTS",
+          "Canonical": "Genestealer Cults"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "partial",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "999ce432ded4fabf24e85151ecf313d1c5ff4002f39dfe16d84816748a955de3": {
+    "Hash": "999ce432ded4fabf24e85151ecf313d1c5ff4002f39dfe16d84816748a955de3",
+    "Text": "At the start of your Shooting phase, select one visible enemy ^^**Vehicle^^** unit. Until the end of the phase, each time a friendly ^^**Heretic Astartes^^** model makes an attack that targets that unit, re-roll a Wound roll of 1.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1563951+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Keyword",
+        "Keywords": [
+          "HERETIC ASTARTES"
+        ]
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": "mine",
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Grants a re-roll of Wound rolls of 1 for attacks against a selected enemy Vehicle unit - no re-roll effect kind exists in this schema, and the selection of an enemy unit as a target-filter condition also cannot be represented"
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "UnitKeyword",
+          "Verbatim": "HERETIC ASTARTES",
+          "Canonical": "Heretic Astartes"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "9b9df93dbfadb4b191d36dde9c1f678f8fb85f9009853a22a5f76aac251d1158": {
+    "Hash": "9b9df93dbfadb4b191d36dde9c1f678f8fb85f9009853a22a5f76aac251d1158",
+    "Text": "When you select a unit to be **pinned** by a friendly **PURGATION SQUAD** unit's **Righteous Persecution** ability, that enemy unit makes a **battle‑shock roll**, with -1 to that **battle‑shock roll**.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1372672+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Keyword",
+        "Keywords": [
+          "PURGATION SQUAD"
+        ]
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Applies a -1 modifier to an enemy unit's battle-shock roll when pinned by this unit's Righteous Persecution ability - effects on enemy units and roll modifiers have no representation in this schema"
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "UnitKeyword",
+          "Verbatim": "PURGATION SQUAD",
+          "Canonical": "Purgation Squad"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "9ed4ceeb7bbb5927bcbb4beda5faf0875a785f52d9581602c204a224d3dc573f": {
+    "Hash": "9ed4ceeb7bbb5927bcbb4beda5faf0875a785f52d9581602c204a224d3dc573f",
+    "Text": "In your Shooting phase, when this unit is selected to shoot you can select one non-**MONSTER/VEHICLE** enemy unit visible to it. While making attacks, this unit's heavy bolters that targeted that selected unit have **[BLAST 1]**.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1355323+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponKeywordGrant",
+            "Selector": {
+              "kind": "NamedWeapon",
+              "Name": "heavy bolters"
+            },
+            "Keyword": "[BLAST 1]",
+            "ReplacesKeyword": null
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "Only while targeting the one non-Monster/Vehicle enemy unit selected when this unit was selected to shoot",
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": "mine",
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "WeaponName",
+          "Verbatim": "heavy bolters",
+          "Canonical": "Heavy bolter"
+        },
+        {
+          "Kind": "WeaponKeyword",
+          "Verbatim": "[BLAST 1]",
+          "Canonical": "BLAST 1"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "9f6400a788b6fdfe910af3586a1d5ae467825c29daf935a6b4e96904836b39e6": {
+    "Hash": "9f6400a788b6fdfe910af3586a1d5ae467825c29daf935a6b4e96904836b39e6",
+    "Text": "This model has a transport capacity of 16 Adeptus Astartes Infantry models. Each Jump Pack, Wulfen, Gravis or Terminator model takes up the space of 2 models and each Centurion model takes up the space of 3 models.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1580729+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "States transport capacity and model-slot rules - no effect kind exists in this schema for transport capacity"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "b089f46fe6b5aa2a54dc77072a942c5c03dede9be3bff2d2084b3fd3114953a1": {
+    "Hash": "b089f46fe6b5aa2a54dc77072a942c5c03dede9be3bff2d2084b3fd3114953a1",
+    "Text": "While an ^^**Adeptus Astartes**^^ unit from your army is Battle-shocked, change the Objective Control characteristic of models in that unit to 1, instead of 0.\nIn your Command phase, select one ^^**Adeptus Astartes^^** unit from your army; until the start of your next Command phase, add 1 to the Objective Control characteristic of models in that unit.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1046237+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Keyword",
+        "Keywords": [
+          "ADEPTUS ASTARTES"
+        ]
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "Scalar",
+            "Characteristic": "Oc",
+            "Verb": "set",
+            "Amount": 1
+          },
+          "ResidualConditionBucket": "evaluable-now",
+          "ConditionText": "While the unit is Battle-shocked",
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "command"
+      ],
+      "TurnOwnership": "mine",
+      "UsageLimit": null,
+      "CoverageStatus": "partial",
+      "UnclassifiedResidue": "Second rule lets the player select one specific Adeptus Astartes unit each Command phase to add 1 to its Objective Control characteristic until the next Command phase - this schema has no way to represent a per-turn player-selected single unit as a target"
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "UnitKeyword",
+          "Verbatim": "ADEPTUS ASTARTES",
+          "Canonical": "Adeptus Astartes"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "partial",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "b3cf20df95ea0e4f04ffc395734f319838d8128572c34025bf25569fad71fbee": {
+    "Hash": "b3cf20df95ea0e4f04ffc395734f319838d8128572c34025bf25569fad71fbee",
+    "Text": "Each time this model makes an attack, a successful unmodified Hit roll of 5+ scores a Critical Hit.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.105163+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting",
+        "fight"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Lowers the Critical Hit threshold to an unmodified 5+ on Hit rolls - no effect kind in this schema represents changing what counts as a Critical Hit"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "b61e98d82af70e74b6a550ef8a0817910be0027c511a191e5a863636db09fc3b": {
+    "Hash": "b61e98d82af70e74b6a550ef8a0817910be0027c511a191e5a863636db09fc3b",
+    "Text": "While a friendly ^^**Rubricae^^** unit is within 9\" of the bearer, you can re-roll Battle-shock tests taken for that unit.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1384554+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Keyword",
+        "Keywords": [
+          "RUBRICAE"
+        ]
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Allows re-rolling Battle-shock tests for a friendly Rubricae unit within 9\" of the bearer - no re-roll effect kind exists in this schema, and the 9\" range condition cannot be evaluated"
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "UnitKeyword",
+          "Verbatim": "RUBRICAE",
+          "Canonical": "Rubricae"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "b75bcfdcfb3c81c5c3e222d9bf05e936c3e584635b8a20b4ae70df90a24e5ff9": {
+    "Hash": "b75bcfdcfb3c81c5c3e222d9bf05e936c3e584635b8a20b4ae70df90a24e5ff9",
+    "Text": "Model with the Heroic rank or higher. If the bearer is in your Crusade army, then at the Select Crusade Blessings step, if you are the Underdog, you can select one additional Crusade Blessing.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1055737+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Crusade army-construction rule granting an additional Crusade Blessing selection - no effect kind in this schema represents Crusade mechanics"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "c05e5a2892fbb07d3fe5895d51b7c0ba9c2ba372ea0480d65ab864942db814c5": {
+    "Hash": "c05e5a2892fbb07d3fe5895d51b7c0ba9c2ba372ea0480d65ab864942db814c5",
+    "Text": "Each time this model is selected to shoot or fight, you can re-roll one Hit roll or you can re-roll one Wound roll when resolving those attacks.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1260472+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting",
+        "fight"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Allows re-rolling one Hit roll or one Wound roll when this model attacks - no re-roll effect kind exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "c906d21427a046fd65c98260374662475637b87d6b685f35d3456fb69821cfeb": {
+    "Hash": "c906d21427a046fd65c98260374662475637b87d6b685f35d3456fb69821cfeb",
+    "Text": "PENITENT model only. Once per battle, at the start of the battle round, select one Vow of Atonement. Until the start of the next battle round, that Vow of Atonement is active for the bearer's unit in addition to any that is active for your army, even if you have already selected that Vow of Atonement this battle.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1621416+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "command"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": "Once per battle",
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Activates a named Vow of Atonement (selected from elsewhere) for the bearer's unit - the text itself states no concrete effect, only that a separately-defined Vow becomes active"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "ca757d506f18a3d9a2f5f6132d89b989b9d2b201849962156aa987b33558e619": {
+    "Hash": "ca757d506f18a3d9a2f5f6132d89b989b9d2b201849962156aa987b33558e619",
+    "Text": "^^**Leagues of Votann Transport^^** units from your army have the following ability:\n\n**Firebase Control (Aura):** While a friendly ^^**Leagues of Votann Infantry^^** unit is wholly within 6\" of this ^^**Transport^^**, ranged weapons equipped by models in that ^^**Infantry^^** unit have the [^^**sustained hits 1^^**] ability.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1145693+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Keyword",
+        "Keywords": [
+          "LEAGUES OF VOTANN",
+          "INFANTRY"
+        ]
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponKeywordGrant",
+            "Selector": {
+              "kind": "WeaponClass",
+              "Type": "Ranged"
+            },
+            "Keyword": "[SUSTAINED HITS 1]",
+            "ReplacesKeyword": null
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "While the unit is wholly within 6\" of a friendly Leagues of Votann Transport unit",
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "UnitKeyword",
+          "Verbatim": "LEAGUES OF VOTANN",
+          "Canonical": "Leagues of Votann"
+        },
+        {
+          "Kind": "UnitKeyword",
+          "Verbatim": "INFANTRY",
+          "Canonical": "Infantry"
+        },
+        {
+          "Kind": "WeaponKeyword",
+          "Verbatim": "[SUSTAINED HITS 1]",
+          "Canonical": "Sustained Hits 1"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "cc7cf880001f9f1ba2f1c9ee265588ca872b6acd4decc3616f05f4a5cfca0272": {
+    "Hash": "cc7cf880001f9f1ba2f1c9ee265588ca872b6acd4decc3616f05f4a5cfca0272",
+    "Text": "The bearer has a Save characteristic of 2+. In addition, once per battle, at the start of either player's Command phase, the bearer can use this Enhancement. If it does, the bearer regains up to D6 lost wounds.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1678041+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "Scalar",
+            "Characteristic": "Sv",
+            "Verb": "set",
+            "Amount": 2
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "command"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": "Once per battle",
+      "CoverageStatus": "partial",
+      "UnclassifiedResidue": "Once per battle, the bearer can regain up to D3 lost wounds at the start of either player's Command phase - no healing/wound-regain effect kind exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "partial",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "cdce816c5c63a78474656dcac57b7d0c6e57d21aa9ad38cd82dc83a7cd8841ce": {
+    "Hash": "cdce816c5c63a78474656dcac57b7d0c6e57d21aa9ad38cd82dc83a7cd8841ce",
+    "Text": "Ranged weapons equipped by the bearer have the [ANTI-VEHICLE 4+] ability.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1364528+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponKeywordGrant",
+            "Selector": {
+              "kind": "WeaponClass",
+              "Type": "Ranged"
+            },
+            "Keyword": "[ANTI-VEHICLE 4+]",
+            "ReplacesKeyword": null
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "WeaponKeyword",
+          "Verbatim": "[ANTI-VEHICLE 4+]",
+          "Canonical": "Anti-Vehicle 4+"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "de0f6d5fccfede259431670b11fde977db18bf624e08962cc728d2c5227ed13c": {
+    "Hash": "de0f6d5fccfede259431670b11fde977db18bf624e08962cc728d2c5227ed13c",
+    "Text": "While this model is within 3\" of one or more friendly **^^Slaanesh Infantry^^**, this model has the Lone Operative ability.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1592084+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "NamedAbilityGrant",
+            "AbilityName": "Lone Operative"
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "This model is within 3\" of one or more friendly Slaanesh Infantry models",
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [
+        {
+          "Kind": "AbilityName",
+          "Verbatim": "Lone Operative",
+          "Canonical": "Lone Operative"
+        }
+      ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "dfcb7d06eda99d41da255624caba59ee08315d864670632806956c8fe78f78da": {
+    "Hash": "dfcb7d06eda99d41da255624caba59ee08315d864670632806956c8fe78f78da",
+    "Text": "In your Shooting phase, after this model has shot, select one enemy unit hit by one or more of those attacks. That enemy unit must take a Battle-shock test.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1589353+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": "mine",
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Forces an enemy unit hit by this model\"s shooting attacks to take a Battle-shock test - effects on enemy units have no representation in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "e35d91c120d34a8967b1de374d12e60d5924ab792dd6a1659032667d269b7f49": {
+    "Hash": "e35d91c120d34a8967b1de374d12e60d5924ab792dd6a1659032667d269b7f49",
+    "Text": "Each time the bearer uses its Tainted Narthecium ability, you can return up to D3 destroyed models to the bearer's unit (instead of 1).",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1148556+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Modifies the Tainted Narthecium ability to return up to D3 destroyed models instead of 1 - reviving/returning destroyed models has no effect kind in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "eb15b41940afe129c9f466cadd706c00e6640046ce4ac609318176cc6b36e64c": {
+    "Hash": "eb15b41940afe129c9f466cadd706c00e6640046ce4ac609318176cc6b36e64c",
+    "Text": "In your Shooting phase, after this model has shot, select one enemy unit (excluding **^^Monsters^^** and **^^Vehicles^^**) that was hit by one or more of those attacks made with this model's storm eagle rockets. Until the start of your next Shooting phase, that enemy unit is staggered. While a unit is staggered, subtract 1 from the Objective Control characteristic of models in that unit (to a minimum of 1).",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1160944+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": "mine",
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Effect applies to an enemy unit (reduces Objective Control by 1, to a minimum of 1, for units hit by storm eagle rockets) - effects on enemy units are not represented in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "f364723c97c77b0efb709c5b905830957f83c08396bc45fc8e54914794bb64cd": {
+    "Hash": "f364723c97c77b0efb709c5b905830957f83c08396bc45fc8e54914794bb64cd",
+    "Text": "Each time this model makes an attack, you can re-roll the Hit roll.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1141317+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting",
+        "fight"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Grants a re-roll of the Hit roll - no re-roll effect kind exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "f902d5ed166ae1998b24f14ae1a9159546b71c0df388b99c08c7cd421fd63aff": {
+    "Hash": "f902d5ed166ae1998b24f14ae1a9159546b71c0df388b99c08c7cd421fd63aff",
+    "Text": "LEGIONES DAEMONICA SLAANESH MONSTER model only. At the end of the Fight phase, if one or more enemy models were destroyed this phase as a result of one or more of the bearer's attacks, it can use this Enhancement. If it does, it regains up to D3 lost wounds.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-01T17:44:54.1387053+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [],
+      "ChoiceGroups": [],
+      "Phases": [
+        "fight"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "unclassifiable",
+      "UnclassifiedResidue": "Regains up to D3 lost wounds if the bearer destroyed one or more enemy models this phase - no wound-healing effect kind exists in this schema"
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  }
+}

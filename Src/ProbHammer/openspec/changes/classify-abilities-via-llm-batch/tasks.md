@@ -95,13 +95,14 @@
       prompt's allowlist sentence; resolve granted names through 4.0.4's step against `RuleGlossary`
       and BSData ability names - confirm `RuleGlossary.Normalize` handles a trailing `9"`
       (`Scouts 9"`)
-- [ ] 4.0.6 Re-run the same 50-record sample under v2 and compare against the v1 results before 4.1
+- [x] 4.0.6 Re-run the same 50-record sample under v2 and compare against the v1 results before 4.1
+      - done 2026-10-01, see design.md's "v2 sample re-run"
 - [x] 4.0.7 Make `KeywordTarget` an all-of `keywords` list; prompt tells the model to split a
       faction-plus-type target into separate keywords (slash-OR stays residue); update the
       keyword-target few-shot examples
 - [x] 4.0.8 Resolve `NamedWeapon` names (case- and singular/plural-tolerant) and target keywords
       through 4.0.4's step
-- [ ] 4.1 Submit a Batch API job against every hash in `ability-corpus.json` under prompt `v1`
+- [x] 4.1 Submit a Batch API job against every hash in `ability-corpus.json` under prompt `v2`
 - [ ] 4.2 Poll for completion and write results into `tools/AbilityPipeline/data/classifications.json`,
       each record stamped with `hash`, `promptVersion`, `model`, `classifiedAt`, and a
       `reviewStatus` defaulting to pending

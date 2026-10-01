@@ -604,3 +604,16 @@ Grenades, Smoke, Markerlight) with an any-of target; battle-round awareness in t
   Infiltrators stay `[]`; the Command-phase +2 Damage example is `["command", "shooting", "fight"]`;
   the two first-battle-round choice abilities take `command` plus the union of their options'
   phases.
+
+## v2 sample re-run, 2026-10-01 (task 4.0.6)
+
+Same 50 hashes: 9/4/37 complete/partial/unclassifiable (v1 8/4/38), no unresolved names, effects
+unchanged except `Scouts 9"` now resolving. Phases, `usageLimit` and keyword lists behaved as
+intended. Decisions from the user's review:
+- **Battle-shock tests can happen in any phase in 11e** (the user's correction, not just Command), so
+  an ability about them is `phases: []` unless its text names a phase. The v2 prompt claimed
+  Command-only and is edited in place; the sample isn't re-run.
+- **"The first time the bearer is destroyed"** on a `Self` target as `Once per battle` is accepted -
+  the same outcome either way.
+- **A selection condition on an ability with no representable effect stays in residue** - the
+  condition bucket belongs to an effect, so there's nothing to attach it to.

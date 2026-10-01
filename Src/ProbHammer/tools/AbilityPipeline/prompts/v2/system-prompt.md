@@ -190,9 +190,9 @@ has several effects.
     `["command", "shooting", "fight"]`.
   - An event that only happens in one phase implies it: "each time this model ends a Charge move" is
     `["charge"]`; "each time this unit is selected to shoot or fight" is `["shooting", "fight"]`.
-  - Rolls happen in fixed phases: Advance rolls in `movement`, Charge rolls in `charge`, Battle-shock
-    tests in `command`. "Add 1 to Advance and Charge rolls made for this unit" is
-    `["movement", "charge"]`.
+  - Rolls happen in fixed phases: Advance rolls in `movement`, Charge rolls in `charge`. "Add 1 to
+    Advance and Charge rolls made for this unit" is `["movement", "charge"]`. Battle-shock tests can
+    happen in any phase, so an ability about them is `[]` unless its text names a phase.
   - Anything in the attack sequence - an attack made by or targeting the unit, Hit and Wound rolls,
     saving throws (including invulnerable saves and Feel No Pain against attacks), or Damage - is
     `["shooting", "fight"]`. "Ranged attack" narrows it to `["shooting"]`, "melee attack" or a melee
