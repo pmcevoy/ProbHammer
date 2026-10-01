@@ -219,6 +219,10 @@ unaffected by anything in this change.
 
 ## Risks / Trade-offs
 
+- **[Risk] Batch size ceiling** - a batch is capped at 100,000 requests or 256 MB, and every request
+  repeats the ~53 KB prompt prefix (caching cuts its cost, not its size). The full v2 run was 3,773
+  requests, ~210 MB. → Mitigation: none in code yet; a larger corpus or prompt needs `submit` to
+  split across batches.
 - **[Risk] Review bottleneck at initial rollout** - ~3,830 first-run candidates is a much larger
   review surface than today's ~20 manually-vetted results. → Mitigation: not fully solved here (see
   Open Questions), but the per-record review-status field (pending/approved/rejected/note) at least
