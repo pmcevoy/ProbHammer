@@ -38,6 +38,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fewshot", "fewshot", "{46B2
 		tools\AbilityPipeline\fewshot\examples.json = tools\AbilityPipeline\fewshot\examples.json
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v2", "v2", "{15C776D4-C0C4-442C-9671-88242C3B6266}"
+	ProjectSection(SolutionItems) = preProject
+		tools\AbilityPipeline\prompts\v2\schema.json = tools\AbilityPipeline\prompts\v2\schema.json
+		tools\AbilityPipeline\prompts\v2\system-prompt.md = tools\AbilityPipeline\prompts\v2\system-prompt.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -134,5 +140,6 @@ Global
 		{22173918-B1B8-468F-9148-01C4BB03DEA1} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 		{B77CC126-EACA-4B2C-A359-B3000CBC0D72} = {22173918-B1B8-468F-9148-01C4BB03DEA1}
 		{46B2038F-FA7C-4702-AF08-C26CD4B85C19} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
+		{15C776D4-C0C4-442C-9671-88242C3B6266} = {22173918-B1B8-468F-9148-01C4BB03DEA1}
 	EndGlobalSection
 EndGlobal
