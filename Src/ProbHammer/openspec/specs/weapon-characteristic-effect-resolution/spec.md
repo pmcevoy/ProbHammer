@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Resolves a classified weapon-characteristic Effect (from the rule-effect-classification capability)
+Resolves a classified weapon-characteristic Effect (from the ability-classification-catalogue capability)
 and its source Ability against a specific weapon's profile into a mutated profile — the
 weapon-specific counterpart to the characteristic-modification-kind capability's scalar resolution
 and the invulnerable-save-effect-resolution capability's own compound-value resolution.

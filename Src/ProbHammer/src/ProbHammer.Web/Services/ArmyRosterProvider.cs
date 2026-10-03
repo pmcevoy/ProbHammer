@@ -31,7 +31,7 @@ public sealed record ArmyRosterBuildResult(ArmyRoster Roster, RuleGlossary Gloss
 public sealed class ArmyRosterProvider(
     BsdataCatalogueCache cache,
     IBsdataCatalogueSource source,
-    RuleClassificationBaseline baseline)
+    AbilityClassificationCatalogue classifications)
     : IArmyRosterProvider
 {
     public ArmyRosterBuildResult Build(StoredArmyImport import)
@@ -44,7 +44,7 @@ public sealed class ArmyRosterProvider(
                 "Unrecognized StoredArmyImport variant.")
         };
 
-        DetachmentRuleInboundAbilityResolver.Apply(result.Roster.Units, result.Roster.Detachments, baseline);
+        DetachmentRuleInboundAbilityResolver.Apply(result.Roster.Units, result.Roster.Detachments, classifications);
         return result;
     }
 

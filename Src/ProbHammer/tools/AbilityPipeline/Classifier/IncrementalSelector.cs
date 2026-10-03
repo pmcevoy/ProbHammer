@@ -6,7 +6,7 @@ namespace ProbHammer.Tools.AbilityPipeline.Classifier;
 ///
 /// spec.md's requirement also names a third trigger - "its extracted text has changed since the
 /// last classification" - worded as if that's an independent condition alongside a matching hash.
-/// It isn't, and can't be: Hash is the Extractor's own <c>ContentHash.Of</c> - a SHA-256 digest of
+/// It isn't, and can't be: Hash is Core's <c>AbilityTextKey.Hash</c> - a SHA-256 digest of
 /// this exact Text (see <c>AbilityCorpusAggregator</c>, in the Extractor project this project
 /// deliberately doesn't reference) - so a genuine text change always produces a genuinely
 /// different hash - the OLD hash simply stops appearing in a fresh corpus walk at all, which

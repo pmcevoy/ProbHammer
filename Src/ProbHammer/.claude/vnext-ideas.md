@@ -19,10 +19,10 @@ record, not this file).
   one unioned set.
 - **Split `wwwroot/css/site.css` into a `/LivePlay`-only stylesheet** — it still ships dead 10e
   selectors interleaved with the live rules.
-- **A Feel No Pain stat box, mirroring InSv's.** Given how common Feel No Pain grants are in the
-  corpus (153+ hits), a dedicated box beneath the M/T/Sv/W/Ld/Oc row — same treatment as the
-  invulnerable-save box — could surface it the way InSv already is. Purely an idea, no display
-  field exists today.
+- **A Feel No Pain stat box, mirroring InSv's.** Feel No Pain grants are common (153+ corpus hits)
+  and the catalogue already loads them as `FeelNoPainEffect` (data only). A dedicated box beneath
+  the M/T/Sv/W/Ld/Oc row - same treatment as the invulnerable-save box - would be its first
+  consumer.
 - **Suppress a bare glossary-tag ability entry whose Name carries no concrete value.** Confirmed via
   real BSData (Custodian Wardens): a datasheet can link the shared, valueless `"Feel No Pain"` rule
   directly as its own ability-list entry (a keyword tag, no append-name modifier) — unconditionally
@@ -41,6 +41,24 @@ record, not this file).
   not who goes first in a round, so "at the start/end of the battle round" abilities (~28/~11
   corpus texts) light up in both players' Command/Fight phases. Tracking the first player (or a
   round boundary) would let them light up only in the right turn.
+- **Phase/turn ability highlighting.** Every catalogue record carries `Phases`/`TurnOwnership`
+  (even unclassifiable ones), so an ability button could change colour in the phases it matters in,
+  the tracker's original purpose for those fields.
+- **Player toggles for conditional effects.** Any conditional effect (residual condition, usage
+  limit, choice branch, turn restriction) is skipped today; a uniform player-set toggle labelled
+  from `ConditionText`, the same convention as Battle-shock/Half Strength, would let the player
+  assert it. Choice groups would toggle per option.
+- **Display for a conditional Statline effect.** Weapons show a conditional effect as an
+  "unresolved ability" marker; a conditional Statline effect shows nothing (the ability still
+  renders). The caveated-InSv marker/legend could cover it.
+- **Consume the remaining data-only effect kinds.** `WeaponKeywordGrant` (a chip on the weapon row,
+  merged with the profile's own `KeywordsText`), `NamedAbilityGrant` (an inbound ability; needs
+  `RuleGlossary.Normalize` to strip a trailing `9"`-style value so `Scouts 9"` resolves),
+  `NamedAbilityRemoval` (hide or strike the removed ability).
+- **Detachment-rule weapon effects.** A keyword-targeted Detachment rule flags Statline values but
+  never reaches weapons: `AttachedUnitAggregator`'s weapon path filters on Self/AttachedUnit targets
+  before `IsBearerOf` sees the DetachmentRule origin. Kept as-is when the catalogue replaced the
+  baseline; unify with the Statline path when a real case needs it.
 
 ## `WeaponProfile`-targeting rule effects — deferred coverage
 
@@ -99,11 +117,13 @@ design, not as a gap to eventually close.
     ("LEGIONES DAEMONICA TZEENTCH"); emit JSON `null`, not the string `"null"`.
   - **"Select N units"** selections (Wolf Master, Obscuroptikon) - covered by the planned
     per-condition player toggle, not the schema.
+  - **Incremental runs** (`submit` picks only unclassified hashes - proven 2026-10-03 with 5 InSv
+    footnote texts): a small batch's requests run in parallel, so none reads the prompt cache and
+    each pays the write premium (5 requests: 0 reads, 84k written). Consider skipping the cache
+    breakpoint below some batch size.
 - **Enhancement Model/Unit scope classification.** Every Enhancement renders at Unit scope
   unconditionally today, even though real rules text sometimes signals Model scope instead (e.g.
-  "this model's Objective Control"). The closed-vocabulary text-classification approach this would
-  build on already exists (`RuleEffectClassifier`, `InvulnerableSaveCaveatClassifier`) — this
-  specific classification hasn't been.
+  "this model's Objective Control"). Could be a new field on the LLM classification schema.
 - **Characteristic modification engine.** A real engine for stacking multiple rules on one
   characteristic (Set→Multiply→Add→Divide→Subtract order, per-characteristic clamp bounds) and
   applying Improve/Worsen verbs. The sign/clamp resolver exists; the modifier/engine/mutator-rule
@@ -112,11 +132,6 @@ design, not as a gap to eventually close.
   contributing ability, tier-3+ conditions (cross-unit or sibling-selection gating), a
   ranged-aura ability with no positional data to resolve against, and the "Ignore Modifiers" rule
   (needs each applied modifier tracked as a discrete, toggleable item).
-- **Fallback "known-affected, unresolved" effect marker.** When text clearly touches a
-  characteristic but matches no specific extraction pattern, emit an unresolved/caveated marker
-  instead of silently extracting nothing. A detection gate for "text mentions invulnerable save"
-  exists (`RuleEffectClassifier.MayStateInvulnerableSave`) but the marker type itself doesn't;
-  extending this to the six Statline scalars needs an equivalent gate for each first.
 - **Unit keyword grants/removals as a classified effect kind.** e.g. "Friendly BULLGRYN SQUAD/OGRYN
   SQUAD/RATLINGS units have ABHUMAN", "the bearer has the Grenades keyword", "loses the Smoke
   keyword" — a few dozen corpus texts (Grenades, Smoke, PENITENT, Officer, Soul Forge, a Faction

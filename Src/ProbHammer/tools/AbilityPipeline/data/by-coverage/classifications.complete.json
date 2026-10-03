@@ -1316,6 +1316,45 @@
     "ReviewStatus": "Pending",
     "ReviewerNote": null
   },
+  "08e20e06322846de362f926abfe7c46c6281b3a7997fbb7463199977c4a6cbd4": {
+    "Hash": "08e20e06322846de362f926abfe7c46c6281b3a7997fbb7463199977c4a6cbd4",
+    "Text": "This model has a 5+ invulnerable save against ranged attacks.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-03T15:22:42.0093996+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "InvulnerableSave",
+            "MeleeInSv": 0,
+            "RangedInSv": 5
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
   "0948d51cc31755c84bdaa60f9e398bb068ef69110bc2e1e0e36c5841fb47b758": {
     "Hash": "0948d51cc31755c84bdaa60f9e398bb068ef69110bc2e1e0e36c5841fb47b758",
     "Text": "While this unit is not Battle-shocked, add 3 to its Objective Control characteristic.",
@@ -12688,6 +12727,45 @@
     "ReviewStatus": "Pending",
     "ReviewerNote": null
   },
+  "58ebe32341277cce4f69fc301cd7ef5200ebce21d9e541ec679eae763ade736f": {
+    "Hash": "58ebe32341277cce4f69fc301cd7ef5200ebce21d9e541ec679eae763ade736f",
+    "Text": "This model has a 4+ invulnerable save against melee attacks.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-03T15:22:42.0116956+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "InvulnerableSave",
+            "MeleeInSv": 4,
+            "RangedInSv": 0
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "fight"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
   "5916aaed34565e863bd930786742965c87e769e05ecd2e7f351280bc637de7b7": {
     "Hash": "5916aaed34565e863bd930786742965c87e769e05ecd2e7f351280bc637de7b7",
     "Text": "The bearer has a Move characteristic of 7\" and a Save Characteristic of 3+.",
@@ -13387,6 +13465,45 @@
             "Characteristic": "D",
             "Verb": "improve",
             "Amount": 1
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "fight"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "5d106c885571681d373d78b2c200a64968304d341d89e4e774412d036fbf0fe7": {
+    "Hash": "5d106c885571681d373d78b2c200a64968304d341d89e4e774412d036fbf0fe7",
+    "Text": "Models in this unit have a 4+ invulnerable save against melee attacks.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-03T15:22:42.0105095+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "InvulnerableSave",
+            "MeleeInSv": 4,
+            "RangedInSv": 0
           },
           "ResidualConditionBucket": "none",
           "ConditionText": null,
@@ -18531,6 +18648,45 @@
           "Canonical": "Scouts 6\""
         }
       ],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "7fa0f3efe8fce186c2afb73832b6330108b4e113c07e4b33110d13d47bb4de59": {
+    "Hash": "7fa0f3efe8fce186c2afb73832b6330108b4e113c07e4b33110d13d47bb4de59",
+    "Text": "Models in this unit have a 5+ invulnerable save against ranged attacks.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-03T15:22:42.0113128+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "InvulnerableSave",
+            "MeleeInSv": 0,
+            "RangedInSv": 5
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [],
       "Unresolved": []
     },
     "EffectiveCoverageStatus": "complete",
@@ -37261,6 +37417,45 @@
           },
           "ResidualConditionBucket": "never",
           "ConditionText": "Only while the model is on top of the tower roof of this Fortification",
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "fbb325364b410ee205517051e8fa136a6e1b1b7a92f5a0692cba6982492340d1": {
+    "Hash": "fbb325364b410ee205517051e8fa136a6e1b1b7a92f5a0692cba6982492340d1",
+    "Text": "This model has a 4+ invulnerable save against ranged attacks.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-03T15:22:42.0109033+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "InvulnerableSave",
+            "MeleeInSv": 0,
+            "RangedInSv": 4
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
           "ChoiceBranch": null
         }
       ],

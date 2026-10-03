@@ -10,8 +10,7 @@ namespace ProbHammer.Tools.AbilityPipeline.Extractor;
 public static class Program
 {
     /// <summary>The bundled snapshot this repo actually ships and tests against
-    /// (src/ProbHammer.Web/BsData/*.json) - not the external live clone
-    /// <c>tools/RuleEffectClassificationReport</c> defaults to, so this tool runs out of the box on
+    /// (src/ProbHammer.Web/BsData/*.json) - not the external live clone, so this tool runs out of the box on
     /// any checkout with no extra setup. Still overridable via the first command-line argument to
     /// point at the external live clone instead.</summary>
     private static string DefaultClonePath([CallerFilePath] string here = "") =>

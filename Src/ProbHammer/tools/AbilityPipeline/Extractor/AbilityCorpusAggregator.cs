@@ -6,7 +6,7 @@ public sealed record AggregationResult(
     IReadOnlyDictionary<string, AbilityCorpusRecord> FreshRecords,
     int TotalRawOccurrences);
 
-/// <summary>Groups a corpus walk's raw occurrences by <see cref="RuleEffectClassifier.Normalize"/>d
+/// <summary>Groups a corpus walk's raw occurrences by <see cref="AbilityTextKey"/>
 /// text hash into one <see cref="AbilityCorpusRecord"/> per distinct text - the dedup step behind
 /// the extraction tool's "one record per distinct text" guarantee.</summary>
 public static class AbilityCorpusAggregator
@@ -21,8 +21,8 @@ public static class AbilityCorpusAggregator
         foreach (var occurrence in occurrences)
         {
             total++;
-            var normalized = RuleEffectClassifier.Normalize(occurrence.Text);
-            var hash = ContentHash.Of(normalized);
+            var normalized = AbilityTextKey.Normalize(occurrence.Text);
+            var hash = AbilityTextKey.Hash(normalized);
 
             if (texts.TryAdd(hash, normalized))
             {

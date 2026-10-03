@@ -1,3 +1,4 @@
+using ProbHammer.Tests.Domain.Fixtures;
 using System.Runtime.CompilerServices;
 using FluentAssertions;
 using ProbHammer.Core.Domain.Catalogue;
@@ -8,38 +9,14 @@ using ProbHammer.Web.Pages;
 
 namespace ProbHammer.Tests.Domain.Roster;
 
-/// <summary>Real-corpus verification for `resolve-weapon-characteristic-effects` - drives the full
-/// production pipeline (BsdataFactionResolver -> ResolvedBsdataCatalogue -> ArmyRosterEnricher.Enrich
-/// -> AttachedUnitAggregator.Build) against the real bundled BSData snapshot
-/// (`src/ProbHammer.Web/BsData/`) and the real checked-in `RuleClassificationBaseline`, not a
-/// hand-built fixture - mirrors <c>UnifiedCharacteristicEffectResolutionRegressionTests</c>'s own
-/// precedent and rationale.
-///
-/// A real, hand-verified finding drove this test's shape (recorded in tasks.md task 7.1): every one
-/// of the 19 checked-in weapon-characteristic baseline entries is either caveated (15, including
-/// this one - Adepta Sororitas' Zealot) or Crusade-mode-gated wargear this project's own
-/// `IsGameModeGated` mechanism already excludes before it ever becomes a present `Ability` (the
-/// remaining 4). No currently-importable ordinary roster produces a VISIBLE weapon-characteristic
-/// mutation yet - so this test instead proves the two things real corpus data can actually confirm
-/// today: the real `AttachedUnitAggregator.ApplyEffect` bug fixed alongside this change (design.md
-/// D8) no longer crashes on Zealot specifically (it would have, before this change - Zealot's own
-/// Target is Self, exactly the shape that threw), and a caveated match correctly leaves the real
-/// printed weapon value untouched.
-///
-/// `render-weapon-characteristic-effects` (this change) extends this same real-corpus pipeline
-/// through to `LivePlayModel.BuildUnitBlock` (task 5.1/5.2): Zealot's caveated match, invisible
-/// end-to-end before this change, now surfaces as a real, visible name-marker + legend on the
-/// Ministorum Priest's Power weapon row - the first real weapon-characteristic-effect result this
-/// project has produced against actual bundled BSData, not just a hand-built fixture.</summary>
+/// <summary>Drives the full production pipeline (BsdataFactionResolver -> ResolvedBsdataCatalogue ->
+/// ArmyRosterEnricher.Enrich -> AttachedUnitAggregator.Build) against the real bundled BSData
+/// snapshot, resolving against the checked-in catalogue.</summary>
 public class WeaponCharacteristicEffectRealCorpusTests
 {
     private static string BundledBsDataRoot([CallerFilePath] string here = "") =>
         Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "..", "..", "src", "ProbHammer.Web",
             "BsData"));
-
-    private static string BundledBaselinePath([CallerFilePath] string here = "") =>
-        Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "..", "..", "src", "ProbHammer.Web",
-            "Data", "RuleEffectClassifications.json"));
 
     [Fact]
     public void MinistorumPriestWithZealot_BuildsWithoutCrashing_AndLeavesItsWeaponUnmutated()
@@ -59,19 +36,16 @@ public class WeaponCharacteristicEffectRealCorpusTests
         var catalogue = ResolvedBsdataCatalogue.Build(source, fileName);
         var roster = ArmyRosterEnricher.Enrich(parsed, catalogue);
         var priest = roster.Units.Single();
-        var baseline = RuleClassificationBaseline.Load(BundledBaselinePath());
+        var classifications = ClassificationFixtures.CheckedIn;
 
-        // The real, previously-crashing call: before design.md D8's fix, Zealot's own baseline entry
-        // (Target: Self, Effects: [WeaponCharacteristicEffect(S), WeaponCharacteristicEffect(A)])
-        // reached ApplyStatlineFlagRules' ApplyEffect and threw ArgumentOutOfRangeException.
-        var view = AttachedUnitAggregator.Build(priest, baseline);
+        var view = AttachedUnitAggregator.Build(priest, classifications);
 
         view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Zealot");
 
         var weapon = view.Weapons.Should().ContainSingle(w => w.Profile.Name == "Power weapon").Subject;
         weapon.Profile.S.IsCaveated.Should().BeFalse();
         weapon.Profile.S.Value.Should().Be((CharacteristicValue)4); // the real printed value, unmutated
-        weapon.Profile.S.ContributingAbilities.Should().BeEmpty(); // Zealot is caveated - not applied
+        weapon.Profile.S.ContributingAbilities.Should().BeEmpty(); // Zealot is conditional - not applied
         weapon.UnresolvedAbilities.Should().ContainSingle(a => a.Name == "Zealot");
     }
 
@@ -93,9 +67,9 @@ public class WeaponCharacteristicEffectRealCorpusTests
         var catalogue = ResolvedBsdataCatalogue.Build(source, fileName);
         var roster = ArmyRosterEnricher.Enrich(parsed, catalogue);
         var priest = roster.Units.Single();
-        var baseline = RuleClassificationBaseline.Load(BundledBaselinePath());
+        var classifications = ClassificationFixtures.CheckedIn;
 
-        var view = AttachedUnitAggregator.Build(priest, baseline);
+        var view = AttachedUnitAggregator.Build(priest, classifications);
         var block = LivePlayModel.BuildUnitBlock(view);
 
         var weaponRow = block.MeleeWeapons.Should().ContainSingle(w => w.Entry.Profile.Name == "Power weapon").Subject;
@@ -114,8 +88,8 @@ public class WeaponCharacteristicEffectRealCorpusTests
     // Datasheet.TryResolveAbility path a wargear-granted ability like Vexilla already uses
     // (ArmyRosterEnricher.ResolveWargearItem falls back to it for any Weapons-list item that isn't a
     // weapon profile name) - so a real import naming it as a wargear item still resolves it as a
-    // present ability, and this test proves that real end-to-end path actually applies the real,
-    // checked-in, uncaveated baseline entry against a real BSData-resolved melee weapon.
+    // present ability, and this test proves that real end-to-end path actually applies its
+    // unconditional Attacks effect against a real BSData-resolved melee weapon.
     [Fact]
     public void ScorpionTail_IsExcludedFromChosensAbilitiesList_ButStillResolvesAndRendersWhenNamedAsWargear()
     {
@@ -136,9 +110,9 @@ public class WeaponCharacteristicEffectRealCorpusTests
 
         var roster = ArmyRosterEnricher.Enrich(parsed, catalogue);
         var chosen = roster.Units.Single();
-        var baseline = RuleClassificationBaseline.Load(BundledBaselinePath());
+        var classifications = ClassificationFixtures.CheckedIn;
 
-        var view = AttachedUnitAggregator.Build(chosen, baseline);
+        var view = AttachedUnitAggregator.Build(chosen, classifications);
 
         view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Scorpion Tail");
         var weapon = view.Weapons.Should().ContainSingle(w => w.Profile.Name == "Accursed weapon").Subject;

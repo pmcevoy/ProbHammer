@@ -220,7 +220,7 @@ public class BattleScribeRosterMapperTests
         var army = BuildRoster();
         var impulsor = army.Units.OfType<Unit>().Single(u => u.Name == "Impulsor");
 
-        var view = AttachedUnitAggregator.Build(impulsor, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
+        var view = AttachedUnitAggregator.Build(impulsor, ClassificationFixtures.ShieldDomeAndVexilla);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.InSv.IsCaveated.Should().BeFalse();
@@ -291,7 +291,7 @@ public class BattleScribeRosterMapperTests
         foreach (var line in guardianSpearLines)
             line.Weapons.Count(w => w == "Guardian Spear").Should().Be(1);
 
-        var view = AttachedUnitAggregator.Build(wardens, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(wardens, AbilityClassificationCatalogue.Empty);
         var guardianSpear = view.Weapons.Single(w => w.Name == "Guardian Spear");
         var totalWardens = guardianSpearLines.Sum(ml => ml.Count);
         guardianSpear.TotalAttacks.Should().Be(DiceExpression.Fixed(5 * totalWardens));

@@ -1,4 +1,5 @@
 using FluentAssertions;
+using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Roster;
 using ProbHammer.Web.Pages;
 

@@ -327,7 +327,7 @@ section covers only the visual decisions.
   `.stat-tile-flagged` amber background (the `--amber-tint` background/`--amber` border token, also
   used for a Battle-shocked OC tile) is reserved for a **resolved** run only — one whose displayed
   value is an actual computed result (e.g. `statline-flag-rules`' Vexilla, always resolved), never a
-  still-caveated one (`characteristic-modifier-caveats`' own candidates, and a caveated InSv) whose
+  still-caveated one (a caveated InSv) whose
   shown number is still the plain, unmutated catalogue value. Corrected by
   `classify-characteristic-modifier-caveats` after direct user review of a live caveated tile:
   painting a still-caveated value amber falsely reads as "already adjusted for you," when the marker

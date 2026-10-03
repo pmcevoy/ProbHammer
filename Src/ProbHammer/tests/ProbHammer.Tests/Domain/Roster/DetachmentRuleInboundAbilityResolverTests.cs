@@ -11,12 +11,12 @@ public class DetachmentRuleInboundAbilityResolverTests
 {
     private const string FaithFuelledResolveText = "Friendly SWORD BRETHREN SQUAD units have +1 OC.";
 
-    private static readonly RuleClassificationBaseline KeywordBaseline = RuleClassificationBaseline.FromEntries(
+    private static readonly AbilityClassificationCatalogue KeywordClassifications = ClassificationFixtures.Catalogue(
     [
-        new RuleClassificationBaselineEntry(
-            Text: FaithFuelledResolveText,
-            Target: new KeywordRuleTarget("SWORD BRETHREN SQUAD"),
-            Effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)])
+        ClassificationFixtures.Entry(
+            text: FaithFuelledResolveText,
+            target: new KeywordRuleTarget(["SWORD BRETHREN SQUAD"]),
+            effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)])
     ]);
 
     private static ResolvedDetachment MarshalsHousehold() =>
@@ -27,7 +27,7 @@ public class DetachmentRuleInboundAbilityResolverTests
     {
         var swordBrethren = UnitFixtures.SwordBrethrenSquadUniform();
 
-        DetachmentRuleInboundAbilityResolver.Apply([swordBrethren], [MarshalsHousehold()], KeywordBaseline);
+        DetachmentRuleInboundAbilityResolver.Apply([swordBrethren], [MarshalsHousehold()], KeywordClassifications);
 
         swordBrethren.InboundAbilities.Should().ContainSingle(a =>
             a.Name == "Faith-Fuelled Resolve" &&
@@ -37,11 +37,33 @@ public class DetachmentRuleInboundAbilityResolverTests
     }
 
     [Fact]
+    public void AMultiKeywordTarget_RequiresEveryKeyword()
+    {
+        const string text = "Friendly INFANTRY SWORD BRETHREN SQUAD units have +1 OC.";
+        var classifications = ClassificationFixtures.Catalogue(
+        [
+            ClassificationFixtures.Entry(
+                text: text,
+                target: new KeywordRuleTarget(["infantry", "SWORD BRETHREN SQUAD"]),
+                effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)])
+        ]);
+        var swordBrethren = UnitFixtures.SwordBrethrenSquadUniform();
+        var assaultIntercessors = UnitFixtures.AssaultIntercessorSquadWithUnitLeader();
+        var detachment = new ResolvedDetachment("Some Detachment", [new DetachmentRule("Some Rule", text)]);
+
+        DetachmentRuleInboundAbilityResolver.Apply([swordBrethren, assaultIntercessors], [detachment],
+            classifications);
+
+        swordBrethren.InboundAbilities.Should().ContainSingle(a => a.Name == "Some Rule");
+        assaultIntercessors.InboundAbilities.Should().BeEmpty();
+    }
+
+    [Fact]
     public void ANonMatchingUnit_IsUnaffected()
     {
         var nonMatching = UnitFixtures.AssaultIntercessorSquadWithUnitLeader();
 
-        DetachmentRuleInboundAbilityResolver.Apply([nonMatching], [MarshalsHousehold()], KeywordBaseline);
+        DetachmentRuleInboundAbilityResolver.Apply([nonMatching], [MarshalsHousehold()], KeywordClassifications);
 
         nonMatching.InboundAbilities.Should().BeEmpty();
     }
@@ -53,19 +75,19 @@ public class DetachmentRuleInboundAbilityResolverTests
         var attachedSwordBrethren = UnitFixtures.SwordBrethrenSquadUniform();
         var attachedUnit = new AttachedUnit(bodyguard, [attachedSwordBrethren]);
 
-        DetachmentRuleInboundAbilityResolver.Apply([attachedUnit], [MarshalsHousehold()], KeywordBaseline);
+        DetachmentRuleInboundAbilityResolver.Apply([attachedUnit], [MarshalsHousehold()], KeywordClassifications);
 
         attachedUnit.InboundAbilities.Should().ContainSingle(a => a.Name == "Faith-Fuelled Resolve");
     }
 
     [Fact]
-    public void ADetachmentRuleWithNoBaselineEntry_AttachesNothing()
+    public void ADetachmentRuleWithNoClassification_AttachesNothing()
     {
         var swordBrethren = UnitFixtures.SwordBrethrenSquadUniform();
-        var unbaselined = new ResolvedDetachment("Unknown Detachment",
-            [new DetachmentRule("Unbaselined Rule", "Some rule text with no baseline entry.")]);
+        var unclassified = new ResolvedDetachment("Unknown Detachment",
+            [new DetachmentRule("Unclassified Rule", "Some rule text with no classification.")]);
 
-        DetachmentRuleInboundAbilityResolver.Apply([swordBrethren], [unbaselined], KeywordBaseline);
+        DetachmentRuleInboundAbilityResolver.Apply([swordBrethren], [unclassified], KeywordClassifications);
 
         swordBrethren.InboundAbilities.Should().BeEmpty();
     }
@@ -77,14 +99,14 @@ public class DetachmentRuleInboundAbilityResolverTests
     {
         const string text = "Some other Detachment rule text.";
         var target = (RuleTarget)Activator.CreateInstance(targetType)!;
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(Text: text, Target: target, Effects: [])
+            ClassificationFixtures.Entry(text: text, target: target, effects: [])
         ]);
         var detachment = new ResolvedDetachment("Some Detachment", [new DetachmentRule("Some Rule", text)]);
         var swordBrethren = UnitFixtures.SwordBrethrenSquadUniform();
 
-        DetachmentRuleInboundAbilityResolver.Apply([swordBrethren], [detachment], baseline);
+        DetachmentRuleInboundAbilityResolver.Apply([swordBrethren], [detachment], classifications);
 
         swordBrethren.InboundAbilities.Should().BeEmpty();
     }

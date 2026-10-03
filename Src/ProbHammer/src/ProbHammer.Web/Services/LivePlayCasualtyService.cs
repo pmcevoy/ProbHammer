@@ -25,7 +25,7 @@ public class LivePlayCasualtyService(
     ISessionArmyListStore sessionStore,
     IArmyRosterProvider rosterProvider,
     IPhaseTurnStore phaseTurnStore,
-    RuleClassificationBaseline ruleClassificationBaseline)
+    AbilityClassificationCatalogue abilityClassifications)
     : ILivePlayCasualtyService
 {
     private static readonly LivePlaySyncResponse EmptyResponse = new([], []);
@@ -64,7 +64,7 @@ public class LivePlayCasualtyService(
             : [];
 
         var roster = LivePlayModel.RebuildRosterWithStatus(
-            result.Roster.Units, request.CasualtyAdjustments, request.StatusAdjustments, ruleClassificationBaseline);
+            result.Roster.Units, request.CasualtyAdjustments, request.StatusAdjustments, abilityClassifications);
         var fragments = new Dictionary<int, string>();
 
         foreach (var unitIndex in unitIndexes)

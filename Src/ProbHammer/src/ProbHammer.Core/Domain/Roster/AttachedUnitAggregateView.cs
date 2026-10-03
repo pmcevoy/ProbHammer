@@ -35,10 +35,10 @@ public sealed record AttacksContribution(Ability SourceAbility, int Amount);
 /// coincidentally share a model count). <c>-1</c> when the statline has only one <c>ModelLine</c>
 /// (no <c>Loadouts</c> rendered at all, so there is nothing to index).
 /// <see cref="UnresolvedAbilities"/> lists every present, bearer-scoped, selector-matched ability
-/// whose checked-in baseline entry is caveated - matched the same way an applied
+/// carrying a conditional weapon effect - matched the same way an applied
 /// <c>WeaponCharacteristicEffect</c> would be, but left unapplied, per
-/// <c>AttachedUnitAggregator.ResolveContributionProfile</c>'s own caveated-branch counterpart.
-/// Empty when no caveated match reaches this contribution. Independent of whether this
+/// <c>AttachedUnitAggregator.FindUnresolvedAbilities</c>.
+/// Empty when no conditional match reaches this contribution. Independent of whether this
 /// contribution's own <see cref="PerModelAttacks"/>/<see cref="Name"/> already reflect an applied
 /// mutation from a different, non-caveated ability.
 /// <see cref="AttacksContributions"/> is Attacks' own genuinely different mechanism

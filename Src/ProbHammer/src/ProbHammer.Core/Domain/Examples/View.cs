@@ -42,5 +42,5 @@ public static class View
     public static List<ICombatUnit> MyArmyRoster() => Roster().Units.ToList();
 
     public static List<AttachedUnitAggregateView> MyArmy() =>
-        MyArmyRoster().Select(unit => AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty)).ToList();
+        MyArmyRoster().Select(unit => AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty)).ToList();
 }

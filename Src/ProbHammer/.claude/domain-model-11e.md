@@ -50,14 +50,10 @@ already uses for the archived 10e docs.
   JSON import pipeline (no BSData involvement).
 - `.claude/domain-model/roster-context.md` — `Unit`/`AttachedUnit`/`ModelLine`/`ICombatUnit`,
   `AttachedUnitAggregator`'s aggregate view, and `ArmyRoster`.
-- `.claude/domain-model/statline-flag-rules.md` — how a matched `RuleClassificationBaseline` entry
-  derives a flagged, per-unit Statline value at roster-Build time.
-- `.claude/domain-model/characteristic-modifier-caveats.md` — `CharacteristicModifierCandidate`,
-  the structural (`BsModifier`-based) classifier; retired as a live mechanism, kept for the
-  offline report tool.
-- `.claude/domain-model/rule-effect-classification.md` — `RuleEffectClassifier`, the text-only
-  Target/Effect extractor, its regex patterns, the corpus report tool, and the checked-in
-  verified-classification baseline.
+- `.claude/domain-model/statline-flag-rules.md` — how an ability's classification derives a
+  flagged, per-unit Statline value at roster-Build time.
+- `.claude/domain-model/ability-classification-catalogue.md` — the runtime catalogue of LLM
+  ability classifications: hash key, file/export, the unconditional-effect rule, its consumers.
 - `.claude/domain-model/invulnerable-save-effect-resolution.md` — resolving a classified
   `InvulnerableSaveCharacteristicEffect` into a real `InvulnerableSaveCharacteristicView`.
 - `.claude/domain-model/phase-turn-tracker.md` — the player-set phase/turn control and the

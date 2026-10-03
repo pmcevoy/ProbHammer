@@ -4,7 +4,7 @@
 
 Resolves an `Improve`/`Worsen`/`Set` effect verb and amount into the correct signed mutation for a
 specific characteristic's own rulebook arithmetic family, and enforces that characteristic's legal
-value bounds afterward — the arithmetic step `rule-effect-classification` deliberately stops short
+value bounds afterward — the arithmetic step `ability-classification-catalogue` deliberately stops short
 of, and the step the existing hand-authored `statline-flag-rules` currently duplicate ad hoc.
 
 Scoped to the characteristics this codebase actually represents as a plain scalar value today — the
@@ -18,7 +18,7 @@ melee/ranged value with its own dedicated resolution path
 (`invulnerable-save`/`characteristic-value`), not a plain scalar — the same reason
 `characteristic-modifier-caveats` already excludes it from its own Field allowlist. A weapon's
 Attacks characteristic is also excluded: this codebase represents it as a bare `DiceExpression` with
-no resolution path yet — classifiable (`rule-effect-classification`'s own weapon-characteristic
+no resolution path yet — classifiable (`ability-classification-catalogue`'s own weapon-characteristic
 Effect extraction covers it) but not yet resolvable, a deliberately separate, later-sequenced piece
 of work from Damage's own resolution path.
 

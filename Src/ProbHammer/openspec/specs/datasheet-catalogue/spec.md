@@ -5,9 +5,7 @@
 Represents reference/rules data (the Catalogue context) for 40K unit types: Datasheets, their
 named statlines, on-demand weapon profile resolution, and Abilities. Independent of any specific
 army list. TBD: expand as this capability grows beyond its initial domain-model scope.
-
 ## Requirements
-
 ### Requirement: Datasheet Identity
 A Datasheet SHALL represent the reference/rules data for a single named unit type, independent of
 any specific army list, including its name, faction keywords, general keywords, and its intrinsic,
@@ -175,23 +173,6 @@ A Datasheet SHALL NOT represent wargear option constraints (minimum/maximum sele
 - **WHEN** a Datasheet is constructed from catalogue data
 - **THEN** it exposes no fields for wargear selection limits, composition counts, or points values
 
-### Requirement: On-Demand Characteristic-Modifier Candidate Exposure
-A Datasheet SHALL expose its classified characteristic-modifier candidates on demand, never as part
-of its always-enumerated Statlines or Abilities — mirroring the existing on-demand pattern for
-optional abilities and weapon profiles. A candidate SHALL describe its own granting selection, its
-targeted characteristic, and its modifier data, and SHALL NOT be applied to the Datasheet's own
-Statline or WeaponProfile fields — a Datasheet's own base characteristic values remain exactly as
-they would if no candidate existed.
-
-#### Scenario: A candidate is retrievable without altering the Datasheet's base values
-- **WHEN** a Datasheet has one or more classified characteristic-modifier candidates
-- **THEN** its own Statline and WeaponProfile fields are unchanged from their unmodified catalogue
-  values, and each candidate is retrievable through its own on-demand accessor
-
-#### Scenario: A Datasheet with no classified candidates exposes none
-- **WHEN** none of a Datasheet's selection entries carry a classifiable characteristic-modifier
-- **THEN** its on-demand candidate exposure is empty
-
 ### Requirement: Weapon Profile Verbatim Keyword Text
 A WeaponProfile SHALL retain the exact keyword text supplied by its source data, in source order,
 as its sole representation of the weapon's ability keywords — WeaponProfile SHALL NOT carry any
@@ -219,3 +200,4 @@ ever rendered or compared under some other canonical wording instead of its actu
 - **THEN** the produced WeaponProfile retains `"Cleave"` in its verbatim keyword text exactly as
   written, and rendering of that weapon's keywords shows `"Cleave"`, never `"Blast"` or any other
   keyword's own wording
+

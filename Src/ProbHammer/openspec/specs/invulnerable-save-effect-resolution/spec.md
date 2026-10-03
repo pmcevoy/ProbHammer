@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Resolves a classified invulnerable-save Effect (from the rule-effect-classification capability) and
+Resolves a classified invulnerable-save Effect (from the ability-classification-catalogue capability) and
 its source Ability into a real, displayable `InvulnerableSaveCharacteristicView` — the InSv-specific
 counterpart to the characteristic-modification-kind capability's scalar resolution, proven correct in
 isolation ahead of any roster-resolution-time wiring.

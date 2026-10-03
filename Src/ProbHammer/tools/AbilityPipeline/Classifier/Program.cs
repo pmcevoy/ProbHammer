@@ -19,11 +19,12 @@ var pendingBatchPath = Path.Combine(dataDir, "pending-batch.json");
 var vocabularyPath = Path.Combine(dataDir, "vocabulary.json");
 var promptDir = Path.Combine(RepoRoot(), "tools", "AbilityPipeline", "prompts", promptVersion);
 var fewShotPath = Path.Combine(RepoRoot(), "tools", "AbilityPipeline", "fewshot", "examples.json");
+var catalogueExportPath = Path.Combine(RepoRoot(), "src", "ProbHammer.Web", "Data", "ability-classifications.json");
 
 if (args.Length == 0)
 {
     Console.WriteLine(
-        "Usage: Classifier <submit [N|hash1,hash2,...]|collect|resolve|status|schema|check-fewshot|preview <hash>|report [file]>");
+        "Usage: Classifier <submit [N|hash1,hash2,...]|collect|resolve|export|status|schema|check-fewshot|preview <hash>|report [file]>");
     return 1;
 }
 
@@ -32,6 +33,7 @@ return args[0] switch
     "submit" => await SubmitAsync(),
     "collect" => await CollectAsync(),
     "resolve" => ResolveAll(),
+    "export" => Export(),
     "status" => await StatusAsync(),
     "schema" => WriteSchema(),
     "check-fewshot" => CheckFewShot(),
@@ -43,7 +45,7 @@ return args[0] switch
 int Unknown()
 {
     Console.WriteLine(
-        $"Unknown command '{args[0]}'. Use submit, collect, resolve, status, schema, check-fewshot, preview, or report.");
+        $"Unknown command '{args[0]}'. Use submit, collect, resolve, export, status, schema, check-fewshot, preview, or report.");
     return 1;
 }
 
@@ -80,6 +82,15 @@ int ResolveAll()
         .ToDictionary(kvp => kvp.Key, kvp => kvp.Value with { Resolution = resolver.Resolve(kvp.Value.Classification) });
     ClassificationFile.Save(classificationsPath, records);
     return Report(classificationsPath);
+}
+
+// Run resolve first after a vocabulary refresh - export substitutes names from each record's stored Resolution.
+int Export()
+{
+    var json = CatalogueExporter.Export(ClassificationFile.Load(classificationsPath), ExtractionFile.Load(corpusPath));
+    File.WriteAllText(catalogueExportPath, json);
+    Console.WriteLine($"Wrote catalogue to '{catalogueExportPath}'.");
+    return 0;
 }
 
 NameResolver? LoadResolver()

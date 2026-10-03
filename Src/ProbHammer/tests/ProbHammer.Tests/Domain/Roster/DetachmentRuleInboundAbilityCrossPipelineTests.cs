@@ -1,3 +1,4 @@
+using ProbHammer.Tests.Domain.Fixtures;
 using System.Runtime.CompilerServices;
 using FluentAssertions;
 using ProbHammer.Core.Domain.Catalogue;
@@ -11,17 +12,17 @@ namespace ProbHammer.Tests.Domain.Roster;
 /// <summary>Covers `army-roster-enrichment`'s "Both import pipelines produce identical
 /// InboundAbilities for equivalent input" scenario: the same Detachment + matching-keyword-unit
 /// shape, imported once via each pipeline, run through
-/// <see cref="DetachmentRuleInboundAbilityResolver"/> with the same baseline.</summary>
+/// <see cref="DetachmentRuleInboundAbilityResolver"/> with the same classifications.</summary>
 public class DetachmentRuleInboundAbilityCrossPipelineTests
 {
     private const string FaithFuelledResolveText = "Friendly SWORD BRETHREN SQUAD units have +1 OC.";
 
-    private static readonly RuleClassificationBaseline Baseline = RuleClassificationBaseline.FromEntries(
+    private static readonly AbilityClassificationCatalogue Classifications = ClassificationFixtures.Catalogue(
     [
-        new RuleClassificationBaselineEntry(
-            Text: FaithFuelledResolveText,
-            Target: new KeywordRuleTarget("SWORD BRETHREN SQUAD"),
-            Effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)])
+        ClassificationFixtures.Entry(
+            text: FaithFuelledResolveText,
+            target: new KeywordRuleTarget(["SWORD BRETHREN SQUAD"]),
+            effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)])
     ]);
 
     // Own CallerFilePath-based lookup rather than reusing BsdataFixtures.Source() - that helper's
@@ -69,8 +70,8 @@ public class DetachmentRuleInboundAbilityCrossPipelineTests
         var textRoster = BuildTextPipelineRoster();
         var battleScribeRoster = BuildBattleScribePipelineRoster();
 
-        DetachmentRuleInboundAbilityResolver.Apply(textRoster.Units, textRoster.Detachments, Baseline);
-        DetachmentRuleInboundAbilityResolver.Apply(battleScribeRoster.Units, battleScribeRoster.Detachments, Baseline);
+        DetachmentRuleInboundAbilityResolver.Apply(textRoster.Units, textRoster.Detachments, Classifications);
+        DetachmentRuleInboundAbilityResolver.Apply(battleScribeRoster.Units, battleScribeRoster.Detachments, Classifications);
 
         var textUnit = textRoster.Units.Should().ContainSingle().Subject;
         var battleScribeUnit = battleScribeRoster.Units.Should().ContainSingle().Subject;

@@ -4,7 +4,7 @@
   is trusted to have already produced a valid list.
 - No partial wound-count tracking — alive/dead per model-line only; physical wound markers cover
   the rest at the table.
-- Ability text classification (`RuleClassificationBaseline`, `classify-abilities-via-llm-batch`)
+- Ability text classification (`AbilityClassificationCatalogue`, `classify-abilities-via-llm-batch`)
   resolves only to *display* state — recomputing a rendered stat/keyword-chip — never to executing
   a game mechanic. What stays a permanent exclusion, not a deferral: a condition needing
   positional/objective-control state the domain has no way to represent even in principle (the

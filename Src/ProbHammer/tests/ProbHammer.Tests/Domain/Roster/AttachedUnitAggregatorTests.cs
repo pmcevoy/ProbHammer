@@ -11,7 +11,7 @@ public class AttachedUnitAggregatorTests
     public void StatlineView_TreatsDifferentlyNamedStatlinesAsDistinct_EvenWithEqualValues()
     {
         var unit = UnitFixtures.AssaultIntercessorSquadWithUnitLeader();
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         //Two statlines
         view.Statlines.Should().HaveCount(2);
@@ -29,7 +29,7 @@ public class AttachedUnitAggregatorTests
         var sergeant = unit.ModelLines.Single(x => x.StatlineName == "Assault Intercessor Sergeant");
         sergeant.RemoveCasualties(sergeant.Count);
 
-        var after = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var after = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         after.Statlines.Should().HaveCount(2);
         after.Statlines.Should().ContainSingle(s => s.StatlineName == "Assault Intercessor");
@@ -50,7 +50,7 @@ public class AttachedUnitAggregatorTests
             datasheet, [],
             [new ModelLine("Sergeant", [], count: 1), new ModelLine("Trooper", [], count: 4)]);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         view.Statlines.Select(s => s.StatlineName).Should().Equal("Sergeant", "Trooper");
     }
@@ -62,7 +62,7 @@ public class AttachedUnitAggregatorTests
         var powerFistLine = unit.ModelLines.Single(x => x.Weapons.Contains("Power fist"));
         powerFistLine.RemoveCasualties(powerFistLine.Count);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         var initiate = view.Statlines.Single(s => s.StatlineName == "Initiate");
         initiate.InitialCount.Should().Be(5); // 2 (removed) + 3 (surviving)
@@ -76,7 +76,7 @@ public class AttachedUnitAggregatorTests
         var powerFistLine = unit.ModelLines.Single(x => x.Weapons.Contains("Power fist"));
         powerFistLine.RemoveCasualties(powerFistLine.Count);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         var initiate = view.Statlines.Single(s => s.StatlineName == "Initiate");
         initiate.Loadouts.Should().HaveCount(2);
@@ -111,7 +111,7 @@ public class AttachedUnitAggregatorTests
                 new ModelLine("Custodian Warden", [], count: 1, abilities: [vexilla])
             ]);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         var entry = view.Statlines.Single(s => s.StatlineName == "Custodian Warden");
         entry.Loadouts.Should().HaveCount(2);
@@ -140,7 +140,7 @@ public class AttachedUnitAggregatorTests
                     displayName: "Plague Marine w/ boltgun")
             ]);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         var entry = view.Statlines.Single(s => s.StatlineName == "Plague Marine");
         entry.Loadouts.Should().HaveCount(2);
@@ -153,7 +153,7 @@ public class AttachedUnitAggregatorTests
     {
         var unit = UnitFixtures.CrusaderSquadMixedLoadout();
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         var initiate = view.Statlines.Single(s => s.StatlineName == "Initiate");
         initiate.Loadouts.Should().OnlyContain(l => l.DisplayName == "Initiate");
@@ -166,7 +166,7 @@ public class AttachedUnitAggregatorTests
         foreach (var modelLine in unit.ModelLines)
             modelLine.RemoveCasualties(modelLine.Count);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         view.Statlines.Should().ContainSingle();
         var initiate = view.Statlines.Single(s => s.StatlineName == "Initiate");
@@ -201,7 +201,7 @@ public class AttachedUnitAggregatorTests
 
         var attachedUnit = new AttachedUnit(bodyguard, [chaplain, ancient]);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.Statlines.Select(s => s.StatlineName).Should().Equal(
             "Chaplain", "Ancient", "Sword Brother", "Initiate");
@@ -218,7 +218,7 @@ public class AttachedUnitAggregatorTests
             datasheet, [],
             [new ModelLine("Sergeant", [], count: 1), new ModelLine("Trooper", [], count: 4)]);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         view.Statlines.Select(s => s.StatlineName).Should().Equal("Sergeant", "Trooper");
     }
@@ -240,7 +240,7 @@ public class AttachedUnitAggregatorTests
 
         var attachedUnit = new AttachedUnit(bodyguard, [leader]);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.Statlines.Should().HaveCount(2);
         view.Statlines.Should().OnlyContain(s => s.StatlineName == "Guardian");
@@ -253,7 +253,7 @@ public class AttachedUnitAggregatorTests
     {
         var attachedUnit = AttachedUnitFixtures.DefaultAttachedUnit();
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         var bodyguardEntries = view.Statlines.Where(s => s.ComponentName == "Crusader Squad").ToList();
         bodyguardEntries.Should().ContainSingle(s => s.StatlineName == "Initiate");
@@ -267,7 +267,7 @@ public class AttachedUnitAggregatorTests
     {
         var attachedUnit = AggregateViewFixtures.WeaponAggregationAttachedUnit();
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.Weapons.Should().ContainSingle();
         // 4 Bodyguard models x A3 + 1 Leader model x A7 = 19, not a count-only merge that discards
@@ -281,7 +281,7 @@ public class AttachedUnitAggregatorTests
         var attachedUnit = AggregateViewFixtures.WeaponAggregationAttachedUnit();
         attachedUnit.Bodyguard.ModelLines[0].RemoveCasualties(2);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.Weapons.Should().ContainSingle();
         // 2 surviving Bodyguard models x A3 + 1 Leader model x A7 = 13
@@ -293,7 +293,7 @@ public class AttachedUnitAggregatorTests
     {
         var attachedUnit = AggregateViewFixtures.WeaponAggregationAttachedUnit();
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         var entry = view.Weapons.Single();
         entry.Contributions.Should().HaveCount(2);
@@ -316,7 +316,7 @@ public class AttachedUnitAggregatorTests
         // no independently-addressable loadout to index, so LoadoutIndex is the -1 sentinel.
         var attachedUnit = AggregateViewFixtures.WeaponAggregationAttachedUnit();
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         var entry = view.Weapons.Single();
         entry.Contributions.Should().OnlyContain(c => c.LoadoutIndex == -1);
@@ -329,7 +329,7 @@ public class AttachedUnitAggregatorTests
         // the same order AttachedUnitAggregator.BuildStatlines already establishes for Loadouts.
         var unit = UnitFixtures.CrusaderSquadMixedLoadout();
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         var powerFistContribution = view.Weapons.Single(w => w.Profile.Name == "Power fist").Contributions.Single();
         powerFistContribution.LoadoutIndex.Should().Be(0);
@@ -344,7 +344,7 @@ public class AttachedUnitAggregatorTests
     {
         var attachedUnit = AggregateViewFixtures.DifferentlyModifiedWeaponsAttachedUnit();
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.Weapons.Should().HaveCount(2);
         var lethalHitsCopy = view.Weapons.Single(w => w.Profile.KeywordsText.Contains("Lethal Hits"));
@@ -376,7 +376,7 @@ public class AttachedUnitAggregatorTests
             datasheet, [],
             [new ModelLine("Scout", ["Bolt pistol", "Astartes shotgun", "Suppressive carbine"], count: 1)]);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         view.Weapons.Should().HaveCount(3);
         view.Weapons.Should()
@@ -392,7 +392,7 @@ public class AttachedUnitAggregatorTests
     {
         var attachedUnit = AggregateViewFixtures.WeaponAggregationAttachedUnit();
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.Weapons.Single().Name.Should().Be("Master-crafted power weapon");
     }
@@ -415,7 +415,7 @@ public class AttachedUnitAggregatorTests
             datasheet, [],
             [new ModelLine("Intercessor", [boltRifle.Name, combatRifle.Name], count: 1)]);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         view.Weapons.Should().ContainSingle();
         view.Weapons[0].Name.Should().Be("Bolt rifle and Combat rifle");
@@ -437,7 +437,7 @@ public class AttachedUnitAggregatorTests
             datasheet, [],
             [new ModelLine("Intercessor", [boltRifle.Name, combatRifle.Name, autoRifle.Name], count: 1)]);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         view.Weapons.Should().ContainSingle();
         view.Weapons[0].Name.Should().Be("Bolt rifle, Combat rifle, and Auto rifle");
@@ -448,7 +448,7 @@ public class AttachedUnitAggregatorTests
     {
         var attachedUnit = AggregateViewFixtures.ModelScopedAbilityAttachedUnit();
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.Abilities.Should().ContainSingle(e =>
             e.Ability.Name == "Righteous Zeal" && e.ComponentName == "Crusader Squad" && e.StatlineName == null);
@@ -459,7 +459,7 @@ public class AttachedUnitAggregatorTests
     {
         var attachedUnit = AggregateViewFixtures.ModelScopedAbilityAttachedUnit();
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.Abilities.Should().ContainSingle(e =>
             e.Ability.Name == "Iron Halo" && e.ComponentName == "Chaplain" && e.StatlineName == "Chaplain");
@@ -472,7 +472,7 @@ public class AttachedUnitAggregatorTests
         var leaderLine = attachedUnit.Attached[0].ModelLines[0];
         leaderLine.RemoveCasualties(1);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.Abilities.Should().NotContain(e => e.Ability.Name == "Iron Halo");
         view.Abilities.Should().Contain(e => e.Ability.Name == "Righteous Zeal"); // Datasheet-sourced, unaffected
@@ -507,7 +507,7 @@ public class AttachedUnitAggregatorTests
 
         var attachedUnit = new AttachedUnit(bodyguard, [leader]);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.Abilities.Where(e => e.Ability.Name == "Shared Name").Should().HaveCount(2);
         view.Abilities.Should()
@@ -535,7 +535,7 @@ public class AttachedUnitAggregatorTests
         ]);
         unit.ModelLines[0].RemoveCasualties(2); // first line fully removed, second still has 3
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Righteous Zeal");
     }
@@ -552,7 +552,7 @@ public class AttachedUnitAggregatorTests
             statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: []);
         var unit = new Unit(datasheet, [enhancement], [new ModelLine("Marshal", [], count: 1)]);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         view.Abilities.Should().ContainSingle(e =>
             e.Ability.Name == "Oathbound Exemplar" && e.ComponentName == "Marshal" && e.StatlineName == null);
@@ -571,7 +571,7 @@ public class AttachedUnitAggregatorTests
         var unit = new Unit(datasheet, [enhancement], [new ModelLine("Marshal", [], count: 1)]);
         unit.ModelLines[0].RemoveCasualties(1);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         view.Abilities.Should().NotContain(e => e.Ability.Name == "Oathbound Exemplar");
     }
@@ -584,7 +584,7 @@ public class AttachedUnitAggregatorTests
             statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: []);
         var unit = new Unit(datasheet, [], [new ModelLine("Marshal", [], count: 1)]);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         view.Abilities.Should().BeEmpty();
     }
@@ -606,7 +606,7 @@ public class AttachedUnitAggregatorTests
 
         var attachedUnit = new AttachedUnit(bodyguard, [leader]);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.Abilities.Where(e => e.Ability.Name == "Templar Vows").Should().ContainSingle();
         view.Abilities.Should().ContainSingle(e =>
@@ -635,7 +635,7 @@ public class AttachedUnitAggregatorTests
 
         var attachedUnit = new AttachedUnit(bodyguard, [leaderOne, leaderTwo]);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.Abilities.Where(e => e.Ability.Name == "Templar Vows").Should().ContainSingle();
         view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Templar Vows" && e.ComponentName == null);
@@ -659,7 +659,7 @@ public class AttachedUnitAggregatorTests
         var attachedUnit = new AttachedUnit(bodyguard, [leader]);
         leader.ModelLines[0].RemoveCasualties(1); // leader fully dead, bodyguard still present
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         // Only the Bodyguard still contributes now - still promoted (ComponentName null), since
         // an ArmyRule ability is an army-wide fact regardless of contributor count, not merely
@@ -687,7 +687,7 @@ public class AttachedUnitAggregatorTests
             statlines: [("Black Templars Impulsor", new Statline(12, 9, 3, 11, 6, 2))], weaponProfiles: []);
         var unit = new Unit(datasheet, [], [new ModelLine("Black Templars Impulsor", [], count: 1)]);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         var entry = view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Templar Vows").Subject;
         entry.ComponentName.Should().BeNull();
@@ -713,7 +713,7 @@ public class AttachedUnitAggregatorTests
         bodyguard.ModelLines[0].RemoveCasualties(3);
         leader.ModelLines[0].RemoveCasualties(1);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.Abilities.Should().NotContain(e => e.Ability.Name == "Templar Vows");
     }
@@ -737,7 +737,7 @@ public class AttachedUnitAggregatorTests
             InboundAbilities = [FaithFuelledResolve]
         };
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         var entry = view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Faith-Fuelled Resolve").Subject;
         entry.ComponentName.Should().BeNull();
@@ -762,7 +762,7 @@ public class AttachedUnitAggregatorTests
         };
         unit.ModelLines[0].RemoveCasualties(4);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         view.Abilities.Should().NotContain(e => e.Ability.Name == "Faith-Fuelled Resolve");
     }
@@ -772,7 +772,7 @@ public class AttachedUnitAggregatorTests
     {
         var unit = UnitFixtures.CrusaderSquadMixedLoadout();
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         view.Name.Should().Be(unit.Name).And.Be("Crusader Squad");
     }
@@ -782,7 +782,7 @@ public class AttachedUnitAggregatorTests
     {
         var attachedUnit = AttachedUnitFixtures.DefaultAttachedUnit();
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.Name.Should().Be(attachedUnit.Name).And.Be("Crusader Squad with Chaplain and Servitor");
     }
@@ -792,7 +792,7 @@ public class AttachedUnitAggregatorTests
     {
         var unit = UnitFixtures.CrusaderSquadMixedLoadout();
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(unit, AbilityClassificationCatalogue.Empty);
 
         view.IsAttachedUnit.Should().BeFalse();
     }
@@ -802,7 +802,7 @@ public class AttachedUnitAggregatorTests
     {
         var attachedUnit = AttachedUnitFixtures.DefaultAttachedUnit();
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.IsAttachedUnit.Should().BeTrue();
     }
@@ -812,7 +812,7 @@ public class AttachedUnitAggregatorTests
     {
         var attachedUnit = new AttachedUnit(UnitFixtures.CrusaderSquadMixedLoadout(), []);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.IsAttachedUnit.Should().BeTrue();
     }
@@ -822,7 +822,7 @@ public class AttachedUnitAggregatorTests
     {
         var attachedUnit = AttachedUnitFixtures.DefaultAttachedUnit();
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaseline.Empty);
+        var view = AttachedUnitAggregator.Build(attachedUnit, AbilityClassificationCatalogue.Empty);
 
         view.Keywords.Should().BeEquivalentTo(KeywordResolution.EffectiveKeywords(attachedUnit));
     }

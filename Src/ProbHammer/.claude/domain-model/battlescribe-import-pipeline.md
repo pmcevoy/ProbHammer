@@ -86,7 +86,7 @@ entryLink ancestry chain to walk) — UNVERIFIED, since the one real sample anal
 InSv at all. Since unify-characteristic-effect-resolution, it never attempts to interpret the
 linked ability's own Text either (mirroring `BsdataDatasheetMapper.ResolveInvulnerableSave`'s
 identical simplification) — a footnoted/split value always resolves to `Caveated(fallbackValue,
-ability)`, deferring real resolution to `AttachedUnitAggregator`'s own Build-time baseline lookup,
+ability)`, deferring real resolution to `AttachedUnitAggregator`'s own Build-time catalogue lookup,
 exactly mirroring the BSData pipeline's own wiring (invulnerable-save's "This resolution behavior
 SHALL be identical regardless of which import pipeline produced the Ability being matched").
 

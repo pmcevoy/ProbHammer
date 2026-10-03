@@ -68,7 +68,7 @@ public class InvulnerableSaveResolutionTests
         // (unify-characteristic-effect-resolution retired InvulnerableSaveCaveatClassifier from
         // this parse-time path); it always stays caveated, with a uniform fallback of the raw
         // footnoted digit on both sides, deferring real resolution to
-        // AttachedUnitAggregator's own Build-time baseline lookup.
+        // AttachedUnitAggregator's own Build-time catalogue lookup.
         var save = Resolve("Linked Ability Save Model");
 
         save.IsCaveated.Should().BeTrue();
@@ -86,7 +86,7 @@ public class InvulnerableSaveResolutionTests
         // Howling Banshee's shape: "4+* / 5+" - the mapper no longer interprets the footnoted
         // side's linked ability text itself; it always stays caveated, with a uniform fallback of
         // the plain (non-footnoted) digit on both sides, deferring real resolution to
-        // AttachedUnitAggregator's own Build-time baseline lookup.
+        // AttachedUnitAggregator's own Build-time catalogue lookup.
         var save = Resolve("Split Save Model");
 
         save.IsCaveated.Should().BeTrue();

@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
+using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Roster;
 using ProbHammer.Web.Pages;
 using static ProbHammer.Tests.Web.ImportTestHelper;

@@ -4,9 +4,9 @@ Full requirements: `openspec/changes/introduce-characteristic-modification-kind/
 int-only resolver/clamp), `openspec/changes/classify-weapon-characteristic-effects/` (Damage's
 dice-aware resolution path, described below). The bottom layer of the not-yet-built "Modification
 Engine" `.claude/vnext-ideas.md`'s "Characteristic-modification domain hardening" entry sketches —
-resolves an `EffectVerb` (`rule-effect-classification`'s `Improve`/`Worsen`/`Set`) plus a stated
+resolves an `EffectVerb` (`ability-classification-catalogue`'s `Improve`/`Worsen`/`Set`) plus a stated
 amount into the correct signed mutation for a characteristic's own rulebook arithmetic family, and
-enforces that characteristic's legal value bound afterward. `rule-effect-classification`
+enforces that characteristic's legal value bound afterward. `ability-classification-catalogue`
 deliberately stops short of this resolution; the two hand-authored `statline-flag-rules` (Shield
 Dome, Vexilla) each embed their own one-off arithmetic inline today, with no shared, tested
 sign/clamp logic behind either.
@@ -43,19 +43,12 @@ CharacteristicModificationResolver.Resolve(characteristic, current, verb, amount
                                        // DiceCharacteristicValue (Damage) vs. NumericCharacteristicValue
                                        // (every other in-scope characteristic) before falling through
                                        // to a symbolic value's own untouched pass-through
-CharacteristicModificationResolver.ResolveVerbFromRawDelta(kind, delta) -> (EffectVerb Verb, int Amount)
-                                       // see method's own doc comment (the inverse of ResolveDelta -
-                                       // an already-signed raw delta back to a rulebook Verb+amount);
-                                       // feeds the offline report tool's structural-derivation path
-                                       // only (see CharacteristicModifierCandidate's own doc
-                                       // comment) - not consumed at Build time.
 ```
 
 **Deliberately excludes InSv** — a scope correction made before any code was written, once the
 original draft (which folded InSv into `RollThreshold`) was found not to type-check against
 `InvulnerableSaveCharacteristicView`'s actual shape; see
-`introduce-characteristic-modification-kind/design.md`'s Context and Decisions for the full trail,
-and characteristic-modifier-caveats.md for the matching precedent.
+`introduce-characteristic-modification-kind/design.md`'s Context and Decisions for the full trail.
 
 **Attacks ("A") is now covered too, but through a genuinely different resolution shape**
 (`resolve-weapon-attacks-effects`) — `CharacteristicModificationResolver.ResolveAttacksAmount`
@@ -90,8 +83,7 @@ reproduced exactly via `CharacteristicModificationResolver.Resolve`; see
 couldn't serve as a second Statline proving example and how that risk is mitigated. `S`/`AP` (the
 `Plain`/`ArmourPenetration` kinds a real weapon characteristic can carry) get their first real
 proving example against genuine weapon data here — a real corpus run extracted 19 distinct
-`WeaponCharacteristicEffect` results (`rule-effect-classification.md`'s own "Weapon-characteristic
-Effects" section), several targeting `S`/`AP` directly (e.g. Chance for Glory, Conversion
+`WeaponCharacteristicEffect` results from the since-retired regex classifier, several targeting `S`/`AP` directly (e.g. Chance for Glory, Conversion
 Eradicator). `WS`/`BS` (already in `CharacteristicModificationKinds`' lookup table, added by an
 earlier change) stay unproven by a real *weapon* Effect - `classify-weapon-characteristic-effects`'s
 own weapon-characteristic vocabulary deliberately scopes to exactly Strength/Attacks/Armour
@@ -100,11 +92,5 @@ Skill/Ballistic Skill as a weapon characteristic does exist (see `.claude/vnext-
 recorded finding) - a future phase widening that vocabulary is what would give `WS`/`BS` their own
 first real weapon-Effect proving example.
 
-**Consumed today only by the corpus report tool's own structural-derivation path (Statline) and by
-unit tests directly (Damage)** — still no `AttachedUnitAggregator`/`/LivePlay` call site resolves a
-`WeaponCharacteristicEffect` against a real `WeaponProfile` (Phase 3 of the
-`WeaponProfile`-targeting rule effects plan, `.claude/vnext-ideas.md`); Damage's own resolver/clamp
-path is proven in isolation against hand-built fixtures first, the same sequencing this component's
-Statline coverage already used. See `classify-weapon-characteristic-effects/design.md`'s Non-Goals
-for the full out-of-scope list for this specific change (no `WeaponProfile` mutation, no
-weapon-selector-to-contribution resolution, no rendering).
+**Consumed by `AttachedUnitAggregator`** — Statline flags and weapon S/AP/D/A resolution, driven by
+the ability-classification catalogue (see ability-classification-catalogue.md).

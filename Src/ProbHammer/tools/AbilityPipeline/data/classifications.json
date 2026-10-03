@@ -4707,6 +4707,45 @@
     "ReviewStatus": "Pending",
     "ReviewerNote": null
   },
+  "08e20e06322846de362f926abfe7c46c6281b3a7997fbb7463199977c4a6cbd4": {
+    "Hash": "08e20e06322846de362f926abfe7c46c6281b3a7997fbb7463199977c4a6cbd4",
+    "Text": "This model has a 5+ invulnerable save against ranged attacks.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-03T15:22:42.0093996+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "InvulnerableSave",
+            "MeleeInSv": 0,
+            "RangedInSv": 5
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
   "08ea57c266c484d10de9256081ec9628ee6662410e5eda38ae43ab987e92009d": {
     "Hash": "08ea57c266c484d10de9256081ec9628ee6662410e5eda38ae43ab987e92009d",
     "Text": "In your Movement phase, when you select this model to Advance, you can spend 1 Pain token to Empower this model. While Empowered, units can disembark from this model after it has Advanced. Units that do so count as having made a Normal move that phase, and cannot declare a charge in the same turn, but can otherwise act normally in the remainder of the turn.",
@@ -46392,6 +46431,45 @@
     "ReviewStatus": "Pending",
     "ReviewerNote": null
   },
+  "58ebe32341277cce4f69fc301cd7ef5200ebce21d9e541ec679eae763ade736f": {
+    "Hash": "58ebe32341277cce4f69fc301cd7ef5200ebce21d9e541ec679eae763ade736f",
+    "Text": "This model has a 4+ invulnerable save against melee attacks.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-03T15:22:42.0116956+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "InvulnerableSave",
+            "MeleeInSv": 4,
+            "RangedInSv": 0
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "fight"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
   "590273ae8756cd90e3720b581ea9d9fe12dbe7b5e1543a7eea510c0a118a08b7": {
     "Hash": "590273ae8756cd90e3720b581ea9d9fe12dbe7b5e1543a7eea510c0a118a08b7",
     "Text": "Add 2 to the bearer's Objective Control characteristic, and at the end of your Command phase, if the bearer is within range of an objective marker that is not in your deployment zone, you gain 1CP. In addition, at the end of the battle, if the bearer was in your Crusade army and you won that battle, roll one D6: on a 4+, your Crusade force acquires one Archeotech Part.",
@@ -48705,6 +48783,45 @@
       "Unresolved": []
     },
     "EffectiveCoverageStatus": "unclassifiable",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "5d106c885571681d373d78b2c200a64968304d341d89e4e774412d036fbf0fe7": {
+    "Hash": "5d106c885571681d373d78b2c200a64968304d341d89e4e774412d036fbf0fe7",
+    "Text": "Models in this unit have a 4+ invulnerable save against melee attacks.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-03T15:22:42.0105095+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "InvulnerableSave",
+            "MeleeInSv": 4,
+            "RangedInSv": 0
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "fight"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
     "ReviewStatus": "Pending",
     "ReviewerNote": null
   },
@@ -68460,6 +68577,45 @@
       "Unresolved": []
     },
     "EffectiveCoverageStatus": "partial",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "7fa0f3efe8fce186c2afb73832b6330108b4e113c07e4b33110d13d47bb4de59": {
+    "Hash": "7fa0f3efe8fce186c2afb73832b6330108b4e113c07e4b33110d13d47bb4de59",
+    "Text": "Models in this unit have a 5+ invulnerable save against ranged attacks.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-03T15:22:42.0113128+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "AttachedUnit"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "InvulnerableSave",
+            "MeleeInSv": 0,
+            "RangedInSv": 5
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
     "ReviewStatus": "Pending",
     "ReviewerNote": null
   },
@@ -136701,6 +136857,45 @@
       "Unresolved": []
     },
     "EffectiveCoverageStatus": "partial",
+    "ReviewStatus": "Pending",
+    "ReviewerNote": null
+  },
+  "fbb325364b410ee205517051e8fa136a6e1b1b7a92f5a0692cba6982492340d1": {
+    "Hash": "fbb325364b410ee205517051e8fa136a6e1b1b7a92f5a0692cba6982492340d1",
+    "Text": "This model has a 4+ invulnerable save against ranged attacks.",
+    "PromptVersion": "v2",
+    "Model": "ClaudeSonnet5",
+    "ClassifiedAt": "2026-10-03T15:22:42.0109033+00:00",
+    "Classification": {
+      "Target": {
+        "kind": "Self"
+      },
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "InvulnerableSave",
+            "MeleeInSv": 0,
+            "RangedInSv": 4
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
+      "ChoiceGroups": [],
+      "Phases": [
+        "shooting"
+      ],
+      "TurnOwnership": null,
+      "UsageLimit": null,
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
+    },
+    "Resolution": {
+      "Resolved": [],
+      "Unresolved": []
+    },
+    "EffectiveCoverageStatus": "complete",
     "ReviewStatus": "Pending",
     "ReviewerNote": null
   },

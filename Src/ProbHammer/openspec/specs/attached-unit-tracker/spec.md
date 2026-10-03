@@ -138,51 +138,53 @@ entry's identity for rendering purposes — grouping/equality itself is unaffect
 already excluded from the structural profile equality above.
 
 Before this structural grouping runs, each contributing weapon's own resolved profile SHALL be
-mutated by every applicable Strength, Armour Penetration, or Damage weapon-characteristic Effect
-recorded against a checked-in, human-verified baseline entry whose classification is not caveated:
-an entry matches when a present ability on the contribution's own bearer (per Target-Scoped
-Application below) has normalized text equal to that baseline entry's own Text, and when the
-Effect's own weapon selector matches that contribution's weapon profile (an unqualified selector
+mutated by every applicable, unconditional (per `ability-classification-catalogue`'s Unconditional
+Effect Rule) Strength, Armour Penetration, or Damage weapon-characteristic effect in the
+ability-classification catalogue: an effect matches when a present ability on the contribution's own
+bearer (per Target-Scoped Application below) has a catalogue record containing it, and when the
+effect's own weapon selector matches that contribution's weapon profile (an unqualified selector
 matches any weapon; a class-qualified selector matches only a profile of the named weapon type; a
-name-qualified selector matches only a profile with that exact name). A caveated baseline entry's
-Effects SHALL NOT be applied. Grouping itself is otherwise unaffected — structural profile equality
+name-qualified selector matches only a profile with that exact name, ignoring case). A conditional
+effect SHALL NOT be applied. Grouping itself is otherwise unaffected — structural profile equality
 still determines which contributions combine into one entry, now evaluated against each
 contribution's own (possibly mutated) profile: a mutation reaching every current contributor of what
 would otherwise be one group leaves that group merged, reporting the mutated value; a mutation
 reaching only some of those contributors splits them into a separate entry from the unaffected ones.
 
-An applicable Attacks weapon-characteristic Effect, matched under the same Target-Scoped Application
-rule, does NOT mutate the contribution's own per-model Attacks value the way a Strength/Armour
-Penetration/Damage match does — Attacks is excluded from the structural profile equality above, so
-mutating it in place would have no grouping effect to produce and would discard the per-ability
-attribution a consumer needs. Instead, each aggregated entry SHALL retain, per contribution, a list
-of every matched, non-caveated Attacks Effect that reaches it — the source Ability and its own
-resolved signed per-model amount (per `weapon-characteristic-effect-resolution`'s "Resolving An
-Attacks-Characteristic Effect Into A Per-Model Amount") — leaving the contribution's own base
-per-model Attacks value unchanged. The aggregated entry's total Attacks value (above) SHALL be
-computed from each contribution's base per-model Attacks value plus the sum of that contribution's
-own recorded Attacks Effect amounts, scaled by its remaining count — a contribution with no recorded
-Attacks Effects contributes its plain base value, unaffected, exactly as today.
+An applicable, unconditional Attacks weapon-characteristic effect, matched under the same
+Target-Scoped Application rule, does NOT mutate the contribution's own per-model Attacks value the
+way a Strength/Armour Penetration/Damage match does — Attacks is excluded from the structural profile
+equality above, so mutating it in place would have no grouping effect to produce and would discard
+the per-ability attribution a consumer needs. Instead, each aggregated entry SHALL retain, per
+contribution, a list of every matched, unconditional Attacks effect that reaches it — the source
+Ability and its own resolved signed per-model amount (per `weapon-characteristic-effect-resolution`'s
+"Resolving An Attacks-Characteristic Effect Into A Per-Model Amount") — leaving the contribution's
+own base per-model Attacks value unchanged. The aggregated entry's total Attacks value (above) SHALL
+be computed from each contribution's base per-model Attacks value plus the sum of that
+contribution's own recorded Attacks effect amounts, scaled by its remaining count — a contribution
+with no recorded Attacks effects contributes its plain base value, unaffected, exactly as today.
 
-A matched baseline entry's own classified target scope SHALL determine which contributions it
-reaches — for a Strength/Armour Penetration/Damage mutation, or for an Attacks Effect's recorded
-per-contribution amount alike: a target scoped to the ability's own bearer SHALL reach only weapons
-contributed by that bearer's own model-line (when the matched ability is model-line-sourced) or by
-any model-line of that bearer's owning component (when the matched ability is component-wide); a
-target scoped to the bearer's whole attached unit SHALL reach matching weapons contributed by every
-component of the resolved unit, regardless of which component granted the matched ability. A matched
-entry whose own classified target is scoped to a named keyword, or is unconditionally roster-wide
-with no bearer/unit qualifier, SHALL NOT reach any contribution — the same outcome as an unmatched
-ability.
+A matched catalogue record's own classified target scope SHALL determine which contributions its
+effects reach — for a Strength/Armour Penetration/Damage mutation, an Attacks effect's recorded
+per-contribution amount, or an unresolved reference (below) alike: a target scoped to the ability's
+own bearer SHALL reach only weapons contributed by that bearer's own model-line (when the matched
+ability is model-line-sourced) or by any model-line of that bearer's owning component (when the
+matched ability is component-wide); a target scoped to the bearer's whole attached unit SHALL reach
+matching weapons contributed by every component of the resolved unit, regardless of which component
+granted the matched ability. A matched record whose own classified target is a set of keywords, or
+is unconditionally roster-wide with no bearer/unit qualifier, SHALL NOT reach any contribution — the
+same outcome as an unmatched ability.
 
-In addition, when a present ability's normalized text matches a checked-in baseline entry whose
-classification IS caveated, and that entry's own weapon selector matches a contribution's weapon
-profile under the same Target-Scoped Application matching rule above, the aggregate view SHALL
-record that contribution as carrying an unresolved ability reference naming the source ability —
-without mutating the profile or recording an Attacks Effect amount. This unresolved-reference signal
-is independent of the applied-mutation/recorded-amount signal above: a contribution can carry an
-applied mutation or a recorded Attacks amount from one matched ability and an unresolved reference
-from a different matched ability at the same time, and an aggregated entry whose contributions
+In addition, when a present ability's catalogue record contains a conditional Strength, Armour
+Penetration, Damage or Attacks weapon-characteristic effect whose weapon selector matches a
+contribution's weapon profile under the same Target-Scoped Application matching rule above, the
+aggregate view SHALL record that contribution as carrying an unresolved ability reference naming the
+source ability — without mutating the profile or recording an Attacks effect amount for that effect.
+The applied/unresolved split is decided per effect, not per record: one record can contribute an
+applied mutation through one unconditional effect and an unresolved reference through another,
+conditional effect. This unresolved-reference signal is independent of the applied-mutation/
+recorded-amount signal above: a contribution can carry an applied mutation or a recorded Attacks
+amount and an unresolved reference at the same time, and an aggregated entry whose contributions
 collectively carry at least one unresolved reference anywhere in the group SHALL report that fact at
 the entry level as well as at the individual contribution level, so a consumer can flag the group
 without inspecting every contribution.
@@ -231,47 +233,54 @@ without inspecting every contribution.
 
 #### Scenario: A bearer-scoped weapon-characteristic effect splits an otherwise-merged group
 - **WHEN** two model-lines from different components carry structurally identical melee weapons,
-  and one of those model-lines' own bearer carries a present ability matching a checked-in,
-  non-caveated baseline entry whose weapon selector matches that weapon and names Strength, Armour
+  and one of those model-lines' own bearer carries a present ability whose catalogue record contains
+  an unconditional effect whose weapon selector matches that weapon and names Strength, Armour
   Penetration, or Damage
 - **THEN** the aggregate view shows two separate entries — one reporting the mutated value for the
   affected contribution, one reporting the original value for the unaffected one
 
 #### Scenario: A unit-scoped weapon-characteristic effect keeps every reached contributor merged
 - **WHEN** every present model-line of a resolved unit carries a structurally identical weapon
-  matching a checked-in, non-caveated baseline entry whose classified target is scoped to the
+  matching an unconditional effect in a catalogue record whose classified target is scoped to the
   bearer's whole attached unit
 - **THEN** the aggregate view shows one merged entry reporting the mutated value, combining every
   contributor exactly as it would if none of them had been mutated
 
 #### Scenario: A caveated baseline entry does not mutate a weapon profile
-- **WHEN** a present ability's normalized text matches a checked-in baseline entry whose
-  classification is caveated
-- **THEN** no weapon profile is mutated by that entry, and the affected weapon's aggregate entry
+- **WHEN** a present ability's catalogue record contains a weapon-characteristic effect that is
+  conditional
+- **THEN** no weapon profile is mutated by that effect, and the affected weapon's aggregate entry
   reports its original, unmutated value
 
 #### Scenario: A caveated baseline entry surfaces an unresolved ability reference
-- **WHEN** a present ability's normalized text matches a checked-in baseline entry whose
-  classification is caveated, and that entry's weapon selector matches a contribution's weapon
-  profile under the same bearer/unit target-scoping rule an applied effect would use
+- **WHEN** a present ability's catalogue record contains a conditional weapon-characteristic effect
+  whose weapon selector matches a contribution's weapon profile under the same bearer/unit
+  target-scoping rule an applied effect would use
 - **THEN** the affected contribution carries an unresolved ability reference naming that ability,
   and the aggregated entry containing that contribution reports the group as having an unresolved
   reference, even though no value was mutated or recorded
 
 #### Scenario: An unresolved reference and an applied mutation can coexist on one contribution
-- **WHEN** a contribution's bearer carries two present abilities matching two different checked-in
-  baseline entries with matching weapon selectors — one caveated, one not — each naming a different
-  characteristic on the same weapon
-- **THEN** the contribution's resolved profile reflects the non-caveated entry's mutation, and the
-  contribution still carries an unresolved ability reference naming the caveated entry's own ability
+- **WHEN** a contribution's bearer carries two present abilities whose catalogue records each contain
+  a weapon-characteristic effect with a matching weapon selector — one conditional, one not — each
+  naming a different characteristic on the same weapon
+- **THEN** the contribution's resolved profile reflects the unconditional effect's mutation, and the
+  contribution still carries an unresolved ability reference naming the conditional effect's own
+  ability
+
+#### Scenario: One record can both apply and defer
+- **WHEN** a present ability's catalogue record contains an unconditional Strength effect and a
+  conditional Damage effect, both matching a contribution's weapon
+- **THEN** the contribution's Strength is mutated, its Damage is not, and it carries an unresolved
+  ability reference naming that ability
 
 #### Scenario: A class-qualified weapon selector leaves a non-matching weapon type unaffected
-- **WHEN** a present ability matches a checked-in, non-caveated baseline entry whose weapon selector
-  is scoped to melee weapons, and the same bearer also contributes a ranged weapon
+- **WHEN** a present ability's catalogue record contains an unconditional effect whose weapon
+  selector is scoped to melee weapons, and the same bearer also contributes a ranged weapon
 - **THEN** the bearer's melee weapon is mutated and the bearer's ranged weapon is not
 
 #### Scenario: An unresolvable characteristic within an otherwise-applicable effect is left unapplied
-- **WHEN** a matched, non-caveated baseline entry's Effects include both a characteristic this
+- **WHEN** a matched catalogue record's unconditional effects include both a characteristic this
   mechanism resolves (Strength, Armour Penetration, Damage, or Attacks) and a characteristic it does
   not yet resolve (e.g. Weapon Skill or Ballistic Skill), scoped to the same weapon
 - **THEN** the resolvable characteristic's value is mutated or recorded as applicable, and the
@@ -279,29 +288,29 @@ without inspecting every contribution.
   outright or the aggregation failing
 
 #### Scenario: A matched effect naming both Attacks and a structural characteristic resolves both, independently
-- **WHEN** a matched, non-caveated baseline entry's Effects include both the Attacks characteristic
+- **WHEN** a matched catalogue record's unconditional effects include both the Attacks characteristic
   and a resolvable structural characteristic (Strength, Armour Penetration, or Damage), scoped to the
   same weapon
 - **THEN** the contribution's structural characteristic value is mutated, and a separate Attacks
-  Effect amount naming the same source ability is recorded against the contribution — neither
+  effect amount naming the same source ability is recorded against the contribution — neither
   displaces the other
 
 #### Scenario: A matched Attacks effect is recorded as a per-contribution amount, not a profile mutation
-- **WHEN** a present ability matches a checked-in, non-caveated baseline entry whose Effects include
-  the Attacks characteristic, and whose weapon selector matches a contribution's weapon profile
+- **WHEN** a present ability's catalogue record contains an unconditional Attacks effect whose weapon
+  selector matches a contribution's weapon profile
 - **THEN** that contribution records the source ability and its own resolved per-model amount, and
   the contribution's own base per-model Attacks value — the one feeding this weapon's structural
   profile equality — is left unchanged
 
 #### Scenario: A contribution's total Attacks reflects its base value plus every recorded amount
-- **WHEN** a contribution has one or more recorded Attacks Effect amounts alongside its own base
+- **WHEN** a contribution has one or more recorded Attacks effect amounts alongside its own base
   per-model Attacks value
 - **THEN** the aggregated entry's total Attacks value sums, for that contribution, its base value
   plus every recorded amount, scaled by the contribution's own remaining count
 
 #### Scenario: A recorded Attacks amount never splits or merges a group
 - **WHEN** two contributions share an identical structural profile, and one of them has a recorded
-  Attacks Effect amount while the other does not
+  Attacks effect amount while the other does not
 - **THEN** both contributions remain in the same aggregated entry, since a recorded Attacks amount
   plays no part in the structural profile equality that determines grouping
 

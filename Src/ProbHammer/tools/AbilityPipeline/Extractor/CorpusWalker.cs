@@ -7,8 +7,7 @@ namespace ProbHammer.Tools.AbilityPipeline.Extractor;
 /// into a single <see cref="AbilityCorpusRecord"/> once grouped by normalized-text hash.</summary>
 public readonly record struct RawOccurrence(string Name, string Text, string SourceKind, string Location);
 
-/// <summary>Walks the entire BSData corpus once, reusing
-/// <c>tools/RuleEffectClassificationReport/Program.cs</c>'s own corpus-resolution calls verbatim
+/// <summary>Walks the entire BSData corpus once, reusing ProbHammer.Core's own corpus-resolution calls
 /// (local + shared rules, always-enumerated <see cref="Datasheet.Abilities"/>, on-demand
 /// Enhancement/OptionalGrant abilities, Detachment rule text) - no independent parsing of
 /// <c>catalogueLinks</c>/<c>infoLink</c>/<c>infoGroup</c> structures, per this pipeline's own
@@ -97,6 +96,17 @@ public static class CorpusWalker
                 foreach (var ability in datasheet.Abilities)
                     yield return new RawOccurrence(ability.Name, ability.Text, SourceKinds.ForOrigin(ability.Origin),
                         $"{fileName} :: '{entry.Name}' ability '{ability.Name}'");
+
+                // A footnoted InSv's linked ability isn't in Abilities, but LivePlay resolves the
+                // caveat through its classification.
+                foreach (var (statlineName, statline) in datasheet.Statlines)
+                {
+                    if (!statline.InSv.IsCaveated)
+                        continue;
+                    foreach (var caveat in statline.InSv.ContributingAbilities)
+                        yield return new RawOccurrence(caveat.Name, caveat.Text, SourceKinds.ForOrigin(caveat.Origin),
+                            $"{fileName} :: '{entry.Name}' statline '{statlineName}' InSv caveat '{caveat.Name}'");
+                }
 
                 foreach (var optionalName in datasheet.OptionalAbilityNames)
                 {

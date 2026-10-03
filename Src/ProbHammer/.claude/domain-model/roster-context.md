@@ -93,8 +93,8 @@ WeaponContribution(ComponentName, StatlineName, Count, PerModelAttacks, Name: st
   // name are otherwise indistinguishable by ComponentName/StatlineName alone, and Count isn't
   // reliable either, since two loadouts can coincidentally share a model count).
   // UnresolvedAbilities (resolve-weapon-characteristic-effects) names every present, bearer-scoped,
-  // selector-matched ability whose checked-in baseline entry is caveated - matched the same way an
-  // applied WeaponCharacteristicEffect would be, but left unapplied.
+  // selector-matched ability carrying a conditional WeaponCharacteristicEffect - matched the same
+  // way an applied one would be, but left unapplied.
   // AttacksContributions (resolve-weapon-attacks-effects) - see AttacksContribution below and
   // "Weapon-characteristic effect resolution" further down.
 
@@ -150,8 +150,8 @@ AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ab
   name changed, from an arbitrary single contributor's Name to this composite.
 - **Weapon-characteristic effect resolution** (`resolve-weapon-characteristic-effects`,
   `resolve-weapon-attacks-effects`) — before `EqualityKey` grouping runs, `BuildWeapons` resolves
-  each contribution's own base `WeaponProfile` against every present, non-caveated, bearer-scoped,
-  selector-matched `WeaponCharacteristicEffect` from the checked-in `RuleClassificationBaseline`,
+  each contribution's own base `WeaponProfile` against every present, unconditional, bearer-scoped,
+  selector-matched `WeaponCharacteristicEffect` from the ability-classification catalogue,
   via two genuinely different mechanisms depending on the named characteristic:
   - **S/AP/D** (`ResolveContributionProfile`) — mutates the matched field in place via
     `WeaponCharacteristicEffectResolver.Resolve`, the same "mutate a `ScalarCharacteristicView`

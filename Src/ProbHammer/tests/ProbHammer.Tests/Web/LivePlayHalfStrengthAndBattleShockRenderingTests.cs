@@ -33,8 +33,8 @@ public class LivePlayHalfStrengthAndBattleShockRenderingTests : IClassFixture<We
         var httpContext = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
         var renderer = scope.ServiceProvider.GetRequiredService<IRazorPartialRenderer>();
 
-        var baseline = scope.ServiceProvider.GetRequiredService<RuleClassificationBaseline>();
-        var view = AttachedUnitAggregator.Build(unit, baseline);
+        var classifications = scope.ServiceProvider.GetRequiredService<AbilityClassificationCatalogue>();
+        var view = AttachedUnitAggregator.Build(unit, classifications);
         var unitBlock = LivePlayModel.BuildUnitBlock(view, unit);
         var glossary = RuleGlossary.Build(new BsdataClosure([]));
         var model = new UnitBlockRenderModel(0, unitBlock, glossary);

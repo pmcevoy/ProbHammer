@@ -11,14 +11,28 @@ Unconditional Effect Rule). When a record's matched ability is present on a spec
 is one this capability applies to (per Target-Scoped Application below), the system SHALL derive a
 flagged value for the Statline characteristic(s) named by that record's unconditional Statline scalar
 and invulnerable-save effects, replacing or adjusting the Datasheet's own base value for display on
-that unit, and SHALL record a reference back to the matched ability for each flagged value. Effects
-of any other kind SHALL NOT affect the Statline.
+that unit, and SHALL record a reference back to the matched ability for each flagged value. An
+invulnerable-save effect SHALL be combined with the existing value per side (melee, ranged), keeping
+the better save, so that a side the effect does not name, or names with a worse save, keeps its
+existing value; an effect improving neither side SHALL leave the value unflagged. Effects of any other
+kind SHALL NOT affect the Statline.
 
 #### Scenario: A matched ability grants a new invulnerable save value
 - **WHEN** a resolved unit carries an ability whose text has a catalogue record classifying it ("The
   bearer has a 5+ invulnerable save.") as an unconditional invulnerable-save effect of 5+
 - **THEN** that unit's displayed invulnerable save is flagged with a value of 5+, referencing that
   ability as its source
+
+#### Scenario: A one-sided invulnerable-save grant keeps the other side's existing save
+- **WHEN** a resolved unit with a 5+ invulnerable save carries an ability whose catalogue record
+  classifies it as an unconditional 4+ invulnerable save against ranged attacks only
+- **THEN** that unit's displayed invulnerable save is flagged as 5+ melee and 4+ ranged, referencing
+  that ability as its source
+
+#### Scenario: A worse invulnerable-save grant leaves the value unflagged
+- **WHEN** a resolved unit with a 4+ invulnerable save carries an ability whose catalogue record
+  classifies it as an unconditional 5+ invulnerable save
+- **THEN** that unit's invulnerable save stays 4+ and is not flagged on that ability's behalf
 
 #### Scenario: A matched ability adjusts an existing characteristic value
 - **WHEN** a resolved unit carries an ability whose text has a catalogue record classifying it ("Add

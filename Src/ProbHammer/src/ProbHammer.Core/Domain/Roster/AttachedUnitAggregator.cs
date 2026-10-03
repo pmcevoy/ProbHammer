@@ -9,7 +9,8 @@ namespace ProbHammer.Core.Domain.Roster;
 /// </summary>
 public static class AttachedUnitAggregator
 {
-    public static AttachedUnitAggregateView Build(ICombatUnit combatUnit, RuleClassificationBaseline baseline)
+    public static AttachedUnitAggregateView Build(ICombatUnit combatUnit,
+        AbilityClassificationCatalogue classifications)
     {
         var presentLines = combatUnit.Components
             .SelectMany(unit => unit.ModelLines.Select(modelLine => (Unit: unit, ModelLine: modelLine)))
@@ -17,31 +18,28 @@ public static class AttachedUnitAggregator
             .ToList();
 
         var abilities = BuildAbilities(combatUnit);
-        var statlines = ResolveCaveatedInvulnerableSaves(BuildStatlines(combatUnit), baseline);
-        statlines = ApplyStatlineFlagRules(statlines, abilities, baseline);
+        var statlines = ResolveCaveatedInvulnerableSaves(BuildStatlines(combatUnit), classifications);
+        statlines = ApplyStatlineFlagRules(statlines, abilities, classifications);
 
         return new AttachedUnitAggregateView(
             Name: combatUnit.Name,
             IsAttachedUnit: combatUnit is AttachedUnit,
             Statlines: statlines,
-            Weapons: BuildWeapons(presentLines, abilities, baseline),
+            Weapons: BuildWeapons(presentLines, abilities, classifications),
             Abilities: abilities,
             Keywords: KeywordResolution.EffectiveKeywords(combatUnit));
     }
 
-    // A caveated Statline.InSv gets exactly one resolution attempt against the checked-in baseline,
-    // via the same InvulnerableSaveEffectResolver ApplyInvulnerableSaveEffect (below) already uses
-    // for an ordinary present ability. Deliberately narrow - scoped to InSv only, reading
-    // Statline.InSv directly rather than joining through BuildAbilities' present-ability list -
-    // since Datasheet's own exclusion of the InSv-caveat-internal ability names (see
+    // A caveated Statline.InSv gets exactly one resolution attempt against the catalogue, via the
+    // same InvulnerableSaveEffectResolver ApplyInvulnerableSaveEffect (below) already uses for an
+    // ordinary present ability. Deliberately narrow - scoped to InSv only, reading Statline.InSv
+    // directly rather than joining through BuildAbilities' present-ability list - since Datasheet's
+    // own exclusion of the InSv-caveat-internal ability names (see
     // Datasheet.IsExcludedFromGeneralAbilityWalk) already ensures that ability is never
-    // independently "present" for ApplyStatlineFlagRules to also match: there is no
-    // ability-presence collision left here to coordinate against, so ordering relative to
-    // ApplyStatlineFlagRules doesn't matter for correctness. Placed before it only because "resolve
-    // what's already known to need resolving, then apply ability-presence-driven flags" reads most
-    // naturally.
+    // independently "present" for ApplyStatlineFlagRules to also match, so ordering relative to
+    // ApplyStatlineFlagRules doesn't matter for correctness.
     private static IReadOnlyList<AggregateStatlineEntry> ResolveCaveatedInvulnerableSaves(
-        IReadOnlyList<AggregateStatlineEntry> statlines, RuleClassificationBaseline baseline) =>
+        IReadOnlyList<AggregateStatlineEntry> statlines, AbilityClassificationCatalogue classifications) =>
         statlines.Select(entry =>
         {
             var insv = entry.Statline.InSv;
@@ -49,15 +47,14 @@ public static class AttachedUnitAggregator
                 return entry;
 
             var sourceAbility = insv.ContributingAbilities[0];
-            var normalizedText = RuleEffectClassifier.Normalize(sourceAbility.Text);
-            if (!baseline.TryGet(normalizedText, out var baselineEntry))
+            if (!classifications.TryGet(sourceAbility.Text, out var classification))
                 return entry;
 
-            var effect = baselineEntry.Effects.OfType<InvulnerableSaveCharacteristicEffect>().FirstOrDefault();
+            var effect = classification.UnconditionalEffects<InvulnerableSaveCharacteristicEffect>().FirstOrDefault();
             if (effect is null)
                 return entry;
 
-            var resolved = InvulnerableSaveEffectResolver.Resolve(effect, sourceAbility, insv);
+            var resolved = InvulnerableSaveEffectResolver.ResolveCaveat(effect, sourceAbility, insv);
             return entry with { Statline = entry.Statline with { InSv = resolved } };
         }).ToList();
 
@@ -88,15 +85,14 @@ public static class AttachedUnitAggregator
     // Runs after BuildStatlines/BuildAbilities produce their live, casualty-filtered results -
     // abilities is already filtered to only currently-present sources, so a matched entry's
     // liveness falls out for free with no separate tracking. Never mutates Datasheet/Unit; only the
-    // returned decorated copy of the statline entries carries an effect. Looks up each present
-    // ability's own normalized Text against the checked-in RuleClassificationBaseline - never
-    // Name+Text, and never a live call to RuleEffectClassifier.Classify.
+    // returned decorated copy of the statline entries carries an effect. Only unconditional effects
+    // apply.
     private static IReadOnlyList<AggregateStatlineEntry> ApplyStatlineFlagRules(
         IReadOnlyList<AggregateStatlineEntry> statlines, IReadOnlyList<AggregateAbilityEntry> abilities,
-        RuleClassificationBaseline baseline)
+        AbilityClassificationCatalogue classifications)
     {
         var matches = abilities
-            .Select(a => (Entry: a, Matched: TryGetApplicableEntry(baseline, a.Ability)))
+            .Select(a => (Entry: a, Matched: TryGetStatlineClassification(classifications, a.Ability)))
             .Where(x => x.Matched is not null)
             .ToList();
 
@@ -112,32 +108,27 @@ public static class AttachedUnitAggregator
                 return entry;
 
             var mutated = entry.Statline;
-            foreach (var (abilityEntry, baselineEntry) in applicable)
-            foreach (var effect in baselineEntry!.Effects)
+            foreach (var (abilityEntry, classification) in applicable)
+            foreach (var effect in classification!.UnconditionalEffects<RuleEffect>())
                 mutated = ApplyEffect(mutated, effect, abilityEntry.Ability);
 
             return entry with { Statline = mutated };
         }).ToList();
     }
 
-    // A baseline entry whose own classified target this capability can't yet apply (KeywordRuleTarget/
+    // A classification whose own target this capability can't yet apply (KeywordRuleTarget/
     // UnconditionalRuleTarget - no roster-wide predicate evaluation exists) produces no match at all,
-    // the same outcome as an ability matching no baseline entry - EXCEPT a DetachmentRule-origin
-    // ability (statline-flag-rules' Target-Scoped Application exception): its own keyword-scoped
-    // target has already been evaluated against the resolved roster by
-    // DetachmentRuleInboundAbilityResolver before it was ever attached as a present ability here, so
-    // re-excluding it for being KeywordRuleTarget-classified would just undo that already-completed
-    // match.
-    private static RuleClassificationBaselineEntry? TryGetApplicableEntry(RuleClassificationBaseline baseline,
-        Ability ability)
-    {
-        var normalizedText = RuleEffectClassifier.Normalize(ability.Text);
-        return baseline.TryGet(normalizedText, out var entry) &&
-               (entry.Target is SelfRuleTarget or AttachedUnitRuleTarget ||
-                ability.Origin == AbilityOrigin.DetachmentRule)
-            ? entry
+    // the same outcome as an unclassified ability - EXCEPT a DetachmentRule-origin ability
+    // (statline-flag-rules' Target-Scoped Application exception): its own keyword target has already
+    // been evaluated against the resolved roster by DetachmentRuleInboundAbilityResolver before it
+    // was ever attached as a present ability here.
+    private static AbilityClassification? TryGetStatlineClassification(
+        AbilityClassificationCatalogue classifications, Ability ability) =>
+        classifications.TryGet(ability.Text, out var classification) &&
+        (classification.Target is SelfRuleTarget or AttachedUnitRuleTarget ||
+         ability.Origin == AbilityOrigin.DetachmentRule)
+            ? classification
             : null;
-    }
 
     // SelfRuleTarget applies to the matched ability's own (ComponentName, StatlineName): one specific
     // model-line when StatlineName is set, the whole component when it's null (a Datasheet-level or
@@ -161,28 +152,16 @@ public static class AttachedUnitAggregator
             : abilityEntry.ComponentName == componentName;
     }
 
-    // If two baseline-matched entries would both touch the same characteristic of the same statline
+    // If two matched classifications would both touch the same characteristic of the same statline
     // entry, the first applied wins and the second is skipped - "skip if the field already carries a
-    // contributing ability", no separate accumulate logic. No real corpus example needs this today.
-    //
-    // A WeaponCharacteristicEffect is a real, expected case here, not an unrecognized one - a
-    // present ability's baseline entry can carry it alongside (or instead of) a Statline-shaped
-    // effect, and ApplyStatlineFlagRules' own TryGetApplicableEntry only filters by Target, not by
-    // Effect subtype (deliberately - it doesn't know about weapon effects at all). Pre-existing bug
-    // found while wiring resolve-weapon-characteristic-effects: 17 of the 19 real, checked-in
-    // weapon-characteristic baseline entries are Self-targeted, so any roster carrying one of those
-    // abilities already reached this switch's old default arm and threw
-    // ArgumentOutOfRangeException, before this change existed - a WeaponCharacteristicEffect is
-    // simply irrelevant to Statline resolution and must be skipped, not treated as an
-    // unrecognized/error case; ResolveContributionProfile (BuildWeapons, below) is what actually
-    // applies it.
-    private static Statline ApplyEffect(Statline statline, CharacteristicEffect effect, Ability sourceAbility) =>
+    // contributing ability", no separate accumulate logic. Every other effect kind leaves the
+    // Statline alone; weapon effects are applied by BuildWeapons.
+    private static Statline ApplyEffect(Statline statline, RuleEffect effect, Ability sourceAbility) =>
         effect switch
         {
             ScalarCharacteristicEffect scalar => ApplyScalarEffect(statline, scalar, sourceAbility),
             InvulnerableSaveCharacteristicEffect insv => ApplyInvulnerableSaveEffect(statline, insv, sourceAbility),
-            WeaponCharacteristicEffect => statline,
-            _ => throw new ArgumentOutOfRangeException(nameof(effect))
+            _ => statline
         };
 
     // The one missing piece of glue CharacteristicModificationResolver itself doesn't provide -
@@ -208,7 +187,7 @@ public static class AttachedUnitAggregator
         if (statline.InSv.ContributingAbilities.Count > 0)
             return statline;
 
-        return statline with { InSv = InvulnerableSaveEffectResolver.Resolve(effect, sourceAbility, statline.InSv) };
+        return statline with { InSv = InvulnerableSaveEffectResolver.Merge(effect, sourceAbility, statline.InSv) };
     }
 
     // Component display order: an AttachedUnit's Attached units first, in their list order, then
@@ -274,7 +253,7 @@ public static class AttachedUnitAggregator
     // no new logic to do this (resolve-weapon-characteristic-effects design.md D5).
     private static IReadOnlyList<AggregateWeaponEntry> BuildWeapons(
         List<(Unit Unit, ModelLine ModelLine)> presentLines,
-        IReadOnlyList<AggregateAbilityEntry> abilities, RuleClassificationBaseline baseline)
+        IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications)
     {
         var groups = new Dictionary<WeaponProfileEqualityKey,
             (WeaponProfile Profile, DiceExpression TotalAttacks, List<WeaponContribution> Contributions)>();
@@ -284,10 +263,11 @@ public static class AttachedUnitAggregator
             foreach (var weaponName in modelLine.Weapons)
             {
                 var baseProfile = unit.Datasheet.ResolveWeaponProfile(weaponName);
-                var profile = ResolveContributionProfile(baseProfile, unit, modelLine, abilities, baseline);
-                var unresolvedAbilities = FindUnresolvedAbilities(baseProfile, unit, modelLine, abilities, baseline);
+                var profile = ResolveContributionProfile(baseProfile, unit, modelLine, abilities, classifications);
+                var unresolvedAbilities =
+                    FindUnresolvedAbilities(baseProfile, unit, modelLine, abilities, classifications);
                 var attacksContributions =
-                    ResolveAttacksContributions(baseProfile, unit, modelLine, abilities, baseline);
+                    ResolveAttacksContributions(baseProfile, unit, modelLine, abilities, classifications);
                 var key = profile.EqualityKey();
 
                 var contribution = new WeaponContribution(
@@ -321,24 +301,18 @@ public static class AttachedUnitAggregator
             .ToList();
     }
 
-    // Applies every present, non-caveated, bearer-scoped, selector-matched WeaponCharacteristicEffect
+    // Applies every present, unconditional, bearer-scoped, selector-matched WeaponCharacteristicEffect
     // to this contribution's own resolved profile before EqualityKey grouping runs (see BuildWeapons'
-    // own comment). Reads the same abilities list BuildAbilities already assembles - no separate
-    // per-component walk. An Attacks-characteristic effect is filtered out here - it's handled
-    // entirely by ResolveAttacksContributions' own separate path instead (design.md D2), never by
+    // own comment). An Attacks-characteristic effect is filtered out here - it's handled entirely by
+    // ResolveAttacksContributions' own separate path instead, never by
     // WeaponCharacteristicEffectResolver, which stays fail-loud for that case.
     private static WeaponProfile ResolveContributionProfile(
         WeaponProfile profile, Unit unit, ModelLine modelLine,
-        IReadOnlyList<AggregateAbilityEntry> abilities, RuleClassificationBaseline baseline)
+        IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications)
     {
-        var applicableEffects = abilities
-            .Select(a => (Entry: a, Matched: TryGetWeaponEffectEntry(baseline, a.Ability, isCaveated: false)))
-            .Where(x => x.Matched is not null)
-            .Where(x => IsBearerOf(x.Entry, x.Matched!.Target, unit.Datasheet.Name, modelLine.StatlineName))
-            .SelectMany(x => x.Matched!.Effects.OfType<WeaponCharacteristicEffect>()
-                .Where(e => e.Characteristic is "S" or "AP" or "D")
-                .Where(e => WeaponSelectorMatches(e.Selector, profile))
-                .Select(e => (Effect: e, SourceAbility: x.Entry.Ability)));
+        var applicableEffects = MatchedWeaponEffects(profile, unit, modelLine, abilities, classifications,
+                c => c.UnconditionalEffects<WeaponCharacteristicEffect>())
+            .Where(x => x.Effect.Characteristic is "S" or "AP" or "D");
 
         var resolved = profile;
         foreach (var (effect, sourceAbility) in applicableEffects)
@@ -347,70 +321,49 @@ public static class AttachedUnitAggregator
         return resolved;
     }
 
-    // Sibling to ResolveContributionProfile, for the Attacks characteristic specifically
-    // (design.md D1/D2): identical IsBearerOf/WeaponSelectorMatches/TryGetWeaponEffectEntry
-    // matching against the same unmutated base profile, but collects a list of signed per-model
-    // deltas instead of mutating a WeaponProfile field - there is no WeaponProfile.A
-    // ScalarCharacteristicView field to mutate, and folding several abilities' amounts into one
-    // resolved value would discard the per-ability attribution the render layer needs.
+    // Sibling to ResolveContributionProfile, for the Attacks characteristic specifically: collects a
+    // list of signed per-model deltas instead of mutating a WeaponProfile field - there is no
+    // WeaponProfile.A ScalarCharacteristicView field to mutate, and folding several abilities'
+    // amounts into one resolved value would discard the per-ability attribution the render layer
+    // needs.
     private static IReadOnlyList<AttacksContribution> ResolveAttacksContributions(
         WeaponProfile profile, Unit unit, ModelLine modelLine,
-        IReadOnlyList<AggregateAbilityEntry> abilities, RuleClassificationBaseline baseline)
-    {
-        return abilities
-            .Select(a => (Entry: a, Matched: TryGetWeaponEffectEntry(baseline, a.Ability, isCaveated: false)))
-            .Where(x => x.Matched is not null)
-            .Where(x => IsBearerOf(x.Entry, x.Matched!.Target, unit.Datasheet.Name, modelLine.StatlineName))
-            .SelectMany(x => x.Matched!.Effects.OfType<WeaponCharacteristicEffect>()
-                .Where(e => e.Characteristic == "A")
-                .Where(e => WeaponSelectorMatches(e.Selector, profile))
-                .Select(e => new AttacksContribution(
-                    x.Entry.Ability, CharacteristicModificationResolver.ResolveAttacksAmount(e))))
+        IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications) =>
+        MatchedWeaponEffects(profile, unit, modelLine, abilities, classifications,
+                c => c.UnconditionalEffects<WeaponCharacteristicEffect>())
+            .Where(x => x.Effect.Characteristic == "A")
+            .Select(x => new AttacksContribution(
+                x.SourceAbility, CharacteristicModificationResolver.ResolveAttacksAmount(x.Effect)))
             .ToList();
-    }
 
-    // Caveated-branch counterpart to ResolveContributionProfile (design.md D5): identical
-    // IsBearerOf/WeaponSelectorMatches matching against the same unmutated base profile, admitting a
-    // caveated baseline entry instead of a non-caveated one, and never mutating the profile - only
-    // naming the source ability so a caveated match is still visible without evaluating the
-    // activation condition this app has no mechanism for (attached-unit-tracker's "Aggregate Weapon
-    // Count View" requirement). Includes Attacks alongside S/AP/D (design.md D2) - a caveated
-    // Attacks match still surfaces via this same unresolved-ability-reference mechanism, unlike the
-    // non-caveated case above, which routes Attacks through ResolveAttacksContributions instead.
+    // Conditional counterpart to the two methods above: never mutates the profile, only names the
+    // source ability so a conditional effect is still visible without evaluating its condition.
+    // Includes Attacks alongside S/AP/D.
     private static IReadOnlyList<Ability> FindUnresolvedAbilities(
         WeaponProfile profile, Unit unit, ModelLine modelLine,
-        IReadOnlyList<AggregateAbilityEntry> abilities, RuleClassificationBaseline baseline)
-    {
-        return abilities
-            .Select(a => (Entry: a, Matched: TryGetWeaponEffectEntry(baseline, a.Ability, isCaveated: true)))
-            .Where(x => x.Matched is not null)
-            .Where(x => IsBearerOf(x.Entry, x.Matched!.Target, unit.Datasheet.Name, modelLine.StatlineName))
-            .Where(x => x.Matched!.Effects.OfType<WeaponCharacteristicEffect>()
-                .Where(e => e.Characteristic is "S" or "AP" or "D" or "A")
-                .Any(e => WeaponSelectorMatches(e.Selector, profile)))
-            .Select(x => x.Entry.Ability)
+        IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications) =>
+        MatchedWeaponEffects(profile, unit, modelLine, abilities, classifications,
+                c => c.ConditionalEffects<WeaponCharacteristicEffect>())
+            .Where(x => x.Effect.Characteristic is "S" or "AP" or "D" or "A")
+            .Select(x => x.SourceAbility)
             .DistinctBy(a => (a.Name, a.Text))
             .ToList();
-    }
 
-    // A baseline entry's own weapon-characteristic Effects are only ever applied when its
-    // classification is NOT caveated - deliberately diverges from TryGetApplicableEntry's own
-    // Statline precedent above (which applies regardless of IsCaveated), since this family's
-    // caveats are disproportionately real, unmodeled activation conditions rather than harmless
-    // trailing flavor text (design.md D4). Same KeywordRuleTarget/UnconditionalRuleTarget exclusion
-    // as the Statline case - no roster-wide predicate evaluation exists. isCaveated selects which
-    // branch a caller wants: false for the applied-mutation path, true for the unresolved-reference
-    // path (FindUnresolvedAbilities, above) - both read the identical Target-scoping rule.
-    private static RuleClassificationBaselineEntry? TryGetWeaponEffectEntry(
-        RuleClassificationBaseline baseline, Ability ability, bool isCaveated)
-    {
-        var normalizedText = RuleEffectClassifier.Normalize(ability.Text);
-        return baseline.TryGet(normalizedText, out var entry) &&
-               entry.IsCaveated == isCaveated &&
-               entry.Target is SelfRuleTarget or AttachedUnitRuleTarget
-            ? entry
-            : null;
-    }
+    // Every weapon effect (chosen by effectsOf) of a present ability whose classification targets the
+    // bearer or its unit, reaching this contribution and matching its profile. Keyword/Unconditional
+    // targets never reach a weapon - no roster-wide predicate evaluation exists, and unlike the
+    // Statline path there's no DetachmentRule-origin exception here.
+    private static IEnumerable<(WeaponCharacteristicEffect Effect, Ability SourceAbility)> MatchedWeaponEffects(
+        WeaponProfile profile, Unit unit, ModelLine modelLine,
+        IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications,
+        Func<AbilityClassification, IEnumerable<WeaponCharacteristicEffect>> effectsOf) =>
+        abilities
+            .Select(a => (Entry: a, Classification: classifications.TryGet(a.Ability.Text, out var c) ? c : null))
+            .Where(x => x.Classification?.Target is SelfRuleTarget or AttachedUnitRuleTarget)
+            .Where(x => IsBearerOf(x.Entry, x.Classification!.Target, unit.Datasheet.Name, modelLine.StatlineName))
+            .SelectMany(x => effectsOf(x.Classification!)
+                .Where(e => WeaponSelectorMatches(e.Selector, profile))
+                .Select(e => (Effect: e, SourceAbility: x.Entry.Ability)));
 
     private static bool WeaponSelectorMatches(WeaponSelector selector, WeaponProfile profile) =>
         selector switch

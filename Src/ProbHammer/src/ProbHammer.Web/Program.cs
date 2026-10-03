@@ -26,14 +26,11 @@ var bsdataSource = new LocalDiskBsdataCatalogueSource(bsdataRoot);
 builder.Services.AddSingleton<IBsdataCatalogueSource>(bsdataSource);
 builder.Services.AddSingleton(new BsdataCatalogueCache(bsdataSource));
 
-// The human-verified rule/ability -> characteristic-Effect vocabulary AttachedUnitAggregator
-// consults at runtime (apply-rule-effect-baseline) - loaded once, mirrors BsdataCatalogueCache's own
-// ContentRootPath-resolved root convention. A missing file loads as an empty baseline rather than
-// throwing (RuleClassificationBaseline.Load's own contract).
-var ruleClassificationBaselinePath = Path.Combine(
+// Exported by the ability pipeline (Classifier export); a missing file loads as an empty catalogue.
+var abilityClassificationsPath = Path.Combine(
     builder.Environment.ContentRootPath,
-    builder.Configuration["RuleEffectClassifications:FilePath"] ?? "Data/RuleEffectClassifications.json");
-builder.Services.AddSingleton(RuleClassificationBaseline.Load(ruleClassificationBaselinePath));
+    builder.Configuration["AbilityClassifications:FilePath"] ?? "Data/ability-classifications.json");
+builder.Services.AddSingleton(AbilityClassificationCatalogue.Load(abilityClassificationsPath));
 
 builder.Services.AddSingleton<IArmyListParser, ArmyListParser>();
 builder.Services.AddSingleton<IArmyRosterProvider, ArmyRosterProvider>();

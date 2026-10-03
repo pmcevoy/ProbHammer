@@ -166,37 +166,29 @@ SWORD BRETHREN SQUAD units have +1 OC.") - previously reference-only text printe
 
 ```
 DetachmentRuleInboundAbilityResolver.Apply(units: IReadOnlyList<ICombatUnit>,
-    detachments: IReadOnlyList<ResolvedDetachment>, baseline: RuleClassificationBaseline)
-                                       // Domain.Roster, independent of Domain.Catalogue.Bsdata (same
-                                       // precedent as ArmyRuleNameLookup/
-                                       // InvulnerableSaveCaveatClassifier) - so one implementation
-                                       // serves both import pipelines. For each DetachmentRule across
-                                       // every ResolvedDetachment, normalizes its Text
-                                       // (RuleEffectClassifier.Normalize) and looks it up via
-                                       // baseline.TryGet - never a live RuleEffectClassifier.Classify
-                                       // call, mirroring AttachedUnitAggregator.
-                                       // ApplyStatlineFlagRules's own lookup convention. When a match
-                                       // exists and its Target is a KeywordRuleTarget, appends one
-                                       // synthesized Ability (Name/Text verbatim from the
+    detachments: IReadOnlyList<ResolvedDetachment>, classifications: AbilityClassificationCatalogue)
+                                       // Domain.Roster, independent of Domain.Catalogue.Bsdata - so
+                                       // one implementation serves both import pipelines. For each
+                                       // DetachmentRule across every ResolvedDetachment, looks up its
+                                       // Text in the ability-classification catalogue. When a
+                                       // classification exists and its Target is a KeywordRuleTarget,
+                                       // appends one synthesized Ability (Name/Text verbatim from the
                                        // DetachmentRule, Scope Unit, Origin DetachmentRule - see
                                        // AbilityOrigin's own doc comment) to InboundAbilities for
                                        // every unit whose KeywordResolution.EffectiveKeywords
-                                       // contains that keyword. A rule with no baseline entry, or
-                                       // whose matched Target is not KeywordRuleTarget
-                                       // (SelfRuleTarget/UnconditionalRuleTarget - no meaningful
-                                       // "self" to bind to for an abstract army-level rule, or no
-                                       // confirmed real example yet), attaches nothing.
+                                       // contains every one of the target's keywords (case-
+                                       // insensitive). A rule with no classification, or whose
+                                       // Target is not KeywordRuleTarget, attaches nothing.
 ```
 
 Downstream consumption: `AttachedUnitAggregator.BuildAbilities` reads `InboundAbilities` as a second
 "reported once, belonging to no single component" source (see "Roster Context" in
-roster-context.md's `Abilities` section); `AttachedUnitAggregator.TryGetApplicableEntry`/`IsBearerOf`
-(the `statline-flag-rules` bearer-scope check) treat a `DetachmentRule`-origin ability as
-WholeUnit-scoped regardless of its own baseline entry's classified `Target`, since its own
-keyword-scoped target has already been evaluated against the resolved roster by this resolver before
-it was ever attached as a present ability. `AttachedUnitAggregator.BuildWeapons`' own separate
-bearer-scope check is untouched - no real Detachment-rule baseline entry classified so far carries a
-`WeaponCharacteristicEffect`.
+roster-context.md's `Abilities` section); `AttachedUnitAggregator.TryGetStatlineClassification`/
+`IsBearerOf` (the `statline-flag-rules` bearer-scope check) treat a `DetachmentRule`-origin ability
+as WholeUnit-scoped regardless of its own classified `Target`, since its keyword target has already
+been evaluated against the resolved roster by this resolver. `AttachedUnitAggregator.BuildWeapons`'
+own bearer-scope check has no such exception - a keyword-targeted Detachment rule never reaches a
+weapon (see ability-classification-catalogue.md).
 
 ### Session-Backed Import (`ProbHammer.Web`)
 
@@ -218,12 +210,12 @@ IArmyRosterProvider.Build(StoredArmyImport) -> ArmyRosterBuildResult
                                        // see interface's own doc comment. Since
                                        // apply-detachment-rule-keyword-targets, calls
                                        // DetachmentRuleInboundAbilityResolver.Apply(roster.Units,
-                                       // roster.Detachments, baseline) once, after either pipeline's
+                                       // roster.Detachments, classifications) once, after either pipeline's
                                        // BuildFromText/BuildFromBattleScribe has already constructed
                                        // its own ArmyRoster - one shared call site for both
                                        // pipelines, mutating each matched unit's InboundAbilities in
                                        // place (see "Roster Context" in roster-context.md).
-                                       // ArmyRosterProvider gained a RuleClassificationBaseline
+                                       // ArmyRosterProvider takes the AbilityClassificationCatalogue
                                        // constructor parameter (already a registered DI singleton).
 
 ImportModel (/Import Razor Page)      // paste box + submit - see class's own doc comment (format

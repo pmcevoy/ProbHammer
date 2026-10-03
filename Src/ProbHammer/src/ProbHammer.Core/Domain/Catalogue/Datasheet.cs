@@ -22,10 +22,6 @@ public sealed class Datasheet
     private readonly IReadOnlyDictionary<string, Ability> _optionalAbilities;
     private readonly IReadOnlyDictionary<string, IReadOnlySet<string>> _modelKeywordsByName;
 
-    /// <summary>Classified, data-derived characteristic-modifier candidates - selection-blind
-    /// catalog data, never applied to this Datasheet's own Statline fields.</summary>
-    public IReadOnlyList<CharacteristicModifierCandidate> CharacteristicModifierCandidates { get; }
-
     // These three names only ever restate attachment eligibility a resolved roster's own attachment
     // relationships already represent directly - excluded regardless of source (Intrinsic or Core
     // Rule).
@@ -73,8 +69,7 @@ public sealed class Datasheet
         IReadOnlyList<(string Name, Statline Statline)> statlines,
         IEnumerable<WeaponProfile> weaponProfiles,
         IEnumerable<Ability>? optionalAbilities = null,
-        IEnumerable<(string Name, IReadOnlySet<string> Keywords)>? modelKeywords = null,
-        IEnumerable<CharacteristicModifierCandidate>? characteristicModifierCandidates = null)
+        IEnumerable<(string Name, IReadOnlySet<string> Keywords)>? modelKeywords = null)
     {
         Name = name;
         Keywords = new HashSet<string>(keywords, StringComparer.OrdinalIgnoreCase);
@@ -87,7 +82,6 @@ public sealed class Datasheet
             .ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
         _modelKeywordsByName =
             (modelKeywords ?? []).ToDictionary(x => x.Name, x => x.Keywords, StringComparer.OrdinalIgnoreCase);
-        CharacteristicModifierCandidates = (characteristicModifierCandidates ?? []).ToList();
     }
 
     public Statline GetStatline(string name) =>

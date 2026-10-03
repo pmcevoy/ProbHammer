@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 namespace ProbHammer.Tools.AbilityPipeline.Classifier.Models;
 
 /// <summary>Whole-record coverage triage - see design.md's "Coverage status per classification, not
-/// a numeric confidence score" decision. Recovers the role the old regex classifier's
-/// <c>RuleClassification.IsCaveated</c> flag played (Principle #6: "Never silently claim full
+/// a numeric confidence score" decision. Recovers the role the retired regex classifier's
+/// caveat flag played (Principle #6: "Never silently claim full
 /// understanding of partially-understood text"), generalized to a category plus a plain-English
 /// note rather than a single boolean or a poorly-calibrated numeric score. Distinct from per-effect
 /// <see cref="ResidualConditionBucket"/>: that triages a condition on an effect that WAS extracted;

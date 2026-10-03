@@ -58,11 +58,11 @@ AbilityClassification(RuleTarget Target, IReadOnlyList<ClassifiedEffect> Effects
     GameTurn? TurnOwnership, UsageLimit? UsageLimit, CoverageStatus CoverageStatus,
     string? UnclassifiedResidue)
   + bool IsUnconditional(ClassifiedEffect)           // the spec's one rule, defined once here
-ClassifiedEffect(RuleEffect Effect, ConditionBucket ConditionBucket, string? ConditionText,
-    ChoiceBranch? ChoiceBranch)
+ClassifiedEffect(RuleEffect Effect, ResidualConditionBucket ResidualConditionBucket,
+    string? ConditionText, ChoiceBranch? ChoiceBranch)
 ChoiceGroup(int MinSelect, int MaxSelect, IReadOnlyList<string> Options, string? ConditionText)
 ChoiceBranch(int Group, int Option)
-ConditionBucket { None, EvaluableNow, Never }   UsageLimit { ... 5 values }
+ResidualConditionBucket { None, EvaluableNow, Never }   UsageLimit { ... 5 values }
 CoverageStatus { Complete, Partial, Unclassifiable }
 
 RuleEffect (renamed from CharacteristicEffect)    // discriminator "kind"

@@ -6,9 +6,9 @@ using ProbHammer.Tests.Domain.Fixtures;
 namespace ProbHammer.Tests.Domain.Roster;
 
 /// <summary>Covers rule-effect flagging against a small, hand-built
-/// <see cref="RuleClassificationBaseline"/> fixture reproducing Shield Dome's and Vexilla's real
-/// baseline entries (<see cref="RuleClassificationBaselineFixtures.ShieldDomeAndVexilla"/>), matched
-/// via <see cref="AttachedUnitAggregator.Build"/> directly - the baseline lookup runs inside Build,
+/// <see cref="AbilityClassificationCatalogue"/> fixture reproducing Shield Dome's and Vexilla's
+/// classifications (<see cref="ClassificationFixtures.ShieldDomeAndVexilla"/>), matched
+/// via <see cref="AttachedUnitAggregator.Build"/> directly - the catalogue lookup runs inside Build,
 /// so its effect is only observable through the aggregate view it produces.</summary>
 public class StatlineFlagRuleTests
 {
@@ -41,7 +41,7 @@ public class StatlineFlagRuleTests
     {
         var unit = ImpulsorWithShieldDome();
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
+        var view = AttachedUnitAggregator.Build(unit, ClassificationFixtures.ShieldDomeAndVexilla);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.InSv.IsCaveated.Should().BeFalse();
@@ -57,7 +57,7 @@ public class StatlineFlagRuleTests
     {
         var unit = ImpulsorWithShieldDome();
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
+        var view = AttachedUnitAggregator.Build(unit, ClassificationFixtures.ShieldDomeAndVexilla);
 
         view.Abilities.Should().ContainSingle(e => e.Ability.Name == "Shield Dome");
     }
@@ -68,7 +68,7 @@ public class StatlineFlagRuleTests
         var unit = ImpulsorWithShieldDome();
         unit.ModelLines[0].RemoveCasualties(1);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
+        var view = AttachedUnitAggregator.Build(unit, ClassificationFixtures.ShieldDomeAndVexilla);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.InSv.IsCaveated.Should().BeFalse();
@@ -86,7 +86,7 @@ public class StatlineFlagRuleTests
             statlines: [("Impulsor", new Statline(12, 9, 3, 11, 6, 2))], weaponProfiles: []);
         var unit = new Unit(datasheet, [], [new ModelLine("Impulsor", [], count: 1, abilities: [mismatched])]);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
+        var view = AttachedUnitAggregator.Build(unit, ClassificationFixtures.ShieldDomeAndVexilla);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.InSv.IsCaveated.Should().BeFalse();
@@ -115,7 +115,7 @@ public class StatlineFlagRuleTests
     {
         var attachedUnit = CustodianGuardWithVexilla();
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
+        var view = AttachedUnitAggregator.Build(attachedUnit, ClassificationFixtures.ShieldDomeAndVexilla);
 
         view.Statlines.Should().HaveCount(2);
         var bodyguardEntry = view.Statlines.Should().ContainSingle(s => s.StatlineName == "Custodian Guard").Subject;
@@ -125,13 +125,96 @@ public class StatlineFlagRuleTests
         view.Statlines.Should().ContainSingle(s => s.StatlineName == "Custodian Warden" && s.Statline.Oc.Value == 3);
     }
 
+    private static (string Text, AbilityClassification Classification) VexillaEntry(bool conditional = false) =>
+        ClassificationFixtures.Entry(
+            text: Vexilla.Text,
+            target: new AttachedUnitRuleTarget(),
+            effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)],
+            conditional: conditional);
+
+    [Fact]
+    public void AConditionalEffect_ProducesNoFlaggedValue_AndTheAbilityStillRenders()
+    {
+        var attachedUnit = CustodianGuardWithVexilla();
+
+        var view = AttachedUnitAggregator.Build(attachedUnit,
+            ClassificationFixtures.Catalogue([VexillaEntry(conditional: true)]));
+
+        view.Statlines.Should()
+            .OnlyContain(s => s.Statline.Oc.Value == 2 && s.Statline.Oc.ContributingAbilities.Count == 0);
+        view.Abilities.Should().Contain(e => e.Ability.Name == "Vexilla");
+    }
+
+    [Fact]
+    public void AUsageLimitedEffect_ProducesNoFlaggedValue()
+    {
+        var attachedUnit = CustodianGuardWithVexilla();
+        var (text, classification) = VexillaEntry();
+
+        var view = AttachedUnitAggregator.Build(attachedUnit,
+            ClassificationFixtures.Catalogue([(text, classification with { UsageLimit = UsageLimit.OncePerBattle })]));
+
+        view.Statlines.Should().OnlyContain(s => s.Statline.Oc.Value == 2);
+    }
+
+    [Fact]
+    public void APartialRecordsUnconditionalEffect_StillApplies()
+    {
+        var attachedUnit = CustodianGuardWithVexilla();
+        var (text, classification) = VexillaEntry();
+        var partial = classification with
+        {
+            CoverageStatus = CoverageStatus.Partial,
+            UnclassifiedResidue = "Something this schema can't represent"
+        };
+
+        var view = AttachedUnitAggregator.Build(attachedUnit, ClassificationFixtures.Catalogue([(text, partial)]));
+
+        view.Statlines.Should().OnlyContain(s => s.Statline.Oc.Value == 3);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    public void ACaveatedInvulnerableSave_ResolvesOnlyFromAnUnconditionalEffect(bool conditional, bool staysCaveated)
+    {
+        var caveat = new Ability
+        {
+            Name = "Invulnerable Save (4+*)",
+            Text = "This model has a 4+ invulnerable save against melee attacks.",
+            Scope = AbilityScope.Model,
+            Origin = AbilityOrigin.Intrinsic
+        };
+        var datasheet = new Datasheet(
+            "Judiciar", keywords: [], abilities: [],
+            statlines:
+            [
+                ("Judiciar", new Statline(6, 4, 3, 4, 6, 1)
+                    { InSv = InvulnerableSaveCharacteristicView.Caveated(4, 4, caveat) })
+            ],
+            weaponProfiles: []);
+        var unit = new Unit(datasheet, [], [new ModelLine("Judiciar", [], count: 1)]);
+        var classifications = ClassificationFixtures.Catalogue(
+        [
+            ClassificationFixtures.Entry(
+                text: caveat.Text,
+                target: new SelfRuleTarget(),
+                effects: [new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(4, 0))],
+                conditional: conditional)
+        ]);
+
+        var view = AttachedUnitAggregator.Build(unit, classifications);
+
+        view.Statlines.Should().ContainSingle().Which.Statline.InSv.IsCaveated.Should().Be(staysCaveated);
+    }
+
     [Fact]
     public void Vexilla_UnrelatedCasualtyElsewhereInTheUnit_LeavesTheFlagUntouched()
     {
         var attachedUnit = CustodianGuardWithVexilla();
         attachedUnit.Attached[0].ModelLines[0].RemoveCasualties(1); // the Warden, not the Vexilla bearer
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
+        var view = AttachedUnitAggregator.Build(attachedUnit, ClassificationFixtures.ShieldDomeAndVexilla);
 
         view.Statlines.Should().ContainSingle(s => s.StatlineName == "Custodian Guard" && s.Statline.Oc.Value == 3);
     }
@@ -142,13 +225,13 @@ public class StatlineFlagRuleTests
         var attachedUnit = CustodianGuardWithVexilla();
         attachedUnit.Bodyguard.ModelLines[0].RemoveCasualties(4);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, RuleClassificationBaselineFixtures.ShieldDomeAndVexilla);
+        var view = AttachedUnitAggregator.Build(attachedUnit, ClassificationFixtures.ShieldDomeAndVexilla);
 
         view.Statlines.Should().OnlyContain(s => s.Statline.Oc.Value == 2);
     }
 
     [Fact]
-    public void KeywordScopedBaselineMatch_ProducesNoFlaggedValue()
+    public void KeywordScopedMatch_ProducesNoFlaggedValue()
     {
         var keywordScoped = new Ability
         {
@@ -157,12 +240,12 @@ public class StatlineFlagRuleTests
             Scope = AbilityScope.Unit,
             Origin = AbilityOrigin.OptionalGrant
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: keywordScoped.Text,
-                Target: new KeywordRuleTarget("SWORD BRETHREN SQUAD"),
-                Effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)])
+            ClassificationFixtures.Entry(
+                text: keywordScoped.Text,
+                target: new KeywordRuleTarget(["SWORD BRETHREN SQUAD"]),
+                effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)])
         ]);
         var datasheet = new Datasheet(
             "Sword Brethren Squad", keywords: [], abilities: [],
@@ -170,7 +253,7 @@ public class StatlineFlagRuleTests
         var unit = new Unit(datasheet, [],
             [new ModelLine("Sword Brother", [], count: 1, abilities: [keywordScoped])]);
 
-        var view = AttachedUnitAggregator.Build(unit, baseline);
+        var view = AttachedUnitAggregator.Build(unit, classifications);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.Oc.IsCaveated.Should().BeFalse();
@@ -188,12 +271,12 @@ public class StatlineFlagRuleTests
             Scope = AbilityScope.Unit,
             Origin = AbilityOrigin.DetachmentRule
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: inboundAbility.Text,
-                Target: new KeywordRuleTarget("SWORD BRETHREN SQUAD"),
-                Effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)])
+            ClassificationFixtures.Entry(
+                text: inboundAbility.Text,
+                target: new KeywordRuleTarget(["SWORD BRETHREN SQUAD"]),
+                effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)])
         ]);
         var bodyguardDatasheet = new Datasheet(
             "Sword Brethren Squad", keywords: [], abilities: [],
@@ -205,7 +288,7 @@ public class StatlineFlagRuleTests
         var leader = new Unit(leaderDatasheet, [], [new ModelLine("Ancient", [], count: 1)]);
         var attachedUnit = new AttachedUnit(bodyguard, [leader]) { InboundAbilities = [inboundAbility] };
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, baseline);
+        var view = AttachedUnitAggregator.Build(attachedUnit, classifications);
 
         view.Statlines.Should().HaveCount(2);
         view.Statlines.Should().OnlyContain(s => s.Statline.Oc.ContributingAbilities.Count == 1);
@@ -214,7 +297,7 @@ public class StatlineFlagRuleTests
     }
 
     [Fact]
-    public void UnconditionallyRosterWideBaselineMatch_ProducesNoFlaggedValue()
+    public void UnconditionallyRosterWideMatch_ProducesNoFlaggedValue()
     {
         var unconditional = new Ability
         {
@@ -223,12 +306,12 @@ public class StatlineFlagRuleTests
             Scope = AbilityScope.Unit,
             Origin = AbilityOrigin.OptionalGrant
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: unconditional.Text,
-                Target: new UnconditionalRuleTarget(),
-                Effects: [new ScalarCharacteristicEffect("T", EffectVerb.Improve, 1)])
+            ClassificationFixtures.Entry(
+                text: unconditional.Text,
+                target: new UnconditionalRuleTarget(),
+                effects: [new ScalarCharacteristicEffect("T", EffectVerb.Improve, 1)])
         ]);
         var datasheet = new Datasheet(
             "Some Unit", keywords: [], abilities: [],
@@ -236,7 +319,7 @@ public class StatlineFlagRuleTests
         var unit = new Unit(datasheet, [],
             [new ModelLine("Some Unit", [], count: 1, abilities: [unconditional])]);
 
-        var view = AttachedUnitAggregator.Build(unit, baseline);
+        var view = AttachedUnitAggregator.Build(unit, classifications);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.T.IsCaveated.Should().BeFalse();
@@ -244,11 +327,10 @@ public class StatlineFlagRuleTests
         entry.Statline.T.Value.Should().Be((CharacteristicValue)4);
     }
 
-    // Same-field stacking between two baseline matches - the first applied wins, the second is
-    // skipped. Mirrors CharacteristicModifierApplicationTests' own pinning-test convention for the
-    // sibling mechanism.
+    // Same-field stacking between two matched classifications - the first applied wins, the second
+    // is skipped.
     [Fact]
-    public void TwoBaselineMatchesTargetingTheSameCharacteristic_TheFirstAppliedWins_TheSecondIsSkipped()
+    public void TwoMatchesTargetingTheSameCharacteristic_TheFirstAppliedWins_TheSecondIsSkipped()
     {
         var abilityA = new Ability
         {
@@ -260,14 +342,14 @@ public class StatlineFlagRuleTests
             Name = "Second Grant", Text = "Add 2 to the Wounds characteristic.",
             Scope = AbilityScope.Model, Origin = AbilityOrigin.Enhancement
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: abilityA.Text, Target: new SelfRuleTarget(),
-                Effects: [new ScalarCharacteristicEffect("W", EffectVerb.Improve, 1)]),
-            new RuleClassificationBaselineEntry(
-                Text: abilityB.Text, Target: new SelfRuleTarget(),
-                Effects: [new ScalarCharacteristicEffect("W", EffectVerb.Improve, 2)])
+            ClassificationFixtures.Entry(
+                text: abilityA.Text, target: new SelfRuleTarget(),
+                effects: [new ScalarCharacteristicEffect("W", EffectVerb.Improve, 1)]),
+            ClassificationFixtures.Entry(
+                text: abilityB.Text, target: new SelfRuleTarget(),
+                effects: [new ScalarCharacteristicEffect("W", EffectVerb.Improve, 2)])
         ]);
         var datasheet = new Datasheet(
             "Custodian Guard", keywords: [], abilities: [],
@@ -275,7 +357,7 @@ public class StatlineFlagRuleTests
         var unit = new Unit(datasheet, [],
             [new ModelLine("Custodian Guard", [], count: 1, abilities: [abilityA, abilityB])]);
 
-        var view = AttachedUnitAggregator.Build(unit, baseline);
+        var view = AttachedUnitAggregator.Build(unit, classifications);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.W.IsCaveated.Should().BeFalse();

@@ -5,8 +5,8 @@ namespace ProbHammer.Core.Domain.Catalogue;
 /// counterpart to <see cref="CharacteristicModificationResolver"/>'s own scalar resolution and
 /// <see cref="InvulnerableSaveEffectResolver"/>'s own compound-value resolution.
 /// <c>ProbHammer.Core.Domain.Roster.AttachedUnitAggregator</c> is this resolver's real runtime
-/// consumer, matched against each present ability's normalized Text in the checked-in
-/// <see cref="RuleClassificationBaseline"/>.</summary>
+/// consumer, matched against each present ability.s classification in the
+/// <see cref="AbilityClassificationCatalogue"/>.</summary>
 public static class WeaponCharacteristicEffectResolver
 {
     /// <summary>Mutates exactly the field <paramref name="effect"/>'s own Characteristic names

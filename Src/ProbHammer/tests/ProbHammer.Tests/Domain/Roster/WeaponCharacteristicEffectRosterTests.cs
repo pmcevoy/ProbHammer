@@ -1,3 +1,4 @@
+using ProbHammer.Tests.Domain.Fixtures;
 using FluentAssertions;
 using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Roster;
@@ -5,8 +6,8 @@ using ProbHammer.Core.Domain.Roster;
 namespace ProbHammer.Tests.Domain.Roster;
 
 /// <summary>Covers weapon-characteristic effect resolution against a small, hand-built
-/// <see cref="RuleClassificationBaseline"/> fixture, matched via <see cref="AttachedUnitAggregator.Build"/>
-/// directly - the baseline lookup, bearer-scope match, and weapon-selector match all run inside
+/// <see cref="AbilityClassificationCatalogue"/> fixture, matched via <see cref="AttachedUnitAggregator.Build"/>
+/// directly - the catalogue lookup, bearer-scope match, and weapon-selector match all run inside
 /// Build, so their effect is only observable through the aggregate view it produces. Mirrors
 /// <c>StatlineFlagRuleTests</c>'s own precedent for testing a private mechanism only through its
 /// one public entry point.</summary>
@@ -23,12 +24,12 @@ public class WeaponCharacteristicEffectRosterTests
             Scope = AbilityScope.Model,
             Origin = AbilityOrigin.Intrinsic
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: boost.Text,
-                Target: new SelfRuleTarget(),
-                Effects:
+            ClassificationFixtures.Entry(
+                text: boost.Text,
+                target: new SelfRuleTarget(),
+                effects:
                 [
                     new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 1)
                 ])
@@ -46,7 +47,7 @@ public class WeaponCharacteristicEffectRosterTests
 
         var attachedUnit = new AttachedUnit(bodyguard, [leader]);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, baseline);
+        var view = AttachedUnitAggregator.Build(attachedUnit, classifications);
 
         view.Weapons.Should().HaveCount(2);
         var unaffected = view.Weapons.Single(w => w.Contributions.Any(c => c.ComponentName == "Sword Brethren Squad"));
@@ -69,12 +70,12 @@ public class WeaponCharacteristicEffectRosterTests
             Scope = AbilityScope.Unit,
             Origin = AbilityOrigin.OptionalGrant
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: banner.Text,
-                Target: new AttachedUnitRuleTarget(),
-                Effects:
+            ClassificationFixtures.Entry(
+                text: banner.Text,
+                target: new AttachedUnitRuleTarget(),
+                effects:
                 [
                     new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 1)
                 ])
@@ -93,7 +94,7 @@ public class WeaponCharacteristicEffectRosterTests
 
         var attachedUnit = new AttachedUnit(bodyguard, [leader]);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, baseline);
+        var view = AttachedUnitAggregator.Build(attachedUnit, classifications);
 
         var entry = view.Weapons.Should().ContainSingle().Subject;
         entry.Profile.S.Value.Should().Be((CharacteristicValue)5);
@@ -101,7 +102,7 @@ public class WeaponCharacteristicEffectRosterTests
     }
 
     [Fact]
-    public void CaveatedBaselineEntry_DoesNotMutateAWeaponProfile()
+    public void AConditionalEffect_DoesNotMutateAWeaponProfile()
     {
         var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
         var conditional = new Ability
@@ -112,26 +113,73 @@ public class WeaponCharacteristicEffectRosterTests
             Scope = AbilityScope.Model,
             Origin = AbilityOrigin.Intrinsic
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: conditional.Text,
-                Target: new SelfRuleTarget(),
-                Effects: [new WeaponCharacteristicEffect(new AllWeapons(), "S", EffectVerb.Improve, 1)],
-                IsCaveated: true)
+            ClassificationFixtures.Entry(
+                text: conditional.Text,
+                target: new SelfRuleTarget(),
+                effects: [new WeaponCharacteristicEffect(new AllWeapons(), "S", EffectVerb.Improve, 1)],
+                conditional: true)
         ]);
         var datasheet = new Datasheet(
             "Some Unit", keywords: [], abilities: [conditional],
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 1)]);
 
-        var view = AttachedUnitAggregator.Build(unit, baseline);
+        var view = AttachedUnitAggregator.Build(unit, classifications);
 
         var entry = view.Weapons.Should().ContainSingle().Subject;
         entry.Profile.S.Value.Should().Be((CharacteristicValue)4);
         entry.Profile.S.ContributingAbilities.Should().BeEmpty();
         entry.UnresolvedAbilities.Should().ContainSingle(a => a.Name == "Furious Charge");
         entry.Contributions.Single().UnresolvedAbilities.Should().ContainSingle(a => a.Name == "Furious Charge");
+    }
+
+    [Fact]
+    public void OneClassification_AppliesItsUnconditionalEffect_AndDefersItsConditionalOne()
+    {
+        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
+        var mixed = new Ability
+        {
+            Name = "Righteous Fury",
+            Text = "Improve the Strength characteristic of melee weapons equipped by this model by 1. " +
+                   "If this model made a Charge move this turn, add 1 to their Damage characteristic.",
+            Scope = AbilityScope.Model,
+            Origin = AbilityOrigin.Intrinsic
+        };
+        var classification = new AbilityClassification
+        {
+            Target = new SelfRuleTarget(),
+            Effects =
+            [
+                new ClassifiedEffect
+                {
+                    Effect = new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve,
+                        1),
+                    ResidualConditionBucket = ResidualConditionBucket.None
+                },
+                new ClassifiedEffect
+                {
+                    Effect = new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "D", EffectVerb.Improve,
+                        1),
+                    ResidualConditionBucket = ResidualConditionBucket.Never,
+                    ConditionText = "This model made a Charge move this turn"
+                }
+            ],
+            CoverageStatus = CoverageStatus.Complete
+        };
+        var classifications = ClassificationFixtures.Catalogue([(mixed.Text, classification)]);
+        var datasheet = new Datasheet(
+            "Some Unit", keywords: [], abilities: [mixed],
+            statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
+        var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 1)]);
+
+        var view = AttachedUnitAggregator.Build(unit, classifications);
+
+        var entry = view.Weapons.Should().ContainSingle().Subject;
+        entry.Profile.S.Value.Should().Be((CharacteristicValue)5);
+        entry.Profile.D.Value.Should().Be((CharacteristicValue)1);
+        entry.UnresolvedAbilities.Should().ContainSingle(a => a.Name == "Righteous Fury");
     }
 
     [Fact]
@@ -153,30 +201,30 @@ public class WeaponCharacteristicEffectRosterTests
             Scope = AbilityScope.Model,
             Origin = AbilityOrigin.Intrinsic
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: resolvedBoost.Text,
-                Target: new SelfRuleTarget(),
-                Effects:
+            ClassificationFixtures.Entry(
+                text: resolvedBoost.Text,
+                target: new SelfRuleTarget(),
+                effects:
                 [
                     new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 1)
                 ]),
-            new RuleClassificationBaselineEntry(
-                Text: caveatedBoost.Text,
-                Target: new SelfRuleTarget(),
-                Effects:
+            ClassificationFixtures.Entry(
+                text: caveatedBoost.Text,
+                target: new SelfRuleTarget(),
+                effects:
                 [
                     new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "AP", EffectVerb.Improve, 1)
                 ],
-                IsCaveated: true)
+                conditional: true)
         ]);
         var datasheet = new Datasheet(
             "Some Unit", keywords: [], abilities: [resolvedBoost, caveatedBoost],
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 1)]);
 
-        var view = AttachedUnitAggregator.Build(unit, baseline);
+        var view = AttachedUnitAggregator.Build(unit, classifications);
 
         var entry = view.Weapons.Should().ContainSingle().Subject;
         entry.Profile.S.Value.Should().Be((CharacteristicValue)5);
@@ -205,18 +253,18 @@ public class WeaponCharacteristicEffectRosterTests
             Scope = AbilityScope.Model,
             Origin = AbilityOrigin.Intrinsic
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: firstCaveat.Text,
-                Target: new SelfRuleTarget(),
-                Effects: [new WeaponCharacteristicEffect(new AllWeapons(), "S", EffectVerb.Improve, 1)],
-                IsCaveated: true),
-            new RuleClassificationBaselineEntry(
-                Text: secondCaveat.Text,
-                Target: new SelfRuleTarget(),
-                Effects: [new WeaponCharacteristicEffect(new AllWeapons(), "S", EffectVerb.Improve, 1)],
-                IsCaveated: true)
+            ClassificationFixtures.Entry(
+                text: firstCaveat.Text,
+                target: new SelfRuleTarget(),
+                effects: [new WeaponCharacteristicEffect(new AllWeapons(), "S", EffectVerb.Improve, 1)],
+                conditional: true),
+            ClassificationFixtures.Entry(
+                text: secondCaveat.Text,
+                target: new SelfRuleTarget(),
+                effects: [new WeaponCharacteristicEffect(new AllWeapons(), "S", EffectVerb.Improve, 1)],
+                conditional: true)
         ]);
 
         var firstDatasheet = new Datasheet(
@@ -231,7 +279,7 @@ public class WeaponCharacteristicEffectRosterTests
 
         var attachedUnit = new AttachedUnit(firstUnit, [secondUnit]);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, baseline);
+        var view = AttachedUnitAggregator.Build(attachedUnit, classifications);
 
         var entry = view.Weapons.Should().ContainSingle().Subject;
         entry.UnresolvedAbilities.Should().HaveCount(2);
@@ -247,7 +295,7 @@ public class WeaponCharacteristicEffectRosterTests
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 1)]);
 
-        var view = AttachedUnitAggregator.Build(unit, RuleClassificationBaseline.FromEntries([]));
+        var view = AttachedUnitAggregator.Build(unit, ClassificationFixtures.Catalogue([]));
 
         var entry = view.Weapons.Should().ContainSingle().Subject;
         entry.UnresolvedAbilities.Should().BeEmpty();
@@ -266,12 +314,12 @@ public class WeaponCharacteristicEffectRosterTests
             Scope = AbilityScope.Model,
             Origin = AbilityOrigin.Intrinsic
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: boost.Text,
-                Target: new SelfRuleTarget(),
-                Effects: [new WeaponCharacteristicEffect(new AllWeapons(), "S", EffectVerb.Improve, 1)])
+            ClassificationFixtures.Entry(
+                text: boost.Text,
+                target: new SelfRuleTarget(),
+                effects: [new WeaponCharacteristicEffect(new AllWeapons(), "S", EffectVerb.Improve, 1)])
         ]);
         var datasheet = new Datasheet(
             "Some Unit", keywords: [], abilities: [boost],
@@ -280,7 +328,7 @@ public class WeaponCharacteristicEffectRosterTests
         var unit = new Unit(datasheet, [],
             [new ModelLine("Some Unit", [meleeWeapon.Name, rangedWeapon.Name], count: 1)]);
 
-        var view = AttachedUnitAggregator.Build(unit, baseline);
+        var view = AttachedUnitAggregator.Build(unit, classifications);
 
         view.Weapons.Should().HaveCount(2);
         view.Weapons.Should().OnlyContain(w => w.Profile.S.Value == (CharacteristicValue)5);
@@ -298,12 +346,12 @@ public class WeaponCharacteristicEffectRosterTests
             Scope = AbilityScope.Model,
             Origin = AbilityOrigin.Intrinsic
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: boost.Text,
-                Target: new SelfRuleTarget(),
-                Effects:
+            ClassificationFixtures.Entry(
+                text: boost.Text,
+                target: new SelfRuleTarget(),
+                effects:
                 [
                     new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 1)
                 ])
@@ -315,7 +363,7 @@ public class WeaponCharacteristicEffectRosterTests
         var unit = new Unit(datasheet, [],
             [new ModelLine("Some Unit", [meleeWeapon.Name, rangedWeapon.Name], count: 1)]);
 
-        var view = AttachedUnitAggregator.Build(unit, baseline);
+        var view = AttachedUnitAggregator.Build(unit, classifications);
 
         var melee = view.Weapons.Single(w => w.Profile.Type == WeaponType.Melee);
         melee.Profile.S.Value.Should().Be((CharacteristicValue)5);
@@ -335,12 +383,12 @@ public class WeaponCharacteristicEffectRosterTests
             Scope = AbilityScope.Model,
             Origin = AbilityOrigin.Intrinsic
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: boost.Text,
-                Target: new SelfRuleTarget(),
-                Effects: [new WeaponCharacteristicEffect(new NamedWeapon("Power sword"), "S", EffectVerb.Improve, 1)])
+            ClassificationFixtures.Entry(
+                text: boost.Text,
+                target: new SelfRuleTarget(),
+                effects: [new WeaponCharacteristicEffect(new NamedWeapon("Power sword"), "S", EffectVerb.Improve, 1)])
         ]);
         var datasheet = new Datasheet(
             "Some Unit", keywords: [], abilities: [boost],
@@ -349,7 +397,7 @@ public class WeaponCharacteristicEffectRosterTests
         var unit = new Unit(datasheet, [],
             [new ModelLine("Some Unit", [swordWeapon.Name, axeWeapon.Name], count: 1)]);
 
-        var view = AttachedUnitAggregator.Build(unit, baseline);
+        var view = AttachedUnitAggregator.Build(unit, classifications);
 
         view.Weapons.Should().HaveCount(2);
         var sword = view.Weapons.Single(w => w.Contributions.Single().Name == "Power sword");
@@ -373,12 +421,12 @@ public class WeaponCharacteristicEffectRosterTests
             Scope = AbilityScope.Model,
             Origin = AbilityOrigin.Intrinsic
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: zealousFury.Text,
-                Target: new SelfRuleTarget(),
-                Effects:
+            ClassificationFixtures.Entry(
+                text: zealousFury.Text,
+                target: new SelfRuleTarget(),
+                effects:
                 [
                     new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "S", EffectVerb.Improve, 1),
                     new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "A", EffectVerb.Improve, 1)
@@ -389,7 +437,7 @@ public class WeaponCharacteristicEffectRosterTests
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 1)]);
 
-        var view = AttachedUnitAggregator.Build(unit, baseline);
+        var view = AttachedUnitAggregator.Build(unit, classifications);
 
         var entry = view.Weapons.Should().ContainSingle().Subject;
         entry.Profile.S.Value.Should().Be((CharacteristicValue)5);
@@ -411,12 +459,12 @@ public class WeaponCharacteristicEffectRosterTests
             Scope = AbilityScope.Model,
             Origin = AbilityOrigin.Intrinsic
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: boost.Text,
-                Target: new SelfRuleTarget(),
-                Effects:
+            ClassificationFixtures.Entry(
+                text: boost.Text,
+                target: new SelfRuleTarget(),
+                effects:
                 [
                     new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "A", EffectVerb.Improve, 1)
                 ])
@@ -426,7 +474,7 @@ public class WeaponCharacteristicEffectRosterTests
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 2)]);
 
-        var view = AttachedUnitAggregator.Build(unit, baseline);
+        var view = AttachedUnitAggregator.Build(unit, classifications);
 
         var entry = view.Weapons.Should().ContainSingle().Subject;
         var contribution = entry.Contributions.Single();
@@ -450,12 +498,12 @@ public class WeaponCharacteristicEffectRosterTests
             Scope = AbilityScope.Model,
             Origin = AbilityOrigin.Intrinsic
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: boost.Text,
-                Target: new SelfRuleTarget(),
-                Effects:
+            ClassificationFixtures.Entry(
+                text: boost.Text,
+                target: new SelfRuleTarget(),
+                effects:
                 [
                     new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "A", EffectVerb.Improve, 1)
                 ])
@@ -473,7 +521,7 @@ public class WeaponCharacteristicEffectRosterTests
 
         var attachedUnit = new AttachedUnit(bodyguard, [leader]);
 
-        var view = AttachedUnitAggregator.Build(attachedUnit, baseline);
+        var view = AttachedUnitAggregator.Build(attachedUnit, classifications);
 
         var entry = view.Weapons.Should().ContainSingle().Subject;
         entry.Contributions.Should().HaveCount(2);
@@ -496,12 +544,12 @@ public class WeaponCharacteristicEffectRosterTests
             Scope = AbilityScope.Model,
             Origin = AbilityOrigin.Intrinsic
         };
-        var baseline = RuleClassificationBaseline.FromEntries(
+        var classifications = ClassificationFixtures.Catalogue(
         [
-            new RuleClassificationBaselineEntry(
-                Text: hybrid.Text,
-                Target: new SelfRuleTarget(),
-                Effects:
+            ClassificationFixtures.Entry(
+                text: hybrid.Text,
+                target: new SelfRuleTarget(),
+                effects:
                 [
                     new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "WS", EffectVerb.Improve, 1),
                     new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "A", EffectVerb.Improve, 1)
@@ -512,10 +560,10 @@ public class WeaponCharacteristicEffectRosterTests
             statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
         var unit = new Unit(datasheet, [], [new ModelLine("Some Unit", [weapon.Name], count: 1)]);
 
-        var act = () => AttachedUnitAggregator.Build(unit, baseline);
+        var act = () => AttachedUnitAggregator.Build(unit, classifications);
 
         act.Should().NotThrow();
-        var view = AttachedUnitAggregator.Build(unit, baseline);
+        var view = AttachedUnitAggregator.Build(unit, classifications);
         var entry = view.Weapons.Should().ContainSingle().Subject;
         entry.TotalAttacks.Should().Be(DiceExpression.Fixed(4)); // 1 model x (base A3 + 1), WS ignored
     }
