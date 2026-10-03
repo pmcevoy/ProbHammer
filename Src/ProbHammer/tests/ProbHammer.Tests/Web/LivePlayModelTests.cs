@@ -399,7 +399,7 @@ public class LivePlayModelTests
                 new WeaponContribution("Squad A", "Sarge", 1, DiceExpression.Fixed(4), "Test Weapon")
             ]);
 
-        // Not group-wide: it reaches 2 of 3 contributions, so no line is promoted above the breakdown.
+        // Not group-wide: it reaches 2 of 3 contributions, so no group-wide line is rendered.
         LivePlayModel.BuildGroupWideAttacksLines(entry).Should().BeEmpty();
 
         var breakdown = LivePlayModel.BuildContributionBreakdown(entry, EmptyLoadoutLabels);

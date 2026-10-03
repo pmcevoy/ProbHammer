@@ -421,7 +421,7 @@ public class LivePlayModel(
 
     // The entry-level counterpart to BuildContributionBreakdown's own per-row AttacksLines (design.md
     // D3): an ability-Amount pair that reaches every one of the entry's current Contributions renders
-    // once, above the breakdown, rather than repeated under each contributor row it also reaches.
+    // once, after the breakdown, rather than repeated under each contributor row it also reaches.
     internal static IReadOnlyList<AttacksContributionLine> BuildGroupWideAttacksLines(AggregateWeaponEntry entry)
     {
         var groupWidePairs = ResolveGroupWideAttacksPairs(entry.Contributions);
@@ -434,7 +434,7 @@ public class LivePlayModel(
     // A distinct (source ability, amount) pair is group-wide when it reaches every one of the
     // entry's current Contributions - reused by both BuildContributionBreakdown (to exclude a
     // group-wide pair from a row's own nested AttacksLines) and BuildGroupWideAttacksLines (to
-    // render it once, above the breakdown). Ability identity is (Name, Text), the same convention
+    // render it once, after the breakdown). Ability identity is (Name, Text), the same convention
     // CompositeUnresolvedAbilities/AssignFlagMarkers already use.
     private static IReadOnlyList<(Ability SourceAbility, int Amount)> ResolveGroupWideAttacksPairs(
         IReadOnlyList<WeaponContribution> contributions)

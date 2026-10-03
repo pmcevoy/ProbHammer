@@ -44,17 +44,50 @@ record, not this file).
 - **Phase/turn ability highlighting.** Every catalogue record carries `Phases`/`TurnOwnership`
   (even unclassifiable ones), so an ability button could change colour in the phases it matters in,
   the tracker's original purpose for those fields.
-- **Player toggles for conditional effects.** Any conditional effect (residual condition, usage
-  limit, choice branch, turn restriction) is skipped today; a uniform player-set toggle labelled
-  from `ConditionText`, the same convention as Battle-shock/Half Strength, would let the player
-  assert it. Choice groups would toggle per option.
-- **Display for a conditional Statline effect.** Weapons show a conditional effect as an
-  "unresolved ability" marker; a conditional Statline effect shows nothing (the ability still
-  renders). The caveated-InSv marker/legend could cover it.
-- **Consume the remaining data-only effect kinds.** `WeaponKeywordGrant` (a chip on the weapon row,
-  merged with the profile's own `KeywordsText`), `NamedAbilityGrant` (an inbound ability; needs
+- **Value-provenance popovers ("amber = an ability has something to say; tap to judge").** Agreed
+  design principle (explore session 2026-10-03), next change after the Attacks-breakdown reorder.
+  Wherever an ability touches a base value (Statline tile, weapon S/AP/D, weapon total A), the value
+  renders amber and the amber area itself is a popover trigger showing the original value, each
+  contributing ability as an `.ability-name-line` button (nested popover for its text), and the
+  total. Replaces footnote markers (`5*`, `OC**`) and every flag-legend row/line, which today repeat
+  each ability once per row (Helbrecht's Crusade of Wrath: legend + Attacks line on all 6 melee
+  rows). Rationale: drawing attention to a value and letting the player judge it beats trusting the
+  classification - LLM-derived effects/conditions may simply be wrong, and the popover always
+  exposes the original value so the player can play on. Popover content by case:
+  - modified, no caveat (rarer than expected) - base, ability, total;
+  - modified with caveat/residue - same, plus the caveat/residue text;
+  - qualified value (e.g. "4+ InSv vs Psychic Attacks") - the qualifier text + ability; doesn't fit
+    the old Unmodified/Fully-modified/Caveated three-bucket model, which is why that model is
+    replaced rather than extended;
+  - caveated, unresolved (today's InSv caveat) - catalogue value, "may be modified by [Ability]".
+  Decided: (1) caveated values go amber too - this **deliberately reverses**
+  `classify-characteristic-modifier-caveats`' rule that a caveated value must not be amber ("reads
+  as already adjusted"); the popover now says which case it is, so no separate "possibly modified"
+  style (user decision 2026-10-03; the proposal must record the reversal and update
+  design-tokens.md's Flagged Statline Legend section). Still to settle in the proposal: (2) total A
+  becomes a modified value - the
+  popover's "original" is the total without ability contributions (28 + Crusade of Wrath 7 = 35),
+  experimental; (3) styling: amber inset within the cell padding so the row colour frames it (an
+  all-amber column currently reads as a column tint, not a signal) - also reads as tappable.
+  Covers Statline and weapons together; also the home for a conditional Statline effect once toggles
+  (below) can switch it on. Today a conditional Statline effect shows nothing, and a conditional
+  weapon effect shows an "unresolved ability" name marker - no live example in
+  `gw-app-export-templars-latest.txt`; verify against a real list that has one.
+- **Granted weapon keywords as amber chips.** After value-provenance popovers. A `WeaponKeywordGrant`
+  renders as a chip merged with the profile's own `KeywordsText`, amber (not normally on this
+  weapon); the chip's existing glossary popover additionally lists the granting ability. Edge cases
+  to decide: the weapon already has the keyword (show once, list the source anyway?), and a granted
+  keyword with a different value (native Sustained Hits 1 vs granted 2).
+- **Condition toggles inside the ability popover.** After the two items above. Any conditional
+  effect (residual condition, usage limit, choice branch, turn restriction) is skipped today. Tapping
+  the ability (in its ability list) opens its popover with the `ConditionText` and an
+  enable/disable checkbox; enabling applies the effect, which then surfaces as an ordinary amber
+  provenance value. Choice groups toggle per option. Accepted cost: the toggle's full-map POST
+  re-renders the unit block (`swapUnitBlock`), closing the open popover. State keyed per unit +
+  ability (the same ability appears on several units, e.g. two Marshals), stored like casualty state.
+- **Consume the remaining data-only effect kinds.** `NamedAbilityGrant` (an inbound ability; needs
   `RuleGlossary.Normalize` to strip a trailing `9"`-style value so `Scouts 9"` resolves),
-  `NamedAbilityRemoval` (hide or strike the removed ability).
+  `NamedAbilityRemoval` (hide or strike the removed ability). `WeaponKeywordGrant` - see above.
 - **Detachment-rule weapon effects.** A keyword-targeted Detachment rule flags Statline values but
   never reaches weapons: `AttachedUnitAggregator`'s weapon path filters on Self/AttachedUnit targets
   before `IsBearerOf` sees the DetachmentRule origin. Kept as-is when the catalogue replaced the
@@ -97,8 +130,10 @@ design, not as a gap to eventually close.
     24/332 complete; Oath of Moment fails on this alone) and a core simulation input. Draft fields:
     roll (Hit/Wound/Damage/Save/Advance/Charge/Battle-shock), modifier (re-roll / re-roll 1s / +N /
     -N / critical on X+), direction (made by vs. targeting this unit), existing weapon selector.
-    LivePlay: an info line in the matching weapon panel for the current phase/turn; "targeting"
-    lines beside Sv/InSv in the opponent's turn.
+    LivePlay: parked - a roll modifier changes no printed value, so value-provenance amber can't
+    surface it; maybe an "info" area in the statline cell, or a section-level effect strip in the
+    weapon panel (rejected for value changes, could return for this). Design once rolls are
+    actually extracted.
   - **BS/WS** as `WeaponCharacteristic` values (35 texts, e.g. Doctrina Imperatives) - see the
     deferred-coverage list above.
   - **Per-effect timing** - `phases`/`turnOwnership`/`usageLimit` are record-level, so "has Deep

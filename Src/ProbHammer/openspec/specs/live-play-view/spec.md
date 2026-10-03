@@ -734,10 +734,11 @@ SHALL always be its base (unmutated) per-model Attacks value.
 
 An ability-contribution line's placement depends on how much of the entry's current contribution set
 it reaches: an effect whose reach provably equals every current contributor of the entry SHALL render
-its line once, above the breakdown, rather than repeated under each contributor row. An effect
-reaching only some of the entry's current contributors (including exactly one) SHALL render its line
-nested directly under each contributor row it reaches, and SHALL NOT render under a row it does not
-reach.
+its line once, after every base contributor row of the breakdown (including merged and
+selection-excluded rows), at the same indent as those base contributor rows, rather than repeated
+under each contributor row. An effect reaching only some of the entry's current contributors
+(including exactly one) SHALL render its line nested directly under each contributor row it reaches,
+one indent step deeper than that row, and SHALL NOT render under a row it does not reach.
 
 Each ability-contribution line SHALL surface its source ability as an interactive popover trigger,
 using the same popover mechanism as any other ability name in the unit block.
@@ -749,11 +750,12 @@ using the same popover mechanism as any other ability name in the unit block.
   showing the reaching Count and the resolved per-model Amount, and the contributor's own row still
   shows its base (unaffected) value
 
-#### Scenario: A group-wide ability contribution renders once, above the breakdown
+#### Scenario: A group-wide ability contribution renders once, after the breakdown's base rows
 - **WHEN** a matched, non-caveated ability's effect reaches every one of a weapon entry's current
   contributors identically
-- **THEN** that ability renders as a single line above the breakdown, not repeated under any
-  individual contributor row
+- **THEN** that ability renders as a single line after the last base contributor row of the
+  breakdown, at the same indent as the base contributor rows, not repeated under any individual
+  contributor row and not above any base contributor row
 
 #### Scenario: A partial-reach ability contribution nests under each contributor row it reaches
 - **WHEN** a matched, non-caveated ability's effect reaches some, but not all, of a weapon entry's

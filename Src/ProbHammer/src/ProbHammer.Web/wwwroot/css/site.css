@@ -962,7 +962,6 @@ button.filter-flag:hover { opacity: 0.8; }
     font-size: 0.72rem;
     font-style: italic;
 }
-.weapon-contribution-label { padding-left: 1.75rem; }
 
 /* Resolved-value marker: the weapon-table counterpart to .stat-tile-flagged, applied directly to a
    plain S/AP/D <td> rather than a tile div - the weapon table has no per-characteristic label the
@@ -1001,11 +1000,9 @@ button.filter-flag:hover { opacity: 0.8; }
     font-style: italic;
     white-space: normal;
 }
-/* A row-bound/partial line nests under its own contributor row, one indent deeper than that row's
-   own label; a group-wide line sits at the same indent as a contributor row, since it isn't nested
-   under any one of them. */
-.weapon-attacks-contribution-row.row-bound .weapon-attacks-contribution-label { padding-left: 2.75rem; }
-.weapon-attacks-contribution-row.group-wide .weapon-attacks-contribution-label { padding-left: 1.75rem; }
+/* A row-bound/partial line nests one 1rem step deeper than its contributor row (which keeps the
+   table's own 0.3rem td padding); a group-wide line inherits that same padding, level with them. */
+.weapon-attacks-contribution-row.row-bound .weapon-attacks-contribution-label { padding-left: 1.3rem; }
 /* The trailing "(Count×Amount)" text never itself splits across two lines, even if the surrounding
    .flag-legend-line flex row has to wrap the whole phrase down at a very narrow width. */
 .weapon-attacks-contribution-amount { white-space: nowrap; }

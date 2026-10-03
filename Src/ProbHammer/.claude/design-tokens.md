@@ -109,6 +109,12 @@ selector, same mechanism as before, just no longer the default case.
 - **Zebra striping** (weapon tables): alternate rows tinted `var(--bg)` against the card's `--bg2`
   base — driven by each row's own list index server-side, not DOM child-position, so hidden
   breakdown rows can't shift the parity of rows after them
+- **Weapon contribution breakdown order and indent** (`reorder-attacks-contribution-breakdown`): an
+  expanded weapon row lists its base contributor rows first, each followed by any row-bound Attacks
+  line nested one `1rem` step deeper; a group-wide Attacks line (e.g. Crusade of Wrath) comes last,
+  level with the base rows, so the breakdown reads as addends then bonus. Base rows sit at the
+  weapon table's own `0.3rem` td padding — the reference indent everything else is measured from.
+  The S/AP/D flag-legend row still renders first, until value-provenance popovers retire it.
 - **Zebra striping** (Model/Unit ability lists, `.ability-name-line`): every ability button's own
   unstriped background is `var(--bg)` (see "Ability button vs. container" below); an even-indexed
   button overrides that to a visibly darker `color-mix(in srgb, var(--border) 70%, var(--bg2))`, via

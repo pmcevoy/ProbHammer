@@ -561,22 +561,6 @@
                         </tr>
                     }
 
-                    @foreach (var line in row.GroupWideAttacksLines)
-                    {
-                        <tr class="weapon-attacks-contribution-row group-wide @(w % 2 == 1 ? "weapon-row-alt" : "")"
-                            data-weapon-id="@weaponId" data-amount-total="@(line.Count * line.Amount)" hidden>
-                            <td class="weapon-contribution-label weapon-attacks-contribution-label">
-                                @Html.Raw(RenderAttacksContributionLine(line))
-                            </td>
-                            <td></td>
-                            <td>@(line.Count * line.Amount)</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                    }
-
                     @foreach (var breakdown in row.Breakdown)
                     {
                         <tr class="weapon-contribution-row @(breakdown.SelectKey == null ? "contribution-merged" : "") @(w % 2 == 1 ? "weapon-row-alt" : "")"
@@ -607,6 +591,22 @@
                                 <td></td>
                             </tr>
                         }
+                    }
+
+                    @foreach (var line in row.GroupWideAttacksLines)
+                    {
+                        <tr class="weapon-attacks-contribution-row group-wide @(w % 2 == 1 ? "weapon-row-alt" : "")"
+                            data-weapon-id="@weaponId" data-amount-total="@(line.Count * line.Amount)" hidden>
+                            <td class="weapon-contribution-label weapon-attacks-contribution-label">
+                                @Html.Raw(RenderAttacksContributionLine(line))
+                            </td>
+                            <td></td>
+                            <td>@(line.Count * line.Amount)</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
                     }
                 }
                 </tbody>
@@ -705,21 +705,6 @@
                         </tr>
                     }
 
-                    @foreach (var line in row.GroupWideAttacksLines)
-                    {
-                        <tr class="weapon-attacks-contribution-row group-wide @(w % 2 == 1 ? "weapon-row-alt" : "")"
-                            data-weapon-id="@weaponId" data-amount-total="@(line.Count * line.Amount)" hidden>
-                            <td class="weapon-contribution-label weapon-attacks-contribution-label">
-                                @Html.Raw(RenderAttacksContributionLine(line))
-                            </td>
-                            <td>@(line.Count * line.Amount)</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                    }
-
                     @foreach (var breakdown in row.Breakdown)
                     {
                         <tr class="weapon-contribution-row @(breakdown.SelectKey == null ? "contribution-merged" : "") @(w % 2 == 1 ? "weapon-row-alt" : "")"
@@ -748,6 +733,21 @@
                                 <td></td>
                             </tr>
                         }
+                    }
+
+                    @foreach (var line in row.GroupWideAttacksLines)
+                    {
+                        <tr class="weapon-attacks-contribution-row group-wide @(w % 2 == 1 ? "weapon-row-alt" : "")"
+                            data-weapon-id="@weaponId" data-amount-total="@(line.Count * line.Amount)" hidden>
+                            <td class="weapon-contribution-label weapon-attacks-contribution-label">
+                                @Html.Raw(RenderAttacksContributionLine(line))
+                            </td>
+                            <td>@(line.Count * line.Amount)</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
                     }
                 }
                 </tbody>
