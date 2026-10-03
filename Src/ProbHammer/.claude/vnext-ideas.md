@@ -36,8 +36,7 @@ record, not this file).
   companion idea considered and dropped: a classifier-emitted "hide this ability" effect kind —
   rejected as conflating a mechanical effect (what the rules text does) with a display/consume-time
   decision (whether to render an entry); if a classifier-side signal ever turns out to be needed
-  here after all, it belongs on the existing `CoverageStatus`/`UnclassifiedResidue` open question in
-  `classify-abilities-via-llm-batch/design.md`, not a new effect kind.
+  here after all, it belongs with prompt v3's residue scope rule (below), not a new effect kind.
 - **Battle-round awareness in the phase/turn tracker.** The tracker knows My Turn/Their Turn but
   not who goes first in a round, so "at the start/end of the battle round" abilities (~28/~11
   corpus texts) light up in both players' Command/Fight phases. Tracking the first player (or a
@@ -47,8 +46,9 @@ record, not this file).
 
 Real corpus shapes found while classifying weapon-characteristic effects but not yet classified or
 resolved — candidates for a future phase, not scoped anywhere yet:
-- WS/BS weapon-characteristic mutations (`CharacteristicModificationKinds` already has entries for
-  both, unconsumed by any real weapon data).
+- WS/BS weapon-characteristic mutations - now part of prompt v3 below
+  (`CharacteristicModificationKinds` already has entries for both, unconsumed by any real weapon
+  data).
 - An ability-flag-qualified weapon selector ("models from your army with this ability").
 - A whole-unit-scoped selector phrased without "equipped by" ("this unit's melee weapons").
 - A coordinate clause with a different amount per characteristic ("add 1 to Attacks... and add 2 to
@@ -56,9 +56,6 @@ resolved — candidates for a future phase, not scoped anywhere yet:
 - A two-branch conditional ("add 1..., if Battle-shocked, add 2... instead").
 - A `Set`-verb-shaped effect, and a dice-valued amount (`WeaponCharacteristicEffect.Amount` is `int`
   today).
-- The "...and those weapons have the [KEYWORD] ability" anaphora continuation (weapon keyword
-  grant) — see `openspec/changes/classify-abilities-via-llm-batch/` for the current exploration
-  covering this, plus Feel No Pain and closed-vocabulary named-ability grants.
 
 **Permanent boundaries, not tasks**: an effect debuffing an *enemy's* weapon is unresolvable until
 the attacker/defender two-roster half of the app exists (no opposing-roster concept today).
@@ -69,6 +66,39 @@ design, not as a gap to eventually close.
 
 ## Domain / data pipeline
 
+- **Ability classification prompt v3 + re-run**, timed with the next Space Marine codex once BSData
+  has it (the rewording stales today's classifications anyway; a run costs ~$16.50). Start by
+  working through the `partial` list for schema tweaks that push records to `complete`. Evidence and
+  examples: the archived `classify-abilities-via-llm-batch` design.md, "Full-run review, 2026-10-03".
+  - **Residue scope rule.** Ask the model to sort its residue into *in scope but not expressible*
+    (LivePlay or the simulation would use it) vs. *outside LivePlay's scope* (tactical actions,
+    resource/token economies, CP, movement/reserves/deployment, enemy-only effects, objective
+    control, list legality). Only the former blocks `complete`; for the latter, phase/target/timing
+    is the whole extraction.
+  - **Roll-modifier effect kind** - the largest in-scope gap (Army/Detachment rules are 1/25 and
+    24/332 complete; Oath of Moment fails on this alone) and a core simulation input. Draft fields:
+    roll (Hit/Wound/Damage/Save/Advance/Charge/Battle-shock), modifier (re-roll / re-roll 1s / +N /
+    -N / critical on X+), direction (made by vs. targeting this unit), existing weapon selector.
+    LivePlay: an info line in the matching weapon panel for the current phase/turn; "targeting"
+    lines beside Sv/InSv in the opponent's turn.
+  - **BS/WS** as `WeaponCharacteristic` values (35 texts, e.g. Doctrina Imperatives) - see the
+    deferred-coverage list above.
+  - **Per-effect timing** - `phases`/`turnOwnership`/`usageLimit` are record-level, so "has Deep
+    Strike; once per battle, redeploy" gates the permanent grant too.
+  - **Structured `evaluable-now` conditions** beside `conditionText`: led by keyword (Ardent
+    Protectors, Bound Daemon), has/lacks keyword (Flesh Sigils), contains model (Ministorum Sermon,
+    Medicae Medi-packs). Not a composite target - `Target` is who benefits.
+    `KeywordResolution.EffectiveKeywords` is already casualty-aware. Check first that no bodyguard
+    datasheet carries CHARACTER itself.
+  - **FNP qualifier vocabulary** (mortal wounds / Psychic Attacks / both) for the FNP-like-InSv
+    display; `export` already maps "unqualified" sentinels to `null`.
+  - **Prompt fixes:** event triggers ("each time this unit Advances/makes a Charge move") are
+    `never`, not `none`; "models with the bearer's own keyword in that unit" is `Self`; an FNP
+    qualifier is only a damage source; `turnOwnership` only when the text says whose turn; don't
+    split a multi-word weapon name on "and" ("Tyrnak and Fenrir"); split faction + type keywords
+    ("LEGIONES DAEMONICA TZEENTCH"); emit JSON `null`, not the string `"null"`.
+  - **"Select N units"** selections (Wolf Master, Obscuroptikon) - covered by the planned
+    per-condition player toggle, not the schema.
 - **Enhancement Model/Unit scope classification.** Every Enhancement renders at Unit scope
   unconditionally today, even though real rules text sometimes signals Model scope instead (e.g.
   "this model's Objective Control"). The closed-vocabulary text-classification approach this would
@@ -87,18 +117,6 @@ design, not as a gap to eventually close.
   instead of silently extracting nothing. A detection gate for "text mentions invulnerable save"
   exists (`RuleEffectClassifier.MayStateInvulnerableSave`) but the marker type itself doesn't;
   extending this to the six Statline scalars needs an equivalent gate for each first.
-- **Replacing `RuleEffectClassifier`'s regex-pattern classification with an LLM-based (Haiku,
-  Batch API) offline pipeline** — supersedes both the `KeywordEffect`/`AbilityEffect` idea and the
-  older "LLM-assisted prose classification" idea above with one converged direction, following a
-  real corpus review that found Feel No Pain grants (153 hits, zero existing representation) as
-  the largest real gap, plus closed-vocabulary named-ability grants and the weapon-keyword-grant
-  anaphora case above. Built as two standalone tools
-  (`openspec/changes/classify-abilities-via-llm-batch/`,
-  `tools/AbilityPipeline/{Extractor,Classifier}/`): the extractor's corpus walk, schema (generated
-  from the classifier's own POCOs), prompt v1, and a real-corpus-verified few-shot set are all in
-  place and wired end-to-end through the Batch API request boundary. Still open: actually submitting
-  the real ~3,823-hash corpus run (needs an Anthropic API key + the ~$4-5 one-time cost authorized),
-  and the review-at-scale workflow once real output exists to review.
 - **Unit keyword grants/removals as a classified effect kind.** e.g. "Friendly BULLGRYN SQUAD/OGRYN
   SQUAD/RATLINGS units have ABHUMAN", "the bearer has the Grenades keyword", "loses the Smoke
   keyword" — a few dozen corpus texts (Grenades, Smoke, PENITENT, Officer, Soul Forge, a Faction

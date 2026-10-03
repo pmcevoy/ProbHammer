@@ -103,29 +103,41 @@
 - [x] 4.0.8 Resolve `NamedWeapon` names (case- and singular/plural-tolerant) and target keywords
       through 4.0.4's step
 - [x] 4.1 Submit a Batch API job against every hash in `ability-corpus.json` under prompt `v2`
-- [ ] 4.2 Poll for completion and write results into `tools/AbilityPipeline/data/classifications.json`,
+- [x] 4.2 Poll for completion and write results into `tools/AbilityPipeline/data/classifications.json`,
       each record stamped with `hash`, `promptVersion`, `model`, `classifiedAt`, and a
-      `reviewStatus` defaulting to pending
-- [ ] 4.3 Record actual token usage (printed by `collect`, including cache reads/writes) and cost,
+      `reviewStatus` defaulting to pending - done 2026-10-03: 3,773 collected, 0 failed; with the
+      50 sample records, 3,823 total: 752 complete / 455 partial / 2,616 unclassifiable
+- [x] 4.3 Record actual token usage (printed by `collect`, including cache reads/writes) and cost,
       against the measured estimate: ~$67 uncached on Sonnet 5 at batch pricing, ~$15-25 if prompt
-      caching hits
+      caching hits - actual: input 413,451, output 1,931,056, cache read 63,677,255, cache write
+      67,580 tokens; ~$16.50 at batch pricing
 
 ## 5. Review and acceptance gate
 
-- [ ] 5.1 Spot-check a random sample of `complete` records - these are used without review, so an
-      error found here means a prompt or schema fix, not a one-off correction
-- [ ] 5.2 Group the `unclassifiedResidue` of `partial`/`unclassifiable` records into mechanic
+- [x] 5.1 Spot-check a random sample of `complete` records - these are used without review, so an
+      error found here means a prompt or schema fix, not a one-off correction - done 2026-10-03:
+      30 records, 27 correct / 2 wrong / 1 design gap; fixes go to the next prompt version (see
+      design.md's "Full-run review, 2026-10-03")
+- [x] 5.2 Group the `unclassifiedResidue` of `partial`/`unclassifiable` records into mechanic
       families, and decide which are out of scope for LivePlay vs. worth a new effect kind (see
-      design.md's "Out-of-scope clauses" open question)
-- [ ] 5.3 Cross-check the new pipeline's output against all 41 entries in the existing
+      design.md's "Out-of-scope clauses" open question) - settled 2026-10-03 as a decision rule
+      (in scope but not expressible vs. outside LivePlay's scope) plus an in-scope family backlog;
+      the per-record split is left to the next prompt version rather than hand-clustered
+- [x] 5.5 Normalize FNP qualifier sentinels (`"null"`, `""`, `none`, `None`, `all`, `__NONE__`) to
+      `null` in `export` (stored records stay verbatim) and re-export the catalogue - done
+      2026-10-03: all 66 unqualified FNP effects now export as `null`
+- [x] 5.3 ~~Cross-check the new pipeline's output against all 41 entries in the existing
       `RuleClassificationBaseline` for the same underlying texts; record any disagreement and its
-      resolution (schema difference vs. genuine error)
-- [ ] 5.4 Decide, based on 5.1-5.3, whether this pipeline is ready to inform a future
-      "consume this output in LivePlay" change - not part of this change's own scope
+      resolution (schema difference vs. genuine error)~~ Superseded by `adopt-llm-ability-classifications`: the baseline was dropped without a
+      cross-check (user decision, 2026-10-01)
+- [x] 5.4 ~~Decide, based on 5.1-5.3, whether this pipeline is ready to inform a future
+      "consume this output in LivePlay" change - not part of this change's own scope~~ Superseded: `adopt-llm-ability-classifications` adopts the output directly
+      (user decision, 2026-10-01)
 
 ## 6. Documentation
 
 - [x] 6.1 Update `.claude/vnext-ideas.md`'s pointer entry to reflect the standalone two-tool
       architecture actually built, once built
-- [ ] 6.2 Record the real corpus-run cost, distinct-hash count, and any schema corrections found
-      during review in this change's own memory/design trail before archiving
+- [x] 6.2 Record the real corpus-run cost, distinct-hash count, and any schema corrections found
+      during review in this change's own memory/design trail before archiving - design.md's
+      "Full-run review, 2026-10-03"

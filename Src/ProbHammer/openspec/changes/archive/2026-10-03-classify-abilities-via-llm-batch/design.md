@@ -249,12 +249,14 @@ unaffected by anything in this change.
   decide after the full run shows how many there are and what their residue says. Also still open:
   whether to spot-check a sample of `complete` records, and the exact consumption rule (a later
   LivePlay-wiring change).
-- **Out-of-scope clauses.** Clauses that can never change what LivePlay shows or reminds during a
+- ~~**Out-of-scope clauses.** Clauses that can never change what LivePlay shows or reminds during a
   battle (e.g. Slaves to None's "when mustering your army..." restriction) currently count against
   `complete`. Candidate rule if that proves noisy: a closed list of categories judged by *effect*,
   not timing (army construction/list legality; unsupported game modes), recorded in a separate
   optional note field so nothing is silently dropped. Decide after the full run, by clustering the
-  real `unclassifiedResidue` text - no re-classification needed to do that analysis.
+  real `unclassifiedResidue` text - no re-classification needed to do that analysis.~~ **RESOLVED
+  2026-10-03** - broader than the candidate rule: residue splits into in-scope-not-expressible vs.
+  outside LivePlay's scope, and only the former blocks `complete`. See "Full-run review, 2026-10-03".
 - **Acceptance gate before this pipeline is trusted over the existing regex classifier.** Whether to
   require reproducing all 41 already-verified `RuleClassificationBaseline` entries with an equivalent
   (not necessarily identical-shaped, given the schema is richer now) correct classification, as an
@@ -621,3 +623,70 @@ intended. Decisions from the user's review:
   the same outcome either way.
 - **A selection condition on an ability with no representable effect stays in residue** - the
   condition bucket belongs to an effect, so there's nothing to attach it to.
+
+## Full-run review, 2026-10-03 (tasks 4.2-5.2)
+
+**Run:** 3,773 requests, 0 failed; with the 50 sample records, 3,823 distinct hashes - 752 complete /
+455 partial / 2,616 unclassifiable. Tokens: input 413,451, output 1,931,056, cache read 63,677,255,
+cache write 67,580 - ~$16.50 at Sonnet 5 batch pricing (estimate was $15-25 cached).
+
+**5.1 spot-check** - 30 seeded-random full-run `complete` records, every one reviewed by the user: 27
+correct, 2 wrong, 1 design gap. Neither error is visible today.
+- **Wrong - event trigger absorbed into the phase fields** (Scuttling Gait/Turbo-boost: "each time
+  this unit Advances... add 6" to the Move characteristic" as bucket `none`). Should be `never`; only
+  safe today because `turnOwnership: mine` trips the unconditional rule.
+- **Wrong - `AttachedUnit` where the bearer's own models are meant** (Bound Daemon, on the
+  Daemonhost [Legends] retinue: "the OC of DAEMONHOST models in that unit is 1"). Should be `Self`;
+  `AttachedUnit` would also set the leading Inquisitor's OC.
+- **Design gap - `evaluable-now` has no structured form** (Ardent Protectors: "while a CHARACTER
+  model is leading this unit"). The bodyguard outlives its Leader, so this can't ride on the target
+  the way a Leader's own "while leading" does. Decided: a structured condition beside
+  `conditionText` (led-by-keyword, has/lacks keyword, contains model), not a composite target -
+  `Target` is who benefits. `KeywordResolution.EffectiveKeywords` is already casualty-aware.
+- Minor: `turnOwnership` set where the text doesn't say whose turn; "contains model X" bucketed
+  `never` where a sibling text got `evaluable-now` (safe direction).
+
+**FNP qualifier:** of 104 FNP effects, none is a JSON `null` - 66 use a string for "unqualified"
+(`"null"` 37, `""`, `none`, `None`, `all`, `__NONE__`), ~8 put a condition or model restriction in
+the qualifier. `export` maps the sentinels to `null` (5.5) - the stored records stay verbatim, per
+"the model's output is never rewritten". The misplaced ones need the prompt fix. A fixed qualifier
+vocabulary is left to the work that surfaces FNP like InSv.
+
+**Consumer bug found:** `InvulnerableSaveEffectResolver` replaces the InSv wholesale, so a
+ranged-only grant (Kustom Force Field) wipes an existing melee save -
+`adopt-llm-ability-classifications` task 7.2.1.
+
+**5.2 - residue scope, resolving the "Out-of-scope clauses" open question.** "Unclassifiable" means
+"no stat effect captured", not "unknown": 73% of unclassifiable records still carry phases, and every
+record a target. Residue splits two ways:
+1. **In scope, not expressible** - LivePlay or the simulation would use it if the schema could hold
+   it. This is the schema backlog, and only this should keep a record from `complete`.
+2. **Outside LivePlay's scope** - tactical actions, resource/token economies, CP, movement/reserves/
+   deployment, enemy-only effects (forced Battle-shock tests), objective control, list legality.
+   Phase/target/timing is the whole useful extraction.
+
+The per-record split is left to the next prompt version (the model sorts its own residue) rather
+than clustering ~3,000 residues by hand. Army and Detachment rules are the worst-covered (1/25 and
+24/332 complete); a rough Detachment residue tally is led by Hit/Wound roll modifiers (~69) and
+re-rolls (~51). Sampled partials were honest and their captured effects safe.
+
+**Next-iteration backlog (schema + prompt v3):**
+- **Roll-modifier effect kind** - the largest in-scope family and a core simulation input (Oath of
+  Moment fails on this alone). Draft fields: roll (Hit/Wound/Damage/Save/Advance/Charge/
+  Battle-shock), modifier (re-roll / re-roll 1s / +N / -N / critical on X+), direction (made by vs.
+  targeting this unit), existing weapon selector. LivePlay idea: an info line in the matching weapon
+  panel for the current phase/turn; "targeting" lines beside Sv/InSv in the opponent's turn.
+- **BS/WS** as weapon characteristics - deferred by the weapon-effects plan, not excluded;
+  `RollThreshold` already handles the sign. 35 texts.
+- **Per-effect timing** - `phases`/`turnOwnership`/`usageLimit` are record-level, so "has Deep Strike;
+  once per battle, redeploy" (Warp-borne Stalker) gates the permanent grant too.
+- **Structured `evaluable-now` conditions** (above).
+- **"Select N units"** selections - covered by the planned condition toggle.
+- **Prompt fixes:** event triggers ("each time this unit Advances/makes a Charge move") are `never`;
+  "models with the bearer's own keyword in that unit" is `Self`; an FNP qualifier is only a damage
+  source; `turnOwnership` only when the text says whose turn; a multi-word weapon name ("Tyrnak and
+  Fenrir") isn't split on "and"; faction + type keywords are split ("LEGIONES DAEMONICA TZEENTCH").
+
+**When:** no re-run now (user decision). The current output stays in use; the next run is timed with
+the new Space Marine codex once BSData has absorbed it, since the rewording will stale these
+classifications anyway.

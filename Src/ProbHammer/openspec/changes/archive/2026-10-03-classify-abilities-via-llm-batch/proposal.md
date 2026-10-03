@@ -45,7 +45,9 @@ around this rather than another round of hand-tuned regex.
   precludes moving to something more robust later if the file-based approach stops scaling.
 - **The existing `RuleEffectClassifier`, `tools/RuleEffectClassificationReport/`, and the shipped
   `RuleClassificationBaseline`/`RuleEffectClassifications.json` are entirely untouched** - this
-  change is purely additive, new tooling running in parallel, not a replacement yet.
+  change is purely additive, new tooling running in parallel, not a replacement yet. (All of them
+  were later deleted by `adopt-llm-ability-classifications`, which also wired this pipeline's output
+  into LivePlay.)
 - **Explicitly out of scope**: any change to `ProbHammer.Core`/`ProbHammer.Web` runtime types,
   resolvers, or rendering. Wiring the new pipeline's output into LivePlay is a deliberately separate,
   later change, gated on this pipeline's output being trusted (see design.md's acceptance-gate
