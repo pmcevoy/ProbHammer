@@ -67,7 +67,7 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
         var html = await RenderAsync(4);
 
         html.Should().Contain(">InSv<").And.Contain(">4+<").And.NotContain("insv-icon").And
-            .NotContain("stat-tile-flagged");
+            .NotContain("provenance-tile");
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
     }
 
     [Fact]
-    public async Task Caveated_RendersPlainTileBareLabelAndALegendTriggerForTheAbility()
+    public async Task Caveated_RendersAHighlightedTileWhosePopoverNamesTheAbility()
     {
         var ability = new Ability
         {
@@ -111,19 +111,11 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
         var html = await RenderAsync(
             InvulnerableSaveCharacteristicView.Caveated(new InvulnerableSave(5, 5), ability));
 
-        // The old always-visible <p class="insv-caveat-text"> paragraph is gone - the ability's
-        // text is now reachable only through a popover trigger, per live-play-view's "Flagged
-        // Statline Characteristic Rendering" (resolve-known-ability-effects). The tile itself stays
-        // plain (no stat-tile-flagged/amber) - a still-caveated value shows the plain catalogue
-        // value, not a computed result, so amber (reserved for "this has already been adjusted for
-        // you") would be misleading; see classify-characteristic-modifier-caveats' own corrected
-        // rendering rationale on RenderScalarTile.
-        html.Should().NotContain("stat-tile-flagged")
-            .And.Contain(">InSv*<")
-            .And.Contain("statline-flag-legend")
-            .And.Contain("flag-legend-line")
-            .And.Contain("flag-legend-marker\">*</span>")
+        html.Should().Contain("class=\"stat-tile insv-tile provenance-tile\"")
+            .And.Contain("<span class=\"stat-label\">InSv</span><span class=\"stat-value\">5+</span>")
+            .And.Contain("<th>Datasheet</th>")
             .And.Contain(">Test Ability<")
+            .And.NotContain("provenance-result")
             .And.Contain("This model has a test invulnerable save condition.")
             .And.NotContain("insv-caveat-text")
             .And.NotContain("insv-icon");

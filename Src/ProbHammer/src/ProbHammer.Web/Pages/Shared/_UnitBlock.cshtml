@@ -23,51 +23,112 @@
     (string Trigger, string Trailer) BuildRulePopover(string triggerHtml, string triggerClass, string ruleText, IReadOnlySet<string> shownRuleNames) =>
         popovers.BuildRulePopover(triggerHtml, triggerClass, ruleText, shownRuleNames);
 
-    // A flag-legend line's own popover trigger never has a nested [BRACKET] reference to suppress
-    // (the source ability isn't itself re-cited anywhere on the page), so it always passes an empty
-    // shownRuleNames set.
+    // An Attacks contribution line's ability is never re-cited elsewhere in its own text, so it
+    // passes an empty shownRuleNames set.
     var noShownRuleNames = new HashSet<string>();
 
-    // Renders one whole legend line (marker span + ability-name-line pill, or plain text when the
-    // source ability has no descriptive text of its own - e.g. a wargear item like "Sigil of
-    // Corruption") as a single HTML string, called from all three legend sites (Statline, Ranged
-    // weapons, Melee weapons) below. Built this way - one Razor call site per legend entry, `@Html.
-    // Raw(RenderLegendLine(flag))` - rather than an inline if/else mixing markup and a tuple-
-    // deconstructing var statement directly in the .cshtml: that shape kept getting corrupted by
-    // this project's own .cshtml auto-formatter at this nesting depth (observed twice: it wrapped a
-    // `new HashSet<string>()` call right after `HashSet`, which Razor's parser then read as an HTML
-    // tag start and exited the code block early; even after removing that call, it still broke a
-    // wrapped `var (a, b) = Method(...)` tuple-deconstruction statement enough to leave `a`/`b`
-    // undeclared). Moving the whole thing into one C# method sidesteps the formatter entirely - a
-    // plain method body is not subject to whatever heuristic mis-wraps a markup/code transition.
-    string RenderLegendLine((string Marker, Ability Source) flag)
-    {
-        var marker = WebUtility.HtmlEncode(flag.Marker);
-        var abilityNameHtml = WebUtility.HtmlEncode(AbilityDisplayName(flag.Source));
-        string nameHtml;
-        if (string.IsNullOrWhiteSpace(flag.Source.Text))
-        {
-            nameHtml = $"<span class=\"ability-name-line\">{abilityNameHtml}</span>";
-        }
-        else
-        {
-            var popover = BuildRulePopover(abilityNameHtml, "ability-name-line", flag.Source.Text, noShownRuleNames);
-            nameHtml = popover.Trigger + popover.Trailer;
-        }
+    // Melee reads fine as the plain Unicode glyph; Ranged is a small inline SVG crosshair, since every
+    // text-glyph candidate tried live rendered ambiguously in this browser/OS font stack.
+    const string rangedIcon = "<svg class=\"insv-icon\" viewBox=\"0 0 16 16\" aria-hidden=\"true\">" +
+                              "<circle cx=\"8\" cy=\"8\" r=\"5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
+                              "<line x1=\"8\" y1=\"0\" x2=\"8\" y2=\"3\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
+                              "<line x1=\"8\" y1=\"13\" x2=\"8\" y2=\"16\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
+                              "<line x1=\"0\" y1=\"8\" x2=\"3\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
+                              "<line x1=\"13\" y1=\"8\" x2=\"16\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
+                              "</svg>";
 
-        return $"<div class=\"flag-legend-line\"><span class=\"flag-legend-marker\">{marker}</span>{nameHtml}</div>";
+    // A stat tile is a plain <div>, or, when an ability has something to say about its value, the
+    // provenance popover's trigger button itself, so the whole tile is the tap target.
+    string RenderTile(string cssClass, string innerHtml, ValueProvenance? provenance)
+    {
+        if (provenance is null)
+            return $"<div class=\"{cssClass}\">{innerHtml}</div>";
+
+        var (trigger, trailer) = popovers.BuildProvenancePopover(innerHtml, $"{cssClass} provenance-tile", provenance);
+        return trigger + trailer;
+    }
+
+    // M/T/Sv/W/Ld/OC: fieldKey is the LivePlayModel.GetScalarField name, suffix the printed trailing
+    // text (`"`/`+`/none).
+    string RenderScalarTile(string label, string fieldKey, StatlineBlockViewModel block, string suffix)
+    {
+        var view = LivePlayModel.GetScalarField(block.Statline, fieldKey);
+        var inner = $"<span class=\"stat-label\">{WebUtility.HtmlEncode(label)}</span>" +
+                    $"<span class=\"stat-value\">{WebUtility.HtmlEncode(view.Value.ToString())}{suffix}</span>";
+        return RenderTile("stat-tile", inner, block.ProvenanceFor(fieldKey));
+    }
+
+    // A Battle-shocked unit's OC shows the toolbar's bolt glyph in the ordinary value color; its
+    // provenance popover always exists and explains the 0.
+    string RenderObjectiveControlTile(StatlineBlockViewModel block)
+    {
+        if (!unit.IsBattleShocked)
+            return RenderScalarTile("OC", "OC", block, "");
+
+        var inner = "<span class=\"stat-label\">OC</span>" +
+                    $"<span class=\"stat-value\">{BoltSvgIcon("oc-battleshock-icon")}</span>";
+        return RenderTile("stat-tile", inner, block.ProvenanceFor("OC"));
+    }
+
+    // InSv shapes: uniform, melee-only, ranged-only, or split (ranged above melee). A highlighted run
+    // with no save (only a not-added conditional save reaches it) renders "–"; an unhighlighted one
+    // renders no tile at all.
+    string RenderInvulnerableSaveTile(StatlineBlockViewModel block)
+    {
+        var inv = block.Statline.InSv;
+        var save = inv.Value;
+        var provenance = block.ProvenanceFor("InSv");
+        string valueHtml;
+        if (inv.IsCaveated)
+            valueHtml = $"<span class=\"stat-value\">{save.MeleeInSv}+</span>";
+        else if (save.MeleeInSv == 0 && save.RangedInSv == 0)
+        {
+            if (provenance is null)
+                return "";
+            valueHtml = "<span class=\"stat-value\">–</span>";
+        }
+        else if (save.MeleeInSv == save.RangedInSv)
+            valueHtml = $"<span class=\"stat-value\">{save.MeleeInSv}+</span>";
+        else if (save.RangedInSv == 0)
+            valueHtml = $"<span class=\"stat-value\">⚔ {save.MeleeInSv}+</span>";
+        else if (save.MeleeInSv == 0)
+            valueHtml = $"<span class=\"stat-value\">{rangedIcon} {save.RangedInSv}+</span>";
+        else
+            valueHtml = "<span class=\"stat-value stat-value-compact\">" +
+                        $"<span>{rangedIcon} {save.RangedInSv}+</span><span>⚔ {save.MeleeInSv}+</span></span>";
+
+        return RenderTile("stat-tile insv-tile", "<span class=\"stat-label\">InSv</span>" + valueHtml, provenance);
+    }
+
+    // A highlighted weapon value keeps the row's own <td> background; the inner button carries the
+    // amber, and its panel trails it inside the cell.
+    string RenderWeaponValueCell(WeaponRowViewModel row, string field)
+    {
+        var valueHtml = WebUtility.HtmlEncode(LivePlayModel.GetWeaponScalarField(row.Entry.Profile, field).Value.ToString());
+        if (row.ProvenanceFor(field) is not { } provenance)
+            return $"<td>{valueHtml}</td>";
+
+        var (trigger, trailer) = popovers.BuildProvenancePopover(valueHtml, "provenance-tile", provenance);
+        return $"<td>{trigger}{trailer}</td>";
+    }
+
+    // live-play.js rewrites .weapon-attacks-number on selection changes, never the cell itself, so
+    // a provenance trigger inside the cell survives the recompute.
+    string RenderAttacksCell(WeaponRowViewModel row)
+    {
+        var numberHtml = $"<span class=\"weapon-attacks-number\">{WebUtility.HtmlEncode(row.Entry.TotalAttacks.ToString())}</span>";
+        if (row.ProvenanceFor("A") is not { } provenance)
+            return $"<td class=\"weapon-attacks-value\">{numberHtml}</td>";
+
+        var (trigger, trailer) = popovers.BuildProvenancePopover(numberHtml, "provenance-tile", provenance);
+        return $"<td class=\"weapon-attacks-value\">{trigger}{trailer}</td>";
     }
 
     // Renders one Attacks ability-contribution line's inner content (resolve-weapon-attacks-effects):
-    // the source ability as a popover trigger, reusing the exact same mechanism RenderLegendLine's
-    // ability-name-line does, plus the same (Count×Amount) notation the breakdown's own base rows
-    // use. Shared by both a row-bound/partial line and a group-wide line - the two differ only in
-    // which <tr> wraps this content (see the Ranged/Melee sections below). Wrapped in
-    // .flag-legend-line (a flex row, not a plain text sibling) for the same reason RenderLegendLine
-    // already needs it: .ability-name-line is display:flex (block-level, even though its own width
-    // hugs its content), so plain text appended right after it as a bare sibling drops to its own
-    // line - .flag-legend-line's flex-row layout keeps the trigger and the trailing amount on one
-    // line instead.
+    // the source ability as a popover trigger plus the same (Count×Amount) notation the breakdown's
+    // own base rows use. Shared by both a row-bound/partial line and a group-wide line. Wrapped in
+    // .attacks-contribution-line, a flex row, because .ability-name-line is display:flex and a bare
+    // text sibling after it would drop to its own line.
     string RenderAttacksContributionLine(AttacksContributionLine line)
     {
         var abilityNameHtml = WebUtility.HtmlEncode(AbilityDisplayName(line.SourceAbility));
@@ -82,7 +143,7 @@
             nameHtml = popover.Trigger + popover.Trailer;
         }
 
-        return $"<div class=\"flag-legend-line\">{nameHtml}<span class=\"weapon-attacks-contribution-amount\">({line.Count}&times;{line.Amount})</span></div>";
+        return $"<div class=\"attacks-contribution-line\">{nameHtml}<span class=\"weapon-attacks-contribution-amount\">({line.Count}&times;{line.Amount})</span></div>";
     }
 }
 @* Whole-unit-block collapse: the block itself is a <details>, and
@@ -299,135 +360,9 @@
                             @Html.Raw(RenderScalarTile("Sv", "Sv", block, "+"))
                             @Html.Raw(RenderScalarTile("W", "W", block, ""))
                             @Html.Raw(RenderScalarTile("Ld", "LD", block, "+"))
-                            @* Battle-shocked: OC renders the same glyph as the header's Battle-shock
-                               control, in the tile's own value color (never amber - see
-                               design-tokens.md's "controls get amber ink when active, stat values
-                               never do") - the "flagged" signal lives entirely in the tile's
-                               background (.stat-tile-flagged, shared with the caveated-InSv tile
-                               below), not in the glyph's own color. No label change, no caption
-                               text: unlike a caveated InSv, there's only one fixed reason, already
-                               conveyed by the header glyph. Applies to every run's OC tile in this
-                               unit, not only whichever run the header itself sits above - Battle-
-                               shocked is one flag for the whole unit. *@
-                            @if (unit.IsBattleShocked)
-                            {
-                                <div class="stat-tile stat-tile-flagged"><span class="stat-label">OC</span><span
-                                        class="stat-value">@Html.Raw(BoltSvgIcon("oc-battleshock-icon"))</span></div>
-                            }
-                            else if (block.ScalarMarker("OC") is { } ocMarker)
-                            {
-                                @* Amber only once OC is actually resolved (a real DerivedValue, e.g.
-                                   Vexilla's +1) - a still-caveated OC shows the plain catalogue
-                                   value and must not look already-adjusted (see RenderScalarTile's
-                                   own doc comment for the full rationale). *@
-                                var ocCssClass = block.Statline.Oc.IsCaveated ? "stat-tile" : "stat-tile stat-tile-flagged";
-                                <div class="@ocCssClass"><span
-                                        class="stat-label">OC@(ocMarker)</span><span
-                                        class="stat-value">@(block.Statline.Oc.Value)</span></div>
-                            }
-                            else
-                            {
-                                <div class="stat-tile"><span class="stat-label">OC</span><span
-                                        class="stat-value">@(block.Statline.Oc.Value)</span></div>
-                            }
-                            @{
-                                var inv = block.Statline.InSv;
-                                var invDisplay = inv.Value;
-                            }
-                            @* The invulnerable save renders as its own labeled box below the row, GW/Wahapedia-card
-                               style, rather than a value stacked inside the Sv tile. The caveated branch is the only
-                               place in this file that renders an Ability's Text rather than only its Name; this is
-                               a scoped exception to the
-                               page's otherwise name-only ability rendering, not a step toward rendering text
-                               generally, since only this one condition has no other way to be shown to the player. *@
-                            @{
-                                // Melee reads fine as the plain Unicode glyph (text-presentation by default, so it
-                                // inherits currentColor); Ranged does not - every text-glyph candidate tried live
-                                // (⌖, ◎, ⊙) rendered ambiguously in this browser/OS font stack (a diamond, an "info"
-                                // icon, a bullet), so Ranged is a small inline SVG crosshair instead, matching this
-                                // file's existing filter-flag icon precedent for exactly the same reason.
-                                var rangedIcon = "<svg class=\"insv-icon\" viewBox=\"0 0 16 16\" aria-hidden=\"true\">" +
-                                                 "<circle cx=\"8\" cy=\"8\" r=\"5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
-                                                 "<line x1=\"8\" y1=\"0\" x2=\"8\" y2=\"3\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
-                                                 "<line x1=\"8\" y1=\"13\" x2=\"8\" y2=\"16\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
-                                                 "<line x1=\"0\" y1=\"8\" x2=\"3\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
-                                                 "<line x1=\"13\" y1=\"8\" x2=\"16\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
-                                                 "</svg>";
-                            }
-                            @* The InSv box is a .stat-tile like M/T/Sv/W/Ld/Oc (label on top, value below, inside
-                               one bordered box), not a separate box+label pair beside each other - matches the
-                               other Statline attributes' own layout exactly, per direct user feedback. Any
-                               attack-type icon rides inside the value line itself (next to the number it
-                               qualifies), not the label - the label is always just "InSv", plus
-                               block.InvulnerableSaveMarker when this run's save is flagged (still-caveated, or
-                               resolved by a matched statline-flag-rules rule) across every shape. *@
-                            @{
-                                var insvLabel = "InSv" + block.InvulnerableSaveMarker;
-                            }
-                            @if (inv.IsCaveated)
-                            {
-                                @* Plain background, not amber - invDisplay here is still the pre-
-                                   caveat catalogue value (IsCaveated selects OriginalValue), not a
-                                   computed result; see RenderScalarTile's own doc comment for the
-                                   full rationale, which applies identically here. *@
-                                <div class="stat-tile insv-tile">
-                                    <span class="stat-label">@insvLabel</span>
-                                    <span class="stat-value">@(invDisplay.MeleeInSv)+</span>
-                                </div>
-                            }
-                            else if (invDisplay.MeleeInSv == 0 && invDisplay.RangedInSv == 0)
-                            {
-                                @* Absent - no invulnerable save box at all. *@
-                            }
-                            else if (invDisplay.MeleeInSv == invDisplay.RangedInSv)
-                            {
-                                @* Uniform - applies equally to both attack types, so no attack-type icon needed. *@
-                                <div
-                                    class="stat-tile insv-tile @(block.InvulnerableSaveMarker != null ? "stat-tile-flagged" : "")">
-                                    <span class="stat-label">@insvLabel</span>
-                                    <span class="stat-value">@(invDisplay.MeleeInSv)+</span>
-                                </div>
-                            }
-                            else if (invDisplay.RangedInSv == 0)
-                            {
-                                <div
-                                    class="stat-tile insv-tile @(block.InvulnerableSaveMarker != null ? "stat-tile-flagged" : "")">
-                                    <span class="stat-label">@insvLabel</span>
-                                    <span class="stat-value">⚔ @(invDisplay.MeleeInSv)+</span>
-                                </div>
-                            }
-                            else if (invDisplay.MeleeInSv == 0)
-                            {
-                                <div
-                                    class="stat-tile insv-tile @(block.InvulnerableSaveMarker != null ? "stat-tile-flagged" : "")">
-                                    <span class="stat-label">@insvLabel</span>
-                                    <span class="stat-value">@Html.Raw(rangedIcon) @(invDisplay.RangedInSv)+</span>
-                                </div>
-                            }
-                            else
-                            {
-                                @* Two stacked rows (ranged above melee), not one line with a "/" separator - each
-                                   row reads as a complete, self-contained fact ("ranged: 5+", "melee: 4+") rather
-                                   than needing the eye to track a column pairing across a divider. *@
-                                <div
-                                    class="stat-tile insv-tile @(block.InvulnerableSaveMarker != null ? "stat-tile-flagged" : "")">
-                                    <span class="stat-label">@insvLabel</span>
-                                    <span class="stat-value stat-value-compact">
-                                        <span>@Html.Raw(rangedIcon) @(invDisplay.RangedInSv)+</span>
-                                        <span>⚔ @(invDisplay.MeleeInSv)+</span>
-                                    </span>
-                                </div>
-                            }
+                            @Html.Raw(RenderObjectiveControlTile(block))
+                            @Html.Raw(RenderInvulnerableSaveTile(block))
                         </div>
-                        @if (block.FlagLegend.Count > 0)
-                        {
-                            <div class="statline-flag-legend">
-                                @foreach (var flag in block.FlagLegend)
-                                {
-                                    @Html.Raw(RenderLegendLine(flag))
-                                }
-                            </div>
-                        }
                     </div>
 
                     @if (block.ModelAbilities.Any() || block.UnitAbilities.Any())
@@ -505,7 +440,7 @@
                     var weapon = row.Entry.Profile;
                     var tags = weapon.KeywordsText;
                     var weaponId = $"w-{i}-r-{w}";
-                    var nameLabel = row.NameMarker is null ? row.Entry.Name : $"{row.Entry.Name}{row.NameMarker}";
+                    var nameLabel = row.Entry.Name;
                     <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId">
                         <td class="weapon-name">
                             @if (row.ShowsBreakdownTrigger)
@@ -540,27 +475,12 @@
                             }
                         </td>
                         <td>@(weapon.Range)"</td>
-                        <td class="weapon-attacks-value">@row.Entry.TotalAttacks</td>
+                        @Html.Raw(RenderAttacksCell(row))
                         <td>@(weapon.Skill.Value)+</td>
-                        @Html.Raw(RenderWeaponValueCell(row, "S", ""))
-                        @Html.Raw(RenderWeaponValueCell(row, "AP", ""))
-                        @Html.Raw(RenderWeaponValueCell(row, "D", ""))
+                        @Html.Raw(RenderWeaponValueCell(row, "S"))
+                        @Html.Raw(RenderWeaponValueCell(row, "AP"))
+                        @Html.Raw(RenderWeaponValueCell(row, "D"))
                     </tr>
-                    @if (row.FlagLegend.Count > 0)
-                    {
-                        <tr class="weapon-flag-legend-row @(w % 2 == 1 ? "weapon-row-alt" : "")"
-                            data-weapon-id="@weaponId" hidden>
-                            <td colspan="7">
-                                <div class="statline-flag-legend">
-                                    @foreach (var flag in row.FlagLegend)
-                                    {
-                                        @Html.Raw(RenderLegendLine(flag))
-                                    }
-                                </div>
-                            </td>
-                        </tr>
-                    }
-
                     @foreach (var breakdown in row.Breakdown)
                     {
                         <tr class="weapon-contribution-row @(breakdown.SelectKey == null ? "contribution-merged" : "") @(w % 2 == 1 ? "weapon-row-alt" : "")"
@@ -650,7 +570,7 @@
                     var weapon = row.Entry.Profile;
                     var tags = weapon.KeywordsText;
                     var weaponId = $"w-{i}-m-{w}";
-                    var nameLabel = row.NameMarker is null ? row.Entry.Name : $"{row.Entry.Name}{row.NameMarker}";
+                    var nameLabel = row.Entry.Name;
                     <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId">
                         <td class="weapon-name">
                             @if (row.ShowsBreakdownTrigger)
@@ -684,27 +604,12 @@
                                 </div>
                             }
                         </td>
-                        <td class="weapon-attacks-value">@row.Entry.TotalAttacks</td>
+                        @Html.Raw(RenderAttacksCell(row))
                         <td>@(weapon.Skill.Value)+</td>
-                        @Html.Raw(RenderWeaponValueCell(row, "S", ""))
-                        @Html.Raw(RenderWeaponValueCell(row, "AP", ""))
-                        @Html.Raw(RenderWeaponValueCell(row, "D", ""))
+                        @Html.Raw(RenderWeaponValueCell(row, "S"))
+                        @Html.Raw(RenderWeaponValueCell(row, "AP"))
+                        @Html.Raw(RenderWeaponValueCell(row, "D"))
                     </tr>
-                    @if (row.FlagLegend.Count > 0)
-                    {
-                        <tr class="weapon-flag-legend-row @(w % 2 == 1 ? "weapon-row-alt" : "")"
-                            data-weapon-id="@weaponId" hidden>
-                            <td colspan="6">
-                                <div class="statline-flag-legend">
-                                    @foreach (var flag in row.FlagLegend)
-                                    {
-                                        @Html.Raw(RenderLegendLine(flag))
-                                    }
-                                </div>
-                            </td>
-                        </tr>
-                    }
-
                     @foreach (var breakdown in row.Breakdown)
                     {
                         <tr class="weapon-contribution-row @(breakdown.SelectKey == null ? "contribution-merged" : "") @(w % 2 == 1 ? "weapon-row-alt" : "")"
@@ -776,45 +681,6 @@
 
     static string AbilityDisplayName(Ability ability) =>
         ability.Origin == AbilityOrigin.Enhancement ? $"✦ {ability.Name}" : ability.Name;
-
-    // The weapon-table counterpart to RenderScalarTile below - marks the value cell itself rather
-    // than a label, since the weapon table has no per-characteristic label the way a Statline tile
-    // does (render-weapon-characteristic-effects). Unlike RenderScalarTile, no IsCaveated guard is
-    // needed: a WeaponProfile's S/AP/D never starts caveated (see WeaponCharacteristicEffectResolver's
-    // own doc comment), so a populated marker here always means a genuinely resolved mutation.
-    static string RenderWeaponValueCell(WeaponRowViewModel row, string field, string suffix)
-    {
-        var view = LivePlayModel.GetWeaponScalarField(row.Entry.Profile, field);
-        var marker = row.ValueMarker(field);
-        var cssClass = marker is not null ? "weapon-value-flagged" : "";
-        var valueText = WebUtility.HtmlEncode($"{view.Value}{marker}{suffix}");
-        return $"<td class=\"{cssClass}\">{valueText}</td>";
-    }
-
-    // Shared renderer for the five ScalarCharacteristicView-backed statline tiles other than OC
-    // (which keeps its own bespoke branch for the Battle-shocked override). Covers
-    // M/T/Sv/W/Ld uniformly: `fieldKey` is the LivePlayModel.GetScalarField-recognized name
-    // ("M"/"T"/"Sv"/"W"/"LD"), `label` is the display text a flagged run's own marker gets
-    // appended to, `suffix` is the literal trailing text (`"`/`+`/none) each characteristic's own
-    // printed convention uses.
-    //
-    // The amber .stat-tile-flagged background is reserved for a RESOLVED (non-caveated) run - one
-    // whose displayed value is an actual DerivedValue the app computed, not the plain catalogue
-    // Value shown while still caveated. The marker itself (and the legend line it points to) still renders
-    // either way - amber specifically means "this number has already been adjusted for you," which
-    // a still-caveated tile hasn't been; painting it amber would wrongly suggest the shown value
-    // already accounts for the linked ability, per direct user feedback reviewing a real caveated
-    // "Auric Mantle" W tile live.
-    static string RenderScalarTile(string label, string fieldKey, StatlineBlockViewModel block, string suffix)
-    {
-        var view = LivePlayModel.GetScalarField(block.Statline, fieldKey);
-        var marker = block.ScalarMarker(fieldKey);
-        var cssClass = marker is not null && !view.IsCaveated ? "stat-tile stat-tile-flagged" : "stat-tile";
-        var labelText = WebUtility.HtmlEncode(marker is null ? label : $"{label}{marker}");
-        var valueText = WebUtility.HtmlEncode(view.Value.ToString());
-        return $"<div class=\"{cssClass}\"><span class=\"stat-label\">{labelText}</span>" +
-               $"<span class=\"stat-value\">{valueText}{suffix}</span></div>";
-    }
 
     // Shared lightning-bolt shape for both the Battle-shock toolbar control and a Battle-shocked
     // unit's OC tile - the same glyph, not

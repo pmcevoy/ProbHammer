@@ -20,7 +20,9 @@ AttachedUnitAggregator.ApplyStatlineFlagRules(statlines, abilities, classificati
                                        // as no classification at all - EXCEPT a DetachmentRule-
                                        // origin ability, whose keyword target was already evaluated
                                        // by DetachmentRuleInboundAbilityResolver. Only the
-                                       // classification's unconditional effects apply.
+                                       // classification's unconditional effects apply; its
+                                       // conditional Scalar/InvulnerableSave effects are recorded
+                                       // on the same entries' NotAppliedEffects instead.
 IsBearerOf(abilityEntry, target, componentName, statlineName) -> bool
                                        // SelfRuleTarget - the matched ability's own bearer row(s),
                                        // one specific model-line when AggregateAbilityEntry
@@ -59,22 +61,19 @@ AttachedUnitAggregator.ResolveCaveatedInvulnerableSaves(statlines, classificatio
 their live, casualty-filtered results, so a flagged value's liveness falls out of ability presence
 with no separate tracking. Never mutates `Datasheet`/`Unit`; only the returned, decorated copy of the
 statline entries carries an effect. A conditional effect (see ability-classification-catalogue.md's
-unconditional rule) is not applied and has no Statline display of its own yet.
+unconditional rule) is not applied; it is recorded on `AggregateStatlineEntry.NotAppliedEffects` as a
+`NotAppliedStatlineEffect` (source ability, effect, `EffectCondition`) on every entry an unconditional
+effect of that record would reach, following the same bearer liveness, so `/LivePlay` can show it
+without adding it (`value-provenance-popovers`).
 
-**`/LivePlay` display** (`resolve-known-ability-effects`; generalized from InSv/Oc-only to all six
-scalar characteristics by the "Remaining Scalar Characteristics Retyped" work in bsdata-json-ingestion.md): replaces the
-old InSv-only always-visible `.insv-caveat-text` paragraph with a general per-run
-footnote-marker-and-legend mechanism, driven uniformly by any populated `ContributingAbilities` — an
-unresolved invulnerable-save caveat and a `statline-flag-rules` match alike — see
-`.claude/design-tokens.md`'s "Flagged statline legend" for the visual mechanism, and
-`live-play-view`'s "Flagged Statline Characteristic Rendering" for the full requirement.
-`LivePlayModel.GroupStatlines` reads each scalar field's own `ContributingAbilities` via
-`GetScalarField` (M/T/Sv/W/Ld/Oc, keyed by `LivePlayModel.ScalarStatlineFieldOrder`) into a
-`StatlineBlockViewModel.ScalarFlagSources` dictionary, and `Statline.InSv.ContributingAbilities`
-directly into its own dedicated `InvulnerableSaveFlagSource` field (InSv keeps its own bespoke
-compound-view renderer, never folded into the scalar dictionary); `LivePlayModel.AssignFlagMarkers`
-then walks every run in order, assigning the first distinct source seen `*`, the next `**`, and so
-on into `ScalarMarkers`/`InvulnerableSaveMarker`, reusing an already-assigned marker for the same
-source wherever it recurs — so a `WholeUnit`-scoped source affecting every run of a unit keeps one
-marker throughout and gets a legend line in every one of those runs, never consolidated into a
-single shared location.
+**`/LivePlay` display** (`value-provenance-popovers`, replacing the earlier footnote-marker-and-
+legend mechanism): every value an ability has something to say about renders as an amber,
+tappable `.provenance-tile` whose popover lists the original value, each ability line and the
+result - see `.claude/design-tokens.md`'s "Value Provenance Highlight" and `live-play-view`'s
+"Value Provenance Highlight"/"Value Provenance Popover Content". `ValueProvenanceBuilder`
+(`Pages/ValueProvenance.cs`, called from `LivePlayModel.BuildUnitBlock`) builds one
+`ValueProvenance` per highlighted Statline field and InSv (`StatlineBlockViewModel.Provenance`) and
+per weapon A/S/AP/D (`WeaponRowViewModel.Provenance`): applied lines from the view's
+`ContributingAbilities`, a caveat line when it is still caveated, not-added lines from
+`NotAppliedEffects` (condition summary + "not added"), a fixed "Battle-shocked → 0" line on a
+Battle-shocked OC, and the source ability's `UnclassifiedResidue` from the catalogue as a note.

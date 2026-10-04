@@ -106,7 +106,7 @@ public class LivePlayModel(
     // is built) so BuildUnitBlock can read HalfStrengthResolution/IsBattleShocked off it.
     internal static List<UnitBlockViewModel> BuildUnitBlocks(ArmyRoster roster, AbilityClassificationCatalogue classifications) =>
         SortRoster(roster.Units, classifications)
-            .Select(unit => BuildUnitBlock(AttachedUnitAggregator.Build(unit, classifications), unit))
+            .Select(unit => BuildUnitBlock(AttachedUnitAggregator.Build(unit, classifications), unit, classifications))
             .ToList();
 
     // Builds the header's own view model directly from the roster's army-level metadata plus the
@@ -238,23 +238,26 @@ public class LivePlayModel(
     // HalfStrengthResolution and ICombatUnit.IsBattleShocked) before delegating to the view-only
     // overload below - the production path (BuildUnitBlocks, the casualty-sync endpoint) always has
     // the unit on hand.
-    internal static UnitBlockViewModel BuildUnitBlock(AttachedUnitAggregateView view, ICombatUnit unit)
+    internal static UnitBlockViewModel BuildUnitBlock(AttachedUnitAggregateView view, ICombatUnit unit,
+        AbilityClassificationCatalogue? classifications = null)
     {
         var isSingleModelUnit = HalfStrengthResolution.StartingStrength(unit) == 1;
         var isAtOrBelowHalfStrength = isSingleModelUnit
             ? unit.IsHalfStrengthOverride
             : HalfStrengthResolution.IsAtOrBelowHalfStrength(unit);
-        return BuildUnitBlock(view, isSingleModelUnit, isAtOrBelowHalfStrength, unit.IsBattleShocked);
+        return BuildUnitBlock(view, isSingleModelUnit, isAtOrBelowHalfStrength, unit.IsBattleShocked, classifications);
     }
 
     // View-only overload, defaulting the three status fields to false/not-applicable - kept for the
     // several existing rendering-focused tests that construct an AttachedUnitAggregateView fixture
-    // directly with no backing ICombatUnit to read status off.
+    // directly with no backing ICombatUnit to read status off. classifications only supplies residue
+    // notes for value provenance.
     internal static UnitBlockViewModel BuildUnitBlock(
         AttachedUnitAggregateView view,
         bool isSingleModelUnit = false,
         bool isAtOrBelowHalfStrength = false,
-        bool isBattleShocked = false)
+        bool isBattleShocked = false,
+        AbilityClassificationCatalogue? classifications = null)
     {
         // Loadouts is empty when exactly one ModelLine shares a statline name (the "no redundant
         // breakdown row" rule - see AggregateStatlineEntry), so Max(.,1) recovers the true
@@ -267,17 +270,18 @@ public class LivePlayModel(
         var hasMultipleModelLines = totalModelLines > 1;
 
         var loadoutLabels = BuildLoadoutLabelLookup(view.Statlines);
+        var provenance = new ValueProvenanceBuilder(classifications);
 
         var orderedWeapons = view.Weapons
             .OrderByDescending(w => w.TotalAttacks.ExpectedValue())
             .Select(w => new WeaponRowViewModel(w, BuildContributionBreakdown(w, loadoutLabels), hasMultipleModelLines,
+                Provenance: provenance.ForWeapon(w),
                 GroupWideAttacksLines: BuildGroupWideAttacksLines(w)))
             .ToList();
         var rangedWeaponRows = orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Ranged).ToList();
         var meleeWeaponRows = orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Melee).ToList();
 
-        var (statlineBlocks, markedRangedWeapons, markedMeleeWeapons) = AssignFlagMarkers(
-            GroupStatlines(view.Statlines, view.Abilities), rangedWeaponRows, meleeWeaponRows);
+        var statlineBlocks = GroupStatlines(view.Statlines, view.Abilities, isBattleShocked, provenance);
         var wholeUnitAbilitySpans = BuildWholeUnitAbilitySpans(statlineBlocks, view.Abilities);
         var (adjustedStatlineBlocks, componentAbilitySpans) =
             BuildComponentAbilitySpans(statlineBlocks, view.Abilities);
@@ -285,8 +289,8 @@ public class LivePlayModel(
         return new(
             Name: view.Name,
             Statlines: adjustedStatlineBlocks,
-            RangedWeapons: markedRangedWeapons,
-            MeleeWeapons: markedMeleeWeapons,
+            RangedWeapons: rangedWeaponRows,
+            MeleeWeapons: meleeWeaponRows,
             ComponentAbilitySpans: componentAbilitySpans,
             WholeUnitAbilitySpans: wholeUnitAbilitySpans,
             Keywords: view.Keywords.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList(),
@@ -434,8 +438,7 @@ public class LivePlayModel(
     // A distinct (source ability, amount) pair is group-wide when it reaches every one of the
     // entry's current Contributions - reused by both BuildContributionBreakdown (to exclude a
     // group-wide pair from a row's own nested AttacksLines) and BuildGroupWideAttacksLines (to
-    // render it once, after the breakdown). Ability identity is (Name, Text), the same convention
-    // CompositeUnresolvedAbilities/AssignFlagMarkers already use.
+    // render it once, after the breakdown). Ability identity is (Name, Text).
     private static IReadOnlyList<(Ability SourceAbility, int Amount)> ResolveGroupWideAttacksPairs(
         IReadOnlyList<WeaponContribution> contributions)
     {
@@ -490,7 +493,8 @@ public class LivePlayModel(
     // Row-bound (StatlineName != null) abilities attach to whichever run contains a matching
     // (ComponentName, StatlineName) entry, split into ModelAbilities/UnitAbilities by Scope.
     private static IReadOnlyList<StatlineBlockViewModel> GroupStatlines(
-        IReadOnlyList<AggregateStatlineEntry> statlines, IReadOnlyList<AggregateAbilityEntry> abilities)
+        IReadOnlyList<AggregateStatlineEntry> statlines, IReadOnlyList<AggregateAbilityEntry> abilities,
+        bool isBattleShocked, ValueProvenanceBuilder provenance)
     {
         var groups = new List<List<AggregateStatlineEntry>>();
 
@@ -509,33 +513,17 @@ public class LivePlayModel(
             }
         }
 
-        return groups.Select(g =>
-            {
-                var statline = g[0].Statline;
-                var scalarSources = ScalarStatlineFieldOrder
-                    .Select(field => (Field: field,
-                        Source: GetScalarField(statline, field).ContributingAbilities.FirstOrDefault()))
-                    .Where(x => x.Source is not null)
-                    .ToDictionary(x => x.Field, x => x.Source!);
-                var insvSource = statline.InSv.ContributingAbilities.FirstOrDefault();
-
-                return new StatlineBlockViewModel(
-                    Entries: g,
-                    LoadoutLabels: g.Select(entry => CompressLoadoutLabels(entry.Loadouts)).ToList(),
-                    ModelAbilities: RowBoundAbilities(g, abilities, AbilityScope.Model),
-                    UnitAbilities: RowBoundAbilities(g, abilities, AbilityScope.Unit),
-                    ScalarFlagSources: scalarSources,
-                    InvulnerableSaveFlagSource: insvSource);
-            })
+        return groups.Select(g => new StatlineBlockViewModel(
+                Entries: g,
+                LoadoutLabels: g.Select(entry => CompressLoadoutLabels(entry.Loadouts)).ToList(),
+                ModelAbilities: RowBoundAbilities(g, abilities, AbilityScope.Model),
+                UnitAbilities: RowBoundAbilities(g, abilities, AbilityScope.Unit),
+                Provenance: provenance.ForStatlineRun(g, isBattleShocked)))
             .ToList();
     }
 
     // The six ScalarCharacteristicView-backed Statline tiles, in their own left-to-right visual
-    // order - shared by GroupStatlines (collecting each one's own ContributingAbilities source),
-    // AssignFlagMarkers (assigning markers in this exact order so "*" always goes to whichever
-    // distinct source is encountered first left-to-right), and StatlineBlockViewModel.FlagLegend
-    // (rendering legend lines in the same order). "LD"/"OC" match GetScalarField's own expected
-    // field-name strings exactly.
+    // order. "LD"/"OC" match GetScalarField's own expected field-name strings exactly.
     internal static readonly string[] ScalarStatlineFieldOrder = ["M", "T", "Sv", "W", "LD", "OC"];
 
     // Field-name -> ScalarCharacteristicView lookup shared by GroupStatlines and
@@ -553,9 +541,7 @@ public class LivePlayModel(
     };
 
     // The three ScalarCharacteristicView-backed weapon value columns, in their own left-to-right
-    // visual order - the weapon-table counterpart to ScalarStatlineFieldOrder, shared by
-    // AssignFlagMarkers (below) and WeaponRowViewModel.FlagLegend (render-weapon-characteristic-
-    // effects).
+    // visual order - the weapon-table counterpart to ScalarStatlineFieldOrder.
     internal static readonly string[] WeaponScalarFieldOrder = ["S", "AP", "D"];
 
     // Field-name -> ScalarCharacteristicView lookup for a WeaponProfile, mirroring GetScalarField's
@@ -567,76 +553,6 @@ public class LivePlayModel(
         "D" => profile.D,
         _ => throw new ArgumentException($"Unknown weapon field '{field}'", nameof(field))
     };
-
-    // Assigns a footnote marker (*, **, ...) to each distinct flag-producing source ability, in the
-    // order its runs are first encountered - the first distinct source seen gets "*", the next
-    // distinct source gets "**", and so on; every later run naming the same source (by exact Name +
-    // Text) reuses its already-assigned marker - marker identity is assigned once per unit block,
-    // not per run. Runs through every ScalarStatlineFieldOrder tile before InSv within a run,
-    // matching the tiles' own left-to-right visual order, covering M/T/Sv/W/Ld/OC alike with no
-    // distinction between a hand-authored rule match and a data-derived one at this layer - then
-    // through every Ranged weapon entry (rendered order) and every Melee weapon entry (rendered
-    // order), so one source ability flagging both a Statline tile and a weapon value shares the same
-    // marker throughout the whole unit block (render-weapon-characteristic-effects design.md D2).
-    private static (IReadOnlyList<StatlineBlockViewModel> Blocks, IReadOnlyList<WeaponRowViewModel> RangedWeapons,
-        IReadOnlyList<WeaponRowViewModel> MeleeWeapons) AssignFlagMarkers(
-            IReadOnlyList<StatlineBlockViewModel> blocks,
-            IReadOnlyList<WeaponRowViewModel> rangedWeapons,
-            IReadOnlyList<WeaponRowViewModel> meleeWeapons)
-    {
-        var markerBySource = new Dictionary<(string Name, string Text), string>();
-
-        string MarkerFor(Ability ability)
-        {
-            var key = (ability.Name, ability.Text);
-            if (!markerBySource.TryGetValue(key, out var marker))
-            {
-                marker = new string('*', markerBySource.Count + 1);
-                markerBySource[key] = marker;
-            }
-
-            return marker;
-        }
-
-        var markedBlocks = blocks.Select(block =>
-        {
-            var scalarMarkers = new Dictionary<string, string>();
-            foreach (var field in ScalarStatlineFieldOrder)
-                if (block.ScalarFlagSources.TryGetValue(field, out var source))
-                    scalarMarkers[field] = MarkerFor(source);
-
-            return block with
-            {
-                ScalarMarkers = scalarMarkers,
-                InvulnerableSaveMarker = block.InvulnerableSaveFlagSource is { } insv ? MarkerFor(insv) : null
-            };
-        }).ToList();
-
-        IReadOnlyList<WeaponRowViewModel> MarkWeapons(IReadOnlyList<WeaponRowViewModel> rows) => rows.Select(row =>
-        {
-            var valueMarkers = new Dictionary<string, string>();
-            var valueFlagSources = new Dictionary<string, Ability>();
-            foreach (var field in WeaponScalarFieldOrder)
-            {
-                var source = GetWeaponScalarField(row.Entry.Profile, field).ContributingAbilities.FirstOrDefault();
-                if (source is null) continue;
-                valueMarkers[field] = MarkerFor(source);
-                valueFlagSources[field] = source;
-            }
-
-            var nameSource = row.Entry.UnresolvedAbilities.FirstOrDefault();
-
-            return row with
-            {
-                ValueMarkers = valueMarkers,
-                ValueFlagSources = valueFlagSources,
-                NameMarker = nameSource is null ? null : MarkerFor(nameSource),
-                NameMarkerSource = nameSource
-            };
-        }).ToList();
-
-        return (markedBlocks, MarkWeapons(rangedWeapons), MarkWeapons(meleeWeapons));
-    }
 
     // Multiset (bag) intersection across every loadout under one statline entry, then per-loadout
     // multiset subtraction - a loadout's distinguishing label is only the weapons and ability names
@@ -906,23 +822,14 @@ public sealed record LivePlaySyncResponse(Dictionary<int, string> Fragments, Lis
 /// element is that entry's own <c>Loadouts</c> compressed to their distinguishing weapons via
 /// <see cref="LivePlayModel.CompressLoadoutLabels"/>, in the same order. <see cref="ModelAbilities"/>/
 /// <see cref="UnitAbilities"/> are the row-bound (ModelLine-sourced) abilities matching this
-/// specific run. <see cref="ScalarFlagSources"/> (keyed by
-/// <see cref="LivePlayModel.ScalarStatlineFieldOrder"/>'s own field-name strings, covering any of
-/// the six <c>ScalarCharacteristicView</c>-backed tiles uniformly) and
-/// <see cref="InvulnerableSaveFlagSource"/> are that run's own flag-producing sources, set by
-/// <see cref="LivePlayModel.GroupStatlines"/>; <see cref="ScalarMarkers"/>/
-/// <see cref="InvulnerableSaveMarker"/> are those sources' own footnote markers, filled in
-/// afterwards by <see cref="LivePlayModel.AssignFlagMarkers"/> once every run's source is known
-/// (marker identity spans the whole unit block, not one run).</summary>
+/// specific run. <see cref="Provenance"/> holds each highlighted tile's popover content, keyed by
+/// <see cref="LivePlayModel.ScalarStatlineFieldOrder"/>'s field names plus "InSv".</summary>
 public sealed record StatlineBlockViewModel(
     IReadOnlyList<AggregateStatlineEntry> Entries,
     IReadOnlyList<IReadOnlyList<string>> LoadoutLabels,
     IReadOnlyList<Ability> ModelAbilities,
     IReadOnlyList<Ability> UnitAbilities,
-    IReadOnlyDictionary<string, Ability> ScalarFlagSources,
-    Ability? InvulnerableSaveFlagSource = null,
-    IReadOnlyDictionary<string, string>? ScalarMarkers = null,
-    string? InvulnerableSaveMarker = null)
+    IReadOnlyDictionary<string, ValueProvenance>? Provenance = null)
 {
     public Statline Statline => Entries[0].Statline;
 
@@ -931,25 +838,8 @@ public sealed record StatlineBlockViewModel(
     /// <see cref="Entries"/>' own summed <c>RemainingCount</c>, never stored independently.</summary>
     public bool IsFullyDead => Entries.All(e => e.RemainingCount == 0);
 
-    /// <summary>This run's own footnote marker for one scalar tile (e.g. `"M"`, `"Sv"`, `"OC"` -
-    /// see <see cref="LivePlayModel.ScalarStatlineFieldOrder"/>), or null when that tile isn't
-    /// flagged.</summary>
-    public string? ScalarMarker(string field) => ScalarMarkers?.GetValueOrDefault(field);
-
-    /// <summary>One entry per distinct marker present on this run's own tiles, in tile order
-    /// (M, T, Sv, W, Ld, OC, then InSv) - the source lines this run's own legend renders.</summary>
-    public IReadOnlyList<(string Marker, Ability Source)> FlagLegend
-    {
-        get
-        {
-            var legend = new List<(string, Ability)>();
-            foreach (var fieldName in LivePlayModel.ScalarStatlineFieldOrder)
-                if (ScalarFlagSources.TryGetValue(fieldName, out var source) && ScalarMarker(fieldName) is { } marker)
-                    legend.Add((marker, source));
-            if (InvulnerableSaveFlagSource is { } insv && InvulnerableSaveMarker is { } im) legend.Add((im, insv));
-            return legend.DistinctBy(l => l.Item1).ToList();
-        }
-    }
+    /// <summary>The popover content for one highlighted tile, or null when nothing touches it.</summary>
+    public ValueProvenance? ProvenanceFor(string field) => Provenance?.GetValueOrDefault(field);
 }
 
 /// <summary>A Datasheet-sourced (component-wide) ability group, rendered once beside the first of
@@ -1025,11 +915,8 @@ public sealed record WeaponContributionRow(
 /// <see cref="LivePlayModel.BuildContributionBreakdown"/>). <see cref="Breakdown"/> is always
 /// populated regardless of <see cref="ShowsBreakdownTrigger"/>, since live-play.js needs its rows'
 /// selection keys to filter/recompute this entry even when no user-facing trigger exists for it.
-/// <see cref="ValueMarkers"/>/<see cref="ValueFlagSources"/> (keyed by
-/// <see cref="LivePlayModel.WeaponScalarFieldOrder"/>'s own field-name strings) and
-/// <see cref="NameMarker"/>/<see cref="NameMarkerSource"/> are filled in by
-/// <see cref="LivePlayModel.AssignFlagMarkers"/>, sharing that method's one marker registry with the
-/// Statline family (render-weapon-characteristic-effects design.md D2). <see cref="GroupWideAttacksLines"/>
+/// <see cref="Provenance"/> holds each highlighted value's popover content, keyed "A", "S", "AP", "D".
+/// <see cref="GroupWideAttacksLines"/>
 /// lists every Attacks ability-contribution line that reaches every current contributor of this
 /// entry identically (resolve-weapon-attacks-effects design.md D3) - rendered once, above the
 /// breakdown, rather than repeated under each row (see <see cref="WeaponContributionRow.AttacksLines"/>
@@ -1038,45 +925,19 @@ public sealed record WeaponRowViewModel(
     AggregateWeaponEntry Entry,
     IReadOnlyList<WeaponContributionRow> Breakdown,
     bool HasMultipleModelLines,
-    IReadOnlyDictionary<string, string>? ValueMarkers = null,
-    IReadOnlyDictionary<string, Ability>? ValueFlagSources = null,
-    string? NameMarker = null,
-    Ability? NameMarkerSource = null,
+    IReadOnlyDictionary<string, ValueProvenance>? Provenance = null,
     IReadOnlyList<AttacksContributionLine>? GroupWideAttacksLines = null)
 {
-    /// <summary>True when the unit has more than one ModelLine in total
-    /// (<see cref="HasMultipleModelLines"/>), or this entry itself carries a resolved-value marker,
-    /// an unresolved ability reference, or a recorded Attacks Effect amount - so a flagged entry's
-    /// source stays reachable even on an otherwise single-ModelLine unit (render-weapon-
-    /// characteristic-effects design.md D4, widened by resolve-weapon-attacks-effects design.md D4).</summary>
+    /// <summary>True when the unit has more than one ModelLine in total, or this entry carries a
+    /// recorded Attacks Effect amount, whose ability lines only the breakdown lists per row. A
+    /// changed S/AP/D value is its own popover trigger, so it no longer needs the breakdown.</summary>
     public bool ShowsBreakdownTrigger =>
-        HasMultipleModelLines || NameMarker is not null || (ValueMarkers?.Count ?? 0) > 0 ||
-        Entry.Contributions.Any(c => c.AttacksContributions.Count > 0);
+        HasMultipleModelLines || Entry.Contributions.Any(c => c.AttacksContributions.Count > 0);
 
     public IReadOnlyList<AttacksContributionLine> GroupWideAttacksLines { get; init; } = GroupWideAttacksLines ?? [];
 
-    /// <summary>This entry's own footnote marker for one S/AP/D value cell (see
-    /// <see cref="LivePlayModel.WeaponScalarFieldOrder"/>), or null when that value isn't
-    /// flagged.</summary>
-    public string? ValueMarker(string field) => ValueMarkers?.GetValueOrDefault(field);
-
-    /// <summary>One entry per distinct marker present on this weapon entry (value-cell markers in
-    /// <see cref="LivePlayModel.WeaponScalarFieldOrder"/> order, then the name marker last) - the
-    /// source lines this entry's own legend renders, mirroring
-    /// <see cref="StatlineBlockViewModel.FlagLegend"/>'s exact shape.</summary>
-    public IReadOnlyList<(string Marker, Ability Source)> FlagLegend
-    {
-        get
-        {
-            var legend = new List<(string, Ability)>();
-            foreach (var fieldName in LivePlayModel.WeaponScalarFieldOrder)
-                if (ValueFlagSources?.TryGetValue(fieldName, out var source) == true &&
-                    ValueMarker(fieldName) is { } marker)
-                    legend.Add((marker, source));
-            if (NameMarkerSource is { } src && NameMarker is { } nm) legend.Add((nm, src));
-            return legend.DistinctBy(l => l.Item1).ToList();
-        }
-    }
+    /// <summary>The popover content for one highlighted value, or null when nothing touches it.</summary>
+    public ValueProvenance? ProvenanceFor(string field) => Provenance?.GetValueOrDefault(field);
 }
 
 public sealed record UnitBlockViewModel(

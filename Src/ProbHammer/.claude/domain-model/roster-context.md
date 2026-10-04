@@ -72,7 +72,10 @@ ModelLineLoadout(WeaponsLabel, Weapons: IReadOnlyList<string>, RemainingCount, I
   // pistol, Power fist" - Weapons itself is carried alongside for a consumer that needs the raw list.
 
 AggregateStatlineEntry(ComponentName, StatlineName, Statline, RemainingCount, InitialCount,
-                        Loadouts: IReadOnlyList<ModelLineLoadout>)
+                        Loadouts: IReadOnlyList<ModelLineLoadout>,
+                        NotAppliedEffects: IReadOnlyList<NotAppliedStatlineEffect> = [])
+  // NotAppliedEffects (value-provenance-popovers): every conditional Scalar/InvulnerableSave effect
+  // reaching this entry, recorded unapplied - see statline-flag-rules.md.
   // ComponentName is the owning component's Datasheet.Name - lets a downstream consumer detect
   // component boundaries without re-deriving them from Statlines' declared order.
   // RemainingCount/InitialCount are summed across every ModelLine sharing StatlineName, including
@@ -81,7 +84,7 @@ AggregateStatlineEntry(ComponentName, StatlineName, Statline, RemainingCount, In
   // disappearing.
 
 WeaponContribution(ComponentName, StatlineName, Count, PerModelAttacks, Name: string, LoadoutIndex = -1,
-                    UnresolvedAbilities: IReadOnlyList<Ability> = [],
+                    NotAppliedEffects: IReadOnlyList<NotAppliedWeaponEffect> = [],
                     AttacksContributions: IReadOnlyList<AttacksContribution> = [])
   // ComponentName is the owning Unit.Datasheet.Name; Count is that ModelLine's RemainingCount.
   // Name is the contributing WeaponProfile's own Name, resolved at the same point PerModelAttacks
@@ -92,9 +95,11 @@ WeaponContribution(ComponentName, StatlineName, Count, PerModelAttacks, Name: st
   // the record's own doc comment for why it's needed (two sibling loadouts under the same statline
   // name are otherwise indistinguishable by ComponentName/StatlineName alone, and Count isn't
   // reliable either, since two loadouts can coincidentally share a model count).
-  // UnresolvedAbilities (resolve-weapon-characteristic-effects) names every present, bearer-scoped,
-  // selector-matched ability carrying a conditional WeaponCharacteristicEffect - matched the same
-  // way an applied one would be, but left unapplied.
+  // NotAppliedEffects (value-provenance-popovers) records every present, bearer-scoped,
+  // selector-matched conditional WeaponCharacteristicEffect - matched the same way an applied one
+  // would be, but left unapplied - as NotAppliedWeaponEffect(SourceAbility, Characteristic, Verb,
+  // Amount, Condition): Amount is the signed per-model change (the assigned value for Set), and
+  // EffectCondition carries the usage limit, turn ownership, condition text and choice-branch flag.
   // AttacksContributions (resolve-weapon-attacks-effects) - see AttacksContribution below and
   // "Weapon-characteristic effect resolution" further down.
 
@@ -106,11 +111,11 @@ AttacksContribution(SourceAbility: Ability, Amount: int)
 
 AggregateWeaponEntry(Profile: WeaponProfile, TotalAttacks: DiceExpression, Name: string,
                       Contributions: IReadOnlyList<WeaponContribution>,
-                      UnresolvedAbilities: IReadOnlyList<Ability> = [])
+                      NotAppliedEffects: IReadOnlyList<NotAppliedWeaponEffect> = [])
   // see record's own doc comment. Name is the group's own composite display name (below) - not
   // Profile.Name, which stays an arbitrary, non-authoritative first-inserted value.
-  // UnresolvedAbilities (resolve-weapon-characteristic-effects) is the same order-preserving-distinct
-  // composite Name already computes, but over every contribution's own UnresolvedAbilities.
+  // NotAppliedEffects is every contribution's own NotAppliedEffects, distinct by source ability and
+  // characteristic, in first-encountered order.
 
 AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ability,
                        ContributingComponentNames: IReadOnlyList<string> = [])
@@ -169,9 +174,9 @@ AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ab
     amount never splits or merges an `EqualityKey` group, unlike S/AP/D.
 
   Both mechanisms share the same matching machinery (`IsBearerOf`/`WeaponSelectorMatches`/
-  `TryGetWeaponEffectEntry`) and the same caveated-branch counterpart (`FindUnresolvedAbilities`,
-  which never mutates or records anything — only names the source ability, covering S/AP/D/A alike,
-  since a caveated match's own activation condition has no evaluation mechanism in this app).
+  `TryGetWeaponEffectEntry`) and the same conditional counterpart (`FindNotAppliedEffects`, which
+  never mutates the profile or records an Attacks amount — it records a `NotAppliedWeaponEffect` per
+  matched conditional S/AP/D/A effect, since a condition has no evaluation mechanism in this app).
 - `Abilities` — built by `BuildAbilities`, walking components in `BuildStatlines`'s display order.
   For each component where `IsPresent`: one entry per `Datasheet.Ability` (`StatlineName: null`),
   one entry per resolved `Unit.Enhancements` ability (`StatlineName: null`, reported the same way

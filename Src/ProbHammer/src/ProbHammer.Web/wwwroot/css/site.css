@@ -537,9 +537,9 @@ h2 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
     fill: currentColor;
 }
 
-/* The same bolt shape rendered inside a Battle-shocked unit's OC tile (see .stat-tile-flagged
+/* The same bolt shape rendered inside a Battle-shocked unit's OC tile (a .provenance-tile, see
    below) - always solid, always the tile's own ordinary .stat-value color, never amber. The
-   "flagged" signal lives entirely in the tile's background token, not in this glyph's own ink -
+   highlight lives entirely in the tile's background token, not in this glyph's own ink -
    deliberately different from the header control above, which does use amber ink because it's a
    control, not a stat value (design-tokens.md's "controls get amber ink when active, stat values
    never do"). */
@@ -690,10 +690,6 @@ button.filter-flag:hover { opacity: 0.8; }
     margin-top: 0;
 }
 
-.statline-cell.col-statline.run-collapsed .statline-flag-legend {
-    display: none;
-}
-
 .stat-tile {
     display: flex;
     flex-direction: column;
@@ -715,14 +711,35 @@ button.filter-flag:hover { opacity: 0.8; }
    column's auto-width grows to fit a wider value/icon combination, leaving the other five tiles'
    widths alone - spanning would let a long value bleed its width into every column it crosses. */
 .insv-tile { grid-column: 3; }
-/* Shared "this stat-tile's value isn't the plain catalogue value" background treatment - covers
-   the caveated InSv box, a Battle-shocked unit's OC tile, and any tile flagged by a matched
-   statline-flag rule (e.g. Vexilla's OC). A separate background token (--amber-tint) rather than
-   the page's existing --amber accent itself, kept black-on-light like every other stat value on
-   this page (not GW's inverted dark-shield/white-text treatment). The glyph/value inside stays in
-   the tile's ordinary .stat-value color regardless of which tile this is on - only the background
-   carries the "flagged" signal, never the value's own ink. */
-.stat-tile-flagged { background: var(--amber-tint); border-color: var(--amber); }
+/* Value provenance highlight: "an ability has something to say about this value; tap to judge".
+   The --amber-tint fill and --amber border mark the tile; the bottom-right corner tick reads as
+   "there's a note about this". On a Statline tile the button is the whole tile; in a weapon table it
+   sits inside the cell so the row's own zebra colour frames it. The value inside keeps its ordinary
+   ink. */
+.provenance-tile {
+    position: relative;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    background: var(--amber-tint);
+    border: 1px solid var(--amber);
+    border-radius: 3px;
+}
+.provenance-tile::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    border-style: solid;
+    border-width: 0 0 5px 5px;
+    border-color: transparent transparent var(--amber) transparent;
+}
+.provenance-tile:hover { opacity: 0.8; }
+.weapon-table .provenance-tile {
+    display: inline-block;
+    min-width: 1.6rem;
+    padding: 0.05rem 0.3rem;
+}
 /* The differing-both-known case stacks its two icon+value pairs as two rows (ranged above melee)
    rather than one line with a "/" separator - each row reads as a complete, self-contained fact,
    and stacking keeps the tile from growing much wider than its neighbours (it grows taller
@@ -737,47 +754,11 @@ button.filter-flag:hover { opacity: 0.8; }
 }
 .insv-icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
 
-/* Flagged-statline legend - a sibling of .statline-tiles, not one of its grid children, since it
-   covers any flagged tile in the run (InSv or OC), not only InSv. One line per distinct marker
-   active in this run, each naming its source ability via the exact same .ability-name-line popover
-   trigger/styling every other ability name on the page already uses - full card look (dashed-border
-   box, padding, border-bottom, bold weight, 0.78rem sizing) plus its own :nth-of-type(even) zebra
-   striping when a run carries more than one flag, not a trimmed-down variant - never rendering the
-   source's full text inline. Mirrors .statline-cell.col-abilities' own box treatment exactly
-   (border/radius/padding/font-size), so a legend reads as the same kind of "ability card" as those
-   columns, just positioned beneath a run's own tiles instead of beside them. No max-height/opacity
-   collapse transition copied from that box, since the whole legend already hides in one step via the
-   run-collapsed rule below, not a per-cell fade. */
-.statline-flag-legend {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    padding: 0.3rem;
-    margin-top: 0.25rem;
-    border: 1px dashed var(--border);
-    border-radius: 3px;
-    font-size: 0.78rem;
-    overflow: hidden;
-    /* Matches .statline-cell.col-abilities' own container background exactly: always var(--bg2)
-       (plain/neutral), never var(--bg) - a container never carries the "filled ability card" look
-       itself, only its .ability-name-line buttons do - see design-tokens.md. */
-    background: var(--bg2);
-}
-
-/* A legend entry's own footnote marker (e.g. "*") renders OUTSIDE its ability-name-line pill,
-   not baked into the pill's own trigger text - direct user preference over the marker sitting
-   inside the pill (e.g. "* Vexilla" as one string). .flag-legend-line is the row wrapper (marker +
-   pill, left-aligned); each .ability-name-line:nth-of-type(even) zebra pair therefore no longer
-   applies within a legend specifically (every pill is now the lone button inside its own wrapper) -
-   an accepted trade-off, since a legend rarely carries more than one or two lines anyway. */
-.flag-legend-line {
+/* An Attacks contribution line: the ability trigger and its trailing "(Count×Amount)" on one row. */
+.attacks-contribution-line {
     display: flex;
     align-items: center;
     gap: 0.35rem;
-}
-.flag-legend-marker {
-    font-weight: 700;
-    color: var(--text-dim);
 }
 
 .loadout-breakdown {
@@ -963,37 +944,11 @@ button.filter-flag:hover { opacity: 0.8; }
     font-style: italic;
 }
 
-/* Resolved-value marker: the weapon-table counterpart to .stat-tile-flagged, applied directly to a
-   plain S/AP/D <td> rather than a tile div - the weapon table has no per-characteristic label the
-   way a Statline tile does, so the marker renders inline in the value text itself (e.g. "5*")
-   instead of appended to a label. The second, more specific selector is required, not decorative:
-   the zebra-striping rule above (.weapon-row-alt td, specificity 0,3,3) otherwise wins over the
-   plain rule below it (0,3,1) on every alternating row regardless of source order, silently
-   overriding the amber tint back to the stripe's own --bg fill - confirmed live (every second
-   flagged weapon row rendered its marker text but not its background). Matching the striping rule's
-   own tbody/tr structure brings this rule to 0,4,3, which always wins on both striped and
-   unstriped rows. */
-.live-play-page .weapon-table td.weapon-value-flagged { background: var(--amber-tint); }
-.live-play-page .weapon-table tbody tr.weapon-row-alt td.weapon-value-flagged { background: var(--amber-tint); }
-
-/* Weapon flag legend row: a full-width row nested under an entry's contribution breakdown, reusing
-   .statline-flag-legend's own box (dashed border/bg2/radius) rather than a distinct style. Not
-   .weapon-contribution-row - deliberately excluded from live-play.js's selection-filtering group
-   logic (recomputeWeaponRow), which would otherwise misread it as a bogus, uncounted contribution;
-   its own show/hide is wired separately in initWeaponProvenanceToggles. white-space reset since the
-   table's own td rule defaults to nowrap, which would clip a wrapping legend line. */
-.live-play-page .weapon-table tr.weapon-flag-legend-row td {
-    padding: 0.3rem;
-    white-space: normal;
-    border-bottom: 1px solid var(--border);
-}
-.live-play-page .weapon-table tr.weapon-flag-legend-row .statline-flag-legend { margin-top: 0; }
-
 /* Attacks ability-contribution line (resolve-weapon-attacks-effects): a nested addend under a
    weapon entry's breakdown, not a .weapon-contribution-row - excluded from that class deliberately
    so it's never mistaken for a real per-contributor row by the selection-filtering group logic
-   (recomputeWeaponRow); its own show/hide is wired into initWeaponProvenanceToggles alongside
-   .weapon-flag-legend-row. Shares .weapon-contribution-row's own dim/italic look. */
+   (recomputeWeaponRow); its own show/hide is wired into initWeaponProvenanceToggles. Shares
+   .weapon-contribution-row's own dim/italic look. */
 .live-play-page .weapon-table tr.weapon-attacks-contribution-row td {
     color: var(--text-dim);
     font-size: 0.72rem;
@@ -1004,7 +959,7 @@ button.filter-flag:hover { opacity: 0.8; }
    table's own 0.3rem td padding); a group-wide line inherits that same padding, level with them. */
 .weapon-attacks-contribution-row.row-bound .weapon-attacks-contribution-label { padding-left: 1.3rem; }
 /* The trailing "(Count×Amount)" text never itself splits across two lines, even if the surrounding
-   .flag-legend-line flex row has to wrap the whole phrase down at a very narrow width. */
+   .attacks-contribution-line flex row has to wrap the whole phrase down at a very narrow width. */
 .weapon-attacks-contribution-amount { white-space: nowrap; }
 
 /* One bordered pill per keyword - matches the GW-app/Wahapedia reference precedent and lets each
@@ -1053,7 +1008,7 @@ button.filter-flag:hover { opacity: 0.8; }
 }
 
 /* A per-unit Keywords pill flagged by an active header filter - the existing --amber-tint
-   "flagged value" convention (.stat-tile-flagged's own pattern), applied by live-play.js's
+   highlight convention (.provenance-tile's fill), applied by live-play.js's
    applyKeywordHighlighting only while that specific keyword's filter is active. A passive
    highlight, not itself a new control - the per-unit pill stays a plain, non-interactive <span>
    (see design-tokens.md's control-vs-value rule). No changes to .weapon-tag's own base style. */
@@ -1273,6 +1228,31 @@ button.filter-flag:hover { opacity: 0.8; }
     font-size: 0.8rem;
     color: var(--text);
 }
+
+/* Provenance popover body: original value, one row per ability line (its change right-aligned, its
+   notes beneath in the dim caption style), then the result. A not-applied line's change is dimmed,
+   since it isn't in the result. */
+.provenance-body {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    color: var(--text);
+}
+.provenance-table { width: 100%; border-collapse: collapse; }
+.provenance-table th { text-align: left; font-weight: 600; color: var(--text-dim); }
+.provenance-table td { padding: 0.15rem 0; }
+.provenance-table td:last-child,
+.provenance-table th + td { text-align: right; font-weight: 700; white-space: nowrap; padding-left: 0.5rem; }
+.provenance-table .provenance-line .ability-name-line { width: auto; }
+.provenance-table .provenance-not-applied td:last-child { color: var(--text-dim); font-weight: 400; }
+.provenance-table .provenance-note td {
+    padding: 0 0 0.25rem 0.5rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--text-dim);
+    white-space: normal;
+}
+.provenance-table .provenance-result { border-top: 1px solid var(--border); }
 
 /* Emphasis markup, rendered as styling only by RuleTextEmphasisRenderer - never an interactive
    trigger by virtue of this markup alone (only a resolved [BRACKET] reference, styled separately

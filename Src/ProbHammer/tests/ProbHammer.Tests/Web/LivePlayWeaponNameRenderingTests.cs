@@ -91,4 +91,30 @@ public class LivePlayWeaponNameRenderingTests : IClassFixture<WebApplicationFact
 
         html.Should().Contain("weapon-name-toggle").And.Contain("Bolt rifle and Combat rifle");
     }
+
+    [Fact]
+    public async Task AWeaponReachedOnlyByAConditionalEffect_HasAnUnmarkedName_AndItsValueIsAHighlightedTrigger()
+    {
+        var chanceForGlory = new Ability
+        {
+            Name = "Chance for Glory", Text = "Chance for Glory test text.",
+            Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic
+        };
+        var weapon = new MeleeWeapon("Daemon hammer", A: 4, Ws: 2, S: 8, Ap: -2, D: 3);
+        var entry = new AggregateWeaponEntry(weapon, DiceExpression.Fixed(4), weapon.Name,
+            [new WeaponContribution("Test Unit", "Model 0", 1, DiceExpression.Fixed(4), weapon.Name)],
+            NotAppliedEffects:
+            [
+                new NotAppliedWeaponEffect(chanceForGlory, "S", EffectVerb.Improve, 1,
+                    new EffectCondition(UsageLimit.OncePerBattle, null, null, false))
+            ]);
+
+        var html = await RenderAsync(entry, statlineCount: 1);
+
+        html.Should().Contain("class=\"provenance-tile\" popovertarget=")
+            .And.Contain(">Chance for Glory</button>")
+            .And.Contain("<td colspan=\"2\">Once per battle; not added</td>")
+            .And.NotContain("Daemon hammer*")
+            .And.NotContain("weapon-flag-legend-row");
+    }
 }

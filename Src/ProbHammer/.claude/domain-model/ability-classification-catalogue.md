@@ -44,20 +44,19 @@ effects are used as-is (user decision).
 | Consumer | Uses |
 |---|---|
 | `ResolveCaveatedInvulnerableSaves` | first unconditional `InvulnerableSave` effect of the caveat's linked ability (not in `Datasheet.Abilities`, so the Extractor walks each statline's caveated InSv to get these texts into the corpus) |
-| `ApplyStatlineFlagRules` | unconditional `Scalar`/`InvulnerableSave` effects - see statline-flag-rules.md |
+| `ApplyStatlineFlagRules` | unconditional `Scalar`/`InvulnerableSave` effects applied; conditional ones recorded as `AggregateStatlineEntry.NotAppliedEffects` - see statline-flag-rules.md |
 | `ResolveContributionProfile` / `ResolveAttacksContributions` | unconditional `WeaponCharacteristic` S/AP/D and A |
-| `FindUnresolvedAbilities` | conditional `WeaponCharacteristic` effects -> the weapon row's "unresolved ability" marker |
+| `FindNotAppliedEffects` | conditional `WeaponCharacteristic` S/AP/D/A effects -> `NotAppliedWeaponEffect`s (characteristic, signed per-model amount, `EffectCondition`) on the contribution and its entry |
 | `DetachmentRuleInboundAbilityResolver` | a Detachment rule with a `Keyword` target attaches to every unit carrying all its keywords (case-insensitive) |
 
-The applied/unresolved split is per effect, so one ability can both mutate Strength and leave a
-conditional Damage boost as an unresolved reference on the same weapon. Known asymmetry, kept from
+The applied/not-applied split is per effect, so one ability can both mutate Strength and record a
+conditional Damage boost as a not-applied effect on the same weapon. Known asymmetry, kept from
 before: a Detachment-rule ability with a keyword target flags Statline values (origin exception) but
 never reaches weapons - the weapon path filters on Self/AttachedUnit targets before
 `IsBearerOf` sees the origin.
 
 **Not consumed yet** (each is a separate future change, see `.claude/vnext-ideas.md`): `Phases`/
-`TurnOwnership` for phase highlighting, condition toggles, the four data-only effect kinds, and a
-display for a conditional Statline effect (today it simply isn't applied; the ability still renders).
+`TurnOwnership` for phase highlighting, condition toggles, and the four data-only effect kinds.
 
 **Tests** build catalogues with `ClassificationFixtures` (`Entry(text, target, effects,
 conditional)` / `Catalogue([...])`), including `RealCorpusExcerpt` - real ability texts the

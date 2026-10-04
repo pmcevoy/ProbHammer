@@ -64,13 +64,11 @@ function initWeaponProvenanceToggles(unitEl) {
             const weaponId = button.dataset.weaponId;
             const expanded = button.getAttribute('aria-expanded') === 'true';
 
-            // .weapon-flag-legend-row and .weapon-attacks-contribution-row are included here (not in
-            // recomputeWeaponRow's own .weapon-contribution-row query) so they expand/collapse with
-            // the breakdown without being mistaken for a real contribution by the selection-filtering
-            // group logic below.
+            // .weapon-attacks-contribution-row is included here (not in recomputeWeaponRow's own
+            // .weapon-contribution-row query) so it expands/collapses with the breakdown without
+            // being mistaken for a real contribution by the selection-filtering group logic below.
             unitEl.querySelectorAll(
                 `tr.weapon-contribution-row[data-weapon-id="${weaponId}"], ` +
-                `tr.weapon-flag-legend-row[data-weapon-id="${weaponId}"], ` +
                 `tr.weapon-attacks-contribution-row[data-weapon-id="${weaponId}"]`)
                 .forEach(row => {
                     row.hidden = expanded;
@@ -745,6 +743,7 @@ function initUnitSelection(unitEl) {
         // Not scaled down on a partial deselection (an accepted scope limit, same class as
         // SubtotalValue's own dice-value limit above) - each line's full amount counts as long as
         // anything in the entry is still selected.
+        const baseSum = sum;
         if (numericOk) {
             unitEl.querySelectorAll(`tr.weapon-attacks-contribution-row[data-weapon-id="${weaponId}"]`)
                 .forEach(line => {
@@ -756,13 +755,25 @@ function initUnitSelection(unitEl) {
 
         row.classList.toggle('selection-excluded', !anySelected);
 
+        // The A provenance popover's original/total spans follow the cell; dice-based values keep
+        // their server-rendered text, as the cell does.
         const cell = row.querySelector('.weapon-attacks-value');
-        if (cell) {
-            if (row.dataset.originalTotal === undefined) row.dataset.originalTotal = cell.textContent;
-            if (anySelected) cell.textContent = numericOk ? String(sum) : row.dataset.originalTotal;
+        const number = cell?.querySelector('.weapon-attacks-number');
+        const provOriginal = cell?.querySelector('[data-prov-original]');
+        const provTotal = cell?.querySelector('[data-prov-total]');
+        if (number) {
+            if (row.dataset.originalTotal === undefined) {
+                row.dataset.originalTotal = number.textContent;
+                if (provOriginal) row.dataset.originalBase = provOriginal.textContent;
+            }
+            if (anySelected) {
+                number.textContent = numericOk ? String(sum) : row.dataset.originalTotal;
+                if (provTotal) provTotal.textContent = number.textContent;
+                if (provOriginal) provOriginal.textContent = numericOk ? String(baseSum) : row.dataset.originalBase;
+            }
         }
 
-        return !anySelected || (numericOk && cell && String(sum) !== row.dataset.originalTotal);
+        return !anySelected || (numericOk && number && String(sum) !== row.dataset.originalTotal);
     }
 
     refresh();

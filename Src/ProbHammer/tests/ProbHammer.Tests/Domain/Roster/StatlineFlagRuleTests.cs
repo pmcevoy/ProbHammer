@@ -364,4 +364,115 @@ public class StatlineFlagRuleTests
         entry.Statline.W.Value.Should().Be((CharacteristicValue)5); // base 4 + First Grant's 1, not + Second's 2
         entry.Statline.W.ContributingAbilities.Should().ContainSingle(a => a.Name == "First Grant");
     }
+
+    private static readonly Ability MartialHonour = new()
+    {
+        Name = "Martial Honour", Text = "Martial Honour test text.",
+        Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic
+    };
+
+    private static readonly AbilityClassificationCatalogue MartialHonourCatalogue = ClassificationFixtures.Catalogue(
+    [
+        ClassificationFixtures.Entry(
+            text: MartialHonour.Text, target: new SelfRuleTarget(),
+            effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 5)], conditional: true)
+    ]);
+
+    private static Unit CrusaderSquadWithMartialHonour()
+    {
+        var datasheet = new Datasheet(
+            "Crusader Squad", keywords: [], abilities: [],
+            statlines:
+            [
+                ("Sword Brother", new Statline(6, 4, 3, 2, 6, 2)),
+                ("Initiate", new Statline(6, 4, 3, 2, 7, 2))
+            ],
+            weaponProfiles: []);
+        return new Unit(datasheet, [],
+        [
+            new ModelLine("Sword Brother", [], count: 1, abilities: [MartialHonour]),
+            new ModelLine("Initiate", [], count: 4)
+        ]);
+    }
+
+    [Fact]
+    public void AConditionalObjectiveControlEffect_IsRecordedOnTheBearer_NotApplied()
+    {
+        var view = AttachedUnitAggregator.Build(CrusaderSquadWithMartialHonour(), MartialHonourCatalogue);
+
+        var bearer = view.Statlines.Should().ContainSingle(s => s.StatlineName == "Sword Brother").Subject;
+        bearer.Statline.Oc.Value.Should().Be((CharacteristicValue)2);
+        var notApplied = bearer.NotAppliedEffects.Should().ContainSingle().Subject;
+        notApplied.SourceAbility.Name.Should().Be("Martial Honour");
+        notApplied.Effect.Should().Be(new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 5));
+        notApplied.Condition.ConditionText.Should().Be("Test condition");
+        view.Statlines.Should().ContainSingle(s => s.StatlineName == "Initiate")
+            .Which.NotAppliedEffects.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AConditionalInvulnerableSave_IsRecordedOnAUnitWithoutOne_AndTheSaveStaysAbsent()
+    {
+        var waaagh = new Ability
+        {
+            Name = "Waaagh!", Text = "Waaagh! test text.", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic
+        };
+        var classifications = ClassificationFixtures.Catalogue(
+        [
+            ClassificationFixtures.Entry(
+                text: waaagh.Text, target: new AttachedUnitRuleTarget(),
+                effects: [new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(5, 5))], conditional: true)
+        ]);
+        var datasheet = new Datasheet(
+            "Boyz", keywords: [], abilities: [waaagh],
+            statlines: [("Boy", new Statline(6, 5, 5, 1, 7, 2)), ("Boss Nob", new Statline(6, 5, 5, 2, 7, 2))],
+            weaponProfiles: []);
+        var unit = new Unit(datasheet, [],
+            [new ModelLine("Boy", [], count: 9), new ModelLine("Boss Nob", [], count: 1)]);
+
+        var view = AttachedUnitAggregator.Build(unit, classifications);
+
+        view.Statlines.Should().HaveCount(2).And.OnlyContain(s =>
+            s.Statline.InSv.OriginalValue == InvulnerableSave.None &&
+            s.Statline.InSv.ContributingAbilities.Count == 0 &&
+            s.NotAppliedEffects.Count == 1 &&
+            s.NotAppliedEffects[0].SourceAbility.Name == "Waaagh!" &&
+            s.NotAppliedEffects[0].Effect is InvulnerableSaveCharacteristicEffect);
+    }
+
+    [Fact]
+    public void AConditionalEffect_IsNoLongerRecordedOnceItsBearerIsRemoved()
+    {
+        var unit = CrusaderSquadWithMartialHonour();
+        unit.ModelLines[0].RemoveCasualties(1);
+
+        var view = AttachedUnitAggregator.Build(unit, MartialHonourCatalogue);
+
+        view.Statlines.Should().OnlyContain(s => s.NotAppliedEffects.Count == 0);
+    }
+
+    [Fact]
+    public void AKeywordTargetedConditionalEffect_IsNotRecorded()
+    {
+        var keywordScoped = new Ability
+        {
+            Name = "Keyword Grant", Text = "Keyword-targeted conditional test text.",
+            Scope = AbilityScope.Unit, Origin = AbilityOrigin.OptionalGrant
+        };
+        var classifications = ClassificationFixtures.Catalogue(
+        [
+            ClassificationFixtures.Entry(
+                text: keywordScoped.Text, target: new KeywordRuleTarget(["SWORD BRETHREN SQUAD"]),
+                effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)], conditional: true)
+        ]);
+        var datasheet = new Datasheet(
+            "Sword Brethren Squad", keywords: [], abilities: [],
+            statlines: [("Sword Brother", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: []);
+        var unit = new Unit(datasheet, [],
+            [new ModelLine("Sword Brother", [], count: 1, abilities: [keywordScoped])]);
+
+        var view = AttachedUnitAggregator.Build(unit, classifications);
+
+        view.Statlines.Should().ContainSingle().Which.NotAppliedEffects.Should().BeEmpty();
+    }
 }

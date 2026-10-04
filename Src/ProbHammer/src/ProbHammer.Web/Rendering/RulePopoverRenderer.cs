@@ -1,4 +1,7 @@
+using System.Net;
+using System.Text;
 using ProbHammer.Core.Domain.Catalogue.Bsdata;
+using ProbHammer.Web.Pages;
 
 namespace ProbHammer.Web.Rendering;
 
@@ -50,6 +53,52 @@ public sealed class RulePopoverRenderer(RuleGlossary glossary, string idScopePre
             $"<div id=\"p-{popoverId}\" class=\"rule-popover\" popover=\"auto\" data-depth=\"{depth}\"><div class=\"rule-popover-title\">{triggerHtml}{closeButton}</div><div class=\"rule-popover-text\">{bodyInline}</div></div>";
         return (trigger, panel + bodyPopovers);
     }
+
+    /// <summary>Builds a highlighted value's trigger and its provenance panel: a title, the original
+    /// value, one row per line (an ability line is a nested ability popover at depth 1, its panel
+    /// emitted after the provenance panel) and the result. The original and result values carry
+    /// <c>data-prov-original</c>/<c>data-prov-total</c> so live-play.js can update them.</summary>
+    public (string Trigger, string Trailer) BuildProvenancePopover(
+        string triggerHtml, string triggerClass, ValueProvenance provenance)
+    {
+        var popoverId = NextPopoverId();
+        var nestedPanels = new StringBuilder();
+        var body = new StringBuilder("<table class=\"provenance-table\">");
+        body.Append($"<tr class=\"provenance-original\"><th>{Encode(provenance.OriginalLabel)}</th>" +
+                    $"<td><span data-prov-original>{Encode(provenance.OriginalText)}</span></td></tr>");
+
+        foreach (var line in provenance.Lines)
+        {
+            var labelHtml = Encode(line.Label);
+            if (line.Source is { } source && !string.IsNullOrWhiteSpace(source.Text))
+            {
+                var (abilityTrigger, abilityTrailer) =
+                    BuildRulePopover(labelHtml, "ability-name-line", source.Text, new HashSet<string>(), depth: 1);
+                labelHtml = abilityTrigger;
+                nestedPanels.Append(abilityTrailer);
+            }
+
+            var rowClass = line.Applied ? "provenance-line" : "provenance-line provenance-not-applied";
+            body.Append($"<tr class=\"{rowClass}\"><td>{labelHtml}</td><td>{Encode(line.ChangeText)}</td></tr>");
+            foreach (var note in line.Notes)
+                body.Append($"<tr class=\"provenance-note\"><td colspan=\"2\">{Encode(note)}</td></tr>");
+        }
+
+        if (provenance.ResultLabel is { } resultLabel)
+            body.Append($"<tr class=\"provenance-result\"><th>{Encode(resultLabel)}</th>" +
+                        $"<td><span data-prov-total>{Encode(provenance.ResultText ?? "")}</span></td></tr>");
+        body.Append("</table>");
+
+        var trigger =
+            $"<button type=\"button\" id=\"t-{popoverId}\" class=\"{triggerClass}\" popovertarget=\"p-{popoverId}\">{triggerHtml}</button>";
+        var closeButton =
+            $"<button type=\"button\" class=\"rule-popover-close\" popovertarget=\"p-{popoverId}\" popovertargetaction=\"hide\" aria-label=\"Close\">&times;</button>";
+        var panel =
+            $"<div id=\"p-{popoverId}\" class=\"rule-popover provenance-popover\" popover=\"auto\" data-depth=\"0\"><div class=\"rule-popover-title\">{Encode(provenance.Title)}{closeButton}</div><div class=\"provenance-body\">{body}</div></div>";
+        return (trigger, panel + nestedPanels);
+    }
+
+    private static string Encode(string text) => WebUtility.HtmlEncode(text);
 
     // The bracket delegate RuleTextEmphasisRenderer.Render calls for every [BRACKET] token it
     // encounters mid-parse. Normalizes the token's raw text the same way extraction always has

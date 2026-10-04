@@ -137,16 +137,18 @@ public class LivePlayHalfStrengthAndBattleShockRenderingTests : IClassFixture<We
     }
 
     [Fact]
-    public async Task BattleShocked_OcTileRendersTheFlaggedTileAndGlyph_NotTheNumericValue()
+    public async Task BattleShocked_OcTileIsAHighlightedTriggerShowingTheGlyph_NotTheNumericValue()
     {
         var unit = AttachedUnitFixtures.LeaderUnit(); // Oc: 1
         unit.IsBattleShocked = true;
 
         var html = await RenderAsync(unit);
 
-        html.Should().Contain("stat-tile stat-tile-flagged")
+        html.Should().Contain("class=\"stat-tile provenance-tile\"")
             .And.Contain(">OC<")
-            .And.Contain("oc-battleshock-icon");
+            .And.Contain("oc-battleshock-icon")
+            .And.Contain("<td>Battle-shocked</td><td>→ 0</td>")
+            .And.Contain("<th>Total</th><td><span data-prov-total>0</span></td>");
         // The numeric Oc value (1) is replaced, not shown alongside the glyph.
         html.Should().NotContain("<span class=\"stat-label\">OC</span><span class=\"stat-value\">1</span>");
     }
@@ -161,7 +163,7 @@ public class LivePlayHalfStrengthAndBattleShockRenderingTests : IClassFixture<We
         unit.IsBattleShocked = false;
         var html = await RenderAsync(unit);
 
-        html.Should().NotContain("oc-battleshock-icon").And.NotContain("stat-tile-flagged");
+        html.Should().NotContain("oc-battleshock-icon").And.NotContain("provenance-tile");
     }
 
     [Fact]

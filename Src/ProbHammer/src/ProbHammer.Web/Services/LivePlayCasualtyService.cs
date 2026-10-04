@@ -73,7 +73,7 @@ public class LivePlayCasualtyService(
                 continue;
 
             var (unit, view) = roster[unitIndex];
-            var block = LivePlayModel.BuildUnitBlock(view, unit);
+            var block = LivePlayModel.BuildUnitBlock(view, unit, abilityClassifications);
             var html = await renderer.RenderAsync(ctx, "/Pages/Shared/_UnitBlock.cshtml",
                 new UnitBlockRenderModel(unitIndex, block, result.Glossary, expandedSections));
             fragments[unitIndex] = html;

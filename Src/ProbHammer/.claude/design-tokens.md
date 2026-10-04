@@ -22,9 +22,9 @@ components.
 | `--accent` | `#24413f` | Emphasis: stat sub-values (e.g. invulnerable save), primary headings, a `.rule-reference` link (a resolved `[BRACKET]` cross-reference inside popover text) |
 | `--text` | `#262622` | Primary text |
 | `--text-dim` | `#6f6c62` | Labels, counts, dim info — including, since `consolidate-unit-toolbar`, a `.unit-toolbar-label` caption's own (always-static) color, identical to `.stat-label`'s |
-| `--amber` | `#a86a1d` | Draw-the-eye **controls** when active on this page's light (`--bg`/`--bg2`) surfaces (e.g. the filter badge, the caveated invulnerable-save box's border) — never a stat *value*'s own ink; see the "Battle-Shocked Objective Control Rendering" note below. Confirmed by `consolidate-unit-toolbar` to read poorly (~2.8:1 contrast) as icon ink directly on a solid `--bg3` fill — that context uses `--amber-bright` instead, below |
+| `--amber` | `#a86a1d` | Draw-the-eye **controls** when active on this page's light (`--bg`/`--bg2`) surfaces (e.g. the filter badge, a `.provenance-tile`'s border and corner tick) — never a stat *value*'s own ink; see the "Battle-Shocked Objective Control Rendering" note below. Confirmed by `consolidate-unit-toolbar` to read poorly (~2.8:1 contrast) as icon ink directly on a solid `--bg3` fill — that context uses `--amber-bright` instead, below |
 | `--amber-bright` | `color-mix(in srgb, var(--amber) 55%, white)` | Foreground only — `--amber` lightened towards white specifically for icon-on-`--bg3` legibility (~4.9:1 contrast). Added by `consolidate-unit-toolbar` for `.unit-toolbar-icon-btn.is-active`'s icon color (Half Strength/Battle-shock/Reset Casualties), after bare `--amber` was confirmed, by direct user testing, not to "pop" against the toolbar buttons' solid `--bg3` background. Not a general `--amber` replacement — every other existing `--amber` use stays on `--amber` itself, since those all sit on light surfaces where it already reads fine |
-| `--amber-tint` | `color-mix(in srgb, var(--amber) 20%, white)` | Background only, for a flagged stat-tile (`.stat-tile-flagged` — originally the caveated invulnerable-save box alone, generalized by `half-strength-and-battleshock-indicators` to also cover a Battle-shocked unit's OC tile, and again by `resolve-known-ability-effects` to also cover any tile flagged by a matched `statline-flag-rules` rule, e.g. Vexilla's OC) — a separate token from `--amber` itself, not a reinterpretation of it; `--amber`'s other uses stay foreground-only |
+| `--amber-tint` | `color-mix(in srgb, var(--amber) 20%, white)` | Background only, for a `.provenance-tile` (the value provenance highlight, `value-provenance-popovers`: any Statline tile or weapon A/S/AP/D value an ability has something to say about, a caveated value and a Battle-shocked OC tile included) and a filter-matched keyword pill — a separate token from `--amber` itself, not a reinterpretation of it; `--amber`'s other uses stay foreground-only |
 | `--border` | `#d9d5c9` | Borders and dividers |
 | `--bg3-tint` | `color-mix(in srgb, var(--bg3) 55%, white)` | Background only, for `.lp-section` summary bars (Statline/Ranged Weapons/Melee Weapons disclosure headers) — a lighter, flat step down in visual weight from the solid `--bg3` unit-name h2 above them, so the two don't read as the same priority. Same "derived tint, not an opacity fade" pattern as `--amber-tint`: a named, independently redefinable token rather than `--bg3` at reduced opacity, which would also fade the bar's own arrow/icon children and whose rendered color would depend on whatever sits behind it. |
 
@@ -69,14 +69,10 @@ selector, same mechanism as before, just no longer the default case.
   handful of distinct sizes on any one screen. The invulnerable-save box (below the main M/T/Sv/W/
   Ld/Oc row, aligned under Sv specifically — a distinct box + side label, not a value stacked
   inside a tile) reuses these same sizes: its value at `0.95rem` bold like a stat value, its label
-  at `0.65rem` like a stat label. A caveated save's box stays the normal `--bg` background, not
-  the off-color `--amber-tint` (see "Flagged Statline Legend" below, `classify-characteristic-modifier-caveats`'
-  correction — `--amber-tint` is reserved for a *resolved* value, never a still-caveated one showing
-  the plain catalogue value). Since `resolve-known-ability-effects`, the linked
-  ability's full text is no longer rendered inline beneath the box (the old `insv-caveat-text`
-  paragraph, always-visible italic run-on text) — a caveated InSv now uses the same general
-  marker-and-legend mechanism a `statline-flag-rules` match uses (below), so its source text is
-  reachable only on demand through a popover, the same as every other ability on the page. A
+  at `0.65rem` like a stat label. A caveated save's box is a `.provenance-tile` like any other
+  value an ability has something to say about (see "Value Provenance Highlight" below), so its
+  linked ability is reachable only on demand through that tile's popover, the same as every other
+  ability on the page. A
   popover's own body (`.rule-popover-text`, `rules-glossary-popovers`) renders at `0.8rem`, with
   `white-space: pre-line` so a real line break in the source text (e.g. "Lethal Hits"' own
   Designer's Note, a separate paragraph from its main description) renders as one. A popover's
@@ -114,7 +110,7 @@ selector, same mechanism as before, just no longer the default case.
   line nested one `1rem` step deeper; a group-wide Attacks line (e.g. Crusade of Wrath) comes last,
   level with the base rows, so the breakdown reads as addends then bonus. Base rows sit at the
   weapon table's own `0.3rem` td padding — the reference indent everything else is measured from.
-  The S/AP/D flag-legend row still renders first, until value-provenance popovers retire it.
+  A changed S/AP/D value adds no breakdown row; the value itself is its provenance trigger.
 - **Zebra striping** (Model/Unit ability lists, `.ability-name-line`): every ability button's own
   unstriped background is `var(--bg)` (see "Ability button vs. container" below); an even-indexed
   button overrides that to a visibly darker `color-mix(in srgb, var(--border) 70%, var(--bg2))`, via
@@ -186,7 +182,7 @@ selector, same mechanism as before, just no longer the default case.
   `half-strength-and-battleshock-indicators`, keeps holding: a **control** gets `--amber`(-bright)
   ink directly when active; a **stat value** never does, even when flagged — the Battle-shocked OC
   tile still reuses the same bolt glyph but renders it in the tile's ordinary `.stat-value` color,
-  letting `.stat-tile-flagged`'s background (`--amber-tint`) carry that signal instead.
+  letting `.provenance-tile`'s background (`--amber-tint`) carry that signal instead.
 
 No dedicated responsive breakpoint today — the page is a single centered column, `max-width: 900px`.
 
@@ -298,6 +294,13 @@ picture; this section covers only the visual/positioning decisions.
   No polyfill pursued; a popover still opens/shows/dismisses correctly either way (native
   `popover="auto"` light-dismiss, not something positioning affects), so only placement quality
   degrades on a browser like this one, never functionality.
+- **Provenance popover** (`value-provenance-popovers`): `.provenance-popover` reuses the rule
+  popover's panel, title bar and close button, with a `.provenance-body` table instead of rule text:
+  the original value (labelled "Datasheet" for a caveated value), one row per ability line with its
+  change right-aligned (a not-added line's change dimmed) and its notes beneath in the dim caption
+  size, then a "Total"/"Shown" result row above a `--border` rule (none for a caveated value). Each
+  ability line is an `.ability-name-line` trigger for a nested ability popover at depth 1, whose
+  panel is emitted after the provenance panel.
 - **Nesting**: a resolved `[BRACKET]` reference inside an open popover's own text becomes a further
   nested trigger/popover pair, using the exact same mechanism recursively — no separate visual
   treatment for a nested vs. top-level popover panel, since the Popover API's own ancestor-aware
@@ -320,50 +323,39 @@ picture; this section covers only the visual/positioning decisions.
 
 ---
 
-## Flagged Statline Legend (`resolve-known-ability-effects`)
+## Value Provenance Highlight (`value-provenance-popovers`)
 
-Replaces the old InSv-only always-visible `.insv-caveat-text` italic paragraph with one general
-mechanism covering both an unresolved invulnerable-save caveat and a `statline-flag-rules` match —
-see `.claude/domain-model-11e.md`'s "Statline-Flag Rules" for the domain-model/wiring picture; this
-section covers only the visual decisions.
+Amber on a value means "an ability has something to say about this value; tap to judge." Replaced
+the footnote markers (`OC*`, `5*`, a weapon name's `*`) and every flag-legend line/row, which
+repeated the same source ability once per run or weapon row. See
+`.claude/domain-model/statline-flag-rules.md` for where the data comes from; this section covers
+only the visual decisions.
 
-- **Marker**: a flagged tile's label gets a trailing footnote marker (`InSv*`, `OC**`, ...) appended
-  directly to the existing label text — no new typography, just more characters in the same
-  `.stat-label`. The marker itself renders on every flagged tile, caveated or resolved alike; the
-  `.stat-tile-flagged` amber background (the `--amber-tint` background/`--amber` border token, also
-  used for a Battle-shocked OC tile) is reserved for a **resolved** run only — one whose displayed
-  value is an actual computed result (e.g. `statline-flag-rules`' Vexilla, always resolved), never a
-  still-caveated one (a caveated InSv) whose
-  shown number is still the plain, unmutated catalogue value. Corrected by
-  `classify-characteristic-modifier-caveats` after direct user review of a live caveated tile:
-  painting a still-caveated value amber falsely reads as "already adjusted for you," when the marker
-  + legend are asking the reader to do that adjustment themselves. An earlier draft of this rule
-  (superseded) painted every flagged tile amber regardless of caveated/resolved status — that
-  wording is what this section replaces.
-- **Legend placement**: `.statline-flag-legend` is a sibling of `.statline-tiles`, not one of its
-  grid children (unlike the retired `.insv-caveat-text`, which lived inside the tiles grid) — it
-  now needs to hold more than one line (one InSv legend line, one OC legend line, in the same run),
-  so it's a plain flex column beneath the tiles row instead of a single grid cell. Still a child of
-  the same `.statline-cell.col-statline` container the tiles sit in, so the existing run-collapse
-  rule (`.statline-cell.col-statline.run-collapsed`) reaches both the tiles and the legend via one
-  shared CSS rule pair, hiding a collapsed run's flagged tile(s) and legend together exactly as
-  `.insv-caveat-text` used to.
-- **Legend line**: `.flag-legend-line` renders with the exact same `.ability-name-line` styling
-  every other ability name on the page already uses — full-row card look (padding, border-bottom,
-  bold weight, hover fade) and popover trigger mechanics alike, not a trimmed-down variant — with
-  the marker + source ability name as the trigger text (e.g. `"* Vexilla"`), never rendering the
-  source's full text inline, unlike the retired paragraph it replaces. When a run carries more than
-  one flag (e.g. both InSv and OC flagged by different sources), its legend lines pick up
-  `.ability-name-line:nth-of-type(even)`'s existing zebra striping the same way any other multi-row
-  ability list on the page does. `.statline-flag-legend` itself also picks up the same dashed-border
-  box treatment as `.statline-cell.col-abilities` (border/radius/font-size), per the
-  button/container rule directly below — a legend is the same kind of "ability card" as that
-  column, not a visually distinct thing.
+- **Tile**: `.provenance-tile` is the existing flagged-tile treatment (`--amber-tint` fill, 1px
+  `--amber` border, 3px radius) plus a 5px `--amber` corner triangle bottom-right (`::after`). No new
+  colour tokens. Chosen from four mocks at 667×315: border plus tick reads as "there's a note about
+  this" and as tappable on a six-column weapon table.
+- **Trigger shape**: on a Statline tile the `<button>` is the whole `.stat-tile`, so the whole tile is
+  the tap target. In a weapon table the `<td>` keeps the row's zebra colour and an inner
+  `<button class="provenance-tile">` carries the amber, so a column of highlighted values is framed
+  by the row colours instead of reading as a column tint (the old full-cell `.weapon-value-flagged`
+  did). The A cell's number sits in `.weapon-attacks-number` inside the trigger, the span
+  `live-play.js` rewrites on selection changes.
+- **Labels stay plain**: a highlighted tile's label is just its characteristic ("OC", "InSv"); a
+  weapon name is never marked.
+- **Caveated values are amber too**: a deliberate reversal of `classify-characteristic-modifier-
+  caveats`' rule that a still-caveated value must not be amber (it read as "already adjusted for
+  you"). The popover now states which case applies (modified, caveated, not added), so no separate
+  "possibly modified" style is needed (user decision 2026-10-03).
+- **Battle-shocked OC** keeps the bolt glyph in the ordinary value colour (controls get amber ink,
+  values never do); the tile is a provenance trigger whose popover ends "Battle-shocked → 0".
+- **Absent InSv**: a run with no save renders no InSv tile, unless a not-added conditional save
+  reaches it (Waaagh!), in which case it renders a highlighted "–" tile.
 
 ### Ability button vs. container: the general rule (`resolve-known-ability-effects`)
 
 Every ability/rule name on the page — a Statline `.ability-name-line` button (row-bound or
-spanning), a flag-legend line, an Army Rules entry, a Detachment rule — is a `popovertarget`
+spanning), a provenance-popover line, an Army Rules entry, a Detachment rule — is a `popovertarget`
 `<button>` feeding the same rule/ability popover. This section states the final, settled styling
 rule for that button and the container it sits in, after several rounds of direct user correction
 converged on it:
@@ -377,7 +369,7 @@ converged on it:
   and rejected; every button on the page measures the same ~28px, confirmed via
   `getBoundingClientRect()`). Button *width* fills its container (`width: 100%`).
 - **The CONTAINER never carries the fill.** `.statline-cell.col-abilities`,
-  `.statline-flag-legend`, `.army-rules-cell`, and `.detachment-entry-rules`
+  `.army-rules-cell`, and `.detachment-entry-rules`
   all use `background: var(--bg2)` (the plain card background) unconditionally — spanning or not,
   one button or several. A container can still be taller than its own button content: a plain,
   row-bound cell is always exactly content-height (`align-self: start` opts it out of

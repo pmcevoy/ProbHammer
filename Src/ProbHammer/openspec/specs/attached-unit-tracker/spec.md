@@ -166,7 +166,7 @@ with no recorded Attacks effects contributes its plain base value, unaffected, e
 
 A matched catalogue record's own classified target scope SHALL determine which contributions its
 effects reach — for a Strength/Armour Penetration/Damage mutation, an Attacks effect's recorded
-per-contribution amount, or an unresolved reference (below) alike: a target scoped to the ability's
+per-contribution amount, or a not-applied effect (below) alike: a target scoped to the ability's
 own bearer SHALL reach only weapons contributed by that bearer's own model-line (when the matched
 ability is model-line-sourced) or by any model-line of that bearer's owning component (when the
 matched ability is component-wide); a target scoped to the bearer's whole attached unit SHALL reach
@@ -178,16 +178,18 @@ same outcome as an unmatched ability.
 In addition, when a present ability's catalogue record contains a conditional Strength, Armour
 Penetration, Damage or Attacks weapon-characteristic effect whose weapon selector matches a
 contribution's weapon profile under the same Target-Scoped Application matching rule above, the
-aggregate view SHALL record that contribution as carrying an unresolved ability reference naming the
-source ability — without mutating the profile or recording an Attacks effect amount for that effect.
-The applied/unresolved split is decided per effect, not per record: one record can contribute an
-applied mutation through one unconditional effect and an unresolved reference through another,
-conditional effect. This unresolved-reference signal is independent of the applied-mutation/
+aggregate view SHALL record on that contribution a not-applied effect naming the source ability, the
+characteristic, the effect's resolved signed per-model amount, and its condition (the record's usage
+limit and turn ownership, the effect's condition text, and whether it is one branch of a choice) —
+without mutating the profile or recording an Attacks effect amount for that effect.
+The applied/not-applied split is decided per effect, not per record: one record can contribute an
+applied mutation through one unconditional effect and a not-applied effect through another,
+conditional effect. This not-applied signal is independent of the applied-mutation/
 recorded-amount signal above: a contribution can carry an applied mutation or a recorded Attacks
-amount and an unresolved reference at the same time, and an aggregated entry whose contributions
-collectively carry at least one unresolved reference anywhere in the group SHALL report that fact at
-the entry level as well as at the individual contribution level, so a consumer can flag the group
-without inspecting every contribution.
+amount and a not-applied effect at the same time, and an aggregated entry SHALL report the distinct
+not-applied effects of all its contributions at the entry level as well as at the individual
+contribution level, so a consumer can show them per characteristic without inspecting every
+contribution.
 
 #### Scenario: Same weapon profile from different components is combined
 - **WHEN** the Bodyguard unit has 4 models carrying a weapon profile with 3 Attacks each, and the attached Leader carries a wargear item with an identical structural profile but 7 Attacks
@@ -256,23 +258,23 @@ without inspecting every contribution.
 - **WHEN** a present ability's catalogue record contains a conditional weapon-characteristic effect
   whose weapon selector matches a contribution's weapon profile under the same bearer/unit
   target-scoping rule an applied effect would use
-- **THEN** the affected contribution carries an unresolved ability reference naming that ability,
-  and the aggregated entry containing that contribution reports the group as having an unresolved
-  reference, even though no value was mutated or recorded
+- **THEN** the affected contribution carries a not-applied effect naming that ability, the
+  characteristic, the signed per-model amount and the condition, and the aggregated entry containing
+  that contribution reports the same not-applied effect, even though no value was mutated or recorded
 
 #### Scenario: An unresolved reference and an applied mutation can coexist on one contribution
 - **WHEN** a contribution's bearer carries two present abilities whose catalogue records each contain
   a weapon-characteristic effect with a matching weapon selector — one conditional, one not — each
   naming a different characteristic on the same weapon
 - **THEN** the contribution's resolved profile reflects the unconditional effect's mutation, and the
-  contribution still carries an unresolved ability reference naming the conditional effect's own
-  ability
+  contribution still carries a not-applied effect naming the conditional effect's own ability and
+  characteristic
 
 #### Scenario: One record can both apply and defer
 - **WHEN** a present ability's catalogue record contains an unconditional Strength effect and a
   conditional Damage effect, both matching a contribution's weapon
-- **THEN** the contribution's Strength is mutated, its Damage is not, and it carries an unresolved
-  ability reference naming that ability
+- **THEN** the contribution's Strength is mutated, its Damage is not, and it carries a not-applied
+  Damage effect naming that ability
 
 #### Scenario: A class-qualified weapon selector leaves a non-matching weapon type unaffected
 - **WHEN** a present ability's catalogue record contains an unconditional effect whose weapon
@@ -313,6 +315,13 @@ without inspecting every contribution.
   Attacks effect amount while the other does not
 - **THEN** both contributions remain in the same aggregated entry, since a recorded Attacks amount
   plays no part in the structural profile equality that determines grouping
+
+#### Scenario: A once-per-battle effect is recorded with its usage limit
+- **WHEN** a Chaos Lord carries Chance for Glory, whose catalogue record has a once-per-battle usage
+  limit and improves the Strength, Attacks, AP and Damage of the bearer's melee weapons by 1
+- **THEN** the Daemon hammer's contribution carries four not-applied effects, one per characteristic,
+  each with its signed amount and the once-per-battle limit as its condition, and none of those
+  values is changed
 
 ### Requirement: Aggregate Ability View
 The Attached Unit aggregate view SHALL report abilities per present component Unit, without
@@ -512,4 +521,3 @@ when the player explicitly sets or clears it.
 #### Scenario: A casualty adjustment does not clear Battle-shocked status
 - **WHEN** a player marks or restores a casualty on a Battle-shocked combat unit
 - **THEN** that unit's Battle-shocked status remains unchanged
-

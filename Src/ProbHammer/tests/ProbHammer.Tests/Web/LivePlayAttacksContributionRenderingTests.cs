@@ -17,7 +17,13 @@ public class LivePlayAttacksContributionRenderingTests : IClassFixture<WebApplic
 
     public LivePlayAttacksContributionRenderingTests(WebApplicationFactory<Program> factory) => _factory = factory;
 
-    private async Task<IReadOnlyList<string>> RenderBreakdownRowClassesAsync(AggregateWeaponEntry weaponEntry)
+    private async Task<IReadOnlyList<string>> RenderBreakdownRowClassesAsync(AggregateWeaponEntry weaponEntry) =>
+        Regex.Matches(await RenderAsync(weaponEntry), "<tr class=\"([^\"]*)\"[^>]*data-weapon-id=")
+            .Select(m => m.Groups[1].Value)
+            .Where(c => c.Contains("contribution-row"))
+            .ToList();
+
+    private async Task<string> RenderAsync(AggregateWeaponEntry weaponEntry)
     {
         using var scope = _factory.Services.CreateScope();
         var httpContext = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
@@ -43,12 +49,7 @@ public class LivePlayAttacksContributionRenderingTests : IClassFixture<WebApplic
 
         var model = new UnitBlockRenderModel(0, LivePlayModel.BuildUnitBlock(view),
             RuleGlossary.Build(new BsdataClosure([])));
-        var html = await renderer.RenderAsync(httpContext, "/Pages/Shared/_UnitBlock.cshtml", model);
-
-        return Regex.Matches(html, "<tr class=\"([^\"]*)\"[^>]*data-weapon-id=")
-            .Select(m => m.Groups[1].Value)
-            .Where(c => c.Contains("contribution-row"))
-            .ToList();
+        return await renderer.RenderAsync(httpContext, "/Pages/Shared/_UnitBlock.cshtml", model);
     }
 
     private static Ability TestAbility(string name) =>
@@ -98,5 +99,29 @@ public class LivePlayAttacksContributionRenderingTests : IClassFixture<WebApplic
         rowBoundIndex.Should().BePositive();
         rows[rowBoundIndex - 1].Should().StartWith("weapon-contribution-row");
         rows.Should().NotContain(c => c.Contains("group-wide"));
+    }
+
+    [Fact]
+    public async Task HighlightedTotalAttacks_KeepsItsNumberSpanInsideTheTrigger_AndTheBreakdownStillListsTheAbilityLine()
+    {
+        var ability = TestAbility("Crusade of Wrath");
+        var entry = new AggregateWeaponEntry(
+            Profile: new MeleeWeapon("Power fist", DiceExpression.Fixed(3), 3, 8, -2, 2),
+            TotalAttacks: DiceExpression.Fixed(8),
+            Name: "Power fist",
+            Contributions:
+            [
+                new WeaponContribution("Squad A", "Initiate", 2, DiceExpression.Fixed(3), "Power fist",
+                    AttacksContributions: [new AttacksContribution(ability, 1)])
+            ]);
+
+        var html = await RenderAsync(entry);
+
+        html.Should().Contain("<td class=\"weapon-attacks-value\"><button type=\"button\"")
+            .And.Contain("class=\"provenance-tile\" popovertarget=")
+            .And.Contain("<span class=\"weapon-attacks-number\">8</span></button>")
+            .And.Contain("<span data-prov-original>6</span>")
+            .And.Contain("<span data-prov-total>8</span>");
+        (await RenderBreakdownRowClassesAsync(entry)).Should().Contain(c => c.Contains("weapon-attacks-contribution-row"));
     }
 }

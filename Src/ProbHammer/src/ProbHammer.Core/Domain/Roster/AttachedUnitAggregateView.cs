@@ -10,13 +10,19 @@ public sealed record ModelLineLoadout(
     IReadOnlyList<string> Abilities,
     string DisplayName);
 
+/// <summary><see cref="NotAppliedEffects"/> lists every conditional Statline scalar or
+/// invulnerable-save effect reaching this entry, left unapplied.</summary>
 public sealed record AggregateStatlineEntry(
     string ComponentName,
     string StatlineName,
     Statline Statline,
     int RemainingCount,
     int InitialCount,
-    IReadOnlyList<ModelLineLoadout> Loadouts);
+    IReadOnlyList<ModelLineLoadout> Loadouts,
+    IReadOnlyList<NotAppliedStatlineEffect>? NotAppliedEffects = null)
+{
+    public IReadOnlyList<NotAppliedStatlineEffect> NotAppliedEffects { get; init; } = NotAppliedEffects ?? [];
+}
 
 /// <summary>One matched, non-caveated Attacks-characteristic effect reaching a
 /// <see cref="WeaponContribution"/> - the source ability plus its own resolved signed per-model
@@ -24,6 +30,36 @@ public sealed record AggregateStatlineEntry(
 /// into <see cref="WeaponContribution.PerModelAttacks"/> - see that record's own doc comment for
 /// why Attacks can't reuse S/AP/D's mutate-in-place convention.</summary>
 public sealed record AttacksContribution(Ability SourceAbility, int Amount);
+
+/// <summary>Why a conditional effect was not applied: the record's usage limit and turn ownership, the
+/// effect's own condition text, and whether it is one branch of a choice.</summary>
+public sealed record EffectCondition(
+    UsageLimit? UsageLimit,
+    GameTurn? TurnOwnership,
+    string? ConditionText,
+    bool IsChoiceBranch)
+{
+    public static EffectCondition Of(AbilityClassification classification, ClassifiedEffect effect) =>
+        new(classification.UsageLimit, classification.TurnOwnership, effect.ConditionText,
+            effect.ChoiceBranch is not null);
+}
+
+/// <summary>A conditional weapon-characteristic effect reaching a contribution but left unapplied.
+/// <see cref="Amount"/> is the signed per-model change it would make (AP improve 1 is -1), or the
+/// assigned value when <see cref="Verb"/> is Set.</summary>
+public sealed record NotAppliedWeaponEffect(
+    Ability SourceAbility,
+    string Characteristic,
+    EffectVerb Verb,
+    int Amount,
+    EffectCondition Condition);
+
+/// <summary>A conditional Statline scalar or invulnerable-save effect reaching an entry but left
+/// unapplied.</summary>
+public sealed record NotAppliedStatlineEffect(
+    Ability SourceAbility,
+    RuleEffect Effect,
+    EffectCondition Condition);
 
 /// <summary>
 /// <see cref="LoadoutIndex"/> is the contributing <c>ModelLine</c>'s position within its
@@ -34,11 +70,9 @@ public sealed record AttacksContribution(Ability SourceAbility, int Amount);
 /// <see cref="StatlineName"/> alone, and <see cref="Count"/> is not reliable (two loadouts can
 /// coincidentally share a model count). <c>-1</c> when the statline has only one <c>ModelLine</c>
 /// (no <c>Loadouts</c> rendered at all, so there is nothing to index).
-/// <see cref="UnresolvedAbilities"/> lists every present, bearer-scoped, selector-matched ability
-/// carrying a conditional weapon effect - matched the same way an applied
-/// <c>WeaponCharacteristicEffect</c> would be, but left unapplied, per
-/// <c>AttachedUnitAggregator.FindUnresolvedAbilities</c>.
-/// Empty when no conditional match reaches this contribution. Independent of whether this
+/// <see cref="NotAppliedEffects"/> lists every present, bearer-scoped, selector-matched conditional
+/// weapon effect - matched the same way an applied <c>WeaponCharacteristicEffect</c> would be, but
+/// left unapplied. Empty when no conditional match reaches this contribution. Independent of whether this
 /// contribution's own <see cref="PerModelAttacks"/>/<see cref="Name"/> already reflect an applied
 /// mutation from a different, non-caveated ability.
 /// <see cref="AttacksContributions"/> is Attacks' own genuinely different mechanism
@@ -55,10 +89,10 @@ public sealed record WeaponContribution(
     DiceExpression PerModelAttacks,
     string Name,
     int LoadoutIndex = -1,
-    IReadOnlyList<Ability>? UnresolvedAbilities = null,
+    IReadOnlyList<NotAppliedWeaponEffect>? NotAppliedEffects = null,
     IReadOnlyList<AttacksContribution>? AttacksContributions = null)
 {
-    public IReadOnlyList<Ability> UnresolvedAbilities { get; init; } = UnresolvedAbilities ?? [];
+    public IReadOnlyList<NotAppliedWeaponEffect> NotAppliedEffects { get; init; } = NotAppliedEffects ?? [];
     public IReadOnlyList<AttacksContribution> AttacksContributions { get; init; } = AttacksContributions ?? [];
 }
 
@@ -67,19 +101,18 @@ public sealed record WeaponContribution(
 /// flags) - but once a row merges contributions from multiple model-lines, <c>Profile.A</c> and
 /// <c>Profile.Name</c> are each whichever contributor happened to be inserted first and are not
 /// authoritative. Only <see cref="TotalAttacks"/> and <see cref="Name"/> are safe to render.
-/// <see cref="UnresolvedAbilities"/> is the same order-preserving-distinct composite
-/// <see cref="Name"/> already computes, but over every contribution's own
-/// <see cref="WeaponContribution.UnresolvedAbilities"/> instead of its Name - naming every distinct
-/// caveated ability reaching any contribution in this group, empty when none do.
+/// <see cref="NotAppliedEffects"/> is every contribution's own
+/// <see cref="WeaponContribution.NotAppliedEffects"/>, distinct by source ability and
+/// characteristic, in first-encountered order.
 /// </summary>
 public sealed record AggregateWeaponEntry(
     WeaponProfile Profile,
     DiceExpression TotalAttacks,
     string Name,
     IReadOnlyList<WeaponContribution> Contributions,
-    IReadOnlyList<Ability>? UnresolvedAbilities = null)
+    IReadOnlyList<NotAppliedWeaponEffect>? NotAppliedEffects = null)
 {
-    public IReadOnlyList<Ability> UnresolvedAbilities { get; init; } = UnresolvedAbilities ?? [];
+    public IReadOnlyList<NotAppliedWeaponEffect> NotAppliedEffects { get; init; } = NotAppliedEffects ?? [];
 }
 
 /// <summary>

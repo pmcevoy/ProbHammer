@@ -115,155 +115,214 @@ public class LivePlayModelTests
             s.FirstRunIndex == 2 && s.LastRunIndex == 2 && s.ModelAbilities.Single().Name == "SUPPORT");
     }
 
+    private static Ability TestAbility(string name) =>
+        new() { Name = name, Text = $"{name} test text.", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
+
+    private static readonly EffectCondition OncePerBattle = new(UsageLimit.OncePerBattle, null, null, false);
+
+    private static AttachedUnitAggregateView TestView(Statline? statline = null,
+        params AggregateWeaponEntry[] weapons) => new(
+        Name: "Test Unit",
+        IsAttachedUnit: false,
+        Statlines: [new AggregateStatlineEntry("Squad A", "Trooper", statline ?? new Statline(6, 4, 3, 2, 6, 2), 1, 1, [])],
+        Weapons: weapons,
+        Abilities: [],
+        Keywords: new HashSet<string>());
+
+    private static AggregateWeaponEntry WeaponEntry(WeaponProfile weapon,
+        IReadOnlyList<NotAppliedWeaponEffect>? notApplied = null) =>
+        new(weapon, DiceExpression.Fixed(3), weapon.Name,
+            [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(3), weapon.Name)],
+            NotAppliedEffects: notApplied);
+
     [Fact]
-    public void BuildUnitBlock_SharesOneMarkerAcrossAFlaggedStatlineTileAndAFlaggedWeaponValue()
+    public void BuildUnitBlock_AModifiedWeaponValue_ShowsOriginalAbilityAndTotal_AndAnUntouchedValueHasNone()
     {
-        var sharedAbility = new Ability
-        {
-            Name = "Vexilla", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic
-        };
-        var statline = new Statline(
-            M: 6, T: ScalarCharacteristicView.Resolved(4, 5, [sharedAbility]), Sv: 3, W: 2, Ld: 6, Oc: 2);
-        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3,
-            S: ScalarCharacteristicView.Resolved(4, 5, [sharedAbility]), Ap: -1, D: 1);
+        var crusadeOfWrath = TestAbility("Crusade of Wrath");
+        var powerFist = new MeleeWeapon("Power fist", A: 3, Ws: 3,
+            S: ScalarCharacteristicView.Resolved(8, 9, [crusadeOfWrath]), Ap: -2, D: 2);
 
-        var view = new AttachedUnitAggregateView(
-            Name: "Test Unit",
-            IsAttachedUnit: false,
-            Statlines: [new AggregateStatlineEntry("Squad A", "Trooper", statline, 1, 1, [])],
-            Weapons:
-            [
-                new AggregateWeaponEntry(weapon, DiceExpression.Fixed(3), weapon.Name,
-                    [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(3), weapon.Name)])
-            ],
-            Abilities: [],
-            Keywords: new HashSet<string>());
+        var row = LivePlayModel.BuildUnitBlock(TestView(null, WeaponEntry(powerFist))).MeleeWeapons.Single();
 
-        var block = LivePlayModel.BuildUnitBlock(view);
-
-        block.Statlines.Single().ScalarMarker("T").Should().Be("*");
-        var weaponRow = block.MeleeWeapons.Single();
-        weaponRow.ValueMarker("S").Should().Be("*");
-        weaponRow.FlagLegend.Should().ContainSingle(l => l.Marker == "*" && l.Source.Name == "Vexilla");
+        var provenance = row.ProvenanceFor("S")!;
+        provenance.OriginalText.Should().Be("8");
+        provenance.Lines.Should().ContainSingle().Which.Should().Match<ProvenanceLine>(l =>
+            l.Source == crusadeOfWrath && l.ChangeText == "+1" && l.Applied);
+        provenance.ResultLabel.Should().Be("Total");
+        provenance.ResultText.Should().Be("9");
+        row.ProvenanceFor("AP").Should().BeNull();
     }
 
     [Fact]
-    public void BuildUnitBlock_OneSourceFlaggingTwoWeaponValues_RendersOneLegendLine()
+    public void BuildUnitBlock_ResidueIsNotedUnderItsAbilityLine()
     {
-        var brutalRaider = new Ability
-            { Name = "Brutal Raider", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
+        var faithFuelledResolve = TestAbility("Faith-Fuelled Resolve");
+        var (text, classification) = ClassificationFixtures.Entry(faithFuelledResolve.Text,
+            new AttachedUnitRuleTarget(), [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)]);
+        var classifications = ClassificationFixtures.Catalogue(
+            [(text, classification with { UnclassifiedResidue = "Army-construction restriction" })]);
+        var statline = new Statline(6, 4, 3, 2, 6, ScalarCharacteristicView.Resolved(1, 2, [faithFuelledResolve]));
+
+        var block = LivePlayModel.BuildUnitBlock(TestView(statline), classifications: classifications);
+
+        var line = block.Statlines.Single().ProvenanceFor("OC")!.Lines.Should().ContainSingle().Subject;
+        line.ChangeText.Should().Be("+1");
+        line.Notes.Should().Equal("Army-construction restriction");
+    }
+
+    [Fact]
+    public void BuildUnitBlock_AResolvedInvulnerableSaveFootnote_ShowsThePrintedSaveAsTheOriginal()
+    {
+        var refractorField = TestAbility("Refractor Field");
+        var statline = new Statline(12, 9, 3, 11, 6, 2)
+        {
+            InSv = InvulnerableSaveCharacteristicView.Resolved(new InvulnerableSave(6, 6),
+                new InvulnerableSave(5, 5), [refractorField])
+        };
+
+        var provenance = LivePlayModel.BuildUnitBlock(TestView(statline)).Statlines.Single().ProvenanceFor("InSv")!;
+
+        provenance.OriginalText.Should().Be("6+");
+        provenance.Lines.Should().ContainSingle(l => l.Source == refractorField && l.ChangeText == "5+");
+        provenance.ResultText.Should().Be("5+");
+    }
+
+    [Fact]
+    public void BuildUnitBlock_ACaveatedValue_ShowsTheDatasheetValueAndItsAbility_WithNoResult()
+    {
+        var caveat = TestAbility("Auric Mantle");
+        var statline = new Statline(6, 6, 2, ScalarCharacteristicView.Caveated(4, caveat), 7, 2);
+
+        var provenance = LivePlayModel.BuildUnitBlock(TestView(statline)).Statlines.Single().ProvenanceFor("W")!;
+
+        provenance.OriginalLabel.Should().Be("Datasheet");
+        provenance.OriginalText.Should().Be("4");
+        provenance.Lines.Should().ContainSingle(l => l.Source == caveat && l.ChangeText == "" && !l.Applied);
+        provenance.ResultLabel.Should().BeNull();
+    }
+
+    [Fact]
+    public void BuildUnitBlock_AValueWithOnlyANotAddedEffect_ShowsItsConditionAndTheUnchangedValue()
+    {
+        var chanceForGlory = TestAbility("Chance for Glory");
+        var daemonHammer = new MeleeWeapon("Daemon hammer", A: 4, Ws: 2, S: 8, Ap: -2, D: 3);
+
+        var row = LivePlayModel.BuildUnitBlock(TestView(null, WeaponEntry(daemonHammer,
+            [new NotAppliedWeaponEffect(chanceForGlory, "S", EffectVerb.Improve, 1, OncePerBattle)]))).MeleeWeapons.Single();
+
+        var provenance = row.ProvenanceFor("S")!;
+        provenance.OriginalText.Should().Be("8");
+        provenance.Lines.Should().ContainSingle().Which.Should().Match<ProvenanceLine>(l =>
+            l.Source == chanceForGlory && l.ChangeText == "+1" && !l.Applied &&
+            l.Notes.Single() == "Once per battle; not added");
+        provenance.ResultLabel.Should().Be("Shown");
+        provenance.ResultText.Should().Be("8");
+    }
+
+    [Fact]
+    public void BuildUnitBlock_AnAppliedAndANotAddedEffectOnOneValue_TotalIncludesOnlyTheApplied()
+    {
+        var applied = TestAbility("Applied Source");
+        var conditional = TestAbility("Conditional Source");
+        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3,
+            S: ScalarCharacteristicView.Resolved(4, 5, [applied]), Ap: -2, D: 1);
+
+        var row = LivePlayModel.BuildUnitBlock(TestView(null, WeaponEntry(weapon,
+            [new NotAppliedWeaponEffect(conditional, "S", EffectVerb.Improve, 2, OncePerBattle)]))).MeleeWeapons.Single();
+
+        var provenance = row.ProvenanceFor("S")!;
+        provenance.Lines.Select(l => (l.Label, l.ChangeText, l.Applied)).Should().Equal(
+            ("Applied Source", "+1", true), ("Conditional Source", "+2", false));
+        provenance.ResultText.Should().Be("5");
+    }
+
+    [Fact]
+    public void BuildUnitBlock_ABattleShockedOcTile_ShowsItsAbilitiesThenBattleShockedToZero()
+    {
+        var faithFuelledResolve = TestAbility("Faith-Fuelled Resolve");
+        var statline = new Statline(6, 4, 3, 5, 6, ScalarCharacteristicView.Resolved(1, 2, [faithFuelledResolve]));
+
+        var provenance = LivePlayModel.BuildUnitBlock(TestView(statline), isBattleShocked: true)
+            .Statlines.Single().ProvenanceFor("OC")!;
+
+        provenance.OriginalText.Should().Be("1");
+        provenance.Lines.Select(l => (l.Label, l.ChangeText)).Should().Equal(
+            ("Faith-Fuelled Resolve", "+1"), ("Battle-shocked", "→ 0"));
+        provenance.Lines[1].Source.Should().BeNull();
+        provenance.ResultLabel.Should().Be("Total");
+        provenance.ResultText.Should().Be("0");
+    }
+
+    [Fact]
+    public void BuildUnitBlock_TotalAttacksWithAnAbilityContribution_ShowsTheBaseTotalAsTheOriginal()
+    {
+        var crusadeOfWrath = TestAbility("Crusade of Wrath");
+        var powerFist = new MeleeWeapon("Power fist", A: 3, Ws: 3, S: 8, Ap: -2, D: 2);
+        var entry = new AggregateWeaponEntry(powerFist, DiceExpression.Fixed(8), powerFist.Name,
+        [
+            new WeaponContribution("Squad A", "Trooper", 2, DiceExpression.Fixed(3), powerFist.Name,
+                AttacksContributions: [new AttacksContribution(crusadeOfWrath, 1)])
+        ]);
+
+        var provenance = LivePlayModel.BuildUnitBlock(TestView(null, entry)).MeleeWeapons.Single().ProvenanceFor("A")!;
+
+        provenance.OriginalText.Should().Be("6");
+        provenance.Lines.Should().ContainSingle().Which.Should().Match<ProvenanceLine>(l =>
+            l.Source == crusadeOfWrath && l.ChangeText == "+2" && l.Notes.Single() == "+1 per model × 2 models");
+        provenance.ResultText.Should().Be("8");
+    }
+
+    [Fact]
+    public void BuildUnitBlock_OneSourceChangingTwoWeaponValues_ListsItOnceInEachValuesPopover()
+    {
+        var brutalRaider = TestAbility("Brutal Raider");
         var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3,
             S: ScalarCharacteristicView.Resolved(5, 6, [brutalRaider]),
             Ap: ScalarCharacteristicView.Resolved(-2, -3, [brutalRaider]), D: 1);
 
-        var view = new AttachedUnitAggregateView(
-            Name: "Test Unit",
-            IsAttachedUnit: false,
-            Statlines: [new AggregateStatlineEntry("Squad A", "Trooper", new Statline(6, 4, 3, 2, 6, 2), 1, 1, [])],
-            Weapons:
-            [
-                new AggregateWeaponEntry(weapon, DiceExpression.Fixed(3), weapon.Name,
-                    [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(3), weapon.Name)])
-            ],
-            Abilities: [],
-            Keywords: new HashSet<string>());
+        var row = LivePlayModel.BuildUnitBlock(TestView(null, WeaponEntry(weapon))).MeleeWeapons.Single();
 
-        var weaponRow = LivePlayModel.BuildUnitBlock(view).MeleeWeapons.Single();
-
-        weaponRow.ValueMarker("S").Should().Be("*");
-        weaponRow.ValueMarker("AP").Should().Be("*");
-        weaponRow.FlagLegend.Should().ContainSingle().Which.Source.Name.Should().Be("Brutal Raider");
+        row.ProvenanceFor("S")!.Lines.Should().ContainSingle(l => l.Source == brutalRaider && l.ChangeText == "+1");
+        row.ProvenanceFor("AP")!.Lines.Should().ContainSingle(l => l.Source == brutalRaider && l.ChangeText == "-1");
     }
 
     [Fact]
-    public void BuildUnitBlock_AssignsMarkersInStatlineThenRangedThenMeleeOrder()
+    public void BuildUnitBlock_ANotAddedInvulnerableSaveOnAUnitWithoutOne_GetsAHighlightShowingNoSave()
     {
-        var statlineAbility = new Ability
-            { Name = "Statline Source", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
-        var weaponAbility = new Ability
-            { Name = "Weapon Source", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
-        var statline = new Statline(
-            M: 6, T: ScalarCharacteristicView.Resolved(4, 5, [statlineAbility]), Sv: 3, W: 2, Ld: 6, Oc: 2);
-        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3,
-            S: ScalarCharacteristicView.Resolved(4, 5, [weaponAbility]), Ap: -1, D: 1);
-
-        var view = new AttachedUnitAggregateView(
-            Name: "Test Unit",
-            IsAttachedUnit: false,
-            Statlines: [new AggregateStatlineEntry("Squad A", "Trooper", statline, 1, 1, [])],
-            Weapons:
+        var waaagh = TestAbility("Waaagh!");
+        var entry = new AggregateStatlineEntry("Boyz", "Boy", new Statline(6, 5, 5, 1, 7, 2), 10, 10, [],
+            NotAppliedEffects:
             [
-                new AggregateWeaponEntry(weapon, DiceExpression.Fixed(3), weapon.Name,
-                    [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(3), weapon.Name)])
-            ],
-            Abilities: [],
-            Keywords: new HashSet<string>());
+                new NotAppliedStatlineEffect(waaagh, new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(5, 5)),
+                    new EffectCondition(null, null, "While the unit is riled up", false))
+            ]);
+        var view = new AttachedUnitAggregateView("Boyz", false, [entry], [], [], new HashSet<string>());
 
-        var block = LivePlayModel.BuildUnitBlock(view);
+        var provenance = LivePlayModel.BuildUnitBlock(view).Statlines.Single().ProvenanceFor("InSv")!;
 
-        block.Statlines.Single().ScalarMarker("T").Should().Be("*");
-        block.MeleeWeapons.Single().ValueMarker("S").Should().Be("**");
+        provenance.OriginalText.Should().Be("–");
+        provenance.Lines.Should().ContainSingle().Which.Should().Match<ProvenanceLine>(l =>
+            l.ChangeText == "5+" && l.Notes.Single() == "While the unit is riled up; not added");
+        provenance.ResultLabel.Should().Be("Shown");
     }
 
     [Fact]
-    public void BuildUnitBlock_UnresolvedAbilityReference_GetsANameMarkerDistinctFromValueMarkers()
+    public void BuildUnitBlock_SingleModelLineUnit_OnlyAnAttacksContributionShowsABreakdownTrigger()
     {
-        var caveatedAbility = new Ability
-        {
-            Name = "Furious Charge", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic
-        };
-        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
+        var source = TestAbility("Source");
+        var strengthOnly = new MeleeWeapon("Power sword", A: 3, Ws: 3,
+            S: ScalarCharacteristicView.Resolved(4, 5, [source]), Ap: -1, D: 1);
+        var withAttacks = new MeleeWeapon("Combat knife", A: 1, Ws: 3, S: 3, Ap: 0, D: 1);
+        var attacksEntry = new AggregateWeaponEntry(withAttacks, DiceExpression.Fixed(2), withAttacks.Name,
+        [
+            new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(1), withAttacks.Name,
+                AttacksContributions: [new AttacksContribution(source, 1)])
+        ]);
 
-        var view = new AttachedUnitAggregateView(
-            Name: "Test Unit",
-            IsAttachedUnit: false,
-            Statlines: [new AggregateStatlineEntry("Squad A", "Trooper", new Statline(6, 4, 3, 2, 6, 2), 1, 1, [])],
-            Weapons:
-            [
-                new AggregateWeaponEntry(weapon, DiceExpression.Fixed(3), weapon.Name,
-                    [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(3), weapon.Name)],
-                    UnresolvedAbilities: [caveatedAbility])
-            ],
-            Abilities: [],
-            Keywords: new HashSet<string>());
+        var block = LivePlayModel.BuildUnitBlock(TestView(null, WeaponEntry(strengthOnly), attacksEntry));
 
-        var block = LivePlayModel.BuildUnitBlock(view);
-
-        var weaponRow = block.MeleeWeapons.Single();
-        weaponRow.NameMarker.Should().Be("*");
-        weaponRow.ValueMarkers.Should().BeEmpty();
-        weaponRow.FlagLegend.Should().ContainSingle(l => l.Marker == "*" && l.Source.Name == "Furious Charge");
-    }
-
-    [Fact]
-    public void BuildUnitBlock_SingleModelLineUnit_OnlyAFlaggedWeaponEntryShowsABreakdownTrigger()
-    {
-        var caveatedAbility = new Ability
-        {
-            Name = "Furious Charge", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic
-        };
-        var flaggedWeapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
-        var plainWeapon = new MeleeWeapon("Combat knife", A: 1, Ws: 3, S: 3, Ap: 0, D: 1);
-
-        var view = new AttachedUnitAggregateView(
-            Name: "Test Unit",
-            IsAttachedUnit: false,
-            Statlines: [new AggregateStatlineEntry("Squad A", "Trooper", new Statline(6, 4, 3, 2, 6, 2), 1, 1, [])],
-            Weapons:
-            [
-                new AggregateWeaponEntry(flaggedWeapon, DiceExpression.Fixed(3), flaggedWeapon.Name,
-                    [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(3), flaggedWeapon.Name)],
-                    UnresolvedAbilities: [caveatedAbility]),
-                new AggregateWeaponEntry(plainWeapon, DiceExpression.Fixed(1), plainWeapon.Name,
-                    [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(1), plainWeapon.Name)])
-            ],
-            Abilities: [],
-            Keywords: new HashSet<string>());
-
-        var block = LivePlayModel.BuildUnitBlock(view);
-
-        block.MeleeWeapons.Single(w => w.Entry.Profile.Name == "Power sword").ShowsBreakdownTrigger.Should().BeTrue();
-        block.MeleeWeapons.Single(w => w.Entry.Profile.Name == "Combat knife").ShowsBreakdownTrigger.Should().BeFalse();
+        block.MeleeWeapons.Single(w => w.Entry.Profile.Name == "Power sword").ShowsBreakdownTrigger.Should().BeFalse();
+        block.MeleeWeapons.Single(w => w.Entry.Profile.Name == "Combat knife").ShowsBreakdownTrigger.Should().BeTrue();
     }
 
     [Fact]

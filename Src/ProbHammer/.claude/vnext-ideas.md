@@ -44,36 +44,7 @@ record, not this file).
 - **Phase/turn ability highlighting.** Every catalogue record carries `Phases`/`TurnOwnership`
   (even unclassifiable ones), so an ability button could change colour in the phases it matters in,
   the tracker's original purpose for those fields.
-- **Value-provenance popovers ("amber = an ability has something to say; tap to judge").** Agreed
-  design principle (explore session 2026-10-03), next change after the Attacks-breakdown reorder.
-  Wherever an ability touches a base value (Statline tile, weapon S/AP/D, weapon total A), the value
-  renders amber and the amber area itself is a popover trigger showing the original value, each
-  contributing ability as an `.ability-name-line` button (nested popover for its text), and the
-  total. Replaces footnote markers (`5*`, `OC**`) and every flag-legend row/line, which today repeat
-  each ability once per row (Helbrecht's Crusade of Wrath: legend + Attacks line on all 6 melee
-  rows). Rationale: drawing attention to a value and letting the player judge it beats trusting the
-  classification - LLM-derived effects/conditions may simply be wrong, and the popover always
-  exposes the original value so the player can play on. Popover content by case:
-  - modified, no caveat (rarer than expected) - base, ability, total;
-  - modified with caveat/residue - same, plus the caveat/residue text;
-  - qualified value (e.g. "4+ InSv vs Psychic Attacks") - the qualifier text + ability; doesn't fit
-    the old Unmodified/Fully-modified/Caveated three-bucket model, which is why that model is
-    replaced rather than extended;
-  - caveated, unresolved (today's InSv caveat) - catalogue value, "may be modified by [Ability]".
-  Decided: (1) caveated values go amber too - this **deliberately reverses**
-  `classify-characteristic-modifier-caveats`' rule that a caveated value must not be amber ("reads
-  as already adjusted"); the popover now says which case it is, so no separate "possibly modified"
-  style (user decision 2026-10-03; the proposal must record the reversal and update
-  design-tokens.md's Flagged Statline Legend section). Still to settle in the proposal: (2) total A
-  becomes a modified value - the
-  popover's "original" is the total without ability contributions (28 + Crusade of Wrath 7 = 35),
-  experimental; (3) styling: amber inset within the cell padding so the row colour frames it (an
-  all-amber column currently reads as a column tint, not a signal) - also reads as tappable.
-  Covers Statline and weapons together; also the home for a conditional Statline effect once toggles
-  (below) can switch it on. Today a conditional Statline effect shows nothing, and a conditional
-  weapon effect shows an "unresolved ability" name marker - no live example in
-  `gw-app-export-templars-latest.txt`; verify against a real list that has one.
-- **Granted weapon keywords as amber chips.** After value-provenance popovers. A `WeaponKeywordGrant`
+- **Granted weapon keywords as amber chips.** A `WeaponKeywordGrant`
   renders as a chip merged with the profile's own `KeywordsText`, amber (not normally on this
   weapon); the chip's existing glossary popover additionally lists the granting ability. Edge cases
   to decide: the weapon already has the keyword (show once, list the source anyway?), and a granted

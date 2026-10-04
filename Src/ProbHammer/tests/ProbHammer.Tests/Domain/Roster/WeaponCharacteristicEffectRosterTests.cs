@@ -131,8 +131,12 @@ public class WeaponCharacteristicEffectRosterTests
         var entry = view.Weapons.Should().ContainSingle().Subject;
         entry.Profile.S.Value.Should().Be((CharacteristicValue)4);
         entry.Profile.S.ContributingAbilities.Should().BeEmpty();
-        entry.UnresolvedAbilities.Should().ContainSingle(a => a.Name == "Furious Charge");
-        entry.Contributions.Single().UnresolvedAbilities.Should().ContainSingle(a => a.Name == "Furious Charge");
+        var notApplied = entry.NotAppliedEffects.Should().ContainSingle().Subject;
+        notApplied.SourceAbility.Name.Should().Be("Furious Charge");
+        notApplied.Characteristic.Should().Be("S");
+        notApplied.Amount.Should().Be(1);
+        notApplied.Condition.ConditionText.Should().Be("Test condition");
+        entry.Contributions.Single().NotAppliedEffects.Should().ContainSingle(e => e.SourceAbility.Name == "Furious Charge");
     }
 
     [Fact]
@@ -179,7 +183,9 @@ public class WeaponCharacteristicEffectRosterTests
         var entry = view.Weapons.Should().ContainSingle().Subject;
         entry.Profile.S.Value.Should().Be((CharacteristicValue)5);
         entry.Profile.D.Value.Should().Be((CharacteristicValue)1);
-        entry.UnresolvedAbilities.Should().ContainSingle(a => a.Name == "Righteous Fury");
+        entry.NotAppliedEffects.Should().ContainSingle(e =>
+            e.SourceAbility.Name == "Righteous Fury" && e.Characteristic == "D" && e.Amount == 1 &&
+            e.Condition.ConditionText == "This model made a Charge move this turn");
     }
 
     [Fact]
@@ -229,12 +235,13 @@ public class WeaponCharacteristicEffectRosterTests
         var entry = view.Weapons.Should().ContainSingle().Subject;
         entry.Profile.S.Value.Should().Be((CharacteristicValue)5);
         entry.Profile.S.ContributingAbilities.Should().ContainSingle(a => a.Name == "Blessed Blade");
-        entry.Profile.Ap.Value.Should().Be((CharacteristicValue)(-1)); // AP effect stayed unresolved (caveated)
-        entry.UnresolvedAbilities.Should().ContainSingle(a => a.Name == "Furious Charge");
+        entry.Profile.Ap.Value.Should().Be((CharacteristicValue)(-1));
+        entry.NotAppliedEffects.Should().ContainSingle(e =>
+            e.SourceAbility.Name == "Furious Charge" && e.Characteristic == "AP" && e.Amount == -1);
     }
 
     [Fact]
-    public void AggregateWeaponEntry_UnresolvedAbilities_AggregatesAcrossContributionsInFirstEncounteredOrder()
+    public void AggregateWeaponEntry_NotAppliedEffects_AggregatesAcrossContributionsInFirstEncounteredOrder()
     {
         var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
         var firstCaveat = new Ability
@@ -282,12 +289,11 @@ public class WeaponCharacteristicEffectRosterTests
         var view = AttachedUnitAggregator.Build(attachedUnit, classifications);
 
         var entry = view.Weapons.Should().ContainSingle().Subject;
-        entry.UnresolvedAbilities.Should().HaveCount(2);
-        entry.UnresolvedAbilities.Select(a => a.Name).Should().Equal("Furious Charge", "Vengeful Strike");
+        entry.NotAppliedEffects.Select(e => e.SourceAbility.Name).Should().Equal("Furious Charge", "Vengeful Strike");
     }
 
     [Fact]
-    public void NoCaveatedMatch_ReportsEmptyUnresolvedAbilities()
+    public void NoConditionalMatch_ReportsNoNotAppliedEffects()
     {
         var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
         var datasheet = new Datasheet(
@@ -298,8 +304,8 @@ public class WeaponCharacteristicEffectRosterTests
         var view = AttachedUnitAggregator.Build(unit, ClassificationFixtures.Catalogue([]));
 
         var entry = view.Weapons.Should().ContainSingle().Subject;
-        entry.UnresolvedAbilities.Should().BeEmpty();
-        entry.Contributions.Single().UnresolvedAbilities.Should().BeEmpty();
+        entry.NotAppliedEffects.Should().BeEmpty();
+        entry.Contributions.Single().NotAppliedEffects.Should().BeEmpty();
     }
 
     [Fact]

@@ -399,58 +399,6 @@ requirement already govern.
 - **THEN** the run's stat-tile remains fully visible, since not every entry in the run meets the
   fully-deselected or fully-dead condition
 
-### Requirement: Flagged Statline Characteristic Rendering
-A Statline tile whose displayed value has been flagged — either an invulnerable save left caveated
-per "Footnoted Caveat Text Resolution" (`invulnerable-save`), or a characteristic mutated by a
-matched rule per `statline-flag-rules` — SHALL render a footnote marker appended to its label (e.g.
-"InSv*", "OC**"), and that run SHALL render a legend directly beneath its tile row, one line per
-distinct marker active within that run, naming the source ability responsible. Each legend line's
-ability name SHALL be an interactive trigger using the same popover mechanism as any other ability
-name in the unit block (per "Ability And Rule Text Popover") — the source ability's descriptive text
-is available on demand, not rendered inline by default.
-
-Marker identity SHALL be assigned once per unit block and reused for the same source ability
-wherever it recurs within that block, so a single source referenced by more than one flagged tile,
-or by tiles in more than one run, keeps the same marker throughout. The legend line for a given
-marker SHALL render within every run that has a tile carrying that marker, even when this means the
-same legend line appears in more than one run of the same unit block — it SHALL NOT be consolidated
-into a single shared location for the whole unit block, so a run's own flagged tile is never left
-without a visible local explanation.
-
-#### Scenario: A flagged tile's label carries a marker
-- **WHEN** a run's Statline tile has a flagged value
-- **THEN** its label renders with a footnote marker appended, distinguishing it from an unflagged
-  tile of the same characteristic
-
-#### Scenario: A run's legend names the flagged tile's source
-- **WHEN** a run has one flagged tile
-- **THEN** a legend line renders beneath that run's tiles, pairing the tile's marker with the source
-  ability's name, rendered as a popover trigger rather than inline prose
-
-#### Scenario: Tapping a legend entry opens the source ability's text
-- **WHEN** a player taps a legend entry's ability name
-- **THEN** a popover opens showing that ability's full descriptive text, per "Ability And Rule Text
-  Popover"
-
-#### Scenario: One source ability keeps the same marker across the whole unit block
-- **WHEN** a source ability's flagged value affects tiles in more than one run within the same unit
-  block
-- **THEN** every affected tile carries the same marker, and each affected run's own legend names
-  that same source
-
-#### Scenario: A unit-wide-scoped source's legend repeats in every affected run
-- **WHEN** a source ability grants a flagged value that applies to every run of a unit (e.g. a
-  bearer's-unit-wide characteristic change), and that unit renders more than one statline run
-- **THEN** the legend line naming that source renders within every one of those runs, not only the
-  run containing the bearer
-
-#### Scenario: A caveated invulnerable save uses the same marker-and-legend mechanism
-- **WHEN** a run's invulnerable save is left caveated (its linked ability text did not match a known
-  template, per "Footnoted Caveat Text Resolution")
-- **THEN** that run's legend names the invulnerable save view's own contributing ability the same
-  way it would name any other flagged tile's source, rather than rendering that ability's text
-  inline
-
 ### Requirement: Statline Ability Column Rendering
 Each unit block's Statline area SHALL render one additional Abilities column alongside the
 statline column, holding both Model-scoped and Unit-scoped ability entries stacked together in one
@@ -679,102 +627,6 @@ SHALL NOT gate whether its casualty controls are available or functional.
 - **WHEN** a statline entry or loadout is currently deselected
 - **THEN** its casualty controls still function, decreasing or increasing its remaining count as
   usual
-
-### Requirement: Flagged Weapon Characteristic Rendering
-A weapon-table Strength/AP/Damage value cell whose underlying characteristic was mutated by a
-matched, non-caveated weapon-characteristic effect (per `attached-unit-tracker`'s "Aggregate Weapon
-Count View") SHALL render a footnote marker appended to that cell's displayed value (e.g. "5*"), and
-SHALL render with the same flagged-value styling the Statline family uses for a resolved
-characteristic. A weapon entry with at least one contribution carrying an unresolved (caveated)
-ability reference SHALL render a footnote marker appended to the entry's own display Name, distinct
-from a resolved value-cell marker, since the weapon table has no per-characteristic label the way a
-Statline tile does.
-
-Marker identity SHALL be assigned once per unit block and reused for the same source ability
-wherever it recurs within that block — sharing the same assignment registry the Statline family's
-own "Flagged Statline Characteristic Rendering" requirement already establishes, so a source ability
-affecting both a Statline tile and a weapon entry within one unit block is named by the same marker
-in both places, and the unit block's legend lists it once per distinct source regardless of which
-kind of value it flagged. Each flagged weapon entry (name-marker or value-marker alike) SHALL surface
-its source ability as an interactive popover trigger, using the same popover mechanism as any other
-ability name in the unit block, reachable from that entry's contribution breakdown.
-
-#### Scenario: A resolved weapon value carries a marker
-- **WHEN** a weapon entry's Strength, AP, or Damage value was mutated by a matched, non-caveated
-  weapon-characteristic effect
-- **THEN** that value's cell renders with a footnote marker appended and the flagged-value styling,
-  distinguishing it from an unmutated value of the same characteristic
-
-#### Scenario: An unresolved ability reference marks the weapon's name
-- **WHEN** a weapon entry has at least one contribution carrying an unresolved ability reference
-- **THEN** the entry's own display Name renders with a footnote marker appended, even when none of
-  its Strength/AP/Damage values were mutated
-
-#### Scenario: A weapon-value marker and a Statline marker for the same source share one marker
-- **WHEN** one source ability both mutates a Statline characteristic (flagged per "Flagged Statline
-  Characteristic Rendering") and mutates a weapon's Strength/AP/Damage value within the same unit
-  block
-- **THEN** both the flagged Statline tile and the flagged weapon value cell carry the identical
-  marker, and the unit block's legend names that source once, not twice
-
-#### Scenario: Tapping a flagged weapon's contribution breakdown reaches the source ability
-- **WHEN** a player activates a flagged weapon entry's contribution breakdown
-- **THEN** the source ability responsible for the flag is reachable from the breakdown as a popover
-  trigger, per "Ability And Rule Text Popover"
-
-### Requirement: Weapon Ability-Contribution Row Rendering
-Within a weapon entry's contribution breakdown, a matched, non-caveated Attacks-characteristic
-effect (per `attached-unit-tracker`'s "Aggregate Weapon Count View") SHALL render as a separate line
-naming its source ability, using the same `(Count×Amount)` notation the breakdown's own base
-contributor rows already use for their own Count and per-model Attacks value — additive to the
-contributor row(s) it reaches. Every rendered number in the breakdown, base contributor value and
-ability-contribution amount alike, SHALL be a genuine addend of the entry's total Attacks value:
-never a value that already has another rendered number folded into it. A contributor row's own value
-SHALL always be its base (unmutated) per-model Attacks value.
-
-An ability-contribution line's placement depends on how much of the entry's current contribution set
-it reaches: an effect whose reach provably equals every current contributor of the entry SHALL render
-its line once, after every base contributor row of the breakdown (including merged and
-selection-excluded rows), at the same indent as those base contributor rows, rather than repeated
-under each contributor row. An effect reaching only some of the entry's current contributors
-(including exactly one) SHALL render its line nested directly under each contributor row it reaches,
-one indent step deeper than that row, and SHALL NOT render under a row it does not reach.
-
-Each ability-contribution line SHALL surface its source ability as an interactive popover trigger,
-using the same popover mechanism as any other ability name in the unit block.
-
-#### Scenario: A row-bound ability contribution nests under its own contributor row
-- **WHEN** a weapon entry's contribution breakdown includes one contributor row whose Attacks value
-  is affected by a matched, non-caveated ability reaching only that contributor
-- **THEN** that ability renders as its own line nested directly under that contributor's row,
-  showing the reaching Count and the resolved per-model Amount, and the contributor's own row still
-  shows its base (unaffected) value
-
-#### Scenario: A group-wide ability contribution renders once, after the breakdown's base rows
-- **WHEN** a matched, non-caveated ability's effect reaches every one of a weapon entry's current
-  contributors identically
-- **THEN** that ability renders as a single line after the last base contributor row of the
-  breakdown, at the same indent as the base contributor rows, not repeated under any individual
-  contributor row and not above any base contributor row
-
-#### Scenario: A partial-reach ability contribution nests under each contributor row it reaches
-- **WHEN** a matched, non-caveated ability's effect reaches some, but not all, of a weapon entry's
-  current contributors
-- **THEN** that ability renders nested under each of the reached contributor rows, and does not
-  render under an unreached row
-
-#### Scenario: Every rendered number is a genuine addend
-- **WHEN** a weapon entry's contribution breakdown includes both unaffected contributor rows and one
-  or more ability-contribution lines
-- **THEN** the entry's own aggregated total Attacks value equals the sum of every rendered
-  contributor-row value and every rendered ability-contribution amount, with no rendered number
-  itself already including another
-
-#### Scenario: An ability affecting a different characteristic renders via the existing marker convention, not this mechanism
-- **WHEN** a matched, non-caveated effect targets Strength, Armour Penetration, or Damage rather than
-  Attacks
-- **THEN** it renders via the existing "Flagged Weapon Characteristic Rendering" marker/legend
-  convention, unaffected by this requirement
 
 ### Requirement: Weapon Section Rendering
 Each unit block SHALL group the view's `Weapons` into a Ranged section and a Melee section by each
@@ -1241,37 +1093,41 @@ not required to appear when `/LivePlay` is opened from a different browser or de
 
 ### Requirement: Battle-Shocked Objective Control Rendering
 Every Objective Control stat-tile belonging to any component of a Battle-shocked combat unit SHALL
-render using the same visual treatment as a caveated Invulnerable Save tile (a background that
-visually distinguishes it from an ordinary stat-tile), with its displayed value replaced by the
-same glyph used for the toolbar's Battle-shock control, rendered in the ordinary stat-value text
-color — never the tile's numeric Objective Control value, and never in an amber or otherwise
-distinct color. The tile's label SHALL remain "OC", unchanged, and no explanatory text SHALL render
-beneath it — unlike a caveated Invulnerable Save tile, there is only one fixed reason (the unit is
-Battle-shocked), already conveyed by the toolbar's own Battle-shock control, so no per-instance
-footnote is needed. This rendering applies to every component's Objective Control tile within a
-Battle-shocked combat unit, not only whichever statline run happens to sit nearest the unit block's
-own toolbar.
+render as a value provenance highlight (per "Value Provenance Highlight"), with its displayed value
+replaced by the same glyph used for the toolbar's Battle-shock control, rendered in the ordinary
+stat-value text color — never the tile's numeric Objective Control value, and never in an amber or
+otherwise distinct color. The tile's label SHALL remain "OC", unchanged, and no explanatory text
+SHALL render beneath it. Tapping the tile SHALL open its provenance popover, showing the original
+value, any ability lines, a "Battle-shocked" line setting the value to 0, and a total of 0. This
+rendering applies to every component's Objective Control tile within a Battle-shocked combat unit,
+not only whichever statline run happens to sit nearest the unit block's own toolbar.
 
 #### Scenario: An ordinary unit's Objective Control tile shows its numeric value
 - **WHEN** a unit block's combat unit is not Battle-shocked
-- **THEN** every Objective Control tile in that block renders its ordinary numeric value with no
-  special background
+- **THEN** every Objective Control tile in that block renders its numeric value, with no Battle-shock
+  treatment
 
 #### Scenario: A Battle-shocked unit's Objective Control tile shows the glyph instead of a number
 - **WHEN** a unit block's combat unit is Battle-shocked
-- **THEN** every Objective Control tile in that block renders the flagged-tile background and shows
-  the Battle-shock glyph, in the ordinary stat-value text color, in place of the numeric value
+- **THEN** every Objective Control tile in that block renders as a value provenance highlight and
+  shows the Battle-shock glyph, in the ordinary stat-value text color, in place of the numeric value
 
 #### Scenario: Every component's Objective Control tile is affected, not just one
 - **WHEN** an AttachedUnit is Battle-shocked and has more than one statline run across its
   Bodyguard and Attached components
-- **THEN** every one of those runs' Objective Control tiles renders the flagged treatment, not only
-  the run nearest the unit block's own toolbar
+- **THEN** every one of those runs' Objective Control tiles renders the Battle-shock treatment, not
+  only the run nearest the unit block's own toolbar
 
 #### Scenario: Clearing Battle-shocked status reverts the tile
 - **WHEN** a player clears a unit's Battle-shocked status
-- **THEN** every Objective Control tile in that unit's block reverts to its ordinary numeric
-  rendering
+- **THEN** every Objective Control tile in that unit's block reverts to its numeric rendering, still
+  highlighted if an ability has something to say about it
+
+#### Scenario: Tapping a Battle-shocked tile shows how the value was reached
+- **WHEN** a player taps the Battle-shocked OC tile of a Marshal whose OC 1 is raised to 2 by
+  Faith-Fuelled Resolve
+- **THEN** the popover shows original 1, a Faith-Fuelled Resolve line with +1, a Battle-shocked line
+  setting it to 0, and total 0
 
 ### Requirement: Unit Status Toolbar
 Each unit block SHALL render one status toolbar, in its own row, between the unit-name header and
@@ -1664,3 +1520,164 @@ initially inactive (not automatically reactivated).
   carry that keyword
 - **THEN** every unit matching that active keyword remains expanded and flagged as before
 
+### Requirement: Value Provenance Highlight
+A Statline tile (M, T, Sv, W, Ld, OC, InSv) or a weapon-table Attacks, Strength, AP or Damage value
+SHALL render as an inset amber tile with a corner tick whenever an ability has something to say
+about it: an applied ability change, a caveat left unresolved, or a conditional effect that was not
+added. The tile SHALL be a popover trigger. A value nothing touches SHALL render plain.
+
+#### Scenario: An ability-modified weapon value is highlighted
+- **WHEN** Helbrecht leads a Crusader Squad and Crusade of Wrath adds 1 to the Strength of the
+  squad's melee weapons
+- **THEN** each affected melee weapon's Strength value renders as the highlighted tile, and its AP
+  value, which no ability touches, renders plain
+
+#### Scenario: An ability-modified Statline value is highlighted
+- **WHEN** Faith-Fuelled Resolve adds 1 to a Sword Brethren Squad unit's Objective Control
+- **THEN** each affected run's OC tile renders highlighted
+
+#### Scenario: A caveated value is highlighted
+- **WHEN** a run's invulnerable save is still caveated because its linked ability could not be
+  resolved
+- **THEN** that InSv tile renders highlighted, the same as a modified value
+
+#### Scenario: A value with only a not-added conditional effect is highlighted
+- **WHEN** a Chaos Lord carries Chance for Glory (once per battle, +1 to the Strength, Attacks, AP
+  and Damage of its melee weapons)
+- **THEN** the Daemon hammer's Attacks, Strength, AP and Damage values each render highlighted, each
+  still showing its unmodified value
+
+#### Scenario: Tapping a highlighted value opens its provenance popover
+- **WHEN** a player taps a highlighted value
+- **THEN** that value's provenance popover opens, per "Value Provenance Popover Content"
+
+### Requirement: Value Provenance Popover Content
+A highlighted value's popover SHALL show a title naming the characteristic and the statline or
+weapon, the original value, one line per ability that has something to say about it, and the
+resulting value. Each ability line SHALL be an ability-name popover trigger (opening that ability's
+own text, per "Nested Reference Popover") with the change it makes, and SHALL note the ability's
+unmodelled residue when its classification records one.
+
+#### Scenario: A modified value's popover shows original, ability and total
+- **WHEN** a player taps the highlighted Strength 9 of a Power fist in Helbrecht's Crusader Squad
+- **THEN** the popover shows original 8, a Crusade of Wrath line with +1, and total 9
+
+#### Scenario: An ability line opens the ability's text
+- **WHEN** a player taps the Crusade of Wrath line inside a provenance popover
+- **THEN** a nested popover opens showing Crusade of Wrath's rules text, and the provenance popover
+  stays open beneath it
+
+#### Scenario: Residue is noted under its ability
+- **WHEN** a provenance popover lists Faith-Fuelled Resolve, whose classification records an
+  unmodelled army-construction restriction
+- **THEN** that restriction renders as a note beneath the Faith-Fuelled Resolve line
+
+#### Scenario: A resolved datasheet footnote shows the printed value as the original
+- **WHEN** a player taps an Impulsor's InSv tile whose footnoted datasheet save was resolved by
+  Refractor Field
+- **THEN** the popover shows the printed save as the original, a Refractor Field line, and the
+  resolved save as the total
+
+### Requirement: Conditional Effects Are Shown But Not Added
+A conditional effect (usage limit, turn restriction, residual condition, or choice branch) reaching
+a value SHALL appear in its popover as an ability line with its change, its condition text, and a
+note that it was not added. The value shown SHALL NOT include it. A popover holding only such lines
+SHALL end with the shown value rather than a total.
+
+#### Scenario: A once-per-battle effect is listed but not added
+- **WHEN** a player taps the highlighted Strength 8 of a Chaos Lord's Daemon hammer
+- **THEN** the popover shows original 8, a Chance for Glory line with +1 noting once per battle and
+  not added, and shown value 8
+
+#### Scenario: A conditional effect beside an applied one
+- **WHEN** one value is reached by an applied ability change and by a different ability's
+  conditional effect
+- **THEN** the popover lists both lines, and its total includes only the applied change
+
+#### Scenario: A conditional invulnerable save gives an otherwise absent save a tile
+- **WHEN** a unit with no invulnerable save carries Waaagh! (5+ invulnerable save while riled up)
+- **THEN** the run renders a highlighted InSv tile showing no save, and its popover lists Waaagh!
+  with 5+ and the condition "while the unit is riled up", not added
+
+### Requirement: Caveated Value Popover Content
+A caveated value's popover SHALL show the datasheet value and state that it may be modified by the
+caveat's linked ability, as an ability-name popover trigger. It SHALL NOT show a total, since no
+resolved value exists.
+
+#### Scenario: An unresolved caveat names its ability without a total
+- **WHEN** a player taps a still-caveated InSv tile whose linked ability could not be resolved
+- **THEN** the popover shows the datasheet save and "may be modified by" that ability, with no total
+
+### Requirement: Weapon Attacks Total Provenance
+A weapon row's total Attacks SHALL be highlighted when any contribution carries an applied or
+not-added Attacks effect. Its popover's original SHALL be the total without ability contributions,
+each ability line SHALL show its total amount with the per-model amount and model count, and the
+total SHALL equal the row's displayed A. The expanded breakdown SHALL keep its ability lines.
+
+#### Scenario: A Power fist's total Attacks popover
+- **WHEN** a player taps the highlighted A 8 of a Power fist carried by two Initiates with Crusade of
+  Wrath applied
+- **THEN** the popover shows original 6, a Crusade of Wrath line with +2 (+1 per model, 2 models),
+  and total 8
+
+#### Scenario: The breakdown still lists the ability line
+- **WHEN** a player expands that Power fist's contribution breakdown
+- **THEN** the breakdown shows the Initiate row (2×3) 6 followed by the Crusade of Wrath (2×1) 2
+  line, unchanged
+
+#### Scenario: Selection filtering keeps the popover in step
+- **WHEN** a player deselects some of a weapon's contributors and the row's displayed A is
+  recomputed
+- **THEN** the A popover's original and total match the recomputed value
+
+### Requirement: No Footnote Markers Or Flag Legends
+The page SHALL NOT render footnote markers on Statline labels, weapon values or weapon names, nor any
+flag-legend line or row. The value provenance popover is the only place a value's source abilities
+are listed.
+
+#### Scenario: A modified tile's label is unmarked
+- **WHEN** a run's OC is modified by an ability
+- **THEN** the tile's label reads "OC" with no marker, and no legend renders beneath the run
+
+#### Scenario: A weapon with a conditional effect has no name marker
+- **WHEN** a weapon is reached only by a conditional effect
+- **THEN** its name renders unmarked, no legend row renders for it, and its reached values are
+  highlighted instead
+
+### Requirement: Weapon Attacks Breakdown Ability Lines
+Within a weapon entry's contribution breakdown, a matched, non-caveated Attacks-characteristic
+effect SHALL render as a separate line naming its source ability (a popover trigger), in the
+`(Count×Amount)` notation the base rows use, additive to the row(s) it reaches. Every rendered
+number SHALL be a genuine addend of the total, and a base row SHALL show its unmutated value.
+
+#### Scenario: A row-bound ability contribution nests under its own contributor row
+- **WHEN** a weapon entry's contribution breakdown includes one contributor row whose Attacks value
+  is affected by a matched, non-caveated ability reaching only that contributor
+- **THEN** that ability renders as its own line nested directly under that contributor's row, one
+  indent step deeper, showing the reaching Count and the resolved per-model Amount, and the
+  contributor's own row still shows its base (unaffected) value
+
+#### Scenario: A group-wide ability contribution renders once, after the breakdown's base rows
+- **WHEN** a matched, non-caveated ability's effect reaches every one of a weapon entry's current
+  contributors identically
+- **THEN** that ability renders as a single line after the last base contributor row of the
+  breakdown (including merged and selection-excluded rows), at the same indent as the base
+  contributor rows, not repeated under any individual contributor row
+
+#### Scenario: A partial-reach ability contribution nests under each contributor row it reaches
+- **WHEN** a matched, non-caveated ability's effect reaches some, but not all, of a weapon entry's
+  current contributors
+- **THEN** that ability renders nested under each of the reached contributor rows, and does not
+  render under an unreached row
+
+#### Scenario: Every rendered number is a genuine addend
+- **WHEN** a weapon entry's contribution breakdown includes both unaffected contributor rows and one
+  or more ability-contribution lines
+- **THEN** the entry's own aggregated total Attacks value equals the sum of every rendered
+  contributor-row value and every rendered ability-contribution amount, with no rendered number
+  itself already including another
+
+#### Scenario: An ability affecting Strength, AP or Damage does not add a breakdown line
+- **WHEN** a matched, non-caveated effect targets Strength, Armour Penetration, or Damage rather than
+  Attacks
+- **THEN** no breakdown line renders for it; it surfaces through that value's provenance highlight

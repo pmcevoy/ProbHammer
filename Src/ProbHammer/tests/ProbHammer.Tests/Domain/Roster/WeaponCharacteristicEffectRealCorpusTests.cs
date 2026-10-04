@@ -46,11 +46,11 @@ public class WeaponCharacteristicEffectRealCorpusTests
         weapon.Profile.S.IsCaveated.Should().BeFalse();
         weapon.Profile.S.Value.Should().Be((CharacteristicValue)4); // the real printed value, unmutated
         weapon.Profile.S.ContributingAbilities.Should().BeEmpty(); // Zealot is conditional - not applied
-        weapon.UnresolvedAbilities.Should().ContainSingle(a => a.Name == "Zealot");
+        weapon.NotAppliedEffects.Should().Contain(e => e.SourceAbility.Name == "Zealot");
     }
 
     [Fact]
-    public void MinistorumPriestWithZealot_RendersANameMarkerAndLegendNamingZealot()
+    public void MinistorumPriestWithZealot_HighlightsStrengthWithANotAddedZealotLine()
     {
         var parsed = new ParsedArmyList(
             Name: "Test Army", PointsSpent: 0, Faction: ["Imperium", "Adepta Sororitas"], Detachments: [],
@@ -73,8 +73,7 @@ public class WeaponCharacteristicEffectRealCorpusTests
         var block = LivePlayModel.BuildUnitBlock(view);
 
         var weaponRow = block.MeleeWeapons.Should().ContainSingle(w => w.Entry.Profile.Name == "Power weapon").Subject;
-        weaponRow.NameMarker.Should().Be("*");
-        weaponRow.FlagLegend.Should().ContainSingle(l => l.Marker == "*" && l.Source.Name == "Zealot");
+        weaponRow.ProvenanceFor("S")!.Lines.Should().Contain(l => l.Label == "Zealot" && !l.Applied);
     }
 
     // resolve-weapon-attacks-effects task 4.4: proposal.md names Scorpion Tail/Writhing Tentacles
@@ -129,4 +128,35 @@ public class WeaponCharacteristicEffectRealCorpusTests
         groupWideLine.SourceAbility.Name.Should().Be("Scorpion Tail");
         groupWideLine.Amount.Should().Be(1);
     }
+
+    [Fact]
+    public void ChaosLordWithChanceForGlory_RecordsFourNotAppliedEffects_AndLeavesTheDaemonHammerUnmutated()
+    {
+        var parsed = new ArmyListParser().Parse(RealExportText("gw-app-export-chaos-lord-terminator-armour.txt"));
+        var source = new LocalDiskBsdataCatalogueSource(BundledBsDataRoot());
+        var fileName = BsdataFactionResolver.ResolveStartingFileName(parsed.Faction, source.ListFileNames());
+        var roster = ArmyRosterEnricher.Enrich(parsed, ResolvedBsdataCatalogue.Build(source, fileName));
+        var chaosLord = roster.Units.Single(u => u.Name == "Chaos Lord");
+
+        var view = AttachedUnitAggregator.Build(chaosLord, ClassificationFixtures.CheckedIn);
+
+        var hammer = view.Weapons.Single(w => w.Name == "Daemon hammer");
+        hammer.Profile.S.ContributingAbilities.Should().BeEmpty();
+        hammer.Profile.Ap.ContributingAbilities.Should().BeEmpty();
+        hammer.Profile.D.ContributingAbilities.Should().BeEmpty();
+        hammer.Contributions.Single().AttacksContributions.Should().BeEmpty();
+        hammer.NotAppliedEffects
+            .Where(e => e.SourceAbility.Name == "Chance for Glory")
+            .Select(e => (e.Characteristic, e.Amount, e.Condition.UsageLimit))
+            .Should().BeEquivalentTo(new (string, int, UsageLimit?)[]
+            {
+                ("S", 1, UsageLimit.OncePerBattle),
+                ("A", 1, UsageLimit.OncePerBattle),
+                ("AP", -1, UsageLimit.OncePerBattle),
+                ("D", 1, UsageLimit.OncePerBattle)
+            });
+    }
+
+    private static string RealExportText(string fileName, [CallerFilePath] string here = "") =>
+        File.ReadAllText(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "..", "..", "data", fileName));
 }
