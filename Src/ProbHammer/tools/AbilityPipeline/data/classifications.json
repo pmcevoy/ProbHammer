@@ -7860,8 +7860,8 @@
             "Verb": "improve",
             "Amount": 1
           },
-          "ResidualConditionBucket": "none",
-          "ConditionText": null,
+          "ResidualConditionBucket": "never",
+          "ConditionText": "This unit made a Charge move this turn",
           "ChoiceBranch": null
         }
       ],
@@ -7881,7 +7881,7 @@
     },
     "EffectiveCoverageStatus": "partial",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-04: event-triggered effect set from 'none' to 'never' (prompt v2 folds a trigger-only text into phases)."
   },
   "0e2baeeaec3010d7d6209ee42f5e11f3e2369b330ec1cfdc54a8a5fcb1280564": {
     "Hash": "0e2baeeaec3010d7d6209ee42f5e11f3e2369b330ec1cfdc54a8a5fcb1280564",
@@ -25601,8 +25601,8 @@
             "Verb": "improve",
             "Amount": 2
           },
-          "ResidualConditionBucket": "none",
-          "ConditionText": null,
+          "ResidualConditionBucket": "never",
+          "ConditionText": "This model ended a Charge move this turn",
           "ChoiceBranch": null
         }
       ],
@@ -25628,7 +25628,7 @@
     },
     "EffectiveCoverageStatus": "complete",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-04: event-triggered effect set from 'none' to 'never' (prompt v2 folds a trigger-only text into phases)."
   },
   "30e4ac9cdbb71beb4a36026b15305e613dccdacc57d84ce6a941928d2f776ed0": {
     "Hash": "30e4ac9cdbb71beb4a36026b15305e613dccdacc57d84ce6a941928d2f776ed0",
@@ -30837,8 +30837,8 @@
             "Verb": "set",
             "Amount": 6
           },
-          "ResidualConditionBucket": "none",
-          "ConditionText": null,
+          "ResidualConditionBucket": "never",
+          "ConditionText": "The unit invoked its extremis trigger word when selected to fight this phase",
           "ChoiceBranch": null
         },
         {
@@ -30851,8 +30851,8 @@
             "Keyword": "HAZARDOUS",
             "ReplacesKeyword": null
           },
-          "ResidualConditionBucket": "none",
-          "ConditionText": null,
+          "ResidualConditionBucket": "never",
+          "ConditionText": "The unit invoked its extremis trigger word when selected to fight this phase",
           "ChoiceBranch": null
         }
       ],
@@ -30887,7 +30887,7 @@
     },
     "EffectiveCoverageStatus": "complete",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-04: event-triggered effect set from 'none' to 'never' (prompt v2 folds a trigger-only text into phases)."
   },
   "3b9df5430875ca30addd5ad913b3cac9688d37797a1d46fb8f3d50664b480317": {
     "Hash": "3b9df5430875ca30addd5ad913b3cac9688d37797a1d46fb8f3d50664b480317",
@@ -38421,8 +38421,8 @@
             "Verb": "improve",
             "Amount": 6
           },
-          "ResidualConditionBucket": "none",
-          "ConditionText": null,
+          "ResidualConditionBucket": "never",
+          "ConditionText": "The led unit Advanced this phase (instead of an Advance roll)",
           "ChoiceBranch": null
         }
       ],
@@ -38441,7 +38441,7 @@
     },
     "EffectiveCoverageStatus": "partial",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-04: event-triggered effect set from 'none' to 'never' (prompt v2 folds a trigger-only text into phases)."
   },
   "49ae4fefa6485f007ec66567f1582a68846a2d9c8a1ebd93cb5908ee79faabdf": {
     "Hash": "49ae4fefa6485f007ec66567f1582a68846a2d9c8a1ebd93cb5908ee79faabdf",
@@ -65046,8 +65046,8 @@
             "Verb": "improve",
             "Amount": 9
           },
-          "ResidualConditionBucket": "none",
-          "ConditionText": null,
+          "ResidualConditionBucket": "never",
+          "ConditionText": "This model Advanced this phase (instead of an Advance roll)",
           "ChoiceBranch": null
         }
       ],
@@ -65066,7 +65066,7 @@
     },
     "EffectiveCoverageStatus": "partial",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-04: event-triggered effect set from 'none' to 'never' (prompt v2 folds a trigger-only text into phases)."
   },
   "7937e851c8d810c120ed36e08e624b9c8a30a512d6380b3b3f1a549a575bc713": {
     "Hash": "7937e851c8d810c120ed36e08e624b9c8a30a512d6380b3b3f1a549a575bc713",
@@ -76212,8 +76212,8 @@
             "Verb": "improve",
             "Amount": 2
           },
-          "ResidualConditionBucket": "none",
-          "ConditionText": null,
+          "ResidualConditionBucket": "never",
+          "ConditionText": "The model invoked its contract when making a Dark Pact this phase",
           "ChoiceBranch": null
         }
       ],
@@ -76241,7 +76241,7 @@
     },
     "EffectiveCoverageStatus": "partial",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-04: event-triggered effect set from 'none' to 'never' (prompt v2 folds a trigger-only text into phases)."
   },
   "8ca3bf742897709b2cba7450ce42bf9ee6bb815a46ce348f5e81e3b36b2a0bbf": {
     "Hash": "8ca3bf742897709b2cba7450ce42bf9ee6bb815a46ce348f5e81e3b36b2a0bbf",
@@ -90707,8 +90707,8 @@
             "Verb": "improve",
             "Amount": 2
           },
-          "ResidualConditionBucket": "none",
-          "ConditionText": null,
+          "ResidualConditionBucket": "never",
+          "ConditionText": "The unit performed this Agile Manoeuvre this phase",
           "ChoiceBranch": null
         }
       ],
@@ -90727,7 +90727,7 @@
     },
     "EffectiveCoverageStatus": "partial",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-04: event-triggered effect set from 'none' to 'never' (prompt v2 folds a trigger-only text into phases)."
   },
   "a6237b7668ee3605baaf23dd861b0696738fbd08d8a9bc1c9f533c58f4846bca": {
     "Hash": "a6237b7668ee3605baaf23dd861b0696738fbd08d8a9bc1c9f533c58f4846bca",
@@ -91332,8 +91332,8 @@
             "Verb": "improve",
             "Amount": 1
           },
-          "ResidualConditionBucket": "none",
-          "ConditionText": null,
+          "ResidualConditionBucket": "never",
+          "ConditionText": "This model's unit ended a Charge move this turn",
           "ChoiceBranch": null
         },
         {
@@ -91347,8 +91347,8 @@
             "Verb": "improve",
             "Amount": 1
           },
-          "ResidualConditionBucket": "none",
-          "ConditionText": null,
+          "ResidualConditionBucket": "never",
+          "ConditionText": "This model's unit ended a Charge move this turn",
           "ChoiceBranch": null
         }
       ],
@@ -91368,7 +91368,7 @@
     },
     "EffectiveCoverageStatus": "complete",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-04: event-triggered effect set from 'none' to 'never' (prompt v2 folds a trigger-only text into phases)."
   },
   "a7350464b9385bf18626b5e498b94c8849a6852863b72f7af309a6461255c781": {
     "Hash": "a7350464b9385bf18626b5e498b94c8849a6852863b72f7af309a6461255c781",
@@ -111946,8 +111946,8 @@
             "Verb": "improve",
             "Amount": 1
           },
-          "ResidualConditionBucket": "none",
-          "ConditionText": null,
+          "ResidualConditionBucket": "never",
+          "ConditionText": "This unit was set up on the battlefield this turn",
           "ChoiceBranch": null
         },
         {
@@ -111960,8 +111960,8 @@
             "Keyword": "[LANCE]",
             "ReplacesKeyword": null
           },
-          "ResidualConditionBucket": "none",
-          "ConditionText": null,
+          "ResidualConditionBucket": "never",
+          "ConditionText": "This unit was set up on the battlefield this turn",
           "ChoiceBranch": null
         }
       ],
@@ -111988,7 +111988,7 @@
     },
     "EffectiveCoverageStatus": "complete",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-04: event-triggered effect set from 'none' to 'never' (prompt v2 folds a trigger-only text into phases)."
   },
   "cf26584025b3e083db2e459d30b58a08d60e17010dfea561e331c14aeca7b474": {
     "Hash": "cf26584025b3e083db2e459d30b58a08d60e17010dfea561e331c14aeca7b474",
@@ -112530,8 +112530,8 @@
             "Verb": "improve",
             "Amount": 1
           },
-          "ResidualConditionBucket": "none",
-          "ConditionText": null,
+          "ResidualConditionBucket": "never",
+          "ConditionText": "The unit was selected to Advance or Fall Back this turn",
           "ChoiceBranch": null
         }
       ],
@@ -112563,7 +112563,7 @@
     },
     "EffectiveCoverageStatus": "partial",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-04: event-triggered effect set from 'none' to 'never' (prompt v2 folds a trigger-only text into phases)."
   },
   "d0a5b91c6cda9f8c0daa9eeee415473baed0cdfcc59d52d76981549e3af7cc19": {
     "Hash": "d0a5b91c6cda9f8c0daa9eeee415473baed0cdfcc59d52d76981549e3af7cc19",
@@ -114201,8 +114201,8 @@
             "Verb": "improve",
             "Amount": 1
           },
-          "ResidualConditionBucket": "none",
-          "ConditionText": null,
+          "ResidualConditionBucket": "never",
+          "ConditionText": "This model made a Charge move this turn",
           "ChoiceBranch": null
         },
         {
@@ -114216,8 +114216,8 @@
             "Verb": "improve",
             "Amount": 2
           },
-          "ResidualConditionBucket": "none",
-          "ConditionText": null,
+          "ResidualConditionBucket": "never",
+          "ConditionText": "This model made a Charge move this turn",
           "ChoiceBranch": null
         }
       ],
@@ -114240,7 +114240,7 @@
     },
     "EffectiveCoverageStatus": "partial",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-04: event-triggered effect set from 'none' to 'never' (prompt v2 folds a trigger-only text into phases)."
   },
   "d304b7a26d02ae6cd910c65eea839929f6c7da06156c5498598614f255fb272b": {
     "Hash": "d304b7a26d02ae6cd910c65eea839929f6c7da06156c5498598614f255fb272b",

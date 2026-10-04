@@ -5286,7 +5286,8 @@
               "verb": "improve",
               "amount": 1
             },
-            "residualConditionBucket": "none"
+            "residualConditionBucket": "never",
+            "conditionText": "This unit made a Charge move this turn"
           }
         ],
         "choiceGroups": [],
@@ -17334,7 +17335,8 @@
               "verb": "improve",
               "amount": 2
             },
-            "residualConditionBucket": "none"
+            "residualConditionBucket": "never",
+            "conditionText": "This model ended a Charge move this turn"
           }
         ],
         "choiceGroups": [],
@@ -20931,7 +20933,8 @@
               "verb": "set",
               "amount": 6
             },
-            "residualConditionBucket": "none"
+            "residualConditionBucket": "never",
+            "conditionText": "The unit invoked its extremis trigger word when selected to fight this phase"
           },
           {
             "effect": {
@@ -20942,7 +20945,8 @@
               },
               "keyword": "Hazardous"
             },
-            "residualConditionBucket": "none"
+            "residualConditionBucket": "never",
+            "conditionText": "The unit invoked its extremis trigger word when selected to fight this phase"
           }
         ],
         "choiceGroups": [],
@@ -26011,7 +26015,8 @@
               "verb": "improve",
               "amount": 6
             },
-            "residualConditionBucket": "none"
+            "residualConditionBucket": "never",
+            "conditionText": "The led unit Advanced this phase (instead of an Advance roll)"
           }
         ],
         "choiceGroups": [],
@@ -43891,7 +43896,8 @@
               "verb": "improve",
               "amount": 9
             },
-            "residualConditionBucket": "none"
+            "residualConditionBucket": "never",
+            "conditionText": "This model Advanced this phase (instead of an Advance roll)"
           }
         ],
         "choiceGroups": [],
@@ -51454,7 +51460,8 @@
               "verb": "improve",
               "amount": 2
             },
-            "residualConditionBucket": "none"
+            "residualConditionBucket": "never",
+            "conditionText": "The model invoked its contract when making a Dark Pact this phase"
           }
         ],
         "choiceGroups": [],
@@ -61121,7 +61128,8 @@
               "verb": "improve",
               "amount": 2
             },
-            "residualConditionBucket": "none"
+            "residualConditionBucket": "never",
+            "conditionText": "The unit performed this Agile Manoeuvre this phase"
           }
         ],
         "choiceGroups": [],
@@ -61536,7 +61544,8 @@
               "verb": "improve",
               "amount": 1
             },
-            "residualConditionBucket": "none"
+            "residualConditionBucket": "never",
+            "conditionText": "This model's unit ended a Charge move this turn"
           },
           {
             "effect": {
@@ -61549,7 +61558,8 @@
               "verb": "improve",
               "amount": 1
             },
-            "residualConditionBucket": "none"
+            "residualConditionBucket": "never",
+            "conditionText": "This model's unit ended a Charge move this turn"
           }
         ],
         "choiceGroups": [],
@@ -75445,7 +75455,8 @@
               "verb": "improve",
               "amount": 1
             },
-            "residualConditionBucket": "none"
+            "residualConditionBucket": "never",
+            "conditionText": "This unit was set up on the battlefield this turn"
           },
           {
             "effect": {
@@ -75456,7 +75467,8 @@
               },
               "keyword": "Lance"
             },
-            "residualConditionBucket": "none"
+            "residualConditionBucket": "never",
+            "conditionText": "This unit was set up on the battlefield this turn"
           }
         ],
         "choiceGroups": [],
@@ -75846,7 +75858,8 @@
               "verb": "improve",
               "amount": 1
             },
-            "residualConditionBucket": "none"
+            "residualConditionBucket": "never",
+            "conditionText": "The unit was selected to Advance or Fall Back this turn"
           }
         ],
         "choiceGroups": [],
@@ -76988,7 +77001,8 @@
               "verb": "improve",
               "amount": 1
             },
-            "residualConditionBucket": "none"
+            "residualConditionBucket": "never",
+            "conditionText": "This model made a Charge move this turn"
           },
           {
             "effect": {
@@ -77001,7 +77015,8 @@
               "verb": "improve",
               "amount": 2
             },
-            "residualConditionBucket": "none"
+            "residualConditionBucket": "never",
+            "conditionText": "This model made a Charge move this turn"
           }
         ],
         "choiceGroups": [],

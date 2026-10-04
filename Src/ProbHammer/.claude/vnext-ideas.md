@@ -117,7 +117,12 @@ design, not as a gap to eventually close.
   - **FNP qualifier vocabulary** (mortal wounds / Psychic Attacks / both) for the FNP-like-InSv
     display; `export` already maps "unqualified" sentinels to `null`.
   - **Prompt fixes:** event triggers ("each time this unit Advances/makes a Charge move") are
-    `never`, not `none`; "models with the bearer's own keyword in that unit" is `Self`; an FNP
+    `never`, not `none` - v2 gets this right only when the text also has an always-on part (Feral
+    Rage, Spearpoint Paragon); a trigger-only text is folded into `phases` and applied permanently.
+    Hand-corrected to `never` on 2026-10-04 (each record's `ReviewerNote` says so); v3 must reproduce
+    the fix unaided, or the re-run reverts it: Brutal Raider, Attuned Onslaught, Battle-lust, Impetuous Glory, Whirling
+    Death, Speed of Vaul, Swift as the wind, Extremis Trigger Word, Talonstrike Doctrines, Frantic
+    Focus, Debt to the Soulforge; "models with the bearer's own keyword in that unit" is `Self`; an FNP
     qualifier is only a damage source; `turnOwnership` only when the text says whose turn; don't
     split a multi-word weapon name on "and" ("Tyrnak and Fenrir"); split faction + type keywords
     ("LEGIONES DAEMONICA TZEENTCH"); emit JSON `null`, not the string `"null"`.
