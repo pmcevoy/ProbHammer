@@ -19,6 +19,15 @@ record, not this file).
   one unioned set.
 - **Split `wwwroot/css/site.css` into a `/LivePlay`-only stylesheet** — it still ships dead 10e
   selectors interleaved with the live rules.
+- **Style cleanup and alternate colour themes.** Rename colour-named tokens to the state they mean:
+  `--amber` today carries two states (an active control, and a value an ability has something to
+  say about), so it splits into something like `--active` and `--noted`, alongside the semantic
+  `--cond` added by `granted-weapon-keyword-chips`. With semantic names in place, a theme is a set
+  of redefinitions on one selector. Pairs naturally with the stylesheet split above.
+- **Provenance popover polish.** The popover table draws a rule under every row, so the Total row
+  ends with a double line (its own top border plus the row rule above). Five minutes in `site.css`.
+- **Fill in `live-play-view`'s `## Purpose`.** Still the placeholder `openspec archive` wrote, so
+  `openspec validate --specs --strict` fails on it. Edit the main spec directly.
 - **A Feel No Pain stat box, mirroring InSv's.** Feel No Pain grants are common (153+ corpus hits)
   and the catalogue already loads them as `FeelNoPainEffect` (data only). A dedicated box beneath
   the M/T/Sv/W/Ld/Oc row - same treatment as the invulnerable-save box - would be its first
@@ -53,7 +62,8 @@ record, not this file).
   effect (residual condition, usage limit, choice branch, turn restriction) is skipped today. Tapping
   the ability (in its ability list) opens its popover with the `ConditionText` and an
   enable/disable checkbox; enabling applies the effect, which then surfaces as an ordinary amber
-  provenance value. Choice groups toggle per option. Accepted cost: the toggle's full-map POST
+  provenance value - the `--cond` colour turning amber is the visible "activated" signal, for value
+  tiles and keyword chips alike (user idea, 2026-10-04). Choice groups toggle per option. Accepted cost: the toggle's full-map POST
   re-renders the unit block (`swapUnitBlock`), closing the open popover. State keyed per unit +
   ability (the same ability appears on several units, e.g. two Marshals), stored like casualty state.
 - **Consume the remaining data-only effect kinds.** `NamedAbilityGrant` (an inbound ability; needs
