@@ -66,19 +66,16 @@ public abstract record WeaponProfile(
     }
 
     /// <summary>
-    ///     Case-folded, trimmed, deduplicated, sorted-then-joined representation of
-    ///     <see cref="KeywordsText"/> - order and casing differences that don't change the actual
-    ///     keyword set must not split what should be one aggregated entry, while any real
-    ///     difference in keywords still must. Normalized the same way
-    ///     <see cref="Bsdata.RuleGlossary"/> does (lowercase, strip non-alphanumerics) so
-    ///     keyword-equality and glossary-resolution can't drift apart on what counts as "the same
-    ///     token".
+    ///     Deduplicated, sorted-then-joined <see cref="WeaponKeyword"/> identity plus value of each
+    ///     <see cref="KeywordsText"/> token - order and casing differences must not split what should
+    ///     be one aggregated entry, while a different value or Anti target still must.
     /// </summary>
     private static string NormaliseKeywords(IReadOnlyList<string> keywordsText)
     {
         var normalized = keywordsText
-            .Select(Bsdata.RuleGlossary.NormalizeToken)
-            .Where(token => token.Length > 0)
+            .Select(WeaponKeyword.Parse)
+            .Where(keyword => keyword.Identity.Length > 0)
+            .Select(keyword => $"{keyword.Identity}={keyword.Value}")
             .Distinct(StringComparer.Ordinal)
             .OrderBy(token => token, StringComparer.Ordinal);
         return string.Join(",", normalized);

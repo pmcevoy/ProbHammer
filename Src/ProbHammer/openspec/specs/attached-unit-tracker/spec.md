@@ -5,7 +5,9 @@
 Tracks live game state for an Attached Unit (casualties, and the aggregate statline/weapon/ability
 view derived from its currently-present components) as play proceeds. TBD: expand as this
 capability grows beyond its initial domain-model scope.
+
 ## Requirements
+
 ### Requirement: Model-Line Remaining Count
 Each model-line SHALL track a remaining count, initialized to the model-line's original Count.
 The remaining count SHALL be adjustable in both directions: it can be decreased to reflect
@@ -166,14 +168,17 @@ with no recorded Attacks effects contributes its plain base value, unaffected, e
 
 A matched catalogue record's own classified target scope SHALL determine which contributions its
 effects reach — for a Strength/Armour Penetration/Damage mutation, an Attacks effect's recorded
-per-contribution amount, or a not-applied effect (below) alike: a target scoped to the ability's
+per-contribution amount, a keyword grant, or a not-applied effect (below) alike: a target scoped to the ability's
 own bearer SHALL reach only weapons contributed by that bearer's own model-line (when the matched
 ability is model-line-sourced) or by any model-line of that bearer's owning component (when the
 matched ability is component-wide); a target scoped to the bearer's whole attached unit SHALL reach
 matching weapons contributed by every component of the resolved unit, regardless of which component
 granted the matched ability. A matched record whose own classified target is a set of keywords, or
 is unconditionally roster-wide with no bearer/unit qualifier, SHALL NOT reach any contribution — the
-same outcome as an unmatched ability.
+same outcome as an unmatched ability — except an ability whose Origin is Detachment Rule, whose
+keyword target was already evaluated when it was attached to this unit: it SHALL reach matching
+weapons contributed by every component of the resolved unit, the same treatment
+`statline-flag-rules`' Target-Scoped Application gives it.
 
 In addition, when a present ability's catalogue record contains a conditional Strength, Armour
 Penetration, Damage or Attacks weapon-characteristic effect whose weapon selector matches a
@@ -190,6 +195,17 @@ amount and a not-applied effect at the same time, and an aggregated entry SHALL 
 not-applied effects of all its contributions at the entry level as well as at the individual
 contribution level, so a consumer can show them per characteristic without inspecting every
 contribution.
+
+Before structural grouping, each contribution's own keyword text SHALL also be resolved against
+every applicable, unconditional weapon keyword grant whose selector matches its weapon profile under
+the same Target-Scoped Application rule, per `weapon-characteristic-effect-resolution`'s "Resolving
+A Weapon Keyword Grant". Each grant that adds or replaces a keyword SHALL be recorded on the
+contribution with its source ability and any replaced keyword. Because keyword text is part of the
+structural profile equality, an applied grant reaching only some of a group's contributors splits
+them into a separate entry, and a grant reaching all of them leaves the group merged. A conditional
+grant SHALL instead be recorded as a not-applied grant (keyword, source ability, condition) on the
+contribution and, distinct by source ability and keyword, at the entry level; it SHALL NOT change
+the contribution's keywords or its grouping.
 
 #### Scenario: Same weapon profile from different components is combined
 - **WHEN** the Bodyguard unit has 4 models carrying a weapon profile with 3 Attacks each, and the attached Leader carries a wargear item with an identical structural profile but 7 Attacks
@@ -322,6 +338,34 @@ contribution.
 - **THEN** the Daemon hammer's contribution carries four not-applied effects, one per characteristic,
   each with its signed amount and the once-per-battle limit as its condition, and none of those
   values is changed
+
+#### Scenario: A unit-wide keyword grant keeps every reached contributor merged
+- **WHEN** every present model-line of a resolved unit carries a structurally identical melee weapon,
+  and an unconditional grant of Lethal Hits to melee weapons, scoped to the bearer's whole attached
+  unit, reaches all of them
+- **THEN** the aggregate view shows one merged entry whose keywords include Lethal Hits, with the
+  grant recorded against each contribution
+
+#### Scenario: A bearer-scoped keyword grant splits an otherwise-merged group
+- **WHEN** two model-lines carry structurally identical bolt pistols, and an unconditional grant of
+  Lethal Hits reaches only one model-line's bearer
+- **THEN** the aggregate view shows two separate bolt pistol entries, one with Lethal Hits and one
+  without
+
+#### Scenario: A conditional keyword grant is recorded without splitting
+- **WHEN** a conditional grant of Lance reaches only some of a merged weapon entry's contributors
+- **THEN** the entry stays merged, its keywords do not include Lance, and the entry reports a
+  not-applied Lance grant naming its source ability and condition
+
+#### Scenario: A grant the weapon already has is not recorded
+- **WHEN** an unconditional grant of Lethal Hits reaches a weapon that already has Lethal Hits
+- **THEN** the weapon's keywords are unchanged and no grant is recorded against its contribution
+
+#### Scenario: A Detachment-rule ability reaches every component's weapons
+- **WHEN** a present ability whose Origin is Detachment Rule, and whose catalogue record's classified
+  target is a set of keywords, grants Assault to ranged weapons
+- **THEN** every component's ranged weapons in that resolved unit gain Assault, rather than the
+  ability reaching no contribution at all
 
 ### Requirement: Aggregate Ability View
 The Attached Unit aggregate view SHALL report abilities per present component Unit, without

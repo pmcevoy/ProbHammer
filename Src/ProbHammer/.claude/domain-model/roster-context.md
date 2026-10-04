@@ -85,7 +85,9 @@ AggregateStatlineEntry(ComponentName, StatlineName, Statline, RemainingCount, In
 
 WeaponContribution(ComponentName, StatlineName, Count, PerModelAttacks, Name: string, LoadoutIndex = -1,
                     NotAppliedEffects: IReadOnlyList<NotAppliedWeaponEffect> = [],
-                    AttacksContributions: IReadOnlyList<AttacksContribution> = [])
+                    AttacksContributions: IReadOnlyList<AttacksContribution> = [],
+                    KeywordGrants: IReadOnlyList<KeywordGrant> = [],
+                    NotAppliedKeywordGrants: IReadOnlyList<NotAppliedKeywordGrant> = [])
   // ComponentName is the owning Unit.Datasheet.Name; Count is that ModelLine's RemainingCount.
   // Name is the contributing WeaponProfile's own Name, resolved at the same point PerModelAttacks
   // is (name-weapon-group-contributions) - feeds AggregateWeaponEntry.Name's composite computation
@@ -102,6 +104,13 @@ WeaponContribution(ComponentName, StatlineName, Count, PerModelAttacks, Name: st
   // EffectCondition carries the usage limit, turn ownership, condition text and choice-branch flag.
   // AttacksContributions (resolve-weapon-attacks-effects) - see AttacksContribution below and
   // "Weapon-characteristic effect resolution" further down.
+  // KeywordGrants / NotAppliedKeywordGrants (granted-weapon-keyword-chips) - see "Weapon keyword
+  // grants" further down.
+
+KeywordGrant(SourceAbility: Ability, Keyword: string, ReplacedKeyword: string?)
+NotAppliedKeywordGrant(SourceAbility: Ability, Keyword: string, Condition: EffectCondition)
+  // An applied grant that changed the contribution's keywords (ReplacedKeyword set when it was a
+  // better value of a native keyword), and a conditional grant that would change them.
 
 AttacksContribution(SourceAbility: Ability, Amount: int)
   // resolve-weapon-attacks-effects: one matched, non-caveated Attacks-characteristic effect
@@ -111,11 +120,14 @@ AttacksContribution(SourceAbility: Ability, Amount: int)
 
 AggregateWeaponEntry(Profile: WeaponProfile, TotalAttacks: DiceExpression, Name: string,
                       Contributions: IReadOnlyList<WeaponContribution>,
-                      NotAppliedEffects: IReadOnlyList<NotAppliedWeaponEffect> = [])
+                      NotAppliedEffects: IReadOnlyList<NotAppliedWeaponEffect> = [],
+                      KeywordGrants: IReadOnlyList<KeywordGrant> = [],
+                      NotAppliedKeywordGrants: IReadOnlyList<NotAppliedKeywordGrant> = [])
   // see record's own doc comment. Name is the group's own composite display name (below) - not
   // Profile.Name, which stays an arbitrary, non-authoritative first-inserted value.
   // NotAppliedEffects is every contribution's own NotAppliedEffects, distinct by source ability and
-  // characteristic, in first-encountered order.
+  // characteristic, in first-encountered order; KeywordGrants/NotAppliedKeywordGrants likewise,
+  // distinct by source ability and keyword.
 
 AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ability,
                        ContributingComponentNames: IReadOnlyList<string> = [])
@@ -139,7 +151,9 @@ AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ab
   begin with. This "persist at zero" behavior exists so `/LivePlay`'s casualty control always has a
   row to revert from — see `openspec/specs/live-play-view/spec.md`'s "Statline Section Rendering"
   for the paired UI collapse behavior.
-- `Weapons` — grouped by `WeaponProfile.EqualityKey()` (excludes Name/Range/Attacks) across only
+- `Weapons` — grouped by `WeaponProfile.EqualityKey()` (excludes Name/Range/Attacks; keywords
+  compare by `WeaponKeyword` identity plus value, so Sustained Hits 1 and 2, or Anti-Infantry and
+  Anti-Vehicle, never merge) across only
   `RemainingCount > 0` model-lines. `TotalAttacks` is computed per contribution as
   `(profile.A + attacksContributions.Sum(c => c.Amount)).Scale(modelLine.RemainingCount)`,
   `Add`-reduced across every contributor sharing the `EqualityKey` — **not** a representative
@@ -173,10 +187,21 @@ AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ab
     layer needs (`live-play-view`'s "Weapon Ability-Contribution Row Rendering"). A recorded Attacks
     amount never splits or merges an `EqualityKey` group, unlike S/AP/D.
 
-  Both mechanisms share the same matching machinery (`IsBearerOf`/`WeaponSelectorMatches`/
-  `TryGetWeaponEffectEntry`) and the same conditional counterpart (`FindNotAppliedEffects`, which
-  never mutates the profile or records an Attacks amount — it records a `NotAppliedWeaponEffect` per
-  matched conditional S/AP/D/A effect, since a condition has no evaluation mechanism in this app).
+  Both mechanisms share the same matching machinery (`MatchedWeaponEffects<TEffect>`, using
+  `TryGetApplicableClassification`/`IsBearerOf`/`WeaponSelectorMatches`) and the same conditional
+  counterpart (`FindNotAppliedEffects`, which never mutates the profile or records an Attacks amount —
+  it records a `NotAppliedWeaponEffect` per matched conditional S/AP/D/A effect, since a condition
+  has no evaluation mechanism in this app). `TryGetApplicableClassification` is shared with the
+  Statline path, so a Detachment-rule-origin ability reaches every component's weapons despite its
+  keyword-classified target, exactly as it reaches every Statline row.
+- **Weapon keyword grants** (`granted-weapon-keyword-chips`) — after S/AP/D, `ResolveContributionProfile`
+  resolves each matched unconditional `WeaponKeywordGrantEffect` against the contribution's current
+  `KeywordsText` via `WeaponKeywordGrantResolver.Apply` (native wins unless the grant's value is
+  strictly better; a better value replaces the native token in place), rewriting `KeywordsText` and
+  recording a `KeywordGrant` only when something changed. Since keywords feed `EqualityKey`, a grant
+  reaching only some contributors splits the group. `FindNotAppliedKeywordGrants` checks each matched
+  conditional grant against the already-resolved keywords and records a `NotAppliedKeywordGrant` only
+  when it would change them; it never splits.
 - `Abilities` — built by `BuildAbilities`, walking components in `BuildStatlines`'s display order.
   For each component where `IsPresent`: one entry per `Datasheet.Ability` (`StatlineName: null`),
   one entry per resolved `Unit.Enhancements` ability (`StatlineName: null`, reported the same way

@@ -172,7 +172,7 @@ public class LivePlayFlaggedStatlineRenderingTests : IClassFixture<WebApplicatio
 
         var html = await RenderAsync(new AttachedUnitAggregateView("Boyz", false, [entry], [], [], new HashSet<string>()));
 
-        html.Should().Contain("class=\"stat-tile insv-tile provenance-tile\"")
+        html.Should().Contain("class=\"stat-tile insv-tile provenance-tile provenance-cond\"")
             .And.Contain("<span class=\"stat-label\">InSv</span><span class=\"stat-value\">–</span>")
             .And.Contain("While the unit is riled up; not added");
     }

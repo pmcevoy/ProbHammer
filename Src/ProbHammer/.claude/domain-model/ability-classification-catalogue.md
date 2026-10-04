@@ -45,18 +45,18 @@ effects are used as-is (user decision).
 |---|---|
 | `ResolveCaveatedInvulnerableSaves` | first unconditional `InvulnerableSave` effect of the caveat's linked ability (not in `Datasheet.Abilities`, so the Extractor walks each statline's caveated InSv to get these texts into the corpus) |
 | `ApplyStatlineFlagRules` | unconditional `Scalar`/`InvulnerableSave` effects applied; conditional ones recorded as `AggregateStatlineEntry.NotAppliedEffects` - see statline-flag-rules.md |
-| `ResolveContributionProfile` / `ResolveAttacksContributions` | unconditional `WeaponCharacteristic` S/AP/D and A |
+| `ResolveContributionProfile` / `ResolveAttacksContributions` | unconditional `WeaponCharacteristic` S/AP/D and A; unconditional `WeaponKeywordGrant`s rewrite the contribution's keywords and are recorded as `KeywordGrant`s |
 | `FindNotAppliedEffects` | conditional `WeaponCharacteristic` S/AP/D/A effects -> `NotAppliedWeaponEffect`s (characteristic, signed per-model amount, `EffectCondition`) on the contribution and its entry |
+| `FindNotAppliedKeywordGrants` | conditional `WeaponKeywordGrant`s that would change the keywords -> `NotAppliedKeywordGrant`s on the contribution and its entry |
 | `DetachmentRuleInboundAbilityResolver` | a Detachment rule with a `Keyword` target attaches to every unit carrying all its keywords (case-insensitive) |
 
 The applied/not-applied split is per effect, so one ability can both mutate Strength and record a
-conditional Damage boost as a not-applied effect on the same weapon. Known asymmetry, kept from
-before: a Detachment-rule ability with a keyword target flags Statline values (origin exception) but
-never reaches weapons - the weapon path filters on Self/AttachedUnit targets before
-`IsBearerOf` sees the origin.
+conditional Damage boost as a not-applied effect on the same weapon. A Detachment-rule ability with
+a keyword target reaches both Statline values and every component's weapons (origin exception,
+shared via `TryGetApplicableClassification`).
 
 **Not consumed yet** (each is a separate future change, see `.claude/vnext-ideas.md`): `Phases`/
-`TurnOwnership` for phase highlighting, condition toggles, and the four data-only effect kinds.
+`TurnOwnership` for phase highlighting, condition toggles, and the three remaining data-only effect kinds.
 
 **Tests** build catalogues with `ClassificationFixtures` (`Entry(text, target, effects,
 conditional)` / `Catalogue([...])`), including `RealCorpusExcerpt` - real ability texts the

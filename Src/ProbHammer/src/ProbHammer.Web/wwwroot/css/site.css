@@ -24,6 +24,10 @@
        a distinct, redefinable token rather than an implementation-dependent fade. Gives .lp-section
        summary bars a step down in visual weight from the solid --bg3 unit-name h2 above them. */
     --bg3-tint: color-mix(in srgb, var(--bg3) 55%, white);
+    /* Conditional: a value or keyword an ability could change but did not (not added). Muted blue,
+       distinct from amber's "applied" and from the green-teal --bg3. */
+    --cond: #3d6fa3;
+    --cond-tint: color-mix(in srgb, var(--cond) 20%, white);
 }
 
 /* Bundled, self-hosted (no CDN/network dependency - matters for table-side use with no venue
@@ -735,6 +739,12 @@ button.filter-flag:hover { opacity: 0.8; }
     border-color: transparent transparent var(--amber) transparent;
 }
 .provenance-tile:hover { opacity: 0.8; }
+/* Every popover line is a not-added conditional effect. */
+.provenance-tile.provenance-cond {
+    background: var(--cond-tint);
+    border-color: var(--cond);
+}
+.provenance-tile.provenance-cond::after { border-bottom-color: var(--cond); }
 .weapon-table .provenance-tile {
     display: inline-block;
     min-width: 1.6rem;
@@ -989,14 +999,28 @@ button.filter-flag:hover { opacity: 0.8; }
    plain .weapon-tag pill above rather than a native button, then layer on the page's existing
    hover convention (design-tokens.md's Interaction States: "opacity fades to 0.8") as its only tap
    affordance beyond the cursor. */
-.weapon-tag-resolved {
+.weapon-tag-resolved,
+.weapon-tag-granted,
+.weapon-tag-cond {
     font: inherit;
     text-transform: inherit;
     letter-spacing: inherit;
     cursor: pointer;
 }
-.weapon-tag-resolved:hover {
+.weapon-tag-resolved:hover,
+.weapon-tag-granted:hover,
+.weapon-tag-cond:hover {
     opacity: 0.8;
+}
+
+/* A keyword an ability added (amber) or could add but did not (conditional). */
+.weapon-tag-granted {
+    background: var(--amber-tint);
+    border-color: var(--amber);
+}
+.weapon-tag-cond {
+    background: var(--cond-tint);
+    border-color: var(--cond);
 }
 
 /* A chip with no matching glossary entry is not an interactive trigger - a plain, non-button

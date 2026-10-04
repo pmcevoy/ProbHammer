@@ -118,6 +118,7 @@ public class LivePlayInvulnerableSaveRenderingTests : IClassFixture<WebApplicati
             .And.NotContain("provenance-result")
             .And.Contain("This model has a test invulnerable save condition.")
             .And.NotContain("insv-caveat-text")
-            .And.NotContain("insv-icon");
+            .And.NotContain("insv-icon")
+            .And.NotContain("provenance-cond");
     }
 }

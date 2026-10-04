@@ -92,7 +92,7 @@ public static class AttachedUnitAggregator
         AbilityClassificationCatalogue classifications)
     {
         var matches = abilities
-            .Select(a => (Entry: a, Matched: TryGetStatlineClassification(classifications, a.Ability)))
+            .Select(a => (Entry: a, Matched: TryGetApplicableClassification(classifications, a.Ability)))
             .Where(x => x.Matched is not null)
             .ToList();
 
@@ -130,8 +130,8 @@ public static class AttachedUnitAggregator
     // the same outcome as an unclassified ability - EXCEPT a DetachmentRule-origin ability
     // (statline-flag-rules' Target-Scoped Application exception): its own keyword target has already
     // been evaluated against the resolved roster by DetachmentRuleInboundAbilityResolver before it
-    // was ever attached as a present ability here.
-    private static AbilityClassification? TryGetStatlineClassification(
+    // was ever attached as a present ability here. Shared by the Statline and weapon paths.
+    private static AbilityClassification? TryGetApplicableClassification(
         AbilityClassificationCatalogue classifications, Ability ability) =>
         classifications.TryGet(ability.Text, out var classification) &&
         (classification.Target is SelfRuleTarget or AttachedUnitRuleTarget ||
@@ -272,9 +272,12 @@ public static class AttachedUnitAggregator
             foreach (var weaponName in modelLine.Weapons)
             {
                 var baseProfile = unit.Datasheet.ResolveWeaponProfile(weaponName);
-                var profile = ResolveContributionProfile(baseProfile, unit, modelLine, abilities, classifications);
+                var (profile, keywordGrants) =
+                    ResolveContributionProfile(baseProfile, unit, modelLine, abilities, classifications);
                 var notAppliedEffects =
                     FindNotAppliedEffects(baseProfile, unit, modelLine, abilities, classifications);
+                var notAppliedKeywordGrants =
+                    FindNotAppliedKeywordGrants(profile, unit, modelLine, abilities, classifications);
                 var attacksContributions =
                     ResolveAttacksContributions(baseProfile, unit, modelLine, abilities, classifications);
                 var key = profile.EqualityKey();
@@ -287,7 +290,9 @@ public static class AttachedUnitAggregator
                     Name: profile.Name,
                     LoadoutIndex: LoadoutIndexOf(unit, modelLine),
                     NotAppliedEffects: notAppliedEffects,
-                    AttacksContributions: attacksContributions);
+                    AttacksContributions: attacksContributions,
+                    KeywordGrants: keywordGrants,
+                    NotAppliedKeywordGrants: notAppliedKeywordGrants);
                 var scaledAttacks =
                     (profile.A + attacksContributions.Sum(c => c.Amount)).Scale(modelLine.RemainingCount);
 
@@ -306,28 +311,45 @@ public static class AttachedUnitAggregator
         return groups.Values
             .Select(v =>
                 new AggregateWeaponEntry(v.Profile, v.TotalAttacks, CompositeName(v.Contributions), v.Contributions,
-                    NotAppliedEffects: CompositeNotAppliedEffects(v.Contributions)))
+                    NotAppliedEffects: CompositeNotAppliedEffects(v.Contributions),
+                    KeywordGrants: v.Contributions.SelectMany(c => c.KeywordGrants)
+                        .DistinctBy(g => (g.SourceAbility.Name, g.SourceAbility.Text, g.Keyword)).ToList(),
+                    NotAppliedKeywordGrants: v.Contributions.SelectMany(c => c.NotAppliedKeywordGrants)
+                        .DistinctBy(g => (g.SourceAbility.Name, g.SourceAbility.Text, g.Keyword)).ToList()))
             .ToList();
     }
 
     // Applies every present, unconditional, bearer-scoped, selector-matched WeaponCharacteristicEffect
-    // to this contribution's own resolved profile before EqualityKey grouping runs (see BuildWeapons'
-    // own comment). An Attacks-characteristic effect is filtered out here - it's handled entirely by
+    // and WeaponKeywordGrantEffect to this contribution's own resolved profile before EqualityKey
+    // grouping runs (see BuildWeapons' own comment), returning the grants that changed its keywords.
+    // An Attacks-characteristic effect is filtered out here - it's handled entirely by
     // ResolveAttacksContributions' own separate path instead, never by
     // WeaponCharacteristicEffectResolver, which stays fail-loud for that case.
-    private static WeaponProfile ResolveContributionProfile(
+    private static (WeaponProfile Profile, IReadOnlyList<KeywordGrant> KeywordGrants) ResolveContributionProfile(
         WeaponProfile profile, Unit unit, ModelLine modelLine,
         IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications)
     {
-        var applicableEffects = MatchedWeaponEffects(profile, unit, modelLine, abilities, classifications,
-                conditional: false)
+        var applicableEffects = MatchedWeaponEffects<WeaponCharacteristicEffect>(
+                profile, unit, modelLine, abilities, classifications, conditional: false)
             .Where(x => x.Effect.Characteristic is "S" or "AP" or "D");
 
         var resolved = profile;
         foreach (var (effect, sourceAbility, _) in applicableEffects)
             resolved = ApplyWeaponCharacteristicEffect(resolved, effect, sourceAbility);
 
-        return resolved;
+        var keywordGrants = new List<KeywordGrant>();
+        foreach (var (grant, sourceAbility, _) in MatchedWeaponEffects<WeaponKeywordGrantEffect>(
+                     profile, unit, modelLine, abilities, classifications, conditional: false))
+        {
+            var result = WeaponKeywordGrantResolver.Apply(resolved.KeywordsText, grant.Keyword);
+            if (!result.Changed)
+                continue;
+
+            resolved = resolved with { KeywordsText = result.Keywords };
+            keywordGrants.Add(new KeywordGrant(sourceAbility, result.Added!, result.Replaced));
+        }
+
+        return (resolved, keywordGrants);
     }
 
     // Sibling to ResolveContributionProfile, for the Attacks characteristic specifically: collects a
@@ -338,7 +360,8 @@ public static class AttachedUnitAggregator
     private static IReadOnlyList<AttacksContribution> ResolveAttacksContributions(
         WeaponProfile profile, Unit unit, ModelLine modelLine,
         IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications) =>
-        MatchedWeaponEffects(profile, unit, modelLine, abilities, classifications, conditional: false)
+        MatchedWeaponEffects<WeaponCharacteristicEffect>(
+                profile, unit, modelLine, abilities, classifications, conditional: false)
             .Where(x => x.Effect.Characteristic == "A")
             .Select(x => new AttacksContribution(
                 x.SourceAbility, CharacteristicModificationResolver.ResolveAttacksAmount(x.Effect)))
@@ -349,7 +372,8 @@ public static class AttachedUnitAggregator
     private static IReadOnlyList<NotAppliedWeaponEffect> FindNotAppliedEffects(
         WeaponProfile profile, Unit unit, ModelLine modelLine,
         IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications) =>
-        MatchedWeaponEffects(profile, unit, modelLine, abilities, classifications, conditional: true)
+        MatchedWeaponEffects<WeaponCharacteristicEffect>(
+                profile, unit, modelLine, abilities, classifications, conditional: true)
             .Where(x => x.Effect.Characteristic is "S" or "AP" or "D" or "A")
             .Select(x => new NotAppliedWeaponEffect(x.SourceAbility, x.Effect.Characteristic, x.Effect.Verb,
                 x.Effect.Verb == EffectVerb.Set
@@ -360,25 +384,45 @@ public static class AttachedUnitAggregator
             .DistinctBy(e => (e.SourceAbility.Name, e.SourceAbility.Text, e.Characteristic))
             .ToList();
 
-    // Every unconditional (or, with conditional set, every conditional) weapon effect of a present
-    // ability whose classification targets the bearer or its unit, reaching this contribution and
-    // matching its profile. Keyword/Unconditional targets never reach a weapon - no roster-wide
-    // predicate evaluation exists, and unlike the Statline path there's no DetachmentRule-origin
-    // exception here.
-    private static IEnumerable<(WeaponCharacteristicEffect Effect, Ability SourceAbility, EffectCondition Condition)>
-        MatchedWeaponEffects(
+    // Conditional grants that would still change the contribution's already-resolved keywords; one a
+    // native keyword (or an applied grant) already covers is dropped rather than shown.
+    private static IReadOnlyList<NotAppliedKeywordGrant> FindNotAppliedKeywordGrants(
+        WeaponProfile resolvedProfile, Unit unit, ModelLine modelLine,
+        IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications) =>
+        MatchedWeaponEffects<WeaponKeywordGrantEffect>(
+                resolvedProfile, unit, modelLine, abilities, classifications, conditional: true)
+            .Select(x => (x.SourceAbility, x.Condition,
+                Result: WeaponKeywordGrantResolver.Apply(resolvedProfile.KeywordsText, x.Effect.Keyword)))
+            .Where(x => x.Result.Changed)
+            .Select(x => new NotAppliedKeywordGrant(x.SourceAbility, x.Result.Added!, x.Condition))
+            .DistinctBy(g => (g.SourceAbility.Name, g.SourceAbility.Text, g.Keyword))
+            .ToList();
+
+    // Every unconditional (or, with conditional set, every conditional) TEffect weapon effect of a
+    // present ability whose classification applies here (TryGetApplicableClassification), reaching
+    // this contribution and matching its profile.
+    private static IEnumerable<(TEffect Effect, Ability SourceAbility, EffectCondition Condition)>
+        MatchedWeaponEffects<TEffect>(
             WeaponProfile profile, Unit unit, ModelLine modelLine,
             IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications,
-            bool conditional) =>
+            bool conditional) where TEffect : RuleEffect =>
         abilities
-            .Select(a => (Entry: a, Classification: classifications.TryGet(a.Ability.Text, out var c) ? c : null))
-            .Where(x => x.Classification?.Target is SelfRuleTarget or AttachedUnitRuleTarget)
+            .Select(a => (Entry: a, Classification: TryGetApplicableClassification(classifications, a.Ability)))
+            .Where(x => x.Classification is not null)
             .Where(x => IsBearerOf(x.Entry, x.Classification!.Target, unit.Datasheet.Name, modelLine.StatlineName))
             .SelectMany(x => x.Classification!.Effects
                 .Where(e => x.Classification.IsUnconditional(e) != conditional)
-                .Where(e => e.Effect is WeaponCharacteristicEffect w && WeaponSelectorMatches(w.Selector, profile))
-                .Select(e => (Effect: (WeaponCharacteristicEffect)e.Effect, SourceAbility: x.Entry.Ability,
+                .Where(e => e.Effect is TEffect && WeaponSelectorMatches(SelectorOf(e.Effect), profile))
+                .Select(e => (Effect: (TEffect)e.Effect, SourceAbility: x.Entry.Ability,
                     Condition: EffectCondition.Of(x.Classification, e))));
+
+    private static WeaponSelector SelectorOf(RuleEffect effect) =>
+        effect switch
+        {
+            WeaponCharacteristicEffect characteristic => characteristic.Selector,
+            WeaponKeywordGrantEffect grant => grant.Selector,
+            _ => throw new ArgumentOutOfRangeException(nameof(effect), effect, "Not a weapon effect.")
+        };
 
     private static bool WeaponSelectorMatches(WeaponSelector selector, WeaponProfile profile) =>
         selector switch

@@ -12,17 +12,33 @@ public sealed record ValueProvenance(
     string OriginalText,
     IReadOnlyList<ProvenanceLine> Lines,
     string? ResultLabel,
-    string? ResultText);
+    string? ResultText)
+{
+    /// <summary>Every line is a conditional effect that was not added, so the value renders in the
+    /// conditional colour rather than amber.</summary>
+    public bool IsConditionalOnly => Lines.Count > 0 && Lines.All(l => l.Kind == ProvenanceLineKind.NotAdded);
+}
 
-/// <summary><see cref="Source"/> is null for a fixed line with no ability behind it (Battle-shocked).
-/// <see cref="Applied"/> is false for a conditional effect or a caveat, neither of which is in the
-/// result.</summary>
+/// <summary>Only <see cref="Applied"/> and <see cref="Fixed"/> lines are in the result.</summary>
+public enum ProvenanceLineKind
+{
+    Applied,
+    NotAdded,
+    Caveat,
+    Fixed
+}
+
+/// <summary><see cref="Source"/> is null for a <see cref="ProvenanceLineKind.Fixed"/> line with no
+/// ability behind it (Battle-shocked).</summary>
 public sealed record ProvenanceLine(
     Ability? Source,
     string Label,
     string ChangeText,
     IReadOnlyList<string> Notes,
-    bool Applied);
+    ProvenanceLineKind Kind)
+{
+    public bool InResult => Kind is ProvenanceLineKind.Applied or ProvenanceLineKind.Fixed;
+}
 
 /// <summary>Builds <see cref="ValueProvenance"/> for every highlighted Statline tile and weapon value.
 /// <paramref name="classifications"/> supplies each ability's unmodelled residue; null means no residue
@@ -97,12 +113,12 @@ internal sealed class ValueProvenanceBuilder(AbilityClassificationCatalogue? cla
             lines.AddRange(view.ContributingAbilities.Select(CaveatLine));
         else
             lines.AddRange(view.ContributingAbilities.Select(a =>
-                Line(a, AppliedChange(characteristic, view.OriginalValue, view.Value, suffix), [], applied: true)));
+                Line(a, AppliedChange(characteristic, view.OriginalValue, view.Value, suffix), [], ProvenanceLineKind.Applied)));
         lines.AddRange(pending);
 
         if (battleShocked)
         {
-            lines.Add(new ProvenanceLine(null, "Battle-shocked", "→ 0", [], Applied: true));
+            lines.Add(new ProvenanceLine(null, "Battle-shocked", "→ 0", [], ProvenanceLineKind.Fixed));
             return new ValueProvenance(title, view.IsCaveated ? "Datasheet" : "Original", original, lines, "Total", "0");
         }
 
@@ -131,7 +147,7 @@ internal sealed class ValueProvenanceBuilder(AbilityClassificationCatalogue? cla
 
         var resolved = FormatInvulnerableSave(view.Value);
         return new ValueProvenance(title, "Original", original,
-            [.. view.ContributingAbilities.Select(a => Line(a, resolved, [], applied: true)), .. pending],
+            [.. view.ContributingAbilities.Select(a => Line(a, resolved, [], ProvenanceLineKind.Applied)), .. pending],
             view.ContributingAbilities.Count > 0 ? "Total" : "Shown", resolved);
     }
 
@@ -157,7 +173,7 @@ internal sealed class ValueProvenanceBuilder(AbilityClassificationCatalogue? cla
                 ? [$"{Signed(amounts[0])} per model × {models} {(models == 1 ? "model" : "models")}"]
                 : [];
             return Line(g.First().Contribution.SourceAbility, Signed(g.Sum(x => x.Count * x.Contribution.Amount)),
-                notes, applied: true);
+                notes, ProvenanceLineKind.Applied);
         });
 
         return new ValueProvenance($"A · {entry.Name}", "Original",
@@ -165,21 +181,22 @@ internal sealed class ValueProvenanceBuilder(AbilityClassificationCatalogue? cla
             [.. applied, .. pending], sources.Count > 0 ? "Total" : "Shown", entry.TotalAttacks.ToString());
     }
 
-    private ProvenanceLine Line(Ability source, string changeText, IReadOnlyList<string> notes, bool applied)
+    private ProvenanceLine Line(Ability source, string changeText, IReadOnlyList<string> notes,
+        ProvenanceLineKind kind)
     {
         var residue = classifications is not null && classifications.TryGet(source.Text, out var c)
             ? c.UnclassifiedResidue
             : null;
         var label = source.Origin == AbilityOrigin.Enhancement ? $"✦ {source.Name}" : source.Name;
         return new ProvenanceLine(source, label, changeText,
-            string.IsNullOrWhiteSpace(residue) ? notes : [.. notes, residue], applied);
+            string.IsNullOrWhiteSpace(residue) ? notes : [.. notes, residue], kind);
     }
 
     private ProvenanceLine PendingLine(Ability source, EffectCondition condition, string changeText) =>
-        Line(source, changeText, [ConditionSummary(condition)], applied: false);
+        Line(source, changeText, [ConditionSummary(condition)], ProvenanceLineKind.NotAdded);
 
     private ProvenanceLine CaveatLine(Ability source) =>
-        Line(source, "", ["May modify this value; check its text."], applied: false);
+        Line(source, "", ["May modify this value; check its text."], ProvenanceLineKind.Caveat);
 
     internal static string ConditionSummary(EffectCondition condition)
     {

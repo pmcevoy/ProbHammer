@@ -26,4 +26,24 @@ public class WeaponProfileTests
 
         a.EqualityKey().Should().Be(b.EqualityKey());
     }
+
+    [Theory]
+    [InlineData("Sustained Hits 1", "Sustained Hits 2")]
+    [InlineData("Anti-Infantry 4+", "Anti-Vehicle 4+")]
+    public void EqualityKey_distinguishes_keywords_differing_in_value_or_anti_target(string first, string second)
+    {
+        var a = new MeleeWeapon("Chainsword", 4, 3, 4, -1, 1) { KeywordsText = [first] };
+        var b = new MeleeWeapon("Chainsword", 4, 3, 4, -1, 1) { KeywordsText = [second] };
+
+        a.EqualityKey().Should().NotBe(b.EqualityKey());
+    }
+
+    [Fact]
+    public void EqualityKey_ignores_keyword_casing_and_order()
+    {
+        var a = new MeleeWeapon("Chainsword", 4, 3, 4, -1, 1) { KeywordsText = ["Lethal Hits", "Anti-Infantry 4+"] };
+        var b = new MeleeWeapon("Chainsword", 4, 3, 4, -1, 1) { KeywordsText = ["ANTI-INFANTRY 4+", "lethal hits"] };
+
+        a.EqualityKey().Should().Be(b.EqualityKey());
+    }
 }

@@ -67,7 +67,11 @@ attribute (real device testing found the latter unsupported where the former's p
 register — see design.md's "Popover mechanism" Risks section). `RenderNestedReference` recurses
 into a resolved reference's own `RuleDefinition.Text` to arbitrary depth (confirmed live to 3
 levels) — see `BuildRulePopover`'s own doc comment for the `shownRuleNames` self-reference guard
-and the real stack-overflow bug it fixes.
+and the real stack-overflow bug it fixes. A chip for a keyword an ability granted, or could grant
+but did not (`granted-weapon-keyword-chips`, `WeaponRowViewModel.Chips`), is built by
+`BuildKeywordChipPopover` instead: always a trigger, even with no glossary match, its panel listing
+each granting ability (a depth-1 nested trigger) and its note ("replaces …", or the condition plus
+"not added") above the keyword's rule text. A weapon's own chip keeps the markup above unchanged.
 
 **Army header** (`display-army-header-and-detachment-rules`): `LivePlay.cshtml` renders a new
 `_ArmyHeader.cshtml` partial above the unit-block loop, fed

@@ -54,6 +54,15 @@ public sealed record NotAppliedWeaponEffect(
     int Amount,
     EffectCondition Condition);
 
+/// <summary>An unconditional weapon keyword grant that changed a contribution's keywords: it added
+/// <see cref="Keyword"/>, replacing <see cref="ReplacedKeyword"/> when it was a better value of a
+/// keyword the weapon already had.</summary>
+public sealed record KeywordGrant(Ability SourceAbility, string Keyword, string? ReplacedKeyword);
+
+/// <summary>A conditional weapon keyword grant reaching a contribution that would change its
+/// keywords, left unapplied.</summary>
+public sealed record NotAppliedKeywordGrant(Ability SourceAbility, string Keyword, EffectCondition Condition);
+
 /// <summary>A conditional Statline scalar or invulnerable-save effect reaching an entry but left
 /// unapplied.</summary>
 public sealed record NotAppliedStatlineEffect(
@@ -81,6 +90,8 @@ public sealed record NotAppliedStatlineEffect(
 /// <see cref="WeaponProfile.EqualityKey()"/>'s grouping identity, so mutating it in place would
 /// discard the per-ability attribution a consumer needs) - it's recorded here instead, empty when
 /// no non-caveated Attacks match reaches this contribution.
+/// <see cref="KeywordGrants"/> are the applied grants already folded into the contribution's
+/// keywords; <see cref="NotAppliedKeywordGrants"/> the conditional ones that would change them.
 /// </summary>
 public sealed record WeaponContribution(
     string ComponentName,
@@ -90,10 +101,16 @@ public sealed record WeaponContribution(
     string Name,
     int LoadoutIndex = -1,
     IReadOnlyList<NotAppliedWeaponEffect>? NotAppliedEffects = null,
-    IReadOnlyList<AttacksContribution>? AttacksContributions = null)
+    IReadOnlyList<AttacksContribution>? AttacksContributions = null,
+    IReadOnlyList<KeywordGrant>? KeywordGrants = null,
+    IReadOnlyList<NotAppliedKeywordGrant>? NotAppliedKeywordGrants = null)
 {
     public IReadOnlyList<NotAppliedWeaponEffect> NotAppliedEffects { get; init; } = NotAppliedEffects ?? [];
     public IReadOnlyList<AttacksContribution> AttacksContributions { get; init; } = AttacksContributions ?? [];
+    public IReadOnlyList<KeywordGrant> KeywordGrants { get; init; } = KeywordGrants ?? [];
+
+    public IReadOnlyList<NotAppliedKeywordGrant> NotAppliedKeywordGrants { get; init; } =
+        NotAppliedKeywordGrants ?? [];
 }
 
 /// <summary>
@@ -103,16 +120,24 @@ public sealed record WeaponContribution(
 /// authoritative. Only <see cref="TotalAttacks"/> and <see cref="Name"/> are safe to render.
 /// <see cref="NotAppliedEffects"/> is every contribution's own
 /// <see cref="WeaponContribution.NotAppliedEffects"/>, distinct by source ability and
-/// characteristic, in first-encountered order.
+/// characteristic, in first-encountered order. <see cref="KeywordGrants"/> and
+/// <see cref="NotAppliedKeywordGrants"/> are likewise every contribution's own, distinct by source
+/// ability and keyword.
 /// </summary>
 public sealed record AggregateWeaponEntry(
     WeaponProfile Profile,
     DiceExpression TotalAttacks,
     string Name,
     IReadOnlyList<WeaponContribution> Contributions,
-    IReadOnlyList<NotAppliedWeaponEffect>? NotAppliedEffects = null)
+    IReadOnlyList<NotAppliedWeaponEffect>? NotAppliedEffects = null,
+    IReadOnlyList<KeywordGrant>? KeywordGrants = null,
+    IReadOnlyList<NotAppliedKeywordGrant>? NotAppliedKeywordGrants = null)
 {
     public IReadOnlyList<NotAppliedWeaponEffect> NotAppliedEffects { get; init; } = NotAppliedEffects ?? [];
+    public IReadOnlyList<KeywordGrant> KeywordGrants { get; init; } = KeywordGrants ?? [];
+
+    public IReadOnlyList<NotAppliedKeywordGrant> NotAppliedKeywordGrants { get; init; } =
+        NotAppliedKeywordGrants ?? [];
 }
 
 /// <summary>

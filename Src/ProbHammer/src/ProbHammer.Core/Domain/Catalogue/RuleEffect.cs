@@ -35,7 +35,9 @@ public sealed record WeaponCharacteristicEffect(
 /// <summary>Data only - no consumer yet.</summary>
 public sealed record FeelNoPainEffect(int Value, string? Qualifier = null) : RuleEffect;
 
-/// <summary>Data only - no consumer yet.</summary>
+/// <summary>Grants <see cref="Keyword"/> to the weapons <see cref="Selector"/> picks out; resolved by
+/// <see cref="WeaponKeywordGrantResolver"/>. <see cref="ReplacesKeyword"/> is not consulted - keyword
+/// identity already finds what a better value replaces.</summary>
 public sealed record WeaponKeywordGrantEffect(WeaponSelector Selector, string Keyword, string? ReplacesKeyword = null)
     : RuleEffect;
 

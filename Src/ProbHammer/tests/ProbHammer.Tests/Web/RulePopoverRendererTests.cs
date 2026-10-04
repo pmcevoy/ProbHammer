@@ -17,7 +17,7 @@ public class RulePopoverRendererTests
             Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic
         };
         var provenance = new ValueProvenance("S · Power fist", "Original", "8",
-            [new ProvenanceLine(crusadeOfWrath, "Crusade of Wrath", "+1", [], Applied: true)], "Total", "9");
+            [new ProvenanceLine(crusadeOfWrath, "Crusade of Wrath", "+1", [], ProvenanceLineKind.Applied)], "Total", "9");
         var renderer = new RulePopoverRenderer(RuleGlossary.Build(new BsdataClosure([])), "u0");
 
         var (trigger, trailer) = renderer.BuildProvenancePopover("9", "provenance-tile", provenance);

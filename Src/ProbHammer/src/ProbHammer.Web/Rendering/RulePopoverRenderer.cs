@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Catalogue.Bsdata;
 using ProbHammer.Web.Pages;
 
@@ -78,7 +79,7 @@ public sealed class RulePopoverRenderer(RuleGlossary glossary, string idScopePre
                 nestedPanels.Append(abilityTrailer);
             }
 
-            var rowClass = line.Applied ? "provenance-line" : "provenance-line provenance-not-applied";
+            var rowClass = line.InResult ? "provenance-line" : "provenance-line provenance-not-applied";
             body.Append($"<tr class=\"{rowClass}\"><td>{labelHtml}</td><td>{Encode(line.ChangeText)}</td></tr>");
             foreach (var note in line.Notes)
                 body.Append($"<tr class=\"provenance-note\"><td colspan=\"2\">{Encode(note)}</td></tr>");
@@ -95,6 +96,52 @@ public sealed class RulePopoverRenderer(RuleGlossary glossary, string idScopePre
             $"<button type=\"button\" class=\"rule-popover-close\" popovertarget=\"p-{popoverId}\" popovertargetaction=\"hide\" aria-label=\"Close\">&times;</button>";
         var panel =
             $"<div id=\"p-{popoverId}\" class=\"rule-popover provenance-popover\" popover=\"auto\" data-depth=\"0\"><div class=\"rule-popover-title\">{Encode(provenance.Title)}{closeButton}</div><div class=\"provenance-body\">{body}</div></div>";
+        return (trigger, panel + nestedPanels);
+    }
+
+    /// <summary>Builds a granted or not-added keyword chip and its panel: each granting ability (a
+    /// nested ability popover at depth 1) with its note, above the keyword's rule text when
+    /// <paramref name="rule"/> resolved. A trigger even with no rule, so the source stays reachable.</summary>
+    public (string Trigger, string Trailer) BuildKeywordChipPopover(KeywordChip chip, string triggerClass,
+        RuleDefinition? rule)
+    {
+        var popoverId = NextPopoverId();
+        var nestedPanels = new StringBuilder();
+        var rowClass = chip.Kind == ChipKind.NotAdded ? "provenance-line provenance-not-applied" : "provenance-line";
+        var body = new StringBuilder("<table class=\"provenance-table\">");
+        foreach (var (source, note) in chip.Sources)
+        {
+            var labelHtml = Encode(source.Origin == AbilityOrigin.Enhancement ? $"✦ {source.Name}" : source.Name);
+            if (!string.IsNullOrWhiteSpace(source.Text))
+            {
+                var (abilityTrigger, abilityTrailer) =
+                    BuildRulePopover(labelHtml, "ability-name-line", source.Text, new HashSet<string>(), depth: 1);
+                labelHtml = abilityTrigger;
+                nestedPanels.Append(abilityTrailer);
+            }
+
+            body.Append($"<tr class=\"{rowClass}\"><td colspan=\"2\">{labelHtml}</td></tr>");
+            if (note.Length > 0)
+                body.Append($"<tr class=\"provenance-note\"><td colspan=\"2\">{Encode(note)}</td></tr>");
+        }
+        body.Append("</table>");
+
+        var ruleHtml = "";
+        if (rule is not null)
+        {
+            var (bodyInline, bodyPopovers) = RuleTextEmphasisRenderer.Render(rule.Text,
+                raw => RenderNestedReference(raw, new HashSet<string> { rule.Name }, 0));
+            ruleHtml = $"<div class=\"rule-popover-text\">{bodyInline}</div>";
+            nestedPanels.Append(bodyPopovers);
+        }
+
+        var textHtml = Encode(chip.Text);
+        var trigger =
+            $"<button type=\"button\" id=\"t-{popoverId}\" class=\"{triggerClass}\" popovertarget=\"p-{popoverId}\">{textHtml}</button>";
+        var closeButton =
+            $"<button type=\"button\" class=\"rule-popover-close\" popovertarget=\"p-{popoverId}\" popovertargetaction=\"hide\" aria-label=\"Close\">&times;</button>";
+        var panel =
+            $"<div id=\"p-{popoverId}\" class=\"rule-popover provenance-popover\" popover=\"auto\" data-depth=\"0\"><div class=\"rule-popover-title\">{textHtml}{closeButton}</div><div class=\"provenance-body\">{body}</div>{ruleHtml}</div>";
         return (trigger, panel + nestedPanels);
     }
 

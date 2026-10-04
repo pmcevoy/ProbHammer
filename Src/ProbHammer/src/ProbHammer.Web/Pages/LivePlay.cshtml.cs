@@ -276,7 +276,8 @@ public class LivePlayModel(
             .OrderByDescending(w => w.TotalAttacks.ExpectedValue())
             .Select(w => new WeaponRowViewModel(w, BuildContributionBreakdown(w, loadoutLabels), hasMultipleModelLines,
                 Provenance: provenance.ForWeapon(w),
-                GroupWideAttacksLines: BuildGroupWideAttacksLines(w)))
+                GroupWideAttacksLines: BuildGroupWideAttacksLines(w),
+                Chips: BuildKeywordChips(w)))
             .ToList();
         var rangedWeaponRows = orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Ranged).ToList();
         var meleeWeaponRows = orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Melee).ToList();
@@ -421,6 +422,28 @@ public class LivePlayModel(
         }
 
         return rows;
+    }
+
+    // One chip per keyword token (Granted when an applied grant produced it, Native otherwise), then
+    // one per distinct not-added grant keyword.
+    internal static IReadOnlyList<KeywordChip> BuildKeywordChips(AggregateWeaponEntry entry)
+    {
+        var chips = entry.Profile.KeywordsText.Select(token =>
+        {
+            var sources = entry.KeywordGrants
+                .Where(g => g.Keyword == token)
+                .Select(g => new ChipSource(g.SourceAbility,
+                    g.ReplacedKeyword is { } replaced ? $"replaces {WeaponKeyword.Parse(replaced).Display}" : ""))
+                .ToList();
+            return new KeywordChip(token, sources.Count > 0 ? ChipKind.Granted : ChipKind.Native, sources);
+        }).ToList();
+
+        chips.AddRange(entry.NotAppliedKeywordGrants
+            .GroupBy(g => g.Keyword)
+            .Select(g => new KeywordChip(g.Key, ChipKind.NotAdded,
+                g.Select(n => new ChipSource(n.SourceAbility, ValueProvenanceBuilder.ConditionSummary(n.Condition)))
+                    .ToList())));
+        return chips;
     }
 
     // The entry-level counterpart to BuildContributionBreakdown's own per-row AttacksLines (design.md
@@ -926,8 +949,14 @@ public sealed record WeaponRowViewModel(
     IReadOnlyList<WeaponContributionRow> Breakdown,
     bool HasMultipleModelLines,
     IReadOnlyDictionary<string, ValueProvenance>? Provenance = null,
-    IReadOnlyList<AttacksContributionLine>? GroupWideAttacksLines = null)
+    IReadOnlyList<AttacksContributionLine>? GroupWideAttacksLines = null,
+    IReadOnlyList<KeywordChip>? Chips = null)
 {
+    /// <summary>The weapon's keyword chips in render order; see
+    /// <see cref="LivePlayModel.BuildKeywordChips"/>.</summary>
+    public IReadOnlyList<KeywordChip> Chips { get; init; } =
+        Chips ?? [.. Entry.Profile.KeywordsText.Select(t => new KeywordChip(t, ChipKind.Native, []))];
+
     /// <summary>True when the unit has more than one ModelLine in total, or this entry carries a
     /// recorded Attacks Effect amount, whose ability lines only the breakdown lists per row. A
     /// changed S/AP/D value is its own popover trigger, so it no longer needs the breakdown.</summary>
@@ -939,6 +968,20 @@ public sealed record WeaponRowViewModel(
     /// <summary>The popover content for one highlighted value, or null when nothing touches it.</summary>
     public ValueProvenance? ProvenanceFor(string field) => Provenance?.GetValueOrDefault(field);
 }
+
+public enum ChipKind
+{
+    Native,
+    Granted,
+    NotAdded
+}
+
+/// <summary>A granting ability and what to say about it: what it replaces, or its condition.</summary>
+public sealed record ChipSource(Ability Source, string Note);
+
+/// <summary>One weapon keyword chip; <see cref="Sources"/> is empty for a <see cref="ChipKind.Native"/>
+/// chip.</summary>
+public sealed record KeywordChip(string Text, ChipKind Kind, IReadOnlyList<ChipSource> Sources);
 
 public sealed record UnitBlockViewModel(
     string Name,

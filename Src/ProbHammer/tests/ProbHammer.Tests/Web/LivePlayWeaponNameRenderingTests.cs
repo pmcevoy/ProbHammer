@@ -111,10 +111,32 @@ public class LivePlayWeaponNameRenderingTests : IClassFixture<WebApplicationFact
 
         var html = await RenderAsync(entry, statlineCount: 1);
 
-        html.Should().Contain("class=\"provenance-tile\" popovertarget=")
+        html.Should().Contain("class=\"provenance-tile provenance-cond\" popovertarget=")
             .And.Contain(">Chance for Glory</button>")
             .And.Contain("<td colspan=\"2\">Once per battle; not added</td>")
             .And.NotContain("Daemon hammer*")
             .And.NotContain("weapon-flag-legend-row");
+    }
+
+    [Fact]
+    public async Task AValueWithAnAppliedChangeAndANotAddedEffect_StaysAmber()
+    {
+        Ability TestAbility(string name) => new()
+        {
+            Name = name, Text = $"{name} test text.", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic
+        };
+        var weapon = new MeleeWeapon("Daemon hammer", A: 4, Ws: 2,
+            S: ScalarCharacteristicView.Resolved(8, 9, [TestAbility("Applied Source")]), Ap: -2, D: 3);
+        var entry = new AggregateWeaponEntry(weapon, DiceExpression.Fixed(4), weapon.Name,
+            [new WeaponContribution("Test Unit", "Model 0", 1, DiceExpression.Fixed(4), weapon.Name)],
+            NotAppliedEffects:
+            [
+                new NotAppliedWeaponEffect(TestAbility("Chance for Glory"), "S", EffectVerb.Improve, 1,
+                    new EffectCondition(UsageLimit.OncePerBattle, null, null, false))
+            ]);
+
+        var html = await RenderAsync(entry, statlineCount: 1);
+
+        html.Should().Contain("class=\"provenance-tile\" popovertarget=").And.NotContain("provenance-cond");
     }
 }

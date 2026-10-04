@@ -73,7 +73,7 @@ public class WeaponCharacteristicEffectRealCorpusTests
         var block = LivePlayModel.BuildUnitBlock(view);
 
         var weaponRow = block.MeleeWeapons.Should().ContainSingle(w => w.Entry.Profile.Name == "Power weapon").Subject;
-        weaponRow.ProvenanceFor("S")!.Lines.Should().Contain(l => l.Label == "Zealot" && !l.Applied);
+        weaponRow.ProvenanceFor("S")!.Lines.Should().Contain(l => l.Label == "Zealot" && l.Kind == ProvenanceLineKind.NotAdded);
     }
 
     // resolve-weapon-attacks-effects task 4.4: proposal.md names Scorpion Tail/Writhing Tentacles

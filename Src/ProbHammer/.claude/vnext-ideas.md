@@ -53,26 +53,17 @@ record, not this file).
 - **Phase/turn ability highlighting.** Every catalogue record carries `Phases`/`TurnOwnership`
   (even unclassifiable ones), so an ability button could change colour in the phases it matters in,
   the tracker's original purpose for those fields.
-- **Granted weapon keywords as amber chips.** A `WeaponKeywordGrant`
-  renders as a chip merged with the profile's own `KeywordsText`, amber (not normally on this
-  weapon); the chip's existing glossary popover additionally lists the granting ability. Edge cases
-  to decide: the weapon already has the keyword (show once, list the source anyway?), and a granted
-  keyword with a different value (native Sustained Hits 1 vs granted 2).
-- **Condition toggles inside the ability popover.** After the two items above. Any conditional
+- **Condition toggles inside the ability popover.** Any conditional
   effect (residual condition, usage limit, choice branch, turn restriction) is skipped today. Tapping
   the ability (in its ability list) opens its popover with the `ConditionText` and an
   enable/disable checkbox; enabling applies the effect, which then surfaces as an ordinary amber
   provenance value - the `--cond` colour turning amber is the visible "activated" signal, for value
-  tiles and keyword chips alike (user idea, 2026-10-04). Choice groups toggle per option. Accepted cost: the toggle's full-map POST
+  tiles and keyword chips alike (user idea, 2026-10-04). Choice groups toggle per option: Dark Pacts is the motivating case, since today every Heretic Astartes weapon carries two conditional chips (Lethal Hits, Sustained Hits 1); picking a pact turns one amber and drops the other (user-agreed 2026-10-04). Accepted cost: the toggle's full-map POST
   re-renders the unit block (`swapUnitBlock`), closing the open popover. State keyed per unit +
   ability (the same ability appears on several units, e.g. two Marshals), stored like casualty state.
 - **Consume the remaining data-only effect kinds.** `NamedAbilityGrant` (an inbound ability; needs
   `RuleGlossary.Normalize` to strip a trailing `9"`-style value so `Scouts 9"` resolves),
-  `NamedAbilityRemoval` (hide or strike the removed ability). `WeaponKeywordGrant` - see above.
-- **Detachment-rule weapon effects.** A keyword-targeted Detachment rule flags Statline values but
-  never reaches weapons: `AttachedUnitAggregator`'s weapon path filters on Self/AttachedUnit targets
-  before `IsBearerOf` sees the DetachmentRule origin. Kept as-is when the catalogue replaced the
-  baseline; unify with the Statline path when a real case needs it.
+  `NamedAbilityRemoval` (hide or strike the removed ability).
 
 ## `WeaponProfile`-targeting rule effects — deferred coverage
 

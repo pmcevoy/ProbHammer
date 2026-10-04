@@ -135,6 +135,82 @@ public class LivePlayModelTests
             [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(3), weapon.Name)],
             NotAppliedEffects: notApplied);
 
+    private static WeaponRowViewModel ChipRow(IReadOnlyList<string> keywords, IReadOnlyList<KeywordGrant>? grants = null,
+        IReadOnlyList<NotAppliedKeywordGrant>? notAdded = null)
+    {
+        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -2, D: 1) { KeywordsText = keywords };
+        var entry = WeaponEntry(weapon) with { KeywordGrants = grants ?? [], NotAppliedKeywordGrants = notAdded ?? [] };
+        return LivePlayModel.BuildUnitBlock(TestView(null, entry)).MeleeWeapons.Single();
+    }
+
+    [Fact]
+    public void BuildUnitBlock_AnAppliedGrant_IsAGrantedChipNamingItsSource()
+    {
+        var banner = TestAbility("War Banner");
+
+        var row = ChipRow(["Assault", "Lethal Hits"], grants: [new KeywordGrant(banner, "Lethal Hits", null)]);
+
+        row.Chips.Select(c => (c.Text, c.Kind)).Should().Equal(
+            ("Assault", ChipKind.Native), ("Lethal Hits", ChipKind.Granted));
+        row.Chips[1].Sources.Should().ContainSingle(s => s.Source == banner && s.Note == "");
+    }
+
+    [Fact]
+    public void BuildUnitBlock_ANotAddedGrant_IsAConditionalChipAfterTheWeaponsOwn()
+    {
+        var charge = TestAbility("Glorious Charge");
+
+        var row = ChipRow(["Assault"], notAdded: [new NotAppliedKeywordGrant(charge, "Lance", OncePerBattle)]);
+
+        row.Chips.Select(c => (c.Text, c.Kind)).Should().Equal(
+            ("Assault", ChipKind.Native), ("Lance", ChipKind.NotAdded));
+        row.Chips[1].Sources.Should().ContainSingle(s => s.Source == charge && s.Note == "Once per battle; not added");
+    }
+
+    [Fact]
+    public void BuildUnitBlock_AKeywordTheWeaponAlreadyHas_RendersOncePlainly()
+    {
+        var row = ChipRow(["Lethal Hits"]);
+
+        row.Chips.Should().ContainSingle(c => c.Text == "Lethal Hits" && c.Kind == ChipKind.Native && c.Sources.Count == 0);
+    }
+
+    [Fact]
+    public void BuildUnitBlock_ABetterValueGrant_ReplacesTheWeaponsOwnChip_AndSaysWhatItReplaces()
+    {
+        var oath = TestAbility("Oath");
+
+        var row = ChipRow(["Sustained Hits 2"], grants: [new KeywordGrant(oath, "Sustained Hits 2", "Sustained Hits 1")]);
+
+        var chip = row.Chips.Should().ContainSingle().Subject;
+        chip.Kind.Should().Be(ChipKind.Granted);
+        chip.Sources.Single().Note.Should().Be("replaces Sustained Hits 1");
+    }
+
+    [Fact]
+    public void BuildUnitBlock_ANotAddedBetterValue_SitsBesideTheWeaponsOwnChip()
+    {
+        var oath = TestAbility("Oath");
+
+        var row = ChipRow(["Sustained Hits 1"],
+            notAdded: [new NotAppliedKeywordGrant(oath, "Sustained Hits 2", OncePerBattle)]);
+
+        row.Chips.Select(c => (c.Text, c.Kind)).Should().Equal(
+            ("Sustained Hits 1", ChipKind.Native), ("Sustained Hits 2", ChipKind.NotAdded));
+    }
+
+    [Fact]
+    public void BuildUnitBlock_ChipsOrderNativeAndGrantedInKeywordOrder_ThenNotAdded()
+    {
+        var banner = TestAbility("War Banner");
+        var charge = TestAbility("Glorious Charge");
+
+        var row = ChipRow(["Lethal Hits", "Assault"], grants: [new KeywordGrant(banner, "Lethal Hits", null)],
+            notAdded: [new NotAppliedKeywordGrant(charge, "Lance", OncePerBattle)]);
+
+        row.Chips.Select(c => c.Text).Should().Equal("Lethal Hits", "Assault", "Lance");
+    }
+
     [Fact]
     public void BuildUnitBlock_AModifiedWeaponValue_ShowsOriginalAbilityAndTotal_AndAnUntouchedValueHasNone()
     {
@@ -147,7 +223,7 @@ public class LivePlayModelTests
         var provenance = row.ProvenanceFor("S")!;
         provenance.OriginalText.Should().Be("8");
         provenance.Lines.Should().ContainSingle().Which.Should().Match<ProvenanceLine>(l =>
-            l.Source == crusadeOfWrath && l.ChangeText == "+1" && l.Applied);
+            l.Source == crusadeOfWrath && l.ChangeText == "+1" && l.Kind == ProvenanceLineKind.Applied);
         provenance.ResultLabel.Should().Be("Total");
         provenance.ResultText.Should().Be("9");
         row.ProvenanceFor("AP").Should().BeNull();
@@ -197,8 +273,10 @@ public class LivePlayModelTests
 
         provenance.OriginalLabel.Should().Be("Datasheet");
         provenance.OriginalText.Should().Be("4");
-        provenance.Lines.Should().ContainSingle(l => l.Source == caveat && l.ChangeText == "" && !l.Applied);
+        provenance.Lines.Should().ContainSingle(l =>
+            l.Source == caveat && l.ChangeText == "" && l.Kind == ProvenanceLineKind.Caveat);
         provenance.ResultLabel.Should().BeNull();
+        provenance.IsConditionalOnly.Should().BeFalse();
     }
 
     [Fact]
@@ -213,10 +291,11 @@ public class LivePlayModelTests
         var provenance = row.ProvenanceFor("S")!;
         provenance.OriginalText.Should().Be("8");
         provenance.Lines.Should().ContainSingle().Which.Should().Match<ProvenanceLine>(l =>
-            l.Source == chanceForGlory && l.ChangeText == "+1" && !l.Applied &&
+            l.Source == chanceForGlory && l.ChangeText == "+1" && l.Kind == ProvenanceLineKind.NotAdded &&
             l.Notes.Single() == "Once per battle; not added");
         provenance.ResultLabel.Should().Be("Shown");
         provenance.ResultText.Should().Be("8");
+        provenance.IsConditionalOnly.Should().BeTrue();
     }
 
     [Fact]
@@ -231,9 +310,11 @@ public class LivePlayModelTests
             [new NotAppliedWeaponEffect(conditional, "S", EffectVerb.Improve, 2, OncePerBattle)]))).MeleeWeapons.Single();
 
         var provenance = row.ProvenanceFor("S")!;
-        provenance.Lines.Select(l => (l.Label, l.ChangeText, l.Applied)).Should().Equal(
-            ("Applied Source", "+1", true), ("Conditional Source", "+2", false));
+        provenance.Lines.Select(l => (l.Label, l.ChangeText, l.Kind)).Should().Equal(
+            ("Applied Source", "+1", ProvenanceLineKind.Applied),
+            ("Conditional Source", "+2", ProvenanceLineKind.NotAdded));
         provenance.ResultText.Should().Be("5");
+        provenance.IsConditionalOnly.Should().BeFalse();
     }
 
     [Fact]

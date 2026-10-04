@@ -37,6 +37,10 @@
                               "<line x1=\"13\" y1=\"8\" x2=\"16\" y2=\"8\" stroke=\"currentColor\" stroke-width=\"1.5\" />" +
                               "</svg>";
 
+    // Amber unless every line is a conditional effect that was not added.
+    string ProvenanceTileClass(ValueProvenance provenance) =>
+        provenance.IsConditionalOnly ? "provenance-tile provenance-cond" : "provenance-tile";
+
     // A stat tile is a plain <div>, or, when an ability has something to say about its value, the
     // provenance popover's trigger button itself, so the whole tile is the tap target.
     string RenderTile(string cssClass, string innerHtml, ValueProvenance? provenance)
@@ -44,7 +48,7 @@
         if (provenance is null)
             return $"<div class=\"{cssClass}\">{innerHtml}</div>";
 
-        var (trigger, trailer) = popovers.BuildProvenancePopover(innerHtml, $"{cssClass} provenance-tile", provenance);
+        var (trigger, trailer) = popovers.BuildProvenancePopover(innerHtml, $"{cssClass} {ProvenanceTileClass(provenance)}", provenance);
         return trigger + trailer;
     }
 
@@ -101,14 +105,14 @@
     }
 
     // A highlighted weapon value keeps the row's own <td> background; the inner button carries the
-    // amber, and its panel trails it inside the cell.
+    // highlight, and its panel trails it inside the cell.
     string RenderWeaponValueCell(WeaponRowViewModel row, string field)
     {
         var valueHtml = WebUtility.HtmlEncode(LivePlayModel.GetWeaponScalarField(row.Entry.Profile, field).Value.ToString());
         if (row.ProvenanceFor(field) is not { } provenance)
             return $"<td>{valueHtml}</td>";
 
-        var (trigger, trailer) = popovers.BuildProvenancePopover(valueHtml, "provenance-tile", provenance);
+        var (trigger, trailer) = popovers.BuildProvenancePopover(valueHtml, ProvenanceTileClass(provenance), provenance);
         return $"<td>{trigger}{trailer}</td>";
     }
 
@@ -120,7 +124,7 @@
         if (row.ProvenanceFor("A") is not { } provenance)
             return $"<td class=\"weapon-attacks-value\">{numberHtml}</td>";
 
-        var (trigger, trailer) = popovers.BuildProvenancePopover(numberHtml, "provenance-tile", provenance);
+        var (trigger, trailer) = popovers.BuildProvenancePopover(numberHtml, ProvenanceTileClass(provenance), provenance);
         return $"<td class=\"weapon-attacks-value\">{trigger}{trailer}</td>";
     }
 
@@ -438,7 +442,6 @@
                 {
                     var row = unit.RangedWeapons[w];
                     var weapon = row.Entry.Profile;
-                    var tags = weapon.KeywordsText;
                     var weaponId = $"w-{i}-r-{w}";
                     var nameLabel = row.Entry.Name;
                     <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId">
@@ -454,13 +457,21 @@
                             {
                                 @nameLabel
                             }
-                            @if (tags.Count > 0)
+                            @if (row.Chips.Count > 0)
                             {
                                 <div class="weapon-tags">
-                                    @foreach (var tag in tags)
+                                    @foreach (var chip in row.Chips)
                                     {
+                                        var tag = chip.Text;
                                         var rule = glossary.TryResolve(tag);
-                                        if (rule != null)
+                                        if (chip.Kind != ChipKind.Native)
+                                        {
+                                            var (chipTrigger, chipTrailer) = popovers.BuildKeywordChipPopover(chip,
+                                                chip.Kind == ChipKind.Granted ? "weapon-tag weapon-tag-granted" : "weapon-tag weapon-tag-cond", rule);
+                                            @Html.Raw(chipTrigger)
+                                            @Html.Raw(chipTrailer)
+                                        }
+                                        else if (rule != null)
                                         {
                                             var (tagTrigger, tagTrailer) = BuildRulePopover(WebUtility.HtmlEncode(tag), "weapon-tag weapon-tag-resolved", rule.Text, new HashSet<string> { rule.Name });
                                             @Html.Raw(tagTrigger)
@@ -568,7 +579,6 @@
                 {
                     var row = unit.MeleeWeapons[w];
                     var weapon = row.Entry.Profile;
-                    var tags = weapon.KeywordsText;
                     var weaponId = $"w-{i}-m-{w}";
                     var nameLabel = row.Entry.Name;
                     <tr class="@(w % 2 == 1 ? "weapon-row-alt" : "")" data-weapon-id="@weaponId">
@@ -584,13 +594,21 @@
                             {
                                 @nameLabel
                             }
-                            @if (tags.Count > 0)
+                            @if (row.Chips.Count > 0)
                             {
                                 <div class="weapon-tags">
-                                    @foreach (var tag in tags)
+                                    @foreach (var chip in row.Chips)
                                     {
+                                        var tag = chip.Text;
                                         var rule = glossary.TryResolve(tag);
-                                        if (rule != null)
+                                        if (chip.Kind != ChipKind.Native)
+                                        {
+                                            var (chipTrigger, chipTrailer) = popovers.BuildKeywordChipPopover(chip,
+                                                chip.Kind == ChipKind.Granted ? "weapon-tag weapon-tag-granted" : "weapon-tag weapon-tag-cond", rule);
+                                            @Html.Raw(chipTrigger)
+                                            @Html.Raw(chipTrailer)
+                                        }
+                                        else if (rule != null)
                                         {
                                             var (tagTrigger, tagTrailer) = BuildRulePopover(WebUtility.HtmlEncode(tag), "weapon-tag weapon-tag-resolved", rule.Text, new HashSet<string> { rule.Name });
                                             @Html.Raw(tagTrigger)

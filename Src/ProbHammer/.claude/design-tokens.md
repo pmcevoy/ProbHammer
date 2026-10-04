@@ -10,8 +10,8 @@ weight.
 
 ## Colour Palette
 
-Nine semantic colours cover the page (eight, plus `--amber-bright` added by
-`consolidate-unit-toolbar`). Named as CSS custom properties — do not hardcode hex values in
+Eleven semantic colours cover the page (eight, plus `--amber-bright` added by
+`consolidate-unit-toolbar`, plus `--cond`/`--cond-tint` added by `granted-weapon-keyword-chips`). Named as CSS custom properties — do not hardcode hex values in
 components.
 
 | Name | Value | Semantic role |
@@ -24,7 +24,9 @@ components.
 | `--text-dim` | `#6f6c62` | Labels, counts, dim info — including, since `consolidate-unit-toolbar`, a `.unit-toolbar-label` caption's own (always-static) color, identical to `.stat-label`'s |
 | `--amber` | `#a86a1d` | Draw-the-eye **controls** when active on this page's light (`--bg`/`--bg2`) surfaces (e.g. the filter badge, a `.provenance-tile`'s border and corner tick) — never a stat *value*'s own ink; see the "Battle-Shocked Objective Control Rendering" note below. Confirmed by `consolidate-unit-toolbar` to read poorly (~2.8:1 contrast) as icon ink directly on a solid `--bg3` fill — that context uses `--amber-bright` instead, below |
 | `--amber-bright` | `color-mix(in srgb, var(--amber) 55%, white)` | Foreground only — `--amber` lightened towards white specifically for icon-on-`--bg3` legibility (~4.9:1 contrast). Added by `consolidate-unit-toolbar` for `.unit-toolbar-icon-btn.is-active`'s icon color (Half Strength/Battle-shock/Reset Casualties), after bare `--amber` was confirmed, by direct user testing, not to "pop" against the toolbar buttons' solid `--bg3` background. Not a general `--amber` replacement — every other existing `--amber` use stays on `--amber` itself, since those all sit on light surfaces where it already reads fine |
-| `--amber-tint` | `color-mix(in srgb, var(--amber) 20%, white)` | Background only, for a `.provenance-tile` (the value provenance highlight, `value-provenance-popovers`: any Statline tile or weapon A/S/AP/D value an ability has something to say about, a caveated value and a Battle-shocked OC tile included) and a filter-matched keyword pill — a separate token from `--amber` itself, not a reinterpretation of it; `--amber`'s other uses stay foreground-only |
+| `--amber-tint` | `color-mix(in srgb, var(--amber) 20%, white)` | Background only, for a `.provenance-tile` (the value provenance highlight, `value-provenance-popovers`: any Statline tile or weapon A/S/AP/D value an ability has something to say about, a caveated value and a Battle-shocked OC tile included, but not a conditional-only one, which uses `--cond-tint`), a granted keyword chip, and a filter-matched keyword pill — a separate token from `--amber` itself, not a reinterpretation of it; `--amber`'s other uses stay foreground-only |
+| `--cond` | `#3d6fa3` | Conditional: the border and corner tick of a value tile, and the border of a keyword chip, that an ability could change but did not (not added). Muted blue, chosen 2026-10-04 over violet and dusty rose: clearest against warm amber ("pending" next to amber's "active"), distinct from it under common colour blindness, and clearly different from the green-teal `--bg3` |
+| `--cond-tint` | `color-mix(in srgb, var(--cond) 20%, white)` | Background only, for a conditional tile or chip - derived the same way `--amber-tint` is |
 | `--border` | `#d9d5c9` | Borders and dividers |
 | `--bg3-tint` | `color-mix(in srgb, var(--bg3) 55%, white)` | Background only, for `.lp-section` summary bars (Statline/Ranged Weapons/Melee Weapons disclosure headers) — a lighter, flat step down in visual weight from the solid `--bg3` unit-name h2 above them, so the two don't read as the same priority. Same "derived tint, not an opacity fade" pattern as `--amber-tint`: a named, independently redefinable token rather than `--bg3` at reduced opacity, which would also fade the bar's own arrow/icon children and whose rendered color would depend on whatever sits behind it. |
 
@@ -325,7 +327,10 @@ picture; this section covers only the visual/positioning decisions.
 
 ## Value Provenance Highlight (`value-provenance-popovers`)
 
-Amber on a value means "an ability has something to say about this value; tap to judge." Replaced
+A highlighted value means "an ability has something to say about this value; tap to judge."
+Amber marks an applied change, a caveat or a Battle-shocked OC; the conditional colour (`--cond`)
+marks a value whose popover holds only not-added conditional lines (`ValueProvenance.
+IsConditionalOnly`, rendered as `provenance-tile provenance-cond`). Replaced
 the footnote markers (`OC*`, `5*`, a weapon name's `*`) and every flag-legend line/row, which
 repeated the same source ability once per run or weapon row. See
 `.claude/domain-model/statline-flag-rules.md` for where the data comes from; this section covers
@@ -350,7 +355,12 @@ only the visual decisions.
 - **Battle-shocked OC** keeps the bolt glyph in the ordinary value colour (controls get amber ink,
   values never do); the tile is a provenance trigger whose popover ends "Battle-shocked → 0".
 - **Absent InSv**: a run with no save renders no InSv tile, unless a not-added conditional save
-  reaches it (Waaagh!), in which case it renders a highlighted "–" tile.
+  reaches it (Waaagh!), in which case it renders a highlighted "–" tile (conditional colour).
+- **Granted keyword chips** (`granted-weapon-keyword-chips`): a keyword an applied grant added or
+  replaced is a `.weapon-tag-granted` chip (`--amber-tint` fill, `--amber` border); a not-added
+  grant is a `.weapon-tag-cond` chip (`--cond-tint` fill, `--cond` border) after the weapon's own
+  chips. Both are popover triggers with the resolved chip's button reset and hover fade. A grant the
+  weapon already has adds nothing; the native chip renders as before.
 
 ### Ability button vs. container: the general rule (`resolve-known-ability-effects`)
 
