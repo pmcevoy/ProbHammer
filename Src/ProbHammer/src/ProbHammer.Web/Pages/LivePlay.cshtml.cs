@@ -947,7 +947,7 @@ public sealed record StatlineBlockViewModel(
                 if (ScalarFlagSources.TryGetValue(fieldName, out var source) && ScalarMarker(fieldName) is { } marker)
                     legend.Add((marker, source));
             if (InvulnerableSaveFlagSource is { } insv && InvulnerableSaveMarker is { } im) legend.Add((im, insv));
-            return legend;
+            return legend.DistinctBy(l => l.Item1).ToList();
         }
     }
 }
@@ -1074,7 +1074,7 @@ public sealed record WeaponRowViewModel(
                     ValueMarker(fieldName) is { } marker)
                     legend.Add((marker, source));
             if (NameMarkerSource is { } src && NameMarker is { } nm) legend.Add((nm, src));
-            return legend;
+            return legend.DistinctBy(l => l.Item1).ToList();
         }
     }
 }

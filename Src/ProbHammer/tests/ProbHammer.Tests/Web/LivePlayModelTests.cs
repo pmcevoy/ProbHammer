@@ -148,6 +148,34 @@ public class LivePlayModelTests
     }
 
     [Fact]
+    public void BuildUnitBlock_OneSourceFlaggingTwoWeaponValues_RendersOneLegendLine()
+    {
+        var brutalRaider = new Ability
+            { Name = "Brutal Raider", Text = "...", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
+        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3,
+            S: ScalarCharacteristicView.Resolved(5, 6, [brutalRaider]),
+            Ap: ScalarCharacteristicView.Resolved(-2, -3, [brutalRaider]), D: 1);
+
+        var view = new AttachedUnitAggregateView(
+            Name: "Test Unit",
+            IsAttachedUnit: false,
+            Statlines: [new AggregateStatlineEntry("Squad A", "Trooper", new Statline(6, 4, 3, 2, 6, 2), 1, 1, [])],
+            Weapons:
+            [
+                new AggregateWeaponEntry(weapon, DiceExpression.Fixed(3), weapon.Name,
+                    [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(3), weapon.Name)])
+            ],
+            Abilities: [],
+            Keywords: new HashSet<string>());
+
+        var weaponRow = LivePlayModel.BuildUnitBlock(view).MeleeWeapons.Single();
+
+        weaponRow.ValueMarker("S").Should().Be("*");
+        weaponRow.ValueMarker("AP").Should().Be("*");
+        weaponRow.FlagLegend.Should().ContainSingle().Which.Source.Name.Should().Be("Brutal Raider");
+    }
+
+    [Fact]
     public void BuildUnitBlock_AssignsMarkersInStatlineThenRangedThenMeleeOrder()
     {
         var statlineAbility = new Ability
