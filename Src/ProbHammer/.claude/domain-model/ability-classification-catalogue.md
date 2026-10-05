@@ -33,6 +33,14 @@ written by convention, not by reference (the classifier doesn't reference Core) 
 `AbilityClassificationCatalogueTests.TheCheckedInCatalogue_LoadsAndEveryKeyIsTheHashOfItsOwnText`
 is the drift guard. An unknown effect/target `kind` fails the load rather than being skipped.
 
+**Prompt versions.** `submit` reads `prompts/<--prompt>/` (default `v2`, the version the catalogue was
+built with) and stamps results with `--label` (default: the prompt name). `IncrementalSelector`
+re-classifies any record whose stamp differs from the run's label, so a draft test
+(`submit <hashes> --prompt v3 --label v3-draft`) is redone by the final `--prompt v3` run.
+`prompts/v3/` is a draft: it adds `BS`/`WS` to `WeaponCharacteristic` (`resolve-weapon-skill-effects`),
+and the other v3 items in `.claude/vnext-ideas.md` are still to come. `fewshot/examples.json` is
+shared by every prompt version.
+
 **Unconditional rule** - the one applicability check every consumer shares: an effect applies on its
 own only when its `ResidualConditionBucket` is `None`, it has no `ChoiceBranch`, and the record has
 no `UsageLimit` and no `TurnOwnership`. `Phases` never gates (it's "when to remind the player", not a
@@ -52,8 +60,8 @@ selected, even when the option has its own condition text.
 |---|---|
 | `ResolveCaveatedInvulnerableSaves` | first unconditional `InvulnerableSave` effect of the caveat's linked ability (not in `Datasheet.Abilities`, so the Extractor walks each statline's caveated InSv to get these texts into the corpus) |
 | `ApplyStatlineFlagRules` | `Applied` `Scalar`/`InvulnerableSave` effects applied; `NotApplied` ones recorded as `AggregateStatlineEntry.NotAppliedEffects` - see statline-flag-rules.md |
-| `ResolveContributionProfile` / `ResolveAttacksContributions` | `Applied` `WeaponCharacteristic` S/AP/D and A; `Applied` `WeaponKeywordGrant`s rewrite the contribution's keywords and are recorded as `KeywordGrant`s |
-| `FindNotAppliedEffects` | `NotApplied` `WeaponCharacteristic` S/AP/D/A effects -> `NotAppliedWeaponEffect`s (characteristic, signed per-model amount, `EffectCondition`) on the contribution and its entry |
+| `ResolveContributionProfile` / `ResolveAttacksContributions` | `Applied` `WeaponCharacteristic` S/AP/D/BS/WS and A; `Applied` `WeaponKeywordGrant`s rewrite the contribution's keywords and are recorded as `KeywordGrant`s |
+| `FindNotAppliedEffects` | `NotApplied` `WeaponCharacteristic` S/AP/D/BS/WS/A effects -> `NotAppliedWeaponEffect`s (characteristic, signed per-model amount, `EffectCondition`) on the contribution and its entry |
 | `FindNotAppliedKeywordGrants` | `NotApplied` `WeaponKeywordGrant`s that would change the keywords -> `NotAppliedKeywordGrant`s on the contribution and its entry |
 | `DetachmentRuleInboundAbilityResolver` | a Detachment rule with a `Keyword` target attaches to every unit carrying all its keywords (case-insensitive) |
 

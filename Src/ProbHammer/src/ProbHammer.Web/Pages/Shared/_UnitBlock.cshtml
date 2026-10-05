@@ -110,6 +110,8 @@
     string RenderWeaponValueCell(WeaponRowViewModel row, string field)
     {
         var valueHtml = WebUtility.HtmlEncode(LivePlayModel.GetWeaponScalarField(row.Entry.Profile, field).Value.ToString());
+        if (field == "Skill")
+            valueHtml += "+";
         if (row.ProvenanceFor(field) is not { } provenance)
             return $"<td>{valueHtml}</td>";
 
@@ -488,7 +490,7 @@
                         </td>
                         <td>@(weapon.Range)"</td>
                         @Html.Raw(RenderAttacksCell(row))
-                        <td>@(weapon.Skill.Value)+</td>
+                        @Html.Raw(RenderWeaponValueCell(row, "Skill"))
                         @Html.Raw(RenderWeaponValueCell(row, "S"))
                         @Html.Raw(RenderWeaponValueCell(row, "AP"))
                         @Html.Raw(RenderWeaponValueCell(row, "D"))
@@ -624,7 +626,7 @@
                             }
                         </td>
                         @Html.Raw(RenderAttacksCell(row))
-                        <td>@(weapon.Skill.Value)+</td>
+                        @Html.Raw(RenderWeaponValueCell(row, "Skill"))
                         @Html.Raw(RenderWeaponValueCell(row, "S"))
                         @Html.Raw(RenderWeaponValueCell(row, "AP"))
                         @Html.Raw(RenderWeaponValueCell(row, "D"))

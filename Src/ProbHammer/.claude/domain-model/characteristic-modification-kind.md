@@ -84,13 +84,8 @@ couldn't serve as a second Statline proving example and how that risk is mitigat
 `Plain`/`ArmourPenetration` kinds a real weapon characteristic can carry) get their first real
 proving example against genuine weapon data here — a real corpus run extracted 19 distinct
 `WeaponCharacteristicEffect` results from the since-retired regex classifier, several targeting `S`/`AP` directly (e.g. Chance for Glory, Conversion
-Eradicator). `WS`/`BS` (already in `CharacteristicModificationKinds`' lookup table, added by an
-earlier change) stay unproven by a real *weapon* Effect - `classify-weapon-characteristic-effects`'s
-own weapon-characteristic vocabulary deliberately scopes to exactly Strength/Attacks/Armour
-Penetration/Damage (spec.md's own Requirement text), even though real corpus text naming Weapon
-Skill/Ballistic Skill as a weapon characteristic does exist (see `.claude/vnext-ideas.md`'s
-recorded finding) - a future phase widening that vocabulary is what would give `WS`/`BS` their own
-first real weapon-Effect proving example.
+Eradicator). `WS`/`BS` resolve against a weapon's single `Skill` since `resolve-weapon-skill-effects`
+(`"BS"` on a ranged weapon only, `"WS"` on a melee one) - see roster-context.md.
 
-**Consumed by `AttachedUnitAggregator`** — Statline flags and weapon S/AP/D/A resolution, driven by
+**Consumed by `AttachedUnitAggregator`** — Statline flags and weapon S/AP/D/BS/WS/A resolution, driven by
 the ability-classification catalogue (see ability-classification-catalogue.md).

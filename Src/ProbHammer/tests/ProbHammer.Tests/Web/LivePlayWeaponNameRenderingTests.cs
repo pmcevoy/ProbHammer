@@ -139,4 +139,53 @@ public class LivePlayWeaponNameRenderingTests : IClassFixture<WebApplicationFact
 
         html.Should().Contain("class=\"provenance-tile\" popovertarget=").And.NotContain("provenance-cond");
     }
+
+    private static AggregateWeaponEntry SingleContributionEntry(WeaponProfile weapon,
+        IReadOnlyList<NotAppliedWeaponEffect>? notApplied = null) =>
+        new(weapon, DiceExpression.Fixed(1), weapon.Name,
+            [new WeaponContribution("Test Unit", "Model 0", 1, DiceExpression.Fixed(1), weapon.Name)],
+            NotAppliedEffects: notApplied ?? []);
+
+    private static Ability SkillTestAbility(string name) => new()
+    {
+        Name = name, Text = $"{name} test text.", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic
+    };
+
+    [Fact]
+    public async Task AnAbilityModifiedWeaponSkill_RendersAsAnAmberTriggerShowingTheNewValue()
+    {
+        var weapon = new MeleeWeapon("Reaper chainsword", A: 4,
+            Ws: ScalarCharacteristicView.Resolved(3, 2, [SkillTestAbility("Knight Diabolus")]), S: 12, Ap: -3, D: 6);
+
+        var html = await RenderAsync(SingleContributionEntry(weapon), statlineCount: 1);
+
+        html.Should().Contain("class=\"provenance-tile\" popovertarget=")
+            .And.Contain("2+</button>")
+            .And.Contain(">Knight Diabolus</button>");
+    }
+
+    [Fact]
+    public async Task ANotAddedBallisticSkill_RendersInTheConditionalColour()
+    {
+        var weapon = new RangedWeapon("Radium carbine", 18, 3, 4, 3, 0, 1);
+
+        var html = await RenderAsync(SingleContributionEntry(weapon,
+        [
+            new NotAppliedWeaponEffect(SkillTestAbility("Assisted Targeting"), "BS", EffectVerb.Improve, -1,
+                new EffectCondition(null, null, "Within 6\" of this model", false))
+        ]), statlineCount: 1);
+
+        html.Should().Contain("class=\"provenance-tile provenance-cond\" popovertarget=")
+            .And.Contain("4+</button>");
+    }
+
+    [Fact]
+    public async Task AnUntouchedWeaponSkill_RendersPlain()
+    {
+        var weapon = new RangedWeapon("Radium carbine", 18, 3, 4, 3, 0, 1);
+
+        var html = await RenderAsync(SingleContributionEntry(weapon), statlineCount: 1);
+
+        html.Should().Contain("<td>4+</td>").And.NotContain("provenance-tile");
+    }
 }

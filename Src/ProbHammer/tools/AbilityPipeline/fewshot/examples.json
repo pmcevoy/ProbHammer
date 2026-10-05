@@ -528,5 +528,114 @@
       "coverageStatus": "partial",
       "unclassifiedResidue": "Made once, at the start of the first battle round - not one of this schema's usageLimit values. Vow 1's own re-roll-the-Charge-roll clause has no effect kind (reroll mechanics aren't modeled); Vows 2-4 have no effect-kind representation at all (a to-wound-roll modifier, charge-after-Fall-Back/Pile-in-Consolidation exemptions, objective-control retention, and Action-after-Advance eligibility)"
     }
+  },
+  {
+    "hash": "b8d86632ecce92a91a93e2f35fa51e6961f9be6341be10f672fb8c48950f5f5e",
+    "text": "At the start of the battle round, you can select one of the Doctrina Imperatives below. Until the end of the battle round, that Doctrina Imperative is active for your army, and all units from your army that have the Doctrina Imperatives ability gain the relevant abilities shown below.\n\nPROTECTOR IMPERATIVE\n■ Ranged weapons equipped by models in this unit have the [HEAVY] ability.\n■ Improve the Ballistic Skill characteristic of ranged weapons equipped by models in this unit by 1.\n■ Each time a melee attack targets this unit, if this unit has the ^^**Battleline**^^ keyword and/or it is within 6\" of one or more friendly **^^Adeptus Mechanicus Battleline**^^ units, subtract 1 from the Hit roll.\n\nCONQUEROR IMPERATIVE\n■ Ranged weapons equipped by models in this unit have the [ASSAULT] ability.\n■ Improve the Weapon Skill characteristic of melee weapons equipped by models in this unit by 1.\n■ Each time a model in this unit makes an attack, if this unit has the **^^Battleline**^^ keyword and/or it is within 6\" of one or more friendly **^^Adeptus Mechanicus Battleline**^^ units, improve the Armour Penetration characteristic of that attack by 1.",
+    "expectedClassification": {
+      "target": {
+        "kind": "AttachedUnit"
+      },
+      "effects": [
+        {
+          "effect": {
+            "kind": "WeaponKeywordGrant",
+            "selector": {
+              "kind": "WeaponClass",
+              "type": "Ranged"
+            },
+            "keyword": "[HEAVY]"
+          },
+          "residualConditionBucket": "none",
+          "choiceBranch": {
+            "group": 0,
+            "option": 0
+          }
+        },
+        {
+          "effect": {
+            "kind": "WeaponCharacteristic",
+            "selector": {
+              "kind": "WeaponClass",
+              "type": "Ranged"
+            },
+            "characteristic": "BS",
+            "verb": "improve",
+            "amount": 1
+          },
+          "residualConditionBucket": "none",
+          "choiceBranch": {
+            "group": 0,
+            "option": 0
+          }
+        },
+        {
+          "effect": {
+            "kind": "WeaponKeywordGrant",
+            "selector": {
+              "kind": "WeaponClass",
+              "type": "Ranged"
+            },
+            "keyword": "[ASSAULT]"
+          },
+          "residualConditionBucket": "none",
+          "choiceBranch": {
+            "group": 0,
+            "option": 1
+          }
+        },
+        {
+          "effect": {
+            "kind": "WeaponCharacteristic",
+            "selector": {
+              "kind": "WeaponClass",
+              "type": "Melee"
+            },
+            "characteristic": "WS",
+            "verb": "improve",
+            "amount": 1
+          },
+          "residualConditionBucket": "none",
+          "choiceBranch": {
+            "group": 0,
+            "option": 1
+          }
+        },
+        {
+          "effect": {
+            "kind": "WeaponCharacteristic",
+            "selector": {
+              "kind": "AllWeapons"
+            },
+            "characteristic": "AP",
+            "verb": "improve",
+            "amount": 1
+          },
+          "residualConditionBucket": "never",
+          "conditionText": "This unit has the Battleline keyword and/or is within 6\" of a friendly Adeptus Mechanicus Battleline unit",
+          "choiceBranch": {
+            "group": 0,
+            "option": 1
+          }
+        }
+      ],
+      "choiceGroups": [
+        {
+          "minSelect": 1,
+          "maxSelect": 1,
+          "options": [
+            "Protector Imperative: ranged weapons gain [HEAVY] and +1 Ballistic Skill; melee attacks targeting a Battleline unit get -1 to hit",
+            "Conqueror Imperative: ranged weapons gain [ASSAULT], melee weapons +1 Weapon Skill; +1 AP for a Battleline unit"
+          ]
+        }
+      ],
+      "phases": [
+        "command",
+        "shooting",
+        "fight"
+      ],
+      "coverageStatus": "partial",
+      "unclassifiedResidue": "Protector Imperative subtracts 1 from the Hit roll of melee attacks targeting this unit - a Hit-roll modifier on enemy attacks has no effect kind in this schema"
+    }
   }
 ]

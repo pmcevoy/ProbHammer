@@ -95,11 +95,13 @@ internal sealed class ValueProvenanceBuilder(
         foreach (var field in LivePlayModel.WeaponScalarFieldOrder)
         {
             var view = LivePlayModel.GetWeaponScalarField(entry.Profile, field);
+            var characteristic = field == "Skill" ? (entry.Profile is RangedWeapon ? "BS" : "WS") : field;
+            var suffix = field == "Skill" ? "+" : "";
             var pending = entry.NotAppliedEffects
-                .Where(e => e.Characteristic == field)
-                .Select(e => PendingLine(e.SourceAbility, e.Condition, PendingWeaponChange(e)))
+                .Where(e => e.Characteristic == characteristic)
+                .Select(e => PendingLine(e.SourceAbility, e.Condition, PendingWeaponChange(e, view.Value, suffix)))
                 .ToList();
-            if (Scalar($"{field} · {entry.Name}", view, field, "", pending) is { } provenance)
+            if (Scalar($"{characteristic} · {entry.Name}", view, characteristic, suffix, pending) is { } provenance)
                 result[field] = provenance;
         }
 
@@ -264,8 +266,19 @@ internal sealed class ValueProvenanceBuilder(
             : Signed(CharacteristicModificationResolver.ResolveDelta(kind, effect.Verb, effect.Amount));
     }
 
-    private static string PendingWeaponChange(NotAppliedWeaponEffect effect) =>
-        effect.Verb == EffectVerb.Set ? $"= {effect.Amount}" : Signed(effect.Amount);
+    // A roll threshold (BS/WS) shows the value it would become, like PendingScalarChange.
+    private static string PendingWeaponChange(NotAppliedWeaponEffect effect, CharacteristicValue? current = null,
+        string suffix = "")
+    {
+        if (effect.Verb == EffectVerb.Set)
+            return $"= {effect.Amount}{suffix}";
+
+        return CharacteristicModificationKinds.Of(effect.Characteristic) == CharacteristicModificationKind.RollThreshold &&
+               current is NumericCharacteristicValue numeric
+            ? Format(new NumericCharacteristicValue(
+                CharacteristicModificationClamp.Apply(effect.Characteristic, numeric.Value + effect.Amount)), suffix)
+            : Signed(effect.Amount);
+    }
 
     private static string Signed(int delta) => delta >= 0 ? $"+{delta}" : delta.ToString();
 

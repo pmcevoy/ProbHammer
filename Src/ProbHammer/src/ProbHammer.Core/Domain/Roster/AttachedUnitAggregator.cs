@@ -83,12 +83,12 @@ public static class AttachedUnitAggregator
             ScalarCharacteristicEffect or InvulnerableSaveCharacteristicEffect => statlines.Any(s =>
                 s.RemainingCount > 0 &&
                 IsBearerOf(match.Entry, match.Classification.Target, s.ComponentName, s.StatlineName)),
-            WeaponCharacteristicEffect { Characteristic: not ("S" or "A" or "AP" or "D") } => false,
+            WeaponCharacteristicEffect { Characteristic: not ("S" or "A" or "AP" or "D" or "BS" or "WS") } => false,
             WeaponCharacteristicEffect or WeaponKeywordGrantEffect => presentLines.Any(x =>
                 IsBearerOf(match.Entry, match.Classification.Target, x.Unit.Datasheet.Name,
                     x.ModelLine.StatlineName) &&
                 x.ModelLine.Weapons.Any(w =>
-                    WeaponSelectorMatches(SelectorOf(effect), x.Unit.Datasheet.ResolveWeaponProfile(w)))),
+                    WeaponEffectMatches(effect, x.Unit.Datasheet.ResolveWeaponProfile(w)))),
             _ => false
         };
 
@@ -403,7 +403,7 @@ public static class AttachedUnitAggregator
     {
         var applicableEffects = MatchedWeaponEffects<WeaponCharacteristicEffect>(
                 profile, unit, modelLine, matches, EffectState.Applied)
-            .Where(x => x.Effect.Characteristic is "S" or "AP" or "D");
+            .Where(x => x.Effect.Characteristic is "S" or "AP" or "D" or "BS" or "WS");
 
         var resolved = profile;
         foreach (var (effect, sourceAbility, _) in applicableEffects)
@@ -446,7 +446,7 @@ public static class AttachedUnitAggregator
         IReadOnlyList<MatchedAbility> matches) =>
         MatchedWeaponEffects<WeaponCharacteristicEffect>(
                 profile, unit, modelLine, matches, EffectState.NotApplied)
-            .Where(x => x.Effect.Characteristic is "S" or "AP" or "D" or "A")
+            .Where(x => x.Effect.Characteristic is "S" or "AP" or "D" or "A" or "BS" or "WS")
             .Select(x => new NotAppliedWeaponEffect(x.SourceAbility, x.Effect.Characteristic, x.Effect.Verb,
                 x.Effect.Verb == EffectVerb.Set
                     ? x.Effect.Amount
@@ -480,7 +480,7 @@ public static class AttachedUnitAggregator
             .Where(m => IsBearerOf(m.Entry, m.Classification.Target, unit.Datasheet.Name, modelLine.StatlineName))
             .SelectMany(m => m.Effects
                 .Where(e => e.State == state)
-                .Where(e => e.Effect.Effect is TEffect && WeaponSelectorMatches(SelectorOf(e.Effect.Effect), profile))
+                .Where(e => e.Effect.Effect is TEffect && WeaponEffectMatches(e.Effect.Effect, profile))
                 .Select(e => (Effect: (TEffect)e.Effect.Effect, SourceAbility: m.Entry.Ability,
                     Condition: EffectCondition.Of(m.Classification, e.Effect))));
 
@@ -491,6 +491,11 @@ public static class AttachedUnitAggregator
             WeaponKeywordGrantEffect grant => grant.Selector,
             _ => throw new ArgumentOutOfRangeException(nameof(effect), effect, "Not a weapon effect.")
         };
+
+    private static bool WeaponEffectMatches(RuleEffect effect, WeaponProfile profile) =>
+        WeaponSelectorMatches(SelectorOf(effect), profile) &&
+        (effect is not WeaponCharacteristicEffect characteristic ||
+         WeaponCharacteristicEffectResolver.SkillEffectApplies(characteristic.Characteristic, profile));
 
     private static bool WeaponSelectorMatches(WeaponSelector selector, WeaponProfile profile) =>
         selector switch
@@ -519,6 +524,7 @@ public static class AttachedUnitAggregator
             "S" => profile.S,
             "AP" => profile.Ap,
             "D" => profile.D,
+            "BS" or "WS" => profile.Skill,
             _ => throw new InvalidOperationException($"Unrecognized weapon characteristic '{characteristic}'.")
         };
 

@@ -141,12 +141,12 @@ already excluded from the structural profile equality above.
 
 Before this structural grouping runs, each contributing weapon's own resolved profile SHALL be
 mutated by every applicable, unconditional (per `ability-classification-catalogue`'s Unconditional
-Effect Rule) Strength, Armour Penetration, or Damage weapon-characteristic effect in the
+Effect Rule) Strength, Armour Penetration, Damage, Ballistic Skill, or Weapon Skill weapon-characteristic effect in the
 ability-classification catalogue: an effect matches when a present ability on the contribution's own
 bearer (per Target-Scoped Application below) has a catalogue record containing it, and when the
 effect's own weapon selector matches that contribution's weapon profile (an unqualified selector
 matches any weapon; a class-qualified selector matches only a profile of the named weapon type; a
-name-qualified selector matches only a profile with that exact name, ignoring case). A conditional
+name-qualified selector matches only a profile with that exact name, ignoring case). A Ballistic Skill effect SHALL additionally match only a ranged weapon, and a Weapon Skill effect only a melee weapon, whatever its selector; each mutates that weapon's Skill. A conditional
 effect SHALL NOT be applied. Grouping itself is otherwise unaffected — structural profile equality
 still determines which contributions combine into one entry, now evaluated against each
 contribution's own (possibly mutated) profile: a mutation reaching every current contributor of what
@@ -155,7 +155,7 @@ reaching only some of those contributors splits them into a separate entry from 
 
 An applicable, unconditional Attacks weapon-characteristic effect, matched under the same
 Target-Scoped Application rule, does NOT mutate the contribution's own per-model Attacks value the
-way a Strength/Armour Penetration/Damage match does — Attacks is excluded from the structural profile
+way a Strength/Armour Penetration/Damage/Skill match does — Attacks is excluded from the structural profile
 equality above, so mutating it in place would have no grouping effect to produce and would discard
 the per-ability attribution a consumer needs. Instead, each aggregated entry SHALL retain, per
 contribution, a list of every matched, unconditional Attacks effect that reaches it — the source
@@ -167,7 +167,7 @@ contribution's own recorded Attacks effect amounts, scaled by its remaining coun
 with no recorded Attacks effects contributes its plain base value, unaffected, exactly as today.
 
 A matched catalogue record's own classified target scope SHALL determine which contributions its
-effects reach — for a Strength/Armour Penetration/Damage mutation, an Attacks effect's recorded
+effects reach — for a Strength/Armour Penetration/Damage/Skill mutation, an Attacks effect's recorded
 per-contribution amount, a keyword grant, or a not-applied effect (below) alike: a target scoped to the ability's
 own bearer SHALL reach only weapons contributed by that bearer's own model-line (when the matched
 ability is model-line-sourced) or by any model-line of that bearer's owning component (when the
@@ -181,7 +181,7 @@ weapons contributed by every component of the resolved unit, the same treatment
 `statline-flag-rules`' Target-Scoped Application gives it.
 
 In addition, when a present ability's catalogue record contains a conditional Strength, Armour
-Penetration, Damage or Attacks weapon-characteristic effect whose weapon selector matches a
+Penetration, Damage, Ballistic Skill, Weapon Skill or Attacks weapon-characteristic effect whose weapon selector matches a
 contribution's weapon profile under the same Target-Scoped Application matching rule above, the
 aggregate view SHALL record on that contribution a not-applied effect naming the source ability, the
 characteristic, the effect's resolved signed per-model amount, and its condition (the record's usage
@@ -299,8 +299,8 @@ the contribution's keywords or its grouping.
 
 #### Scenario: An unresolvable characteristic within an otherwise-applicable effect is left unapplied
 - **WHEN** a matched catalogue record's unconditional effects include both a characteristic this
-  mechanism resolves (Strength, Armour Penetration, Damage, or Attacks) and a characteristic it does
-  not yet resolve (e.g. Weapon Skill or Ballistic Skill), scoped to the same weapon
+  mechanism resolves (Strength, Armour Penetration, Damage, Ballistic Skill, Weapon Skill, or Attacks)
+  and a characteristic it does not yet resolve (e.g. Range), scoped to the same weapon
 - **THEN** the resolvable characteristic's value is mutated or recorded as applicable, and the
   unresolvable characteristic's value is left unapplied, rather than the match being rejected
   outright or the aggregation failing
@@ -366,6 +366,29 @@ the contribution's keywords or its grouping.
   target is a set of keywords, grants Assault to ranged weapons
 - **THEN** every component's ranged weapons in that resolved unit gain Assault, rather than the
   ability reaching no contribution at all
+
+#### Scenario: A Weapon Skill effect improves a melee weapon's Skill
+- **WHEN** Knight Diabolus's catalogue record contains an unconditional Weapon Skill Improve of `1`
+  on the bearer's melee weapons, and the bearer's melee weapon has a Weapon Skill of `3+`
+- **THEN** that weapon's Skill is mutated to `2+`, with Knight Diabolus recorded as its contributing
+  ability
+
+#### Scenario: Ballistic and Weapon Skill effects on every weapon reach only the matching type
+- **WHEN** a present ability's catalogue record contains unconditional Ballistic Skill and Weapon
+  Skill Improve effects of `1`, both selecting every weapon, and the bearer carries one ranged and one
+  melee weapon
+- **THEN** the ranged weapon's Skill is improved by the Ballistic Skill effect only, and the melee
+  weapon's Skill by the Weapon Skill effect only
+
+#### Scenario: A Skill effect never reaches the other weapon type, even as not applied
+- **WHEN** a present ability's catalogue record contains a conditional Ballistic Skill effect
+  selecting every weapon, and the bearer carries a melee weapon
+- **THEN** the melee weapon's contribution records no not-applied effect for it
+
+#### Scenario: A Set Ballistic Skill effect replaces the weapon's own value
+- **WHEN** a present ability's catalogue record contains an unconditional Ballistic Skill Set of `3`
+  on the bearer's ranged weapons, and the bearer's ranged weapon has a Ballistic Skill of `4+`
+- **THEN** that weapon's Skill is `3+`, with its original value `4+` preserved
 
 ### Requirement: Aggregate Ability View
 The Attached Unit aggregate view SHALL report abilities per present component Unit, without

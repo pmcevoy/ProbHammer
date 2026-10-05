@@ -116,7 +116,10 @@ public class LivePlayModelTests
     }
 
     private static Ability TestAbility(string name) =>
-        new() { Name = name, Text = $"{name} test text.", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic };
+        new()
+        {
+            Name = name, Text = $"{name} test text.", Scope = AbilityScope.Model, Origin = AbilityOrigin.Intrinsic
+        };
 
     private static readonly EffectCondition OncePerBattle = new(UsageLimit.OncePerBattle, null, null, false);
 
@@ -124,7 +127,10 @@ public class LivePlayModelTests
         params AggregateWeaponEntry[] weapons) => new(
         Name: "Test Unit",
         IsAttachedUnit: false,
-        Statlines: [new AggregateStatlineEntry("Squad A", "Trooper", statline ?? new Statline(6, 4, 3, 2, 6, 2), 1, 1, [])],
+        Statlines:
+        [
+            new AggregateStatlineEntry("Squad A", "Trooper", statline ?? new Statline(6, 4, 3, 2, 6, 2), 1, 1, [])
+        ],
         Weapons: weapons,
         Abilities: [],
         Keywords: new HashSet<string>());
@@ -135,7 +141,8 @@ public class LivePlayModelTests
             [new WeaponContribution("Squad A", "Trooper", 1, DiceExpression.Fixed(3), weapon.Name)],
             NotAppliedEffects: notApplied);
 
-    private static WeaponRowViewModel ChipRow(IReadOnlyList<string> keywords, IReadOnlyList<KeywordGrant>? grants = null,
+    private static WeaponRowViewModel ChipRow(IReadOnlyList<string> keywords,
+        IReadOnlyList<KeywordGrant>? grants = null,
         IReadOnlyList<NotAppliedKeywordGrant>? notAdded = null)
     {
         var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -2, D: 1) { KeywordsText = keywords };
@@ -172,7 +179,8 @@ public class LivePlayModelTests
     {
         var row = ChipRow(["Lethal Hits"]);
 
-        row.Chips.Should().ContainSingle(c => c.Text == "Lethal Hits" && c.Kind == ChipKind.Native && c.Sources.Count == 0);
+        row.Chips.Should()
+            .ContainSingle(c => c.Text == "Lethal Hits" && c.Kind == ChipKind.Native && c.Sources.Count == 0);
     }
 
     [Fact]
@@ -180,7 +188,8 @@ public class LivePlayModelTests
     {
         var oath = TestAbility("Oath");
 
-        var row = ChipRow(["Sustained Hits 2"], grants: [new KeywordGrant(oath, "Sustained Hits 2", "Sustained Hits 1")]);
+        var row = ChipRow(["Sustained Hits 2"],
+            grants: [new KeywordGrant(oath, "Sustained Hits 2", "Sustained Hits 1")]);
 
         var chip = row.Chips.Should().ContainSingle().Subject;
         chip.Kind.Should().Be(ChipKind.Granted);
@@ -286,7 +295,8 @@ public class LivePlayModelTests
         var daemonHammer = new MeleeWeapon("Daemon hammer", A: 4, Ws: 2, S: 8, Ap: -2, D: 3);
 
         var row = LivePlayModel.BuildUnitBlock(TestView(null, WeaponEntry(daemonHammer,
-            [new NotAppliedWeaponEffect(chanceForGlory, "S", EffectVerb.Improve, 1, OncePerBattle)]))).MeleeWeapons.Single();
+                [new NotAppliedWeaponEffect(chanceForGlory, "S", EffectVerb.Improve, 1, OncePerBattle)]))).MeleeWeapons
+            .Single();
 
         var provenance = row.ProvenanceFor("S")!;
         provenance.OriginalText.Should().Be("8");
@@ -299,6 +309,40 @@ public class LivePlayModelTests
     }
 
     [Fact]
+    public void BuildUnitBlock_AModifiedWeaponSkill_ShowsTheResultingThresholdUnderItsOwnName()
+    {
+        var diabolus = TestAbility("Knight Diabolus");
+        var chainsword = new MeleeWeapon("Reaper chainsword", A: 4,
+            Ws: ScalarCharacteristicView.Resolved(3, 2, [diabolus]), S: 12, Ap: -3, D: 6);
+
+        var row = LivePlayModel.BuildUnitBlock(TestView(null, WeaponEntry(chainsword))).MeleeWeapons.Single();
+
+        var provenance = row.ProvenanceFor("Skill")!;
+        provenance.Title.Should().StartWith("WS · ");
+        provenance.OriginalText.Should().Be("3+");
+        provenance.Lines.Should().ContainSingle(l => l.Source == diabolus && l.ChangeText == "2+");
+        provenance.ResultText.Should().Be("2+");
+    }
+
+    [Fact]
+    public void BuildUnitBlock_ANotAddedBallisticSkill_ShowsTheThresholdItWouldBecome()
+    {
+        var targeting = TestAbility("Assisted Targeting");
+        var gun = new RangedWeapon("Radium carbine", Range: 18, A: 3, Bs: 4, S: 3, Ap: 0, D: 1);
+
+        var row = LivePlayModel.BuildUnitBlock(TestView(null, WeaponEntry(gun,
+                [new NotAppliedWeaponEffect(targeting, "BS", EffectVerb.Improve, -1, OncePerBattle)]))).RangedWeapons
+            .Single();
+
+        var provenance = row.ProvenanceFor("Skill")!;
+        provenance.Title.Should().StartWith("BS · ");
+        provenance.Lines.Should().ContainSingle(l =>
+            l.Source == targeting && l.ChangeText == "3+" && l.Kind == ProvenanceLineKind.NotAdded);
+        provenance.ResultText.Should().Be("4+");
+        provenance.IsConditionalOnly.Should().BeTrue();
+    }
+
+    [Fact]
     public void BuildUnitBlock_AnAppliedAndANotAddedEffectOnOneValue_TotalIncludesOnlyTheApplied()
     {
         var applied = TestAbility("Applied Source");
@@ -307,7 +351,8 @@ public class LivePlayModelTests
             S: ScalarCharacteristicView.Resolved(4, 5, [applied]), Ap: -2, D: 1);
 
         var row = LivePlayModel.BuildUnitBlock(TestView(null, WeaponEntry(weapon,
-            [new NotAppliedWeaponEffect(conditional, "S", EffectVerb.Improve, 2, OncePerBattle)]))).MeleeWeapons.Single();
+                [new NotAppliedWeaponEffect(conditional, "S", EffectVerb.Improve, 2, OncePerBattle)]))).MeleeWeapons
+            .Single();
 
         var provenance = row.ProvenanceFor("S")!;
         provenance.Lines.Select(l => (l.Label, l.ChangeText, l.Kind)).Should().Equal(
@@ -374,7 +419,8 @@ public class LivePlayModelTests
         var entry = new AggregateStatlineEntry("Boyz", "Boy", new Statline(6, 5, 5, 1, 7, 2), 10, 10, [],
             NotAppliedEffects:
             [
-                new NotAppliedStatlineEffect(waaagh, new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(5, 5)),
+                new NotAppliedStatlineEffect(waaagh,
+                    new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(5, 5)),
                     new EffectCondition(null, null, "While the unit is riled up", false))
             ]);
         var view = new AttachedUnitAggregateView("Boyz", false, [entry], [], [], new HashSet<string>());
@@ -876,7 +922,8 @@ public class LivePlayModelTests
         var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1),
             RemainingCount: 2);
 
-        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment], AbilityClassificationCatalogue.Empty);
+        var rebuilt =
+            LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment], AbilityClassificationCatalogue.Empty);
 
         var unit = rebuilt[0];
         unit.Name.Should().Be("Crusader Squad with High Marshal Helbrecht and Crusade Ancient");
@@ -891,7 +938,8 @@ public class LivePlayModelTests
         var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Initiate", 0),
             RemainingCount: 0);
 
-        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment], AbilityClassificationCatalogue.Empty);
+        var rebuilt =
+            LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment], AbilityClassificationCatalogue.Empty);
 
         var initiate = rebuilt[0].Statlines.Single(s => s.StatlineName == "Initiate");
         initiate.Loadouts[0].RemainingCount.Should().Be(0); // Power fist loadout, fully removed
@@ -905,7 +953,8 @@ public class LivePlayModelTests
         var adjustment = new CasualtyAdjustment(new CasualtyCoordinate(0, "Crusader Squad", "Neophyte", -1),
             RemainingCount: 99);
 
-        var rebuilt = LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment], AbilityClassificationCatalogue.Empty);
+        var rebuilt =
+            LivePlayModel.RebuildRoster(View.MyArmyRoster(), [adjustment], AbilityClassificationCatalogue.Empty);
 
         rebuilt[0].Statlines.Single(s => s.StatlineName == "Neophyte").RemainingCount.Should()
             .Be(4); // clamped at Count

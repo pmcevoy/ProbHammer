@@ -73,7 +73,8 @@ result - see `.claude/design-tokens.md`'s "Value Provenance Highlight" and `live
 "Value Provenance Highlight"/"Value Provenance Popover Content". `ValueProvenanceBuilder`
 (`Pages/ValueProvenance.cs`, called from `LivePlayModel.BuildUnitBlock`) builds one
 `ValueProvenance` per highlighted Statline field and InSv (`StatlineBlockViewModel.Provenance`) and
-per weapon A/S/AP/D (`WeaponRowViewModel.Provenance`): applied lines from the view's
+per weapon A/Skill/S/AP/D (`WeaponRowViewModel.Provenance`; the Skill entry is titled BS or WS by
+weapon type, and its lines show the resulting `N+` like Sv/Ld): applied lines from the view's
 `ContributingAbilities`, a caveat line when it is still caveated, not-added lines from
 `NotAppliedEffects` (condition summary + "not added"), a fixed "Battle-shocked → 0" line on a
 Battle-shocked OC, and the source ability's `UnclassifiedResidue` from the catalogue as a note.

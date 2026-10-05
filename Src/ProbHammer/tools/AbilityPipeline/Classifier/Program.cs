@@ -9,7 +9,11 @@ using ProbHammer.Tools.AbilityPipeline.Classifier.Models;
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-const string promptVersion = "v2";
+// --prompt picks the prompt directory; --label is the version recorded on results, so a draft run
+// (e.g. --prompt v3 --label v3-draft) is re-classified by the final run.
+var promptVersion = OptionValue("--prompt") ?? "v2";
+var promptLabel = OptionValue("--label") ?? promptVersion;
+args = args.Where((arg, i) => !arg.StartsWith("--") && (i == 0 || !args[i - 1].StartsWith("--"))).ToArray();
 const Model model = Model.ClaudeSonnet5;
 
 var dataDir = Path.Combine(RepoRoot(), "tools", "AbilityPipeline", "data");
@@ -24,7 +28,7 @@ var catalogueExportPath = Path.Combine(RepoRoot(), "src", "ProbHammer.Web", "Dat
 if (args.Length == 0)
 {
     Console.WriteLine(
-        "Usage: Classifier <submit [N|hash1,hash2,...]|collect|resolve|export|status|schema|check-fewshot|preview <hash>|report [file]>");
+        "Usage: Classifier <submit [N|hash1,hash2,...] [--prompt vN] [--label L]|collect|resolve|export|status|schema|check-fewshot|preview <hash>|report [file]>");
     return 1;
 }
 
@@ -171,7 +175,7 @@ async Task<int> SubmitAsync()
 
     var corpus = ExtractionFile.Load(corpusPath);
     var existingClassifications = ClassificationFile.Load(classificationsPath);
-    var pending = IncrementalSelector.SelectPending(corpus, existingClassifications, promptVersion);
+    var pending = IncrementalSelector.SelectPending(corpus, existingClassifications, promptLabel);
 
     // Optional args[1]: an integer takes the first N pending (existing alphabetical order); a
     // comma-separated list of hashes selects exactly those, regardless of order - lets a smoke test
@@ -196,7 +200,7 @@ async Task<int> SubmitAsync()
         .Select(record => BatchRequestBuilder.Build(record, systemPrompt, fewShotExamples, corpus, model))
         .ToList();
 
-    Console.WriteLine($"Submitting {requests.Count} requests (prompt {promptVersion}, model {model}) ...");
+    Console.WriteLine($"Submitting {requests.Count} requests (prompt {promptVersion}, label {promptLabel}, model {model}) ...");
 
     using var client = NewClient();
     var batch = await client.Messages.Batches.Create(new BatchCreateParams { Requests = requests });
@@ -204,7 +208,7 @@ async Task<int> SubmitAsync()
     PendingBatchFile.Save(pendingBatchPath, new PendingBatch
     {
         BatchId = batch.ID,
-        PromptVersion = promptVersion,
+        PromptVersion = promptLabel,
         Model = model.ToString(),
         SubmittedAt = DateTimeOffset.UtcNow,
         RequestCount = requests.Count
@@ -354,3 +358,8 @@ static AnthropicClient NewClient() => new()
     ApiKey = Environment.GetEnvironmentVariable("PROBHAMMER_API_KEY")
              ?? throw new InvalidOperationException("PROBHAMMER_API_KEY environment variable is not set.")
 };
+string? OptionValue(string name)
+{
+    var index = Array.IndexOf(args, name);
+    return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
+}

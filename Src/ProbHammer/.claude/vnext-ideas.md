@@ -81,9 +81,8 @@ record, not this file).
 
 Real corpus shapes found while classifying weapon-characteristic effects but not yet classified or
 resolved — candidates for a future phase, not scoped anywhere yet:
-- WS/BS weapon-characteristic mutations - now part of prompt v3 below
-  (`CharacteristicModificationKinds` already has entries for both, unconsumed by any real weapon
-  data).
+- A model-keyword-subset selector ("weapons equipped by SERVITOR models in this unit") - Mindlock's
+  five variants (BS/WS +1 while led by a Tech-Priest) need it.
 - An ability-flag-qualified weapon selector ("models from your army with this ability").
 - A whole-unit-scoped selector phrased without "equipped by" ("this unit's melee weapons").
 - A coordinate clause with a different amount per characteristic ("add 1 to Attacks... and add 2 to
@@ -117,9 +116,8 @@ design, not as a gap to eventually close.
     LivePlay: parked - a roll modifier changes no printed value, so value-provenance amber can't
     surface it; maybe an "info" area in the statline cell, or a section-level effect strip in the
     weapon panel (rejected for value changes, could return for this). Design once rolls are
-    actually extracted.
-  - **BS/WS** as `WeaponCharacteristic` values (35 texts, e.g. Doctrina Imperatives) - see the
-    deferred-coverage list above.
+    actually extracted. Also covers the ~12 "ignore any or all modifiers to BS/WS and/or the Hit
+    roll" texts (Deathwing, Fury of the First, Inescapable Accuracy).
   - **Per-effect timing** - `phases`/`turnOwnership`/`usageLimit` are record-level, so "has Deep
     Strike; once per battle, redeploy" gates the permanent grant too.
   - **Structured `evaluable-now` conditions** beside `conditionText`: led by keyword (Ardent

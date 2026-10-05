@@ -8534,6 +8534,19 @@
         "effects": [
           {
             "effect": {
+              "kind": "WeaponCharacteristic",
+              "selector": {
+                "kind": "WeaponClass",
+                "type": "Melee"
+              },
+              "characteristic": "WS",
+              "verb": "improve",
+              "amount": 1
+            },
+            "residualConditionBucket": "none"
+          },
+          {
+            "effect": {
               "kind": "WeaponKeywordGrant",
               "selector": {
                 "kind": "WeaponClass",
@@ -8549,8 +8562,7 @@
         "phases": [
           "fight"
         ],
-        "coverageStatus": "partial",
-        "unclassifiedResidue": "Improves the Weapon Skill characteristic of the bearer's melee weapons by 1 - Weapon Skill is not one of the weapon characteristics (S/A/AP/D) this schema's WeaponCharacteristic effect kind covers"
+        "coverageStatus": "complete"
       }
     },
     {
@@ -23458,13 +23470,26 @@
         "target": {
           "kind": "Self"
         },
-        "effects": [],
+        "effects": [
+          {
+            "effect": {
+              "kind": "WeaponCharacteristic",
+              "selector": {
+                "kind": "WeaponClass",
+                "type": "Ranged"
+              },
+              "characteristic": "BS",
+              "verb": "set",
+              "amount": 3
+            },
+            "residualConditionBucket": "none"
+          }
+        ],
         "choiceGroups": [],
         "phases": [
           "shooting"
         ],
-        "coverageStatus": "unclassifiable",
-        "unclassifiedResidue": "Sets the bearer's ranged weapons' Ballistic Skill characteristic to 3+ - Ballistic Skill is not one of the weapon characteristics (S/A/AP/D) this schema's WeaponCharacteristic effect can represent"
+        "coverageStatus": "complete"
       }
     },
     {
@@ -61781,6 +61806,32 @@
         "effects": [
           {
             "effect": {
+              "kind": "WeaponCharacteristic",
+              "selector": {
+                "kind": "AllWeapons"
+              },
+              "characteristic": "BS",
+              "verb": "improve",
+              "amount": 1
+            },
+            "residualConditionBucket": "never",
+            "conditionText": "This model is within 12\" of one or more friendly Aeldari Psyker models"
+          },
+          {
+            "effect": {
+              "kind": "WeaponCharacteristic",
+              "selector": {
+                "kind": "AllWeapons"
+              },
+              "characteristic": "WS",
+              "verb": "improve",
+              "amount": 1
+            },
+            "residualConditionBucket": "never",
+            "conditionText": "This model is within 12\" of one or more friendly Aeldari Psyker models"
+          },
+          {
+            "effect": {
               "kind": "Scalar",
               "characteristic": "Ld",
               "verb": "set",
@@ -61795,8 +61846,7 @@
           "shooting",
           "fight"
         ],
-        "coverageStatus": "partial",
-        "unclassifiedResidue": "Improves the Ballistic Skill and Weapon Skill characteristics of weapons equipped by this model by 1 - BS and WS are not among the characteristics this schema's WeaponCharacteristic effect covers (only S/A/AP/D)"
+        "coverageStatus": "complete"
       }
     },
     {
@@ -67843,12 +67893,46 @@
           },
           {
             "effect": {
+              "kind": "WeaponCharacteristic",
+              "selector": {
+                "kind": "WeaponClass",
+                "type": "Ranged"
+              },
+              "characteristic": "BS",
+              "verb": "improve",
+              "amount": 1
+            },
+            "residualConditionBucket": "none",
+            "choiceBranch": {
+              "group": 0,
+              "option": 0
+            }
+          },
+          {
+            "effect": {
               "kind": "WeaponKeywordGrant",
               "selector": {
                 "kind": "WeaponClass",
                 "type": "Ranged"
               },
               "keyword": "Assault"
+            },
+            "residualConditionBucket": "none",
+            "choiceBranch": {
+              "group": 0,
+              "option": 1
+            }
+          },
+          {
+            "effect": {
+              "kind": "WeaponCharacteristic",
+              "selector": {
+                "kind": "WeaponClass",
+                "type": "Melee"
+              },
+              "characteristic": "WS",
+              "verb": "improve",
+              "amount": 1
             },
             "residualConditionBucket": "none",
             "choiceBranch": {
@@ -67890,7 +67974,7 @@
           "fight"
         ],
         "coverageStatus": "partial",
-        "unclassifiedResidue": "Protector Imperative's Ballistic Skill improvement (BS is not a representable weapon characteristic) and its -1 to enemy hit rolls against this unit (effect on how enemy attacks resolve) are not representable; Conqueror Imperative's Weapon Skill improvement (WS is not a representable weapon characteristic) is not representable. The overarching selection among army units with the Doctrina Imperatives ability is a targeting mechanism this schema cannot express as a keyword filter."
+        "unclassifiedResidue": "Protector Imperative subtracts 1 from the Hit roll of melee attacks targeting this unit - a Hit-roll modifier on enemy attacks has no effect kind in this schema. The selection is army-wide (every unit with Doctrina Imperatives), not per unit."
       }
     },
     {
@@ -69083,6 +69167,20 @@
         "effects": [
           {
             "effect": {
+              "kind": "WeaponCharacteristic",
+              "selector": {
+                "kind": "WeaponClass",
+                "type": "Ranged"
+              },
+              "characteristic": "BS",
+              "verb": "improve",
+              "amount": 1
+            },
+            "residualConditionBucket": "never",
+            "conditionText": "The unit is within 6\" of this model"
+          },
+          {
+            "effect": {
               "kind": "WeaponKeywordGrant",
               "selector": {
                 "kind": "WeaponClass",
@@ -69098,8 +69196,7 @@
         "phases": [
           "shooting"
         ],
-        "coverageStatus": "partial",
-        "unclassifiedResidue": "Also grants +1 BS to the unit's ranged attacks - Ballistic Skill is not one of the characteristics (S/A/AP/D) this schema's WeaponCharacteristic effect kind covers"
+        "coverageStatus": "complete"
       }
     },
     {

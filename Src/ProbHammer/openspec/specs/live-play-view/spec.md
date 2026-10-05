@@ -1524,7 +1524,7 @@ initially inactive (not automatically reactivated).
 - **THEN** every unit matching that active keyword remains expanded and flagged as before
 
 ### Requirement: Value Provenance Highlight
-A Statline tile (M, T, Sv, W, Ld, OC, InSv) or a weapon-table Attacks, Strength, AP or Damage value
+A Statline tile (M, T, Sv, W, Ld, OC, InSv) or a weapon-table Attacks, BS/WS, Strength, AP or Damage value
 SHALL render as an inset tile with a corner tick whenever an ability has something to say
 about it: an applied ability change, a caveat left unresolved, or a conditional effect that was not
 added. The tile SHALL be amber, except that a value reached only by conditional effects that were
@@ -1564,6 +1564,21 @@ touches SHALL render plain.
 #### Scenario: A caveated value stays amber
 - **WHEN** a run's invulnerable save is still caveated and no other ability reaches it
 - **THEN** that InSv tile renders highlighted in amber, not the conditional colour
+
+#### Scenario: An ability-modified weapon skill is highlighted
+- **WHEN** Knight Diabolus improves the Weapon Skill of the bearer's melee weapons by 1
+- **THEN** each melee weapon's WS value renders as the highlighted tile showing the improved value,
+  and tapping it opens a provenance popover listing Knight Diabolus
+
+#### Scenario: An unselected choice-branch skill change is shown as conditional
+- **WHEN** a unit has Doctrina Imperatives and no Imperative is selected
+- **THEN** its ranged weapons' BS values and its melee weapons' WS values render in the conditional
+  colour, each unchanged
+
+#### Scenario: Selecting an Imperative applies only its own skill change
+- **WHEN** the player selects the Protector Imperative for a unit with Doctrina Imperatives
+- **THEN** its ranged weapons' BS values render highlighted in amber showing the improved value, and
+  its melee weapons' WS values render plain
 
 ### Requirement: Value Provenance Popover Content
 A highlighted value's popover SHALL show a title naming the characteristic and the statline or

@@ -98,4 +98,75 @@ public class WeaponCharacteristicEffectResolverTests
 
         act.Should().Throw<ArgumentOutOfRangeException>();
     }
+
+    private static RangedWeapon PlainRangedWeapon(int bs = 4) =>
+        new("Boltgun", Range: 24, A: 2, Bs: bs, S: 4, Ap: 0, D: 1);
+
+    [Fact]
+    public void BallisticSkillImprove_LowersARangedWeaponsSkill()
+    {
+        var effect = new WeaponCharacteristicEffect(new AllWeapons(), "BS", EffectVerb.Improve, 1);
+
+        var result = WeaponCharacteristicEffectResolver.Resolve(effect, SomeAbility, PlainRangedWeapon());
+
+        result.Skill.Value.Should().Be((CharacteristicValue)3);
+        result.Skill.OriginalValue.Should().Be((CharacteristicValue)4);
+        result.Skill.ContributingAbilities.Should().Equal(SomeAbility);
+    }
+
+    [Fact]
+    public void WeaponSkillWorsen_RaisesAMeleeWeaponsSkill()
+    {
+        var effect = new WeaponCharacteristicEffect(new AllWeapons(), "WS", EffectVerb.Worsen, 1);
+
+        var result = WeaponCharacteristicEffectResolver.Resolve(effect, SomeAbility, PlainMeleeWeapon());
+
+        result.Skill.Value.Should().Be((CharacteristicValue)4);
+    }
+
+    [Fact]
+    public void SkillResult_IsClampedAtTwo()
+    {
+        var effect = new WeaponCharacteristicEffect(new AllWeapons(), "BS", EffectVerb.Improve, 2);
+
+        var result = WeaponCharacteristicEffectResolver.Resolve(effect, SomeAbility, PlainRangedWeapon(bs: 3));
+
+        result.Skill.Value.Should().Be((CharacteristicValue)2);
+    }
+
+    [Fact]
+    public void SetSkillEffect_ReplacesTheValue()
+    {
+        var effect = new WeaponCharacteristicEffect(new AllWeapons(), "BS", EffectVerb.Set, 3);
+
+        var result = WeaponCharacteristicEffectResolver.Resolve(effect, SomeAbility, PlainRangedWeapon());
+
+        result.Skill.Value.Should().Be((CharacteristicValue)3);
+    }
+
+    [Fact]
+    public void ResolvingASkillEffectAgainstTheOtherWeaponType_Throws()
+    {
+        var effect = new WeaponCharacteristicEffect(new AllWeapons(), "WS", EffectVerb.Improve, 1);
+
+        var act = () => WeaponCharacteristicEffectResolver.Resolve(effect, SomeAbility, PlainRangedWeapon());
+
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData("BS", false)]
+    [InlineData("WS", true)]
+    [InlineData("S", true)]
+    public void SkillEffectApplies_ForAMeleeWeapon(string characteristic, bool expected) =>
+        WeaponCharacteristicEffectResolver.SkillEffectApplies(characteristic, PlainMeleeWeapon())
+            .Should().Be(expected);
+
+    [Fact]
+    public void SkillEffect_DoesNotApplyToAWeaponWithNoSkill()
+    {
+        var torrent = PlainRangedWeapon(bs: 0);
+
+        WeaponCharacteristicEffectResolver.SkillEffectApplies("BS", torrent).Should().BeFalse();
+    }
 }

@@ -24,7 +24,7 @@ components.
 | `--text-dim` | `#6f6c62` | Labels, counts, dim info — including, since `consolidate-unit-toolbar`, a `.unit-toolbar-label` caption's own (always-static) color, identical to `.stat-label`'s |
 | `--amber` | `#a86a1d` | Draw-the-eye **controls** when active on this page's light (`--bg`/`--bg2`) surfaces (e.g. the filter badge, a `.provenance-tile`'s border and corner tick) — never a stat *value*'s own ink; see the "Battle-Shocked Objective Control Rendering" note below. Confirmed by `consolidate-unit-toolbar` to read poorly (~2.8:1 contrast) as icon ink directly on a solid `--bg3` fill — that context uses `--amber-bright` instead, below |
 | `--amber-bright` | `color-mix(in srgb, var(--amber) 55%, white)` | Foreground only — `--amber` lightened towards white specifically for icon-on-`--bg3` legibility (~4.9:1 contrast). Added by `consolidate-unit-toolbar` for `.unit-toolbar-icon-btn.is-active`'s icon color (Half Strength/Battle-shock/Reset Casualties), after bare `--amber` was confirmed, by direct user testing, not to "pop" against the toolbar buttons' solid `--bg3` background. Not a general `--amber` replacement — every other existing `--amber` use stays on `--amber` itself, since those all sit on light surfaces where it already reads fine |
-| `--amber-tint` | `color-mix(in srgb, var(--amber) 20%, white)` | Background only, for a `.provenance-tile` (the value provenance highlight, `value-provenance-popovers`: any Statline tile or weapon A/S/AP/D value an ability has something to say about, a caveated value and a Battle-shocked OC tile included, but not a conditional-only one, which uses `--cond-tint`), a granted keyword chip, and a filter-matched keyword pill — a separate token from `--amber` itself, not a reinterpretation of it; `--amber`'s other uses stay foreground-only |
+| `--amber-tint` | `color-mix(in srgb, var(--amber) 20%, white)` | Background only, for a `.provenance-tile` (the value provenance highlight, `value-provenance-popovers`: any Statline tile or weapon A/BS/WS/S/AP/D value an ability has something to say about, a caveated value and a Battle-shocked OC tile included, but not a conditional-only one, which uses `--cond-tint`), a granted keyword chip, and a filter-matched keyword pill — a separate token from `--amber` itself, not a reinterpretation of it; `--amber`'s other uses stay foreground-only |
 | `--cond` | `#3d6fa3` | Conditional: the border and corner tick of a value tile, and the border of a keyword chip, that an ability could change but did not (not added). Muted blue, chosen 2026-10-04 over violet and dusty rose: clearest against warm amber ("pending" next to amber's "active"), distinct from it under common colour blindness, and clearly different from the green-teal `--bg3` |
 | `--cond-tint` | `color-mix(in srgb, var(--cond) 20%, white)` | Background only, for a conditional tile or chip - derived the same way `--amber-tint` is |
 | `--border` | `#d9d5c9` | Borders and dividers |
@@ -355,7 +355,8 @@ only the visual decisions.
   `<button class="provenance-tile">` carries the amber, so a column of highlighted values is framed
   by the row colours instead of reading as a column tint (the old full-cell `.weapon-value-flagged`
   did). The A cell's number sits in `.weapon-attacks-number` inside the trigger, the span
-  `live-play.js` rewrites on selection changes.
+  `live-play.js` rewrites on selection changes. The BS/WS cell is a trigger like S/AP/D; its value keeps
+  the `+` suffix.
 - **Activated effects** (`condition-toggles`): a player-activated effect renders exactly like an
   applied one (amber tile or granted chip); its popover line carries an "activated" note.
 - **Labels stay plain**: a highlighted tile's label is just its characteristic ("OC", "InSv"); a

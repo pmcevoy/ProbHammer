@@ -104,7 +104,8 @@ public class LivePlayModel(
     // against a hand-built ArmyRoster, without needing a real HttpContext.Session. Threads each
     // sorted unit alongside its own aggregate view (rather than discarding the unit once the view
     // is built) so BuildUnitBlock can read HalfStrengthResolution/IsBattleShocked off it.
-    internal static List<UnitBlockViewModel> BuildUnitBlocks(ArmyRoster roster, AbilityClassificationCatalogue classifications) =>
+    internal static List<UnitBlockViewModel> BuildUnitBlocks(ArmyRoster roster,
+        AbilityClassificationCatalogue classifications) =>
         SortRoster(roster.Units, classifications)
             .Select(unit => BuildUnitBlock(AttachedUnitAggregator.Build(unit, classifications), unit, classifications))
             .ToList();
@@ -214,7 +215,8 @@ public class LivePlayModel(
                     .DistinctBy(a => a.AbilityName, StringComparer.OrdinalIgnoreCase)
                     .ToDictionary(a => a.AbilityName, a => new AbilityActivation(
                         new HashSet<string>(a.Conditions ?? []),
-                        (a.Choices ?? []).ToDictionary(c => c.Key, c => (IReadOnlySet<int>)new HashSet<int>(c.Value)))));
+                        (a.Choices ?? []).ToDictionary(c => c.Key,
+                            c => (IReadOnlySet<int>)new HashSet<int>(c.Value)))));
         }
 
         return sortedUnits.Select(unit => (unit, AttachedUnitAggregator.Build(unit, classifications))).ToList();
@@ -586,14 +588,15 @@ public class LivePlayModel(
         _ => throw new ArgumentException($"Unknown statline field '{field}'", nameof(field))
     };
 
-    // The three ScalarCharacteristicView-backed weapon value columns, in their own left-to-right
-    // visual order - the weapon-table counterpart to ScalarStatlineFieldOrder.
-    internal static readonly string[] WeaponScalarFieldOrder = ["S", "AP", "D"];
+    // The ScalarCharacteristicView-backed weapon value columns, in their own left-to-right visual
+    // order - the weapon-table counterpart to ScalarStatlineFieldOrder. "Skill" is the BS or WS column.
+    internal static readonly string[] WeaponScalarFieldOrder = ["Skill", "S", "AP", "D"];
 
     // Field-name -> ScalarCharacteristicView lookup for a WeaponProfile, mirroring GetScalarField's
     // own convention above.
     internal static ScalarCharacteristicView GetWeaponScalarField(WeaponProfile profile, string field) => field switch
     {
+        "Skill" => profile.Skill,
         "S" => profile.S,
         "AP" => profile.Ap,
         "D" => profile.D,
@@ -972,7 +975,7 @@ public sealed record WeaponContributionRow(
 /// <see cref="LivePlayModel.BuildContributionBreakdown"/>). <see cref="Breakdown"/> is always
 /// populated regardless of <see cref="ShowsBreakdownTrigger"/>, since live-play.js needs its rows'
 /// selection keys to filter/recompute this entry even when no user-facing trigger exists for it.
-/// <see cref="Provenance"/> holds each highlighted value's popover content, keyed "A", "S", "AP", "D".
+/// <see cref="Provenance"/> holds each highlighted value's popover content, keyed "A", "Skill", "S", "AP", "D".
 /// <see cref="GroupWideAttacksLines"/>
 /// lists every Attacks ability-contribution line that reaches every current contributor of this
 /// entry identically (resolve-weapon-attacks-effects design.md D3) - rendered once, above the

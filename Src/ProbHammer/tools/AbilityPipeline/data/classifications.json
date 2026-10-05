@@ -12663,6 +12663,21 @@
       "Effects": [
         {
           "Effect": {
+            "kind": "WeaponCharacteristic",
+            "Selector": {
+              "kind": "WeaponClass",
+              "Type": "Melee"
+            },
+            "Characteristic": "WS",
+            "Verb": "improve",
+            "Amount": 1
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        },
+        {
+          "Effect": {
             "kind": "WeaponKeywordGrant",
             "Selector": {
               "kind": "WeaponClass",
@@ -12682,8 +12697,8 @@
       ],
       "TurnOwnership": null,
       "UsageLimit": null,
-      "CoverageStatus": "partial",
-      "UnclassifiedResidue": "Improves the Weapon Skill characteristic of the bearer's melee weapons by 1 - Weapon Skill is not one of the weapon characteristics (S/A/AP/D) this schema's WeaponCharacteristic effect kind covers"
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
     },
     "Resolution": {
       "Resolved": [
@@ -12695,9 +12710,9 @@
       ],
       "Unresolved": []
     },
-    "EffectiveCoverageStatus": "partial",
+    "EffectiveCoverageStatus": "complete",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-05: BS/WS effect added from the residue (resolve-weapon-skill-effects; prompt v2 has no BS/WS)."
   },
   "1755aa65f20a43139be92761c90f95f95662bd65cd836963687c1c6cb63fd01a": {
     "Hash": "1755aa65f20a43139be92761c90f95f95662bd65cd836963687c1c6cb63fd01a",
@@ -34712,23 +34727,39 @@
       "Target": {
         "kind": "Self"
       },
-      "Effects": [],
+      "Effects": [
+        {
+          "Effect": {
+            "kind": "WeaponCharacteristic",
+            "Selector": {
+              "kind": "WeaponClass",
+              "Type": "Ranged"
+            },
+            "Characteristic": "BS",
+            "Verb": "set",
+            "Amount": 3
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": null
+        }
+      ],
       "ChoiceGroups": [],
       "Phases": [
         "shooting"
       ],
       "TurnOwnership": null,
       "UsageLimit": null,
-      "CoverageStatus": "unclassifiable",
-      "UnclassifiedResidue": "Sets the bearer's ranged weapons' Ballistic Skill characteristic to 3+ - Ballistic Skill is not one of the weapon characteristics (S/A/AP/D) this schema's WeaponCharacteristic effect can represent"
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
     },
     "Resolution": {
       "Resolved": [],
       "Unresolved": []
     },
-    "EffectiveCoverageStatus": "unclassifiable",
+    "EffectiveCoverageStatus": "complete",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-05: BS/WS effect added from the residue (resolve-weapon-skill-effects; prompt v2 has no BS/WS)."
   },
   "427e5377e25505dccb161ad8a17cb6334a4ca322ee743fd290bf99f6e9c30c7f": {
     "Hash": "427e5377e25505dccb161ad8a17cb6334a4ca322ee743fd290bf99f6e9c30c7f",
@@ -91687,6 +91718,34 @@
       "Effects": [
         {
           "Effect": {
+            "kind": "WeaponCharacteristic",
+            "Selector": {
+              "kind": "AllWeapons"
+            },
+            "Characteristic": "BS",
+            "Verb": "improve",
+            "Amount": 1
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "This model is within 12\" of one or more friendly Aeldari Psyker models",
+          "ChoiceBranch": null
+        },
+        {
+          "Effect": {
+            "kind": "WeaponCharacteristic",
+            "Selector": {
+              "kind": "AllWeapons"
+            },
+            "Characteristic": "WS",
+            "Verb": "improve",
+            "Amount": 1
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "This model is within 12\" of one or more friendly Aeldari Psyker models",
+          "ChoiceBranch": null
+        },
+        {
+          "Effect": {
             "kind": "Scalar",
             "Characteristic": "Ld",
             "Verb": "set",
@@ -91704,16 +91763,16 @@
       ],
       "TurnOwnership": null,
       "UsageLimit": null,
-      "CoverageStatus": "partial",
-      "UnclassifiedResidue": "Improves the Ballistic Skill and Weapon Skill characteristics of weapons equipped by this model by 1 - BS and WS are not among the characteristics this schema's WeaponCharacteristic effect covers (only S/A/AP/D)"
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
     },
     "Resolution": {
       "Resolved": [],
       "Unresolved": []
     },
-    "EffectiveCoverageStatus": "partial",
+    "EffectiveCoverageStatus": "complete",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-05: BS/WS effect added from the residue (resolve-weapon-skill-effects; prompt v2 has no BS/WS)."
   },
   "a7c2b013de4af2e48cfdee57e6e793362d13d011e903061f0d6114aa351fa400": {
     "Hash": "a7c2b013de4af2e48cfdee57e6e793362d13d011e903061f0d6114aa351fa400",
@@ -100797,6 +100856,24 @@
         },
         {
           "Effect": {
+            "kind": "WeaponCharacteristic",
+            "Selector": {
+              "kind": "WeaponClass",
+              "Type": "Ranged"
+            },
+            "Characteristic": "BS",
+            "Verb": "improve",
+            "Amount": 1
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": {
+            "Group": 0,
+            "Option": 0
+          }
+        },
+        {
+          "Effect": {
             "kind": "WeaponKeywordGrant",
             "Selector": {
               "kind": "WeaponClass",
@@ -100804,6 +100881,24 @@
             },
             "Keyword": "[ASSAULT]",
             "ReplacesKeyword": null
+          },
+          "ResidualConditionBucket": "none",
+          "ConditionText": null,
+          "ChoiceBranch": {
+            "Group": 0,
+            "Option": 1
+          }
+        },
+        {
+          "Effect": {
+            "kind": "WeaponCharacteristic",
+            "Selector": {
+              "kind": "WeaponClass",
+              "Type": "Melee"
+            },
+            "Characteristic": "WS",
+            "Verb": "improve",
+            "Amount": 1
           },
           "ResidualConditionBucket": "none",
           "ConditionText": null,
@@ -100849,7 +100944,7 @@
       "TurnOwnership": null,
       "UsageLimit": null,
       "CoverageStatus": "partial",
-      "UnclassifiedResidue": "Protector Imperative's Ballistic Skill improvement (BS is not a representable weapon characteristic) and its -1 to enemy hit rolls against this unit (effect on how enemy attacks resolve) are not representable; Conqueror Imperative's Weapon Skill improvement (WS is not a representable weapon characteristic) is not representable. The overarching selection among army units with the Doctrina Imperatives ability is a targeting mechanism this schema cannot express as a keyword filter."
+      "UnclassifiedResidue": "Protector Imperative subtracts 1 from the Hit roll of melee attacks targeting this unit - a Hit-roll modifier on enemy attacks has no effect kind in this schema. The selection is army-wide (every unit with Doctrina Imperatives), not per unit."
     },
     "Resolution": {
       "Resolved": [
@@ -100868,7 +100963,7 @@
     },
     "EffectiveCoverageStatus": "partial",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-05: BS/WS effect added from the residue (resolve-weapon-skill-effects; prompt v2 has no BS/WS)."
   },
   "b910c455e23b6467e17dccfe57080274a5933e67fb294b44fe64707f3fcf2f02": {
     "Hash": "b910c455e23b6467e17dccfe57080274a5933e67fb294b44fe64707f3fcf2f02",
@@ -102616,6 +102711,21 @@
       "Effects": [
         {
           "Effect": {
+            "kind": "WeaponCharacteristic",
+            "Selector": {
+              "kind": "WeaponClass",
+              "Type": "Ranged"
+            },
+            "Characteristic": "BS",
+            "Verb": "improve",
+            "Amount": 1
+          },
+          "ResidualConditionBucket": "never",
+          "ConditionText": "The unit is within 6\" of this model",
+          "ChoiceBranch": null
+        },
+        {
+          "Effect": {
             "kind": "WeaponKeywordGrant",
             "Selector": {
               "kind": "WeaponClass",
@@ -102635,8 +102745,8 @@
       ],
       "TurnOwnership": null,
       "UsageLimit": null,
-      "CoverageStatus": "partial",
-      "UnclassifiedResidue": "Also grants +1 BS to the unit's ranged attacks - Ballistic Skill is not one of the characteristics (S/A/AP/D) this schema's WeaponCharacteristic effect kind covers"
+      "CoverageStatus": "complete",
+      "UnclassifiedResidue": null
     },
     "Resolution": {
       "Resolved": [
@@ -102653,9 +102763,9 @@
       ],
       "Unresolved": []
     },
-    "EffectiveCoverageStatus": "partial",
+    "EffectiveCoverageStatus": "complete",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-05: BS/WS effect added from the residue (resolve-weapon-skill-effects; prompt v2 has no BS/WS)."
   },
   "bc856f2521a46aad5d7e34b1e33235dd1c68a5dd7ce127f1d80618ca429637a7": {
     "Hash": "bc856f2521a46aad5d7e34b1e33235dd1c68a5dd7ce127f1d80618ca429637a7",

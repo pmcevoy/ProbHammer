@@ -178,11 +178,15 @@ AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ab
   each contribution's own base `WeaponProfile` against every present, unconditional, bearer-scoped,
   selector-matched `WeaponCharacteristicEffect` from the ability-classification catalogue,
   via two genuinely different mechanisms depending on the named characteristic:
-  - **S/AP/D** (`ResolveContributionProfile`) — mutates the matched field in place via
+  - **S/AP/D and BS/WS** (`ResolveContributionProfile`) — mutates the matched field in place via
     `WeaponCharacteristicEffectResolver.Resolve`, the same "mutate a `ScalarCharacteristicView`
     field" convention `ApplyStatlineFlagRules` already uses for `Statline`. A mutation reaching
     every current contributor of what would otherwise be one `EqualityKey` group leaves it merged
     (reporting the mutated value); a mutation reaching only some of them splits the group.
+    `"BS"` and `"WS"` both name the weapon's one `Skill`: `WeaponEffectMatches` adds
+    `WeaponCharacteristicEffectResolver.SkillEffectApplies` to the selector match, so a `"BS"`
+    effect reaches only ranged weapons and a `"WS"` effect only melee ones, applied or not. A Skill of
+    0 (BSData "N/A", e.g. a Torrent weapon) is never reached.
   - **Attacks ("A")** (`ResolveAttacksContributions`) — never mutates `WeaponProfile.A` (a bare
     `DiceExpression`, excluded from `EqualityKey` since it's the summed quantity, not part of the
     weapon's identity — `WeaponCharacteristicEffectResolver` still throws for it). Instead resolves
@@ -194,9 +198,9 @@ AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ab
     amount never splits or merges an `EqualityKey` group, unlike S/AP/D.
 
   Both mechanisms share the same matching machinery (`MatchedWeaponEffects<TEffect>`, using
-  `TryGetApplicableClassification`/`IsBearerOf`/`WeaponSelectorMatches`) and the same conditional
+  `TryGetApplicableClassification`/`IsBearerOf`/`WeaponEffectMatches`) and the same conditional
   counterpart (`FindNotAppliedEffects`, which never mutates the profile or records an Attacks amount —
-  it records a `NotAppliedWeaponEffect` per matched conditional S/AP/D/A effect, since a condition
+  it records a `NotAppliedWeaponEffect` per matched conditional S/AP/D/BS/WS/A effect, since a condition
   has no evaluation mechanism in this app). `TryGetApplicableClassification` is shared with the
   Statline path, so a Detachment-rule-origin ability reaches every component's weapons despite its
   keyword-classified target, exactly as it reaches every Statline row.

@@ -24,7 +24,7 @@ public sealed record ScalarCharacteristicEffect(string Characteristic, EffectVer
 /// <c>0</c>, <see cref="InvulnerableSave.None"/>'s own sentinel.</summary>
 public sealed record InvulnerableSaveCharacteristicEffect(InvulnerableSave Value) : RuleEffect;
 
-/// <summary>A change to one <see cref="WeaponProfile"/> characteristic ("S"/"A"/"AP"/"D") of the
+/// <summary>A change to one <see cref="WeaponProfile"/> characteristic ("S"/"A"/"AP"/"D"/"BS"/"WS") of the
 /// weapons <see cref="Selector"/> picks out.</summary>
 public sealed record WeaponCharacteristicEffect(
     WeaponSelector Selector,

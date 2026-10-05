@@ -537,16 +537,12 @@ public class WeaponCharacteristicEffectRosterTests
     [Fact]
     public void EffectNamingAnUnresolvableCharacteristicAlongsideAttacks_LeavesTheUnresolvableOneUnapplied()
     {
-        // A hypothetical effect naming a characteristic this mechanism doesn't yet resolve (e.g.
-        // Weapon Skill) alongside Attacks - the unresolvable one is silently skipped (the existing
-        // GetWeaponScalarField/ApplyWeaponCharacteristicEffect throw path is never reached for it,
-        // since it's filtered out by ResolveContributionProfile's own S/AP/D allowlist), while the
-        // co-occurring Attacks effect still resolves.
+        // Range isn't resolved yet: it is filtered out before the resolver, so it can't throw.
         var weapon = new MeleeWeapon("Chainsword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
         var hybrid = new Ability
         {
             Name = "Hybrid Boost",
-            Text = "Improve the Weapon Skill and Attacks characteristics of melee weapons equipped by this model by 1.",
+            Text = "Add 6 inches to the Range and 1 to the Attacks characteristics of melee weapons equipped by this model.",
             Scope = AbilityScope.Model,
             Origin = AbilityOrigin.Intrinsic
         };
@@ -557,7 +553,7 @@ public class WeaponCharacteristicEffectRosterTests
                 target: new SelfRuleTarget(),
                 effects:
                 [
-                    new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "WS", EffectVerb.Improve, 1),
+                    new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "Range", EffectVerb.Improve, 6),
                     new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "A", EffectVerb.Improve, 1)
                 ])
         ]);
@@ -571,6 +567,133 @@ public class WeaponCharacteristicEffectRosterTests
         act.Should().NotThrow();
         var view = AttachedUnitAggregator.Build(unit, classifications);
         var entry = view.Weapons.Should().ContainSingle().Subject;
-        entry.TotalAttacks.Should().Be(DiceExpression.Fixed(4)); // 1 model x (base A3 + 1), WS ignored
+        entry.TotalAttacks.Should().Be(DiceExpression.Fixed(4)); // 1 model x (base A3 + 1), Range ignored
+    }
+
+    private static Unit SingleModelUnit(Ability ability, params WeaponProfile[] weapons)
+    {
+        var datasheet = new Datasheet(
+            "Some Unit", keywords: [], abilities: [ability],
+            statlines: [("Some Unit", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: weapons);
+        return new Unit(datasheet, [], [new ModelLine("Some Unit", [.. weapons.Select(w => w.Name)], count: 1)]);
+    }
+
+    private static Ability SkillAbility(string name) => new()
+    {
+        Name = name,
+        Text = $"{name} rules text.",
+        Scope = AbilityScope.Model,
+        Origin = AbilityOrigin.Intrinsic
+    };
+
+    [Fact]
+    public void WeaponSkillEffect_ImprovesAMeleeWeaponsSkill()
+    {
+        var weapon = new MeleeWeapon("Reaper chainsword", A: 4, Ws: 3, S: 12, Ap: -3, D: 6);
+        var diabolus = SkillAbility("Knight Diabolus");
+        var classifications = ClassificationFixtures.Catalogue(
+        [
+            ClassificationFixtures.Entry(diabolus.Text, new SelfRuleTarget(),
+                [new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "WS", EffectVerb.Improve, 1)])
+        ]);
+
+        var view = AttachedUnitAggregator.Build(SingleModelUnit(diabolus, weapon), classifications);
+
+        var skill = view.Weapons.Should().ContainSingle().Subject.Profile.Skill;
+        skill.Value.Should().Be((CharacteristicValue)2);
+        skill.ContributingAbilities.Should().ContainSingle(a => a.Name == "Knight Diabolus");
+    }
+
+    [Fact]
+    public void BallisticAndWeaponSkillOnEveryWeapon_ReachOnlyTheirOwnWeaponType()
+    {
+        var melee = new MeleeWeapon("Chainsword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
+        var ranged = new RangedWeapon("Bolt pistol", Range: 12, A: 1, Bs: 4, S: 4, Ap: 0, D: 1);
+        var guidance = SkillAbility("Psychic Guidance");
+        var classifications = ClassificationFixtures.Catalogue(
+        [
+            ClassificationFixtures.Entry(guidance.Text, new SelfRuleTarget(),
+            [
+                new WeaponCharacteristicEffect(new AllWeapons(), "BS", EffectVerb.Improve, 1),
+                new WeaponCharacteristicEffect(new AllWeapons(), "WS", EffectVerb.Improve, 1)
+            ])
+        ]);
+
+        var view = AttachedUnitAggregator.Build(SingleModelUnit(guidance, melee, ranged), classifications);
+
+        var meleeSkill = view.Weapons.Single(w => w.Profile is MeleeWeapon).Profile.Skill;
+        var rangedSkill = view.Weapons.Single(w => w.Profile is RangedWeapon).Profile.Skill;
+        meleeSkill.Value.Should().Be((CharacteristicValue)2);
+        rangedSkill.Value.Should().Be((CharacteristicValue)3);
+        meleeSkill.ContributingAbilities.Should().ContainSingle();
+        rangedSkill.ContributingAbilities.Should().ContainSingle();
+    }
+
+    [Fact]
+    public void ConditionalBallisticSkill_RecordsANotAppliedEffectOnlyOnRangedWeapons()
+    {
+        var melee = new MeleeWeapon("Chainsword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
+        var ranged = new RangedWeapon("Bolt pistol", Range: 12, A: 1, Bs: 4, S: 4, Ap: 0, D: 1);
+        var targeting = SkillAbility("Assisted Targeting");
+        var classifications = ClassificationFixtures.Catalogue(
+        [
+            ClassificationFixtures.Entry(targeting.Text, new SelfRuleTarget(),
+                [new WeaponCharacteristicEffect(new AllWeapons(), "BS", EffectVerb.Improve, 1)],
+                conditional: true)
+        ]);
+
+        var view = AttachedUnitAggregator.Build(SingleModelUnit(targeting, melee, ranged), classifications);
+
+        view.Weapons.Single(w => w.Profile is MeleeWeapon).NotAppliedEffects.Should().BeEmpty();
+        var notApplied = view.Weapons.Single(w => w.Profile is RangedWeapon).NotAppliedEffects
+            .Should().ContainSingle().Subject;
+        notApplied.Characteristic.Should().Be("BS");
+        notApplied.Amount.Should().Be(-1);
+    }
+
+    [Fact]
+    public void SetBallisticSkill_ReplacesTheValue_PreservingTheOriginal()
+    {
+        var ranged = new RangedWeapon("Lasgun", Range: 24, A: 1, Bs: 4, S: 3, Ap: 0, D: 1);
+        var spotter = SkillAbility("Spotter");
+        var classifications = ClassificationFixtures.Catalogue(
+        [
+            ClassificationFixtures.Entry(spotter.Text, new SelfRuleTarget(),
+                [new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Ranged), "BS", EffectVerb.Set, 3)])
+        ]);
+
+        var view = AttachedUnitAggregator.Build(SingleModelUnit(spotter, ranged), classifications);
+
+        var skill = view.Weapons.Should().ContainSingle().Subject.Profile.Skill;
+        skill.Value.Should().Be((CharacteristicValue)3);
+        skill.OriginalValue.Should().Be((CharacteristicValue)4);
+    }
+
+    [Fact]
+    public void BearerScopedSkillEffect_SplitsAnOtherwiseMergedGroup()
+    {
+        var weapon = new MeleeWeapon("Power sword", A: 3, Ws: 3, S: 4, Ap: -1, D: 1);
+        var focus = SkillAbility("Martial Focus");
+        var classifications = ClassificationFixtures.Catalogue(
+        [
+            ClassificationFixtures.Entry(focus.Text, new SelfRuleTarget(),
+                [new WeaponCharacteristicEffect(new WeaponClass(WeaponType.Melee), "WS", EffectVerb.Improve, 1)])
+        ]);
+        var bodyguardDatasheet = new Datasheet(
+            "Sword Brethren Squad", keywords: [], abilities: [],
+            statlines: [("Sword Brother", new Statline(6, 4, 3, 3, 6, 1))], weaponProfiles: [weapon]);
+        var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Sword Brother", [weapon.Name], count: 4)]);
+        var leaderDatasheet = new Datasheet(
+            "Marshal", keywords: [], abilities: [focus],
+            statlines: [("Marshal", new Statline(6, 4, 3, 5, 6, 1))], weaponProfiles: [weapon]);
+        var leader = new Unit(leaderDatasheet, [], [new ModelLine("Marshal", [weapon.Name], count: 1)]);
+
+        var view = AttachedUnitAggregator.Build(new AttachedUnit(bodyguard, [leader]), classifications);
+
+        view.Weapons.Should().HaveCount(2);
+        view.Weapons.Single(w => w.Contributions.Any(c => c.ComponentName == "Marshal"))
+            .Profile.Skill.Value.Should().Be((CharacteristicValue)2);
+        view.Weapons.Single(w => w.Contributions.Any(c => c.ComponentName == "Sword Brethren Squad"))
+            .Profile.Skill.Value.Should().Be((CharacteristicValue)3);
     }
 }
