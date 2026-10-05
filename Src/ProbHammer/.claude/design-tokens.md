@@ -323,6 +323,16 @@ picture; this section covers only the visual/positioning decisions.
   to sit on `.rule-popover` itself moved onto `.rule-popover-text` alone, so the title bar can span
   flush to the panel's own top edge and corners.
 
+- **Apply section** (`condition-toggles`): an ability popover inside a unit block ends with
+  `.apply-section` under its rule text - an `.apply-title` bar copying `.rule-popover-title`'s look
+  (not sticky), then one full-width `.apply-row` `<label>` per control (`min-height: 2.25rem`, a
+  `--border` rule between rows, the Hover fade). A switch is a native checkbox with `role="switch"`;
+  a choice group is radios (first option "None") or capped checkboxes in an `.apply-choice`. An on
+  or selected row fills `--bg3` with white text, the same "current one" fill `.phase-turn-cell.is-
+  active` uses; its control takes `accent-color: var(--bg2)` so it stays visible on that fill. A
+  capped-out option uses the Disabled opacity. Labels wrap (`overflow-wrap: anywhere`); a usage
+  limit beside condition text is a dim `.apply-caption`. No new tokens.
+
 ---
 
 ## Value Provenance Highlight (`value-provenance-popovers`)
@@ -346,6 +356,8 @@ only the visual decisions.
   by the row colours instead of reading as a column tint (the old full-cell `.weapon-value-flagged`
   did). The A cell's number sits in `.weapon-attacks-number` inside the trigger, the span
   `live-play.js` rewrites on selection changes.
+- **Activated effects** (`condition-toggles`): a player-activated effect renders exactly like an
+  applied one (amber tile or granted chip); its popover line carries an "activated" note.
 - **Labels stay plain**: a highlighted tile's label is just its characteristic ("OC", "InSv"); a
   weapon name is never marked.
 - **Caveated values are amber too**: a deliberate reversal of `classify-characteristic-modifier-

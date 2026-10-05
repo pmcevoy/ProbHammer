@@ -53,14 +53,26 @@ record, not this file).
 - **Phase/turn ability highlighting.** Every catalogue record carries `Phases`/`TurnOwnership`
   (even unclassifiable ones), so an ability button could change colour in the phases it matters in,
   the tracker's original purpose for those fields.
-- **Condition toggles inside the ability popover.** Any conditional
-  effect (residual condition, usage limit, choice branch, turn restriction) is skipped today. Tapping
-  the ability (in its ability list) opens its popover with the `ConditionText` and an
-  enable/disable checkbox; enabling applies the effect, which then surfaces as an ordinary amber
-  provenance value - the `--cond` colour turning amber is the visible "activated" signal, for value
-  tiles and keyword chips alike (user idea, 2026-10-04). Choice groups toggle per option: Dark Pacts is the motivating case, since today every Heretic Astartes weapon carries two conditional chips (Lethal Hits, Sustained Hits 1); picking a pact turns one amber and drops the other (user-agreed 2026-10-04). Accepted cost: the toggle's full-map POST
-  re-renders the unit block (`swapUnitBlock`), closing the open popover. State keyed per unit +
-  ability (the same ability appears on several units, e.g. two Marshals), stored like casualty state.
+- **Unit-fact conditions (riled up first).** A classified effect gains a structured `requires`
+  condition (e.g. `["RILED UP"]`), applied when every required fact holds for the unit. Facts are
+  the unit's `EffectiveKeywords` plus player-set states (Riled Up, Battle-shocked, Below
+  Half-strength), so one condition kind covers both "while this unit has keyword X" and "while
+  riled up", for any army. States are stored like Battle-shock and set from the unit toolbar,
+  never shown as keywords. Riled up is the motivating case: 22 Ork records mention it; Waaagh!,
+  More Dakka, Even More Dakka and Targetin' Gizmos carry its value/keyword effects, and others
+  (Super Runts, War Cry, Intimidating Motivation) make a unit riled up. The Riled Up control shows
+  on units with Waaagh! ("Friendly ORKS with this ability can... become riled up"). Hand-correct
+  the few consuming records first; prompt v3 extracts the field later. Also needs the Army-Rule
+  applicability fix: Waaagh!'s real classification targets `Keyword: ["Orks"]` with ArmyRule
+  origin, so `TryGetApplicableClassification` drops its effects even though New Recruit attaches
+  it to the right units (confirmed live 2026-10-04: no blue InSv on Boyz). Admit ArmyRule origin
+  like the DetachmentRule exception. Until then, condition toggles are the stopgap (user-agreed
+  2026-10-04).
+- **"Used" marker for usage-limited abilities.** Mark a once-per-battle ability as spent so it
+  renders less prominently; separate from its condition toggle.
+- **Link a condition to another ability's activation.** Empyric Wellspring's +1 S applies "if that
+  unit makes a Dark Pact"; a structured "requires ability X active" field would derive it from the
+  Dark Pacts toggle instead of its own switch.
 - **Consume the remaining data-only effect kinds.** `NamedAbilityGrant` (an inbound ability; needs
   `RuleGlossary.Normalize` to strip a trailing `9"`-style value so `Scouts 9"` resolves),
   `NamedAbilityRemoval` (hide or strike the removed ability).

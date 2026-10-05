@@ -72,7 +72,8 @@ exactly as a `complete` record's would be.
 A classified effect SHALL be unconditional only when its residual-condition bucket is none, it
 carries no choice branch, and its record has no usage limit and no turn ownership. Every other
 classified effect SHALL be conditional. Every consumer that applies an effect automatically SHALL
-apply only unconditional effects; what a consumer does with a conditional effect is defined by that
+apply only unconditional effects and conditional effects the player has activated (per
+`condition-activation`); what a consumer does with any other conditional effect is defined by that
 consumer.
 
 #### Scenario: A usage-limited effect is conditional even with no residual condition
@@ -93,6 +94,10 @@ consumer.
 - **WHEN** a record lists one or more phases, its effect has residual-condition bucket none and no
   choice branch, and the record has no usage limit and no turn ownership
 - **THEN** the effect is unconditional
+
+#### Scenario: An activated conditional effect is applied
+- **WHEN** a record's effect is conditional and the player has activated it on a unit
+- **THEN** a consumer that applies effects automatically applies it on that unit
 
 ### Requirement: Catalogue File Is Exported From The Pipeline With Canonical Names
 The pipeline's classifier tool SHALL provide an export that writes the catalogue file from its

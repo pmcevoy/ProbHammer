@@ -38,4 +38,9 @@ public interface ICombatUnit
     /// <see cref="IsHalfStrengthOverride"/>/<see cref="IsBattleShocked"/>, defaulting to empty.
     /// Every entry carries <see cref="AbilityOrigin.DetachmentRule"/>.</summary>
     IReadOnlyList<Ability> InboundAbilities { get; set; }
+
+    /// <summary>Player-set only, defaulting to <see cref="Roster.ConditionActivations.Empty"/> - which
+    /// conditional ability effects the player asserts hold for this unit. Never cleared
+    /// automatically.</summary>
+    ConditionActivations ConditionActivations { get; set; }
 }

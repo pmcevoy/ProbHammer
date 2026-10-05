@@ -160,6 +160,85 @@ public class WeaponKeywordGrantRosterTests
     }
 
     [Fact]
+    public void AnActivatedGrantReachingSomeContributors_SplitsTheMergedRow()
+    {
+        var charge = AbilityWith("Glorious Charge");
+        var unit = SquadLedBy(charge);
+        unit.ConditionActivations = ActivationFixtures.Condition("Glorious Charge", "Test condition");
+
+        var view = AttachedUnitAggregator.Build(unit, Grants(charge, new SelfRuleTarget(), "Lance", conditional: true));
+
+        view.Weapons.Should().HaveCount(2).And.OnlyContain(w => w.NotAppliedKeywordGrants.Count == 0);
+        var marshal = view.Weapons.Single(w => w.Contributions.Single().ComponentName == "Marshal");
+        marshal.Profile.KeywordsText.Should().Equal("Assault", "Lance");
+        marshal.KeywordGrants.Should().ContainSingle(g => g.SourceAbility == charge);
+    }
+
+    [Fact]
+    public void AnActivatedGrant_IsNoLongerAppliedOnceItsBearerIsDestroyed()
+    {
+        var charge = AbilityWith("Glorious Charge");
+        var unit = SquadLedBy(charge);
+        unit.ConditionActivations = ActivationFixtures.Condition("Glorious Charge", "Test condition");
+        unit.Attached[0].ModelLines[0].RemoveCasualties(1);
+
+        var view = AttachedUnitAggregator.Build(unit, Grants(charge, new SelfRuleTarget(), "Lance", conditional: true));
+
+        var entry = view.Weapons.Should().ContainSingle().Subject;
+        entry.Profile.KeywordsText.Should().Equal("Assault");
+        entry.KeywordGrants.Should().BeEmpty();
+        unit.ConditionActivations.For("Glorious Charge").Should().NotBeNull();
+    }
+
+    private static readonly Ability DarkPacts = AbilityWith("Dark Pacts");
+
+    private static AbilityClassificationCatalogue DarkPactsCatalogue() => ClassificationFixtures.Catalogue(
+    [
+        (DarkPacts.Text, new AbilityClassification
+        {
+            Target = new AttachedUnitRuleTarget(),
+            Effects =
+            [
+                new ClassifiedEffect
+                {
+                    Effect = new WeaponKeywordGrantEffect(new AllWeapons(), "Lethal Hits"),
+                    ResidualConditionBucket = ResidualConditionBucket.None, ChoiceBranch = new ChoiceBranch(0, 0)
+                },
+                new ClassifiedEffect
+                {
+                    Effect = new WeaponKeywordGrantEffect(new AllWeapons(), "Sustained Hits 1"),
+                    ResidualConditionBucket = ResidualConditionBucket.None, ChoiceBranch = new ChoiceBranch(0, 1)
+                }
+            ],
+            ChoiceGroups = [new ChoiceGroup(1, 1, ["[LETHAL HITS]", "[SUSTAINED HITS 1]"])],
+            CoverageStatus = CoverageStatus.Complete
+        })
+    ]);
+
+    [Fact]
+    public void DarkPactsWithLethalHitsSelected_AppliesItsGrant_AndDropsTheOtherOption()
+    {
+        var unit = SquadLedBy(DarkPacts);
+        unit.ConditionActivations = ActivationFixtures.Choice("Dark Pacts", 0, 0);
+
+        var view = AttachedUnitAggregator.Build(unit, DarkPactsCatalogue());
+
+        var entry = view.Weapons.Should().ContainSingle().Subject;
+        entry.Profile.KeywordsText.Should().Equal("Assault", "Lethal Hits");
+        entry.KeywordGrants.Should().ContainSingle(g => g.Keyword == "Lethal Hits");
+        entry.NotAppliedKeywordGrants.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void DarkPactsWithNoSelection_RecordsBothOptionsAsNotApplied()
+    {
+        var view = AttachedUnitAggregator.Build(SquadLedBy(DarkPacts), DarkPactsCatalogue());
+
+        view.Weapons.Should().ContainSingle().Which.NotAppliedKeywordGrants.Select(g => g.Keyword)
+            .Should().Equal("Lethal Hits", "Sustained Hits 1");
+    }
+
+    [Fact]
     public void AConditionalRedundantGrant_IsNotRecorded()
     {
         var charge = AbilityWith("Glorious Charge");

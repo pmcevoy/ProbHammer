@@ -73,7 +73,8 @@ public class WeaponCharacteristicEffectRealCorpusTests
         var block = LivePlayModel.BuildUnitBlock(view);
 
         var weaponRow = block.MeleeWeapons.Should().ContainSingle(w => w.Entry.Profile.Name == "Power weapon").Subject;
-        weaponRow.ProvenanceFor("S")!.Lines.Should().Contain(l => l.Label == "Zealot" && l.Kind == ProvenanceLineKind.NotAdded);
+        weaponRow.ProvenanceFor("S")!.Lines.Should()
+            .Contain(l => l.Label == "Zealot" && l.Kind == ProvenanceLineKind.NotAdded);
     }
 
     // resolve-weapon-attacks-effects task 4.4: proposal.md names Scorpion Tail/Writhing Tentacles
@@ -156,6 +157,51 @@ public class WeaponCharacteristicEffectRealCorpusTests
                 ("D", 1, UsageLimit.OncePerBattle)
             });
     }
+
+    [Fact]
+    public void ChaosLordWithChanceForGloryActivated_ImprovesTheDaemonHammer_AndRecordsNothingNotApplied()
+    {
+        var parsed = new ArmyListParser().Parse(RealExportText("gw-app-export-chaos-lord-terminator-armour.txt"));
+        var source = new LocalDiskBsdataCatalogueSource(BundledBsDataRoot());
+        var fileName = BsdataFactionResolver.ResolveStartingFileName(parsed.Faction, source.ListFileNames());
+        var roster = ArmyRosterEnricher.Enrich(parsed, ResolvedBsdataCatalogue.Build(source, fileName));
+        var chaosLord = roster.Units.Single(u => u.Name == "Chaos Lord");
+        var baseline = AttachedUnitAggregator.Build(chaosLord, ClassificationFixtures.CheckedIn)
+            .Weapons.Single(w => w.Name == "Daemon hammer");
+        chaosLord.ConditionActivations = ActivationFixtures.Condition("Chance for Glory");
+
+        var view = AttachedUnitAggregator.Build(chaosLord, ClassificationFixtures.CheckedIn);
+
+        var hammer = view.Weapons.Single(w => w.Name == "Daemon hammer");
+        Number(hammer.Profile.S).Should().Be(Number(baseline.Profile.S) + 1);
+        Number(hammer.Profile.Ap).Should().Be(Number(baseline.Profile.Ap) - 1);
+        hammer.Profile.D.Value.Should().NotBe(baseline.Profile.D.Value);
+        new[] { hammer.Profile.S, hammer.Profile.Ap, hammer.Profile.D }.Should().OnlyContain(v =>
+            v.ContributingAbilities.Count == 1 && v.ContributingAbilities[0].Name == "Chance for Glory");
+        hammer.Contributions.Single().AttacksContributions.Should()
+            .ContainSingle(c => c.SourceAbility.Name == "Chance for Glory" && c.Amount == 1);
+        hammer.NotAppliedEffects.Should().NotContain(e => e.SourceAbility.Name == "Chance for Glory");
+    }
+
+    [Fact]
+    public void ChaosLordWithChanceForGlory_ReportsOneOncePerBattleCondition()
+    {
+        var parsed = new ArmyListParser().Parse(RealExportText("gw-app-export-chaos-lord-terminator-armour.txt"));
+        var source = new LocalDiskBsdataCatalogueSource(BundledBsDataRoot());
+        var fileName = BsdataFactionResolver.ResolveStartingFileName(parsed.Faction, source.ListFileNames());
+        var roster = ArmyRosterEnricher.Enrich(parsed, ResolvedBsdataCatalogue.Build(source, fileName));
+        var chaosLord = roster.Units.Single(u => u.Name == "Chaos Lord");
+
+        var view = AttachedUnitAggregator.Build(chaosLord, ClassificationFixtures.CheckedIn);
+
+        var toggle = view.ActivatableConditions.Where(c => c.Ability.Name == "Chance for Glory")
+            .Should().ContainSingle().Which.Should().BeOfType<ConditionToggle>().Subject;
+        toggle.ConditionText.Should().BeEmpty();
+        toggle.UsageLimit.Should().Be(UsageLimit.OncePerBattle);
+        toggle.IsActive.Should().BeFalse();
+    }
+
+    private static int Number(ScalarCharacteristicView view) => ((NumericCharacteristicValue)view.Value).Value;
 
     private static string RealExportText(string fileName, [CallerFilePath] string here = "") =>
         File.ReadAllText(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "..", "..", "data", fileName));

@@ -42,9 +42,14 @@ public sealed record ProvenanceLine(
 
 /// <summary>Builds <see cref="ValueProvenance"/> for every highlighted Statline tile and weapon value.
 /// <paramref name="classifications"/> supplies each ability's unmodelled residue; null means no residue
-/// notes.</summary>
-internal sealed class ValueProvenanceBuilder(AbilityClassificationCatalogue? classifications)
+/// notes. An applied line whose ability is in <paramref name="activatedAbilityNames"/> notes that the
+/// player activated it.</summary>
+internal sealed class ValueProvenanceBuilder(
+    AbilityClassificationCatalogue? classifications,
+    IReadOnlySet<string>? activatedAbilityNames = null)
 {
+    internal const string ActivatedNote = "activated";
+
     // Page field key (LivePlayModel.ScalarStatlineFieldOrder), Core characteristic key, label, suffix.
     private static readonly (string Field, string Characteristic, string Label, string Suffix)[] StatlineFields =
     [
@@ -188,6 +193,8 @@ internal sealed class ValueProvenanceBuilder(AbilityClassificationCatalogue? cla
             ? c.UnclassifiedResidue
             : null;
         var label = source.Origin == AbilityOrigin.Enhancement ? $"✦ {source.Name}" : source.Name;
+        if (kind == ProvenanceLineKind.Applied && activatedAbilityNames?.Contains(source.Name) == true)
+            notes = [ActivatedNote, .. notes];
         return new ProvenanceLine(source, label, changeText,
             string.IsNullOrWhiteSpace(residue) ? notes : [.. notes, residue], kind);
     }
@@ -202,17 +209,9 @@ internal sealed class ValueProvenanceBuilder(AbilityClassificationCatalogue? cla
     {
         var parts = new List<string>();
         if (condition.UsageLimit is { } limit)
-            parts.Add(limit switch
-            {
-                UsageLimit.OncePerBattle => "Once per battle",
-                UsageLimit.TwicePerBattle => "Twice per battle",
-                UsageLimit.OncePerBattleRound => "Once per battle round",
-                UsageLimit.OncePerTurn => "Once per turn",
-                UsageLimit.OncePerPhase => "Once per phase",
-                _ => limit.ToString()
-            });
+            parts.Add(UsageLimitText(limit));
         if (condition.TurnOwnership is { } turn)
-            parts.Add(turn == GameTurn.Mine ? "Your turn only" : "Opponent's turn only");
+            parts.Add(TurnOwnershipText(turn));
         if (!string.IsNullOrWhiteSpace(condition.ConditionText))
             parts.Add(condition.ConditionText);
         if (condition.IsChoiceBranch)
@@ -220,6 +219,20 @@ internal sealed class ValueProvenanceBuilder(AbilityClassificationCatalogue? cla
         parts.Add("not added");
         return string.Join("; ", parts);
     }
+
+    internal static string UsageLimitText(UsageLimit limit) =>
+        limit switch
+        {
+            UsageLimit.OncePerBattle => "Once per battle",
+            UsageLimit.TwicePerBattle => "Twice per battle",
+            UsageLimit.OncePerBattleRound => "Once per battle round",
+            UsageLimit.OncePerTurn => "Once per turn",
+            UsageLimit.OncePerPhase => "Once per phase",
+            _ => limit.ToString()
+        };
+
+    internal static string TurnOwnershipText(GameTurn turn) =>
+        turn == GameTurn.Mine ? "Your turn only" : "Opponent's turn only";
 
     // Roll thresholds (Sv, Ld) show the resulting value; everything else a signed delta.
     private static string AppliedChange(string characteristic, CharacteristicValue original,

@@ -26,6 +26,10 @@ public sealed class AttachedUnit(Unit bodyguard, IEnumerable<Unit> attached) : I
     /// <see cref="ICombatUnit.InboundAbilities"/>.</summary>
     public IReadOnlyList<Ability> InboundAbilities { get; set; } = [];
 
+    /// <summary>One state for the whole AttachedUnit - see
+    /// <see cref="ICombatUnit.ConditionActivations"/>.</summary>
+    public ConditionActivations ConditionActivations { get; set; } = ConditionActivations.Empty;
+
     /// <summary>
     /// Humanized join of the Bodyguard's name with the Attached units' names: none attached
     /// yields the Bodyguard's name alone; one joins with "with A"; two join with "with A and B"

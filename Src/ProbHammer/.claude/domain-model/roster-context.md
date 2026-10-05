@@ -41,6 +41,12 @@ ICombatUnit
                                      // post-construction, read everywhere" shape as
                                      // IsHalfStrengthOverride/IsBattleShocked. Every entry carries
                                      // Origin DetachmentRule, Scope Unit.
+  ConditionActivations               // condition-toggles - player-set, defaults to Empty, replayed
+                                     // per request like IsBattleShocked. Ability name (case-
+                                     // insensitive) -> AbilityActivation(Conditions: set of
+                                     // condition texts, "" for a usage-limit/turn-only condition;
+                                     // Choices: group index -> selected option indexes). Never
+                                     // changed by the system; unknown names/conditions are ignored.
 ```
 
 **Pure functions (not stored state):**
@@ -202,6 +208,18 @@ AggregateAbilityEntry(ComponentName: string?, StatlineName: string?, Ability: Ab
   reaching only some contributors splits the group. `FindNotAppliedKeywordGrants` checks each matched
   conditional grant against the already-resolved keywords and records a `NotAppliedKeywordGrant` only
   when it would change them; it never splits.
+- **Effect state and condition activation** (`condition-toggles`) — `MatchAbilities` pairs every
+  classified effect of each applicable present ability with `EffectStates.Of(classification, effect,
+  activation)`: `Applied` (unconditional, an activated condition text, or a selected choice option),
+  `Suppressed` (an unselected option of a group with a selection - dropped everywhere), or
+  `NotApplied`. Every path above that says "unconditional" takes `Applied` effects, and every
+  not-applied recorder takes `NotApplied` ones, so an activated effect splits rows and follows bearer
+  liveness exactly as an unconditional one. `ResolveCaveatedInvulnerableSaves` stays unconditional-
+  only. `AttachedUnitAggregateView.ActivatableConditions` reports one `ConditionToggle(Ability,
+  ConditionText, UsageLimit?, TurnOwnership?, IsActive)` per distinct non-choice condition text and
+  one `ChoiceToggle(Ability, GroupIndex, Group, Selected)` per choice group, deduped by ability name,
+  and only when one of that slot's effects reaches a present Statline entry or weapon contribution
+  (bearer + selector, before the applied/not-applied split).
 - `Abilities` — built by `BuildAbilities`, walking components in `BuildStatlines`'s display order.
   For each component where `IsPresent`: one entry per `Datasheet.Ability` (`StatlineName: null`),
   one entry per resolved `Unit.Enhancements` ability (`StatlineName: null`, reported the same way

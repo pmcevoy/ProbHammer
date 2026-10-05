@@ -173,10 +173,36 @@ public sealed record AggregateAbilityEntry(
     }
 }
 
+/// <summary>A conditional slot of an ability on a unit that the player can activate, reported only
+/// when one of its effects reaches a Statline entry or weapon contribution of the unit.</summary>
+public abstract record ActivatableCondition(Ability Ability);
+
+/// <summary>Every non-choice conditional effect of <see cref="ActivatableCondition.Ability"/> sharing
+/// <see cref="ConditionText"/> - the empty string when only a usage limit or turn restriction makes
+/// it conditional.</summary>
+public sealed record ConditionToggle(
+    Ability Ability,
+    string ConditionText,
+    UsageLimit? UsageLimit,
+    GameTurn? TurnOwnership,
+    bool IsActive) : ActivatableCondition(Ability);
+
+/// <summary>One choice group of <see cref="ActivatableCondition.Ability"/> and its selected option
+/// indexes.</summary>
+public sealed record ChoiceToggle(
+    Ability Ability,
+    int GroupIndex,
+    ChoiceGroup Group,
+    IReadOnlySet<int> Selected) : ActivatableCondition(Ability);
+
 public sealed record AttachedUnitAggregateView(
     string Name,
     bool IsAttachedUnit,
     IReadOnlyList<AggregateStatlineEntry> Statlines,
     IReadOnlyList<AggregateWeaponEntry> Weapons,
     IReadOnlyList<AggregateAbilityEntry> Abilities,
-    IReadOnlySet<string> Keywords);
+    IReadOnlySet<string> Keywords,
+    IReadOnlyList<ActivatableCondition>? ActivatableConditions = null)
+{
+    public IReadOnlyList<ActivatableCondition> ActivatableConditions { get; init; } = ActivatableConditions ?? [];
+}

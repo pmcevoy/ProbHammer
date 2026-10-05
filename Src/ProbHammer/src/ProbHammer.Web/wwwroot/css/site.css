@@ -1278,6 +1278,60 @@ button.filter-flag:hover { opacity: 0.8; }
 }
 .provenance-table .provenance-result { border-top: 1px solid var(--border); }
 
+/* Apply section: condition controls under an ability popover's rule text. The title bar copies
+   .rule-popover-title's look (not sticky); each row is a full-width tap target, filled --bg3 when on
+   or selected, the same "current one" fill .phase-turn-cell.is-active uses. */
+.apply-title {
+    background: var(--bg3-tint);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding: 0.35rem 0.6rem;
+}
+.apply-choice > .apply-caption {
+    display: block;
+    padding: 0.35rem 0.75rem 0;
+}
+.apply-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.25rem;
+    padding: 0.35rem 0.75rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.8rem;
+    color: var(--text);
+    cursor: pointer;
+}
+.apply-row:hover { opacity: 0.8; }
+.apply-input {
+    flex: 0 0 auto;
+    margin: 0;
+    accent-color: var(--bg3);
+}
+.apply-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.apply-caption {
+    flex: 0 1 auto;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+.apply-row:has(.apply-input:checked) {
+    background: var(--bg3);
+    color: #fff;
+}
+.apply-row:has(.apply-input:checked) .apply-input { accent-color: var(--bg2); }
+.apply-row:has(.apply-input:checked) .apply-caption { color: var(--bg3-tint); }
+.apply-row:has(.apply-input:disabled) {
+    opacity: 0.4;
+    cursor: default;
+}
+
 /* Emphasis markup, rendered as styling only by RuleTextEmphasisRenderer - never an interactive
    trigger by virtue of this markup alone (only a resolved [BRACKET] reference, styled separately
    below, is ever tappable). font-variant (not text-transform/font-size) is the correct CSS tool for

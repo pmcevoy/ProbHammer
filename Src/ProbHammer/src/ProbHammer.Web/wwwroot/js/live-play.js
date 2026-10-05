@@ -4,6 +4,9 @@ const CASUALTY_STORAGE_KEY = 'probhammer.livePlay.casualties';
 // casualties use) - both are unit-level status, never per-model-line.
 const HALF_STRENGTH_STORAGE_KEY = 'probhammer.livePlay.halfStrength';
 const BATTLESHOCKED_STORAGE_KEY = 'probhammer.livePlay.battleShocked';
+// Condition activations: "{unitIndex}::{abilityName}" -> {conditions: [text], choices: {group: [option]}},
+// an entry pruned once it holds nothing.
+const ACTIVATION_STORAGE_KEY = 'probhammer.livePlay.activations';
 
 // Per-unit selection (deselected select-keys) state, keyed by data-unit-index and kept OUTSIDE
 // initUnitSelection's own closure so it survives a casualty-triggered swapUnitBlock - a casualty
@@ -25,6 +28,10 @@ const deselectedByUnit = new Map();
 // per-unit selection filter's own "does not persist across a page reload" behavior, not the
 // casualty/status localStorage precedent.
 const activeKeywordFilters = new Set();
+
+// The popover whose Apply control changed since the last sync; the sync waits for it to close so the
+// re-render doesn't close it under the player.
+let dirtyPopover = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.unit-block').forEach(initUnitBlock);
@@ -53,7 +60,71 @@ function initUnitBlock(unitEl) {
     initCasualtyControls(unitEl);
     initCasualtyReset(unitEl);
     initStatusGlyphControls(unitEl);
+    initApplyControls(unitEl);
     initUnitSelection(unitEl);
+}
+
+// Condition controls in ability popovers (ApplySectionRenderer). Clicks stop at the section so a
+// popover nested in a selectable statline row doesn't toggle it.
+function initApplyControls(unitEl) {
+    unitEl.querySelectorAll('.apply-section').forEach(section => {
+        section.addEventListener('click', event => event.stopPropagation());
+    });
+    unitEl.querySelectorAll('.apply-choice').forEach(updateChoiceCap);
+    unitEl.querySelectorAll('.apply-input').forEach(input => {
+        input.addEventListener('change', () => {
+            recordActivation(input);
+            const choice = input.closest('.apply-choice');
+            if (choice) updateChoiceCap(choice);
+            dirtyPopover = input.closest('.rule-popover');
+        });
+    });
+
+    // toggle doesn't bubble, so listen in the capture phase.
+    unitEl.addEventListener('toggle', event => {
+        if (event.newState !== 'closed' || dirtyPopover === null || event.target !== dirtyPopover) return;
+        dirtyPopover = null;
+        void syncLivePlayState();
+    }, true);
+}
+
+// A multi-select group disables its unchecked options once its maximum is checked.
+function updateChoiceCap(choice) {
+    const checkboxes = [...choice.querySelectorAll('input[type="checkbox"]')];
+    if (checkboxes.length === 0) return;
+    const max = Number(choice.dataset.max);
+    const full = checkboxes.filter(c => c.checked).length >= max;
+    checkboxes.forEach(c => {
+        c.disabled = full && !c.checked;
+    });
+}
+
+function recordActivation(input) {
+    const key = `${input.dataset.unitIndex}::${input.dataset.ability}`;
+    const stored = readJsonMap(ACTIVATION_STORAGE_KEY);
+    const entry = stored[key] ?? {conditions: [], choices: {}};
+    entry.conditions ??= [];
+    entry.choices ??= {};
+
+    if (input.dataset.condition !== undefined) {
+        const condition = input.dataset.condition;
+        entry.conditions = entry.conditions.filter(c => c !== condition);
+        if (input.checked) entry.conditions.push(condition);
+    } else {
+        const group = input.dataset.group;
+        const option = Number(input.dataset.option);
+        if (input.type === 'radio') {
+            entry.choices[group] = option < 0 ? [] : [option];
+        } else {
+            const selected = (entry.choices[group] ?? []).filter(o => o !== option);
+            entry.choices[group] = input.checked ? [...selected, option] : selected;
+        }
+        if (entry.choices[group].length === 0) delete entry.choices[group];
+    }
+
+    if (entry.conditions.length === 0 && Object.keys(entry.choices).length === 0) delete stored[key];
+    else stored[key] = entry;
+    writeJsonMap(ACTIVATION_STORAGE_KEY, stored);
 }
 
 // Provenance breakdown expand/collapse. Scoped to unitEl
@@ -241,25 +312,48 @@ function buildStatusAdjustments() {
     }));
 }
 
+function buildActivationAdjustments() {
+    return Object.entries(readJsonMap(ACTIVATION_STORAGE_KEY))
+        .map(([key, value]) => {
+            const separator = key.indexOf('::');
+            const unitIndex = Number(key.slice(0, separator));
+            if (separator < 0 || Number.isNaN(unitIndex)) return null;
+            return {
+                unitIndex,
+                abilityName: key.slice(separator + 2),
+                conditions: value?.conditions ?? [],
+                choices: value?.choices ?? {}
+            };
+        })
+        .filter(entry => entry !== null);
+}
+
+function buildLivePlayState() {
+    return {
+        casualtyAdjustments: buildCasualtyAdjustments(),
+        statusAdjustments: buildStatusAdjustments(),
+        activationAdjustments: buildActivationAdjustments()
+    };
+}
+
 // Posts the *entire* current localStorage state on every call, never just the newest change - the
 // server is stateless and always rebuilds from a pristine roster, so a request carrying only one
 // adjustment would discard every earlier casualty/status from the same session; every request
 // carries the full current map, for both the casualty map and the two unit-status maps sharing
-// this same POST. A no-op when
-// both are empty, so a browser with no recorded adjustments never issues a request at all. Returns
+// this same POST, and the activation map. A no-op when
+// all are empty, so a browser with no recorded adjustments never issues a request at all. Returns
 // whether the sync actually completed (used by initCasualtyReset to know when it's safe to prune
 // storage) - true for the no-op case too, since there was nothing to fail.
 async function syncLivePlayState() {
-    const casualtyAdjustments = buildCasualtyAdjustments();
-    const statusAdjustments = buildStatusAdjustments();
-    if (casualtyAdjustments.length === 0 && statusAdjustments.length === 0) return true;
+    const state = buildLivePlayState();
+    if (Object.values(state).every(adjustments => adjustments.length === 0)) return true;
 
     let response;
     try {
         response = await fetch('/api/live-play/casualties', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({casualtyAdjustments, statusAdjustments})
+            body: JSON.stringify(state)
         });
     } catch {
         return false; // offline/network failure - leave the DOM as-is, localStorage still holds the state
@@ -271,7 +365,8 @@ async function syncLivePlayState() {
     return true;
 }
 
-// Posts a phase/turn selection change. Moves .is-active to the clicked
+// Posts a phase/turn selection change with the full recorded state, since every unit block is
+// re-rendered from it. Moves .is-active to the clicked
 // cell immediately - unambiguous, it's exactly what was clicked, no need to wait on the response for
 // this part - then applies the response's own fragment map using its reported
 // Forced set, same as syncLivePlayState.
@@ -296,11 +391,7 @@ async function syncPhaseTurn(turn, phase) {
         response = await fetch('/api/live-play/casualties', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                casualtyAdjustments: [],
-                statusAdjustments: [],
-                phaseTurnAdjustment: {turn, phase}
-            })
+            body: JSON.stringify({...buildLivePlayState(), phaseTurnAdjustment: {turn, phase}})
         });
     } catch {
         return false;

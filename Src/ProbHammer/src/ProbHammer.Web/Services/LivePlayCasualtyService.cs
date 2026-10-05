@@ -38,6 +38,7 @@ public class LivePlayCasualtyService(
         // to pristine; simpler than diffing, and two empty batches still yield an empty response.
         var partialUnitIndexes = request.CasualtyAdjustments.Select(a => a.Coordinate.UnitIndex)
             .Concat(request.StatusAdjustments.Select(a => a.UnitIndex))
+            .Concat((request.ActivationAdjustments ?? []).Select(a => a.UnitIndex))
             .Distinct()
             .ToList();
         var import = sessionStore.Load(ctx.Session);
@@ -64,7 +65,8 @@ public class LivePlayCasualtyService(
             : [];
 
         var roster = LivePlayModel.RebuildRosterWithStatus(
-            result.Roster.Units, request.CasualtyAdjustments, request.StatusAdjustments, abilityClassifications);
+            result.Roster.Units, request.CasualtyAdjustments, request.StatusAdjustments, abilityClassifications,
+            request.ActivationAdjustments);
         var fragments = new Dictionary<int, string>();
 
         foreach (var unitIndex in unitIndexes)

@@ -190,7 +190,8 @@ public class LivePlayModel(
         IReadOnlyList<ICombatUnit> units,
         IReadOnlyList<CasualtyAdjustment> casualtyAdjustments,
         IReadOnlyList<UnitStatusAdjustment> statusAdjustments,
-        AbilityClassificationCatalogue classifications)
+        AbilityClassificationCatalogue classifications,
+        IReadOnlyList<ActivationAdjustment>? activationAdjustments = null)
     {
         var sortedUnits = SortRoster(units, classifications);
 
@@ -206,6 +207,14 @@ public class LivePlayModel(
                 unit.IsHalfStrengthOverride = status.IsHalfStrength;
                 unit.IsBattleShocked = status.IsBattleShocked;
             }
+
+            var activations = (activationAdjustments ?? []).Where(a => a.UnitIndex == unitIndex).ToList();
+            if (activations.Count > 0)
+                unit.ConditionActivations = new ConditionActivations(activations
+                    .DistinctBy(a => a.AbilityName, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(a => a.AbilityName, a => new AbilityActivation(
+                        new HashSet<string>(a.Conditions ?? []),
+                        (a.Choices ?? []).ToDictionary(c => c.Key, c => (IReadOnlySet<int>)new HashSet<int>(c.Value)))));
         }
 
         return sortedUnits.Select(unit => (unit, AttachedUnitAggregator.Build(unit, classifications))).ToList();
@@ -270,14 +279,15 @@ public class LivePlayModel(
         var hasMultipleModelLines = totalModelLines > 1;
 
         var loadoutLabels = BuildLoadoutLabelLookup(view.Statlines);
-        var provenance = new ValueProvenanceBuilder(classifications);
+        var activated = ActivatedAbilityNames(view.ActivatableConditions);
+        var provenance = new ValueProvenanceBuilder(classifications, activated);
 
         var orderedWeapons = view.Weapons
             .OrderByDescending(w => w.TotalAttacks.ExpectedValue())
             .Select(w => new WeaponRowViewModel(w, BuildContributionBreakdown(w, loadoutLabels), hasMultipleModelLines,
                 Provenance: provenance.ForWeapon(w),
                 GroupWideAttacksLines: BuildGroupWideAttacksLines(w),
-                Chips: BuildKeywordChips(w)))
+                Chips: BuildKeywordChips(w, activated)))
             .ToList();
         var rangedWeaponRows = orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Ranged).ToList();
         var meleeWeaponRows = orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Melee).ToList();
@@ -297,7 +307,8 @@ public class LivePlayModel(
             Keywords: view.Keywords.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList(),
             IsSingleModelUnit: isSingleModelUnit,
             IsAtOrBelowHalfStrength: isAtOrBelowHalfStrength,
-            IsBattleShocked: isBattleShocked);
+            IsBattleShocked: isBattleShocked,
+            ActivatableConditions: view.ActivatableConditions);
     }
 
     // Selection-key convention shared between the Statline section's toggle targets and weapon
@@ -426,14 +437,26 @@ public class LivePlayModel(
 
     // One chip per keyword token (Granted when an applied grant produced it, Native otherwise), then
     // one per distinct not-added grant keyword.
-    internal static IReadOnlyList<KeywordChip> BuildKeywordChips(AggregateWeaponEntry entry)
+    private static IReadOnlySet<string> ActivatedAbilityNames(IReadOnlyList<ActivatableCondition> conditions) =>
+        conditions
+            .Where(c => c is ConditionToggle { IsActive: true } or ChoiceToggle { Selected.Count: > 0 })
+            .Select(c => c.Ability.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    internal static IReadOnlyList<KeywordChip> BuildKeywordChips(AggregateWeaponEntry entry,
+        IReadOnlySet<string>? activatedAbilityNames = null)
     {
         var chips = entry.Profile.KeywordsText.Select(token =>
         {
             var sources = entry.KeywordGrants
                 .Where(g => g.Keyword == token)
-                .Select(g => new ChipSource(g.SourceAbility,
-                    g.ReplacedKeyword is { } replaced ? $"replaces {WeaponKeyword.Parse(replaced).Display}" : ""))
+                .Select(g => new ChipSource(g.SourceAbility, string.Join("; ", new[]
+                {
+                    activatedAbilityNames?.Contains(g.SourceAbility.Name) == true
+                        ? ValueProvenanceBuilder.ActivatedNote
+                        : null,
+                    g.ReplacedKeyword is { } replaced ? $"replaces {WeaponKeyword.Parse(replaced).Display}" : null
+                }.OfType<string>())))
                 .ToList();
             return new KeywordChip(token, sources.Count > 0 ? ChipKind.Granted : ChipKind.Native, sources);
         }).ToList();
@@ -809,6 +832,16 @@ public sealed record UnitStatusAdjustment(int UnitIndex, bool IsHalfStrength, bo
 /// selection (see <see cref="ProbHammer.Core.Domain.Roster.PhaseTurnSelection"/>).</summary>
 public sealed record PhaseTurnAdjustment(GameTurn Turn, GamePhase? Phase);
 
+/// <summary>One unit's player-set activation of one ability's conditions: the activated condition texts
+/// (empty string for a condition with no text) and, per choice group index, the selected option
+/// indexes. Addressed like <see cref="UnitStatusAdjustment"/>; an unknown index or ability is
+/// ignored.</summary>
+public sealed record ActivationAdjustment(
+    int UnitIndex,
+    string AbilityName,
+    List<string>? Conditions,
+    Dictionary<int, List<int>>? Choices);
+
 /// <summary>The casualty-sync endpoint's full request body - bundles a casualty batch, a
 /// unit-status-toggle batch, and an optional phase/turn adjustment into
 /// one POST/one roster rebuild/one set of re-rendered fragments, rather than independent requests
@@ -817,7 +850,8 @@ public sealed record PhaseTurnAdjustment(GameTurn Turn, GamePhase? Phase);
 public sealed record LivePlaySyncRequest(
     List<CasualtyAdjustment> CasualtyAdjustments,
     List<UnitStatusAdjustment> StatusAdjustments,
-    PhaseTurnAdjustment? PhaseTurnAdjustment = null);
+    PhaseTurnAdjustment? PhaseTurnAdjustment = null,
+    List<ActivationAdjustment>? ActivationAdjustments = null);
 
 /// <summary>Which of a unit block's four independently-collapsible sections
 /// (<c>_UnitBlock.cshtml</c>'s own <c>data-section</c> values - see
@@ -993,8 +1027,11 @@ public sealed record UnitBlockViewModel(
     IReadOnlyList<string> Keywords,
     bool IsSingleModelUnit,
     bool IsAtOrBelowHalfStrength,
-    bool IsBattleShocked)
+    bool IsBattleShocked,
+    IReadOnlyList<ActivatableCondition>? ActivatableConditions = null)
 {
+    public IReadOnlyList<ActivatableCondition> ActivatableConditions { get; init; } = ActivatableConditions ?? [];
+
     /// <summary>True once at least one statline entry in this unit has taken a casualty
     /// (RemainingCount != InitialCount somewhere) - gates the "reset casualties" control's
     /// visibility, mirroring the Clear-filter button's own "only shown while active" precedent.

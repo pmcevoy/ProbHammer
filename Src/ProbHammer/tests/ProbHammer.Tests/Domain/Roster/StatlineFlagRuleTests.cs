@@ -452,6 +452,51 @@ public class StatlineFlagRuleTests
     }
 
     [Fact]
+    public void AnActivatedObjectiveControlEffect_IsApplied_AndNotRecorded()
+    {
+        var unit = CrusaderSquadWithMartialHonour();
+        unit.ConditionActivations = ActivationFixtures.Condition("Martial Honour", "Test condition");
+
+        var view = AttachedUnitAggregator.Build(unit, MartialHonourCatalogue);
+
+        var bearer = view.Statlines.Single(s => s.StatlineName == "Sword Brother");
+        bearer.Statline.Oc.Value.Should().Be((CharacteristicValue)7);
+        bearer.Statline.Oc.ContributingAbilities.Should().ContainSingle(a => a.Name == "Martial Honour");
+        view.Statlines.Should().OnlyContain(s => s.NotAppliedEffects.Count == 0);
+        view.Statlines.Single(s => s.StatlineName == "Initiate").Statline.Oc.Value
+            .Should().Be((CharacteristicValue)2);
+    }
+
+    [Fact]
+    public void AnActivatedInvulnerableSave_IsApplied_AndNotRecorded()
+    {
+        var waaagh = new Ability
+        {
+            Name = "Waaagh!", Text = "Waaagh! test text.", Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic
+        };
+        var classifications = ClassificationFixtures.Catalogue(
+        [
+            ClassificationFixtures.Entry(
+                text: waaagh.Text, target: new AttachedUnitRuleTarget(),
+                effects: [new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(5, 5))], conditional: true)
+        ]);
+        var datasheet = new Datasheet(
+            "Boyz", keywords: [], abilities: [waaagh],
+            statlines: [("Boy", new Statline(6, 5, 5, 1, 7, 2))], weaponProfiles: []);
+        var unit = new Unit(datasheet, [], [new ModelLine("Boy", [], count: 10)])
+        {
+            ConditionActivations = ActivationFixtures.Condition("WAAAGH!", "Test condition")
+        };
+
+        var view = AttachedUnitAggregator.Build(unit, classifications);
+
+        var entry = view.Statlines.Should().ContainSingle().Subject;
+        entry.Statline.InSv.DerivedValue!.MeleeInSv.Should().Be(5);
+        entry.Statline.InSv.ContributingAbilities.Should().ContainSingle(a => a.Name == "Waaagh!");
+        entry.NotAppliedEffects.Should().BeEmpty();
+    }
+
+    [Fact]
     public void AKeywordTargetedConditionalEffect_IsNotRecorded()
     {
         var keywordScoped = new Ability

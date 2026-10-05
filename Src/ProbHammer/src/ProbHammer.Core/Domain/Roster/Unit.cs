@@ -29,4 +29,6 @@ public sealed class Unit : ICombatUnit
     public bool IsBattleShocked { get; set; }
 
     public IReadOnlyList<Ability> InboundAbilities { get; set; } = [];
+
+    public ConditionActivations ConditionActivations { get; set; } = ConditionActivations.Empty;
 }

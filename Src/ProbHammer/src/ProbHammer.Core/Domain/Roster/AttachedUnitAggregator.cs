@@ -18,17 +18,79 @@ public static class AttachedUnitAggregator
             .ToList();
 
         var abilities = BuildAbilities(combatUnit);
+        var matches = MatchAbilities(abilities, classifications, combatUnit.ConditionActivations);
         var statlines = ResolveCaveatedInvulnerableSaves(BuildStatlines(combatUnit), classifications);
-        statlines = ApplyStatlineFlagRules(statlines, abilities, classifications);
+        statlines = ApplyStatlineFlagRules(statlines, matches);
 
         return new AttachedUnitAggregateView(
             Name: combatUnit.Name,
             IsAttachedUnit: combatUnit is AttachedUnit,
             Statlines: statlines,
-            Weapons: BuildWeapons(presentLines, abilities, classifications),
+            Weapons: BuildWeapons(presentLines, matches),
             Abilities: abilities,
-            Keywords: KeywordResolution.EffectiveKeywords(combatUnit));
+            Keywords: KeywordResolution.EffectiveKeywords(combatUnit),
+            ActivatableConditions:
+            BuildActivatableConditions(statlines, presentLines, matches, combatUnit.ConditionActivations));
     }
+
+    // One toggle per (ability name, condition text) or (ability name, choice group) among conditional
+    // effects that reach something on this unit, regardless of their current state.
+    private static IReadOnlyList<ActivatableCondition> BuildActivatableConditions(
+        IReadOnlyList<AggregateStatlineEntry> statlines, List<(Unit Unit, ModelLine ModelLine)> presentLines,
+        IReadOnlyList<MatchedAbility> matches, ConditionActivations activations)
+    {
+        var result = new List<ActivatableCondition>();
+        var seen = new HashSet<(string Ability, int? Group, string? Condition)>();
+
+        foreach (var match in matches)
+        {
+            var ability = match.Entry.Ability;
+            var activation = activations.For(ability.Name);
+            foreach (var (effect, _) in match.Effects)
+            {
+                if (match.Classification.IsUnconditional(effect) ||
+                    !Reaches(match, effect.Effect, statlines, presentLines))
+                    continue;
+
+                if (effect.ChoiceBranch is { } branch)
+                {
+                    if (branch.Group >= match.Classification.ChoiceGroups.Count ||
+                        !seen.Add((ability.Name.ToUpperInvariant(), branch.Group, null)))
+                        continue;
+
+                    result.Add(new ChoiceToggle(ability, branch.Group, match.Classification.ChoiceGroups[branch.Group],
+                        activation?.Choices.GetValueOrDefault(branch.Group) ?? new HashSet<int>()));
+                }
+                else
+                {
+                    var key = EffectStates.ConditionKey(effect);
+                    if (!seen.Add((ability.Name.ToUpperInvariant(), null, key)))
+                        continue;
+
+                    result.Add(new ConditionToggle(ability, key, match.Classification.UsageLimit,
+                        match.Classification.TurnOwnership, activation?.Conditions.Contains(key) == true));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static bool Reaches(MatchedAbility match, RuleEffect effect,
+        IReadOnlyList<AggregateStatlineEntry> statlines, List<(Unit Unit, ModelLine ModelLine)> presentLines) =>
+        effect switch
+        {
+            ScalarCharacteristicEffect or InvulnerableSaveCharacteristicEffect => statlines.Any(s =>
+                s.RemainingCount > 0 &&
+                IsBearerOf(match.Entry, match.Classification.Target, s.ComponentName, s.StatlineName)),
+            WeaponCharacteristicEffect { Characteristic: not ("S" or "A" or "AP" or "D") } => false,
+            WeaponCharacteristicEffect or WeaponKeywordGrantEffect => presentLines.Any(x =>
+                IsBearerOf(match.Entry, match.Classification.Target, x.Unit.Datasheet.Name,
+                    x.ModelLine.StatlineName) &&
+                x.ModelLine.Weapons.Any(w =>
+                    WeaponSelectorMatches(SelectorOf(effect), x.Unit.Datasheet.ResolveWeaponProfile(w)))),
+            _ => false
+        };
 
     // A caveated Statline.InSv gets exactly one resolution attempt against the catalogue, via the
     // same InvulnerableSaveEffectResolver ApplyInvulnerableSaveEffect (below) already uses for an
@@ -82,43 +144,54 @@ public static class AttachedUnitAggregator
             _ => throw new InvalidOperationException($"Unrecognized characteristic '{characteristic}'.")
         };
 
-    // Runs after BuildStatlines/BuildAbilities produce their live, casualty-filtered results -
-    // abilities is already filtered to only currently-present sources, so a matched entry's
-    // liveness falls out for free with no separate tracking. Never mutates Datasheet/Unit; only the
-    // returned decorated copy of the statline entries carries an effect. Only unconditional effects
-    // apply; conditional Scalar/InvulnerableSave effects reaching the same entry are recorded instead.
-    private static IReadOnlyList<AggregateStatlineEntry> ApplyStatlineFlagRules(
-        IReadOnlyList<AggregateStatlineEntry> statlines, IReadOnlyList<AggregateAbilityEntry> abilities,
-        AbilityClassificationCatalogue classifications)
-    {
-        var matches = abilities
-            .Select(a => (Entry: a, Matched: TryGetApplicableClassification(classifications, a.Ability)))
-            .Where(x => x.Matched is not null)
+    // A present ability whose classification applies here, each classified effect paired with its
+    // state on this unit. Abilities is already filtered to currently-present sources, so a matched
+    // entry's liveness falls out for free.
+    private sealed record MatchedAbility(
+        AggregateAbilityEntry Entry,
+        AbilityClassification Classification,
+        IReadOnlyList<(ClassifiedEffect Effect, EffectState State)> Effects);
+
+    private static IReadOnlyList<MatchedAbility> MatchAbilities(IReadOnlyList<AggregateAbilityEntry> abilities,
+        AbilityClassificationCatalogue classifications, ConditionActivations activations) =>
+        abilities
+            .Select(a => (Entry: a, Classification: TryGetApplicableClassification(classifications, a.Ability)))
+            .Where(x => x.Classification is not null)
+            .Select(x => new MatchedAbility(x.Entry, x.Classification!,
+                x.Classification!.Effects
+                    .Select(e => (e, EffectStates.Of(x.Classification, e, activations.For(x.Entry.Ability.Name))))
+                    .ToList()))
             .ToList();
 
+    // Never mutates Datasheet/Unit; only the returned decorated copy of the statline entries carries
+    // an effect. Applied effects apply; NotApplied Scalar/InvulnerableSave effects reaching the same
+    // entry are recorded instead.
+    private static IReadOnlyList<AggregateStatlineEntry> ApplyStatlineFlagRules(
+        IReadOnlyList<AggregateStatlineEntry> statlines, IReadOnlyList<MatchedAbility> matches)
+    {
         if (matches.Count == 0)
             return statlines;
 
         return statlines.Select(entry =>
         {
             var applicable = matches
-                .Where(m => IsBearerOf(m.Entry, m.Matched!.Target, entry.ComponentName, entry.StatlineName))
+                .Where(m => IsBearerOf(m.Entry, m.Classification.Target, entry.ComponentName, entry.StatlineName))
                 .ToList();
             if (applicable.Count == 0)
                 return entry;
 
             var mutated = entry.Statline;
             var notApplied = new List<NotAppliedStatlineEffect>();
-            foreach (var (abilityEntry, classification) in applicable)
+            foreach (var match in applicable)
             {
-                foreach (var effect in classification!.UnconditionalEffects<RuleEffect>())
-                    mutated = ApplyEffect(mutated, effect, abilityEntry.Ability);
+                foreach (var (effect, _) in match.Effects.Where(e => e.State == EffectState.Applied))
+                    mutated = ApplyEffect(mutated, effect.Effect, match.Entry.Ability);
 
-                notApplied.AddRange(classification.Effects
-                    .Where(e => !classification.IsUnconditional(e) &&
-                                e.Effect is ScalarCharacteristicEffect or InvulnerableSaveCharacteristicEffect)
+                notApplied.AddRange(match.Effects
+                    .Where(e => e.State == EffectState.NotApplied &&
+                                e.Effect.Effect is ScalarCharacteristicEffect or InvulnerableSaveCharacteristicEffect)
                     .Select(e => new NotAppliedStatlineEffect(
-                        abilityEntry.Ability, e.Effect, EffectCondition.Of(classification, e))));
+                        match.Entry.Ability, e.Effect.Effect, EffectCondition.Of(match.Classification, e.Effect))));
             }
 
             return entry with { Statline = mutated, NotAppliedEffects = notApplied };
@@ -261,8 +334,7 @@ public static class AttachedUnitAggregator
     // mutation reaching only some of them splits those into their own entry - grouping itself needs
     // no new logic to do this (resolve-weapon-characteristic-effects design.md D5).
     private static IReadOnlyList<AggregateWeaponEntry> BuildWeapons(
-        List<(Unit Unit, ModelLine ModelLine)> presentLines,
-        IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications)
+        List<(Unit Unit, ModelLine ModelLine)> presentLines, IReadOnlyList<MatchedAbility> matches)
     {
         var groups = new Dictionary<WeaponProfileEqualityKey,
             (WeaponProfile Profile, DiceExpression TotalAttacks, List<WeaponContribution> Contributions)>();
@@ -273,13 +345,13 @@ public static class AttachedUnitAggregator
             {
                 var baseProfile = unit.Datasheet.ResolveWeaponProfile(weaponName);
                 var (profile, keywordGrants) =
-                    ResolveContributionProfile(baseProfile, unit, modelLine, abilities, classifications);
+                    ResolveContributionProfile(baseProfile, unit, modelLine, matches);
                 var notAppliedEffects =
-                    FindNotAppliedEffects(baseProfile, unit, modelLine, abilities, classifications);
+                    FindNotAppliedEffects(baseProfile, unit, modelLine, matches);
                 var notAppliedKeywordGrants =
-                    FindNotAppliedKeywordGrants(profile, unit, modelLine, abilities, classifications);
+                    FindNotAppliedKeywordGrants(profile, unit, modelLine, matches);
                 var attacksContributions =
-                    ResolveAttacksContributions(baseProfile, unit, modelLine, abilities, classifications);
+                    ResolveAttacksContributions(baseProfile, unit, modelLine, matches);
                 var key = profile.EqualityKey();
 
                 var contribution = new WeaponContribution(
@@ -327,10 +399,10 @@ public static class AttachedUnitAggregator
     // WeaponCharacteristicEffectResolver, which stays fail-loud for that case.
     private static (WeaponProfile Profile, IReadOnlyList<KeywordGrant> KeywordGrants) ResolveContributionProfile(
         WeaponProfile profile, Unit unit, ModelLine modelLine,
-        IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications)
+        IReadOnlyList<MatchedAbility> matches)
     {
         var applicableEffects = MatchedWeaponEffects<WeaponCharacteristicEffect>(
-                profile, unit, modelLine, abilities, classifications, conditional: false)
+                profile, unit, modelLine, matches, EffectState.Applied)
             .Where(x => x.Effect.Characteristic is "S" or "AP" or "D");
 
         var resolved = profile;
@@ -339,7 +411,7 @@ public static class AttachedUnitAggregator
 
         var keywordGrants = new List<KeywordGrant>();
         foreach (var (grant, sourceAbility, _) in MatchedWeaponEffects<WeaponKeywordGrantEffect>(
-                     profile, unit, modelLine, abilities, classifications, conditional: false))
+                     profile, unit, modelLine, matches, EffectState.Applied))
         {
             var result = WeaponKeywordGrantResolver.Apply(resolved.KeywordsText, grant.Keyword);
             if (!result.Changed)
@@ -359,9 +431,9 @@ public static class AttachedUnitAggregator
     // needs.
     private static IReadOnlyList<AttacksContribution> ResolveAttacksContributions(
         WeaponProfile profile, Unit unit, ModelLine modelLine,
-        IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications) =>
+        IReadOnlyList<MatchedAbility> matches) =>
         MatchedWeaponEffects<WeaponCharacteristicEffect>(
-                profile, unit, modelLine, abilities, classifications, conditional: false)
+                profile, unit, modelLine, matches, EffectState.Applied)
             .Where(x => x.Effect.Characteristic == "A")
             .Select(x => new AttacksContribution(
                 x.SourceAbility, CharacteristicModificationResolver.ResolveAttacksAmount(x.Effect)))
@@ -371,9 +443,9 @@ public static class AttachedUnitAggregator
     // what the effect would do so it stays visible without evaluating its condition.
     private static IReadOnlyList<NotAppliedWeaponEffect> FindNotAppliedEffects(
         WeaponProfile profile, Unit unit, ModelLine modelLine,
-        IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications) =>
+        IReadOnlyList<MatchedAbility> matches) =>
         MatchedWeaponEffects<WeaponCharacteristicEffect>(
-                profile, unit, modelLine, abilities, classifications, conditional: true)
+                profile, unit, modelLine, matches, EffectState.NotApplied)
             .Where(x => x.Effect.Characteristic is "S" or "AP" or "D" or "A")
             .Select(x => new NotAppliedWeaponEffect(x.SourceAbility, x.Effect.Characteristic, x.Effect.Verb,
                 x.Effect.Verb == EffectVerb.Set
@@ -388,9 +460,9 @@ public static class AttachedUnitAggregator
     // native keyword (or an applied grant) already covers is dropped rather than shown.
     private static IReadOnlyList<NotAppliedKeywordGrant> FindNotAppliedKeywordGrants(
         WeaponProfile resolvedProfile, Unit unit, ModelLine modelLine,
-        IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications) =>
+        IReadOnlyList<MatchedAbility> matches) =>
         MatchedWeaponEffects<WeaponKeywordGrantEffect>(
-                resolvedProfile, unit, modelLine, abilities, classifications, conditional: true)
+                resolvedProfile, unit, modelLine, matches, EffectState.NotApplied)
             .Select(x => (x.SourceAbility, x.Condition,
                 Result: WeaponKeywordGrantResolver.Apply(resolvedProfile.KeywordsText, x.Effect.Keyword)))
             .Where(x => x.Result.Changed)
@@ -398,23 +470,19 @@ public static class AttachedUnitAggregator
             .DistinctBy(g => (g.SourceAbility.Name, g.SourceAbility.Text, g.Keyword))
             .ToList();
 
-    // Every unconditional (or, with conditional set, every conditional) TEffect weapon effect of a
-    // present ability whose classification applies here (TryGetApplicableClassification), reaching
-    // this contribution and matching its profile.
+    // Every TEffect weapon effect in the given state of a matched ability, reaching this contribution
+    // and matching its profile.
     private static IEnumerable<(TEffect Effect, Ability SourceAbility, EffectCondition Condition)>
         MatchedWeaponEffects<TEffect>(
-            WeaponProfile profile, Unit unit, ModelLine modelLine,
-            IReadOnlyList<AggregateAbilityEntry> abilities, AbilityClassificationCatalogue classifications,
-            bool conditional) where TEffect : RuleEffect =>
-        abilities
-            .Select(a => (Entry: a, Classification: TryGetApplicableClassification(classifications, a.Ability)))
-            .Where(x => x.Classification is not null)
-            .Where(x => IsBearerOf(x.Entry, x.Classification!.Target, unit.Datasheet.Name, modelLine.StatlineName))
-            .SelectMany(x => x.Classification!.Effects
-                .Where(e => x.Classification.IsUnconditional(e) != conditional)
-                .Where(e => e.Effect is TEffect && WeaponSelectorMatches(SelectorOf(e.Effect), profile))
-                .Select(e => (Effect: (TEffect)e.Effect, SourceAbility: x.Entry.Ability,
-                    Condition: EffectCondition.Of(x.Classification, e))));
+            WeaponProfile profile, Unit unit, ModelLine modelLine, IReadOnlyList<MatchedAbility> matches,
+            EffectState state) where TEffect : RuleEffect =>
+        matches
+            .Where(m => IsBearerOf(m.Entry, m.Classification.Target, unit.Datasheet.Name, modelLine.StatlineName))
+            .SelectMany(m => m.Effects
+                .Where(e => e.State == state)
+                .Where(e => e.Effect.Effect is TEffect && WeaponSelectorMatches(SelectorOf(e.Effect.Effect), profile))
+                .Select(e => (Effect: (TEffect)e.Effect.Effect, SourceAbility: m.Entry.Ability,
+                    Condition: EffectCondition.Of(m.Classification, e.Effect))));
 
     private static WeaponSelector SelectorOf(RuleEffect effect) =>
         effect switch

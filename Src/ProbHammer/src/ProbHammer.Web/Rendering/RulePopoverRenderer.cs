@@ -15,8 +15,13 @@ namespace ProbHammer.Web.Rendering;
 /// popover ids against. One instance per render pass, scoped by an explicit id-scope prefix
 /// (<paramref name="idScopePrefix"/> - e.g. "u3" for unit block 3, "hdr" for the header) instead of
 /// implicitly relying on a unit's page index the way the original closures did.
+/// <paramref name="applySection"/>, given an ability and its popover id, returns that ability's Apply
+/// section HTML; only a unit block supplies one.
 /// </summary>
-public sealed class RulePopoverRenderer(RuleGlossary glossary, string idScopePrefix)
+public sealed class RulePopoverRenderer(
+    RuleGlossary glossary,
+    string idScopePrefix,
+    Func<Ability, string, string>? applySection = null)
 {
     private int _counter;
 
@@ -39,9 +44,11 @@ public sealed class RulePopoverRenderer(RuleGlossary glossary, string idScopePre
     /// (self-reference guard), which would otherwise make it indistinguishable from a genuinely
     /// nested popover if depth were derived from the set's size instead of tracked explicitly.
     /// Rendered as the panel's own `data-depth` attribute, which CSS uses to offset a nested
-    /// popover from its parent's shared centered position.</summary>
+    /// popover from its parent's shared centered position. <paramref name="ability"/> is the ability
+    /// whose text this is, if any, for its Apply section.</summary>
     public (string Trigger, string Trailer) BuildRulePopover(
-        string triggerHtml, string triggerClass, string ruleText, IReadOnlySet<string> shownRuleNames, int depth = 0)
+        string triggerHtml, string triggerClass, string ruleText, IReadOnlySet<string> shownRuleNames, int depth = 0,
+        Ability? ability = null)
     {
         var popoverId = NextPopoverId();
         var (bodyInline, bodyPopovers) =
@@ -51,7 +58,7 @@ public sealed class RulePopoverRenderer(RuleGlossary glossary, string idScopePre
         var closeButton =
             $"<button type=\"button\" class=\"rule-popover-close\" popovertarget=\"p-{popoverId}\" popovertargetaction=\"hide\" aria-label=\"Close\">&times;</button>";
         var panel =
-            $"<div id=\"p-{popoverId}\" class=\"rule-popover\" popover=\"auto\" data-depth=\"{depth}\"><div class=\"rule-popover-title\">{triggerHtml}{closeButton}</div><div class=\"rule-popover-text\">{bodyInline}</div></div>";
+            $"<div id=\"p-{popoverId}\" class=\"rule-popover\" popover=\"auto\" data-depth=\"{depth}\"><div class=\"rule-popover-title\">{triggerHtml}{closeButton}</div><div class=\"rule-popover-text\">{bodyInline}</div>{ApplySection(ability, popoverId)}</div>";
         return (trigger, panel + bodyPopovers);
     }
 
@@ -74,7 +81,8 @@ public sealed class RulePopoverRenderer(RuleGlossary glossary, string idScopePre
             if (line.Source is { } source && !string.IsNullOrWhiteSpace(source.Text))
             {
                 var (abilityTrigger, abilityTrailer) =
-                    BuildRulePopover(labelHtml, "ability-name-line", source.Text, new HashSet<string>(), depth: 1);
+                    BuildRulePopover(labelHtml, "ability-name-line", source.Text, new HashSet<string>(), depth: 1,
+                        ability: source);
                 labelHtml = abilityTrigger;
                 nestedPanels.Append(abilityTrailer);
             }
@@ -115,7 +123,8 @@ public sealed class RulePopoverRenderer(RuleGlossary glossary, string idScopePre
             if (!string.IsNullOrWhiteSpace(source.Text))
             {
                 var (abilityTrigger, abilityTrailer) =
-                    BuildRulePopover(labelHtml, "ability-name-line", source.Text, new HashSet<string>(), depth: 1);
+                    BuildRulePopover(labelHtml, "ability-name-line", source.Text, new HashSet<string>(), depth: 1,
+                        ability: source);
                 labelHtml = abilityTrigger;
                 nestedPanels.Append(abilityTrailer);
             }
@@ -146,6 +155,9 @@ public sealed class RulePopoverRenderer(RuleGlossary glossary, string idScopePre
     }
 
     private static string Encode(string text) => WebUtility.HtmlEncode(text);
+
+    private string ApplySection(Ability? ability, string popoverId) =>
+        ability is null || applySection is null ? "" : applySection(ability, popoverId);
 
     // The bracket delegate RuleTextEmphasisRenderer.Render calls for every [BRACKET] token it
     // encounters mid-parse. Normalizes the token's raw text the same way extraction always has
