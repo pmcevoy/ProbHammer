@@ -21,8 +21,6 @@ record, not this file).
   two states (an active control, and a value an ability has something to say about), so it splits
   into something like `--active` and `--noted`, beside the already-semantic `--cond`. With semantic
   names in place, a theme is a set of redefinitions on one selector.
-- **Provenance popover polish.** The popover table draws a rule under every row, so the Total row
-  ends with a double line (its own top border plus the row rule above). Five minutes in `site.css`.
 - **Fill in `live-play-view`'s `## Purpose`.** Still the placeholder `openspec archive` wrote, so
   `openspec validate --specs --strict` fails on it. Edit the main spec directly.
 - **A Feel No Pain stat box, mirroring InSv's.** Feel No Pain grants are common (153+ corpus hits)

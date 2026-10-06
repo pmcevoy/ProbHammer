@@ -92,6 +92,17 @@ picks up more routes in the future. Applies to any `RedirectToPage`/`Url.Page`/t
 
 ---
 
+## Popover Panels Inherit Their Host Cell's Descendant Selectors
+
+A popover panel is emitted as its trigger's sibling, so a weapon value's provenance popover sits
+inside the weapon `<td>`. Top-layer rendering doesn't change DOM ancestry, so any
+`.weapon-table td`-style descendant rule also styles the popover's own table cells. That is how
+the provenance Total row got a double rule. `.weapon-table`'s cell rules use child combinators
+(`> tbody > tr > td`) for this reason. Scope any new rule for a popover-hosting container the
+same way.
+
+---
+
 ## Razor Issues
 
 ### Partial Tag Helper model binding

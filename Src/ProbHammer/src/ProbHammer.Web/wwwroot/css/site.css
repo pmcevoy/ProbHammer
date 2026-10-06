@@ -889,7 +889,8 @@ button.filter-flag:hover { opacity: 0.8; }
 .live-play-page .weapon-table col.col-weapon-melee { width: 55%; }
 .live-play-page .weapon-table col.col-slot { width: 9%; }
 
-.live-play-page .weapon-table th {
+/* Child combinators keep these cell rules off the provenance popover tables nested inside weapon cells. */
+.live-play-page .weapon-table > thead > tr > th {
     text-align: left;
     color: var(--text-dim);
     font-weight: 600;
@@ -900,7 +901,7 @@ button.filter-flag:hover { opacity: 0.8; }
     white-space: nowrap;
 }
 
-.live-play-page .weapon-table td {
+.live-play-page .weapon-table > tbody > tr > td {
     padding: 0.3rem 0.3rem;
     border-bottom: 1px solid var(--border);
     white-space: nowrap;
@@ -911,9 +912,9 @@ button.filter-flag:hover { opacity: 0.8; }
    while [hidden], so :nth-child counts it and shifts every later row's parity by one per
    expandable weapon above it. Tying the class to the semantic weapon index instead of raw DOM
    position sidesteps that entirely. */
-.live-play-page .weapon-table tbody tr.weapon-row-alt td { background: var(--bg); }
+.live-play-page .weapon-table > tbody > tr.weapon-row-alt > td { background: var(--bg); }
 
-.live-play-page .weapon-table td.weapon-name { font-weight: 600; white-space: normal; }
+.live-play-page .weapon-table > tbody > tr > td.weapon-name { font-weight: 600; white-space: normal; }
 
 /* Weapon-name toggle: only rendered when a weapon entry has more than one contribution to break
    down. Reset to plain block text so it keeps the existing td.weapon-name stacking (name line,
@@ -948,7 +949,7 @@ button.filter-flag:hover { opacity: 0.8; }
 /* Contribution breakdown rows: dimmer/smaller than primary weapon rows so the two are never
    confused at a glance. Hidden by default via the [hidden] attribute in markup; live-play.js
    toggles it on click. */
-.live-play-page .weapon-table tr.weapon-contribution-row td {
+.live-play-page .weapon-table > tbody > tr.weapon-contribution-row > td {
     color: var(--text-dim);
     font-size: 0.72rem;
     font-style: italic;
@@ -959,7 +960,7 @@ button.filter-flag:hover { opacity: 0.8; }
    so it's never mistaken for a real per-contributor row by the selection-filtering group logic
    (recomputeWeaponRow); its own show/hide is wired into initWeaponProvenanceToggles. Shares
    .weapon-contribution-row's own dim/italic look. */
-.live-play-page .weapon-table tr.weapon-attacks-contribution-row td {
+.live-play-page .weapon-table > tbody > tr.weapon-attacks-contribution-row > td {
     color: var(--text-dim);
     font-size: 0.72rem;
     font-style: italic;
