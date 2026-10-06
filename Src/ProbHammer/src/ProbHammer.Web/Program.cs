@@ -75,7 +75,7 @@ builder.Services.AddSession(options =>
     options.Cookie.MaxAge = TimeSpan.FromDays(7);
 });
 
-builder.Services.AddRazorPages(options => options.Conventions.AddPageRoute("/Import", ""));
+builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
@@ -88,6 +88,9 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
 app.MapRazorPages();
+
+// /LivePlay falls back to /Import itself when the session has no list.
+app.MapGet("/", () => Results.LocalRedirect("/LivePlay"));
 
 // Sync /LivePlay casualty adjustments and unit-status (half-strength/Battle-shocked) toggles,
 // returning rendered fragments for the affected units.

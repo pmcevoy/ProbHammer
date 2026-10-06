@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using ProbHammer.Core.Domain.Catalogue.Bsdata;
@@ -15,7 +16,14 @@ namespace ProbHammer.Web.Pages;
 /// entirely to `/LivePlay` - so a resolution failure is caught and reported before anything is
 /// committed to session: only a fully-successful parse+build ever calls Save, leaving a
 /// previously-successful session import untouched.</summary>
-public class ImportModel(IArmyListParser parser, IArmyRosterProvider rosterProvider, ISessionArmyListStore sessionStore)
+// Validated in OnPostAsync instead, so a stale form re-renders with its text rather than a blank 400.
+[IgnoreAntiforgeryToken]
+public class ImportModel(
+    IArmyListParser parser,
+    IArmyRosterProvider rosterProvider,
+    ISessionArmyListStore sessionStore,
+    IPhaseTurnStore phaseTurnStore,
+    IAntiforgery antiforgery)
     : PageModel
 {
     [BindProperty]
@@ -23,12 +31,20 @@ public class ImportModel(IArmyListParser parser, IArmyRosterProvider rosterProvi
 
     public string? ErrorMessage { get; private set; }
 
+    public bool HasCurrentList => sessionStore.Load(HttpContext.Session) is not null;
+
     public void OnGet()
     {
     }
 
-    public IActionResult OnPost()
+    public async Task<IActionResult> OnPostAsync()
     {
+        if (!await antiforgery.IsRequestValidAsync(HttpContext))
+        {
+            ErrorMessage = "This page had expired - press Import again.";
+            return Page();
+        }
+
         try
         {
             var import = BattleScribeRosterFormat.TryParse(ExportText, out var roster)
@@ -37,6 +53,7 @@ public class ImportModel(IArmyListParser parser, IArmyRosterProvider rosterProvi
 
             rosterProvider.Build(import); // validate before committing to session
             sessionStore.Save(HttpContext.Session, import);
+            phaseTurnStore.Clear(HttpContext.Session);
             return RedirectToPage("/LivePlay");
         }
         catch (Exception ex) when (IsExpectedImportFailure(ex))

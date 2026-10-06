@@ -4,7 +4,7 @@
     ViewData["Title"] = "Live Play";
 }
 
-<main class="live-play-page">
+<main class="live-play-page" data-import-id="@Model.ImportId">
     @* Orientation gate: a narrow portrait viewport (phone-class, max-width ~600px) can't render
        this page's row-aligned layout without clipping/garbling data. CSS-only detect-and-overlay:
        .rotate-prompt and .live-play-content both render unconditionally here; the @@media rule in
@@ -19,6 +19,8 @@
     </div>
 
     <div class="live-play-content">
+        <nav class="page-nav"><a href="/Import">Import a new list</a></nav>
+
         <partial name="_ArmyHeader" model="new ArmyHeaderRenderModel(Model.Header, Model.Glossary)"/>
 
         @* Rendered here, outside _ArmyHeader.cshtml entirely, so it stays visible regardless of the

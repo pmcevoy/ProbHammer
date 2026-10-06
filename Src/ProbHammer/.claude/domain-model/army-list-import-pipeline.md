@@ -205,6 +205,9 @@ ISessionArmyListStore.Save(ISession, StoredArmyImport)
                                        // see interface's own doc comment; every request re-builds
                                        // fresh via IArmyRosterProvider, never re-reading a built
                                        // ArmyRoster from storage.
+                     .GetOrAssignImportId(ISession) -> string
+                                       // a GUID written by every Save (session key ArmyImportId);
+                                       // a session saved before ids existed is assigned one here.
 
 IArmyRosterProvider.Build(StoredArmyImport) -> ArmyRosterBuildResult
                                        // see interface's own doc comment. Since
@@ -229,10 +232,17 @@ ImportModel (/Import Razor Page)      // paste box + submit - see class's own do
                                        // AmbiguousCharacteristicException/
                                        // BattleScribeRosterParseException and reports the message
                                        // on the page; any other exception type is an unhandled bug.
+                                       // [IgnoreAntiforgeryToken] + a manual IAntiforgery check
+                                       // first: a stale form (Safari restoring the tab after the
+                                       // browser-session antiforgery cookie is gone) re-renders with
+                                       // its text and an "expired" message instead of a blank 400.
+                                       // A successful Save also clears IPhaseTurnStore. Shows a
+                                       // "Back to current list" link when the session has a list.
 
 LivePlayModel.OnGet()                 // loads the session's StoredArmyImport; redirects to /Import
                                        // if absent, otherwise builds via IArmyRosterProvider and
-                                       // renders unaware of which pipeline produced it.
+                                       // renders unaware of which pipeline produced it. Renders the
+                                       // import id as <main data-import-id>.
                                        // RebuildRoster (casualty rebuild) takes the roster's Units
                                        // as an explicit parameter rather than reading
                                        // Examples.View.MyArmyRoster() internally.
@@ -270,4 +280,13 @@ unreachable regardless of the bucket's own 14-day retention. `Program.cs` also r
 `LocalDiskBsdataCatalogueSource` rooted at `Bsdata:RootDirectory` (default `"BsData"`, resolved
 against `IWebHostEnvironment.ContentRootPath`) — the bundled snapshot at
 `src/ProbHammer.Web/BsData/`, copied into the Docker image as its own layer, not a live GitHub
-fetch. `BsdataCatalogueCache` is untouched by the BattleScribe JSON pipeline, which never reads it.
+fetch. The BattleScribe JSON pipeline reads `BsdataCatalogueCache` only for the game system's core-rule
+glossary (`GetGameSystemGlossary`), never a faction catalogue.
+
+The site root `/` is a minimal-API redirect to `/LivePlay` (`Program.cs`), which itself falls back
+to `/Import` without a list - so `/Import` has exactly one route. A new list starts a fresh game:
+`ImportModel` clears the session's phase/turn on a successful save, and `live-play.js`'s
+`resetStateForNewImport` drops the browser's `probhammer.livePlay.*` casualty/status/activation
+maps when the page's `data-import-id` differs from the stored `probhammer.livePlay.importId`.
+State with no stored id (recorded before ids existed) is kept, so a deploy doesn't wipe a game in
+progress. Visiting `/Import`, or a failed import, resets nothing.

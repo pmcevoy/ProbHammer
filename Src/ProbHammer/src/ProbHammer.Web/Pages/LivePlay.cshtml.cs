@@ -34,6 +34,9 @@ public class LivePlayModel(
     // unit block's initial ExpandedSections).
     public PhaseTurnSelection PhaseTurn { get; private set; } = PhaseTurnSelection.Default;
 
+    // Rendered on the page so live-play.js can drop browser state recorded for a different import.
+    public string ImportId { get; private set; } = "";
+
     // A session with no successfully imported army list has nothing to render, so it's sent to
     // the import page instead of rendering an empty/erroring page.
     public IActionResult OnGet()
@@ -47,6 +50,7 @@ public class LivePlayModel(
         Header = BuildArmyHeader(result.Roster);
         Glossary = result.Glossary;
         PhaseTurn = phaseTurnStore.Load(HttpContext.Session) ?? PhaseTurnSelection.Default;
+        ImportId = sessionStore.GetOrAssignImportId(HttpContext.Session);
         return Page();
     }
 

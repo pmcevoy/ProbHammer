@@ -13,10 +13,12 @@ internal static partial class ImportTestHelper
 {
     public static async Task<HttpResponseMessage> ImportAsync(HttpClient client, string exportText)
     {
-        var getResponse = await client.GetAsync("/Import", TestContext.Current.CancellationToken);
-        var html = await getResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        var token = ExtractAntiForgeryToken(html);
+        var html = await client.GetStringAsync("/Import", TestContext.Current.CancellationToken);
+        return await PostImportAsync(client, exportText, ExtractAntiForgeryToken(html));
+    }
 
+    public static async Task<HttpResponseMessage> PostImportAsync(HttpClient client, string exportText, string token)
+    {
         var formData = new Dictionary<string, string>
         {
             ["ExportText"] = exportText,
@@ -29,7 +31,7 @@ internal static partial class ImportTestHelper
     public static string ReadRealExport(string fileName, [CallerFilePath] string here = "") =>
         File.ReadAllText(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "..", "data", fileName));
 
-    private static string ExtractAntiForgeryToken(string html)
+    public static string ExtractAntiForgeryToken(string html)
     {
         var match = AntiForgeryTokenRegex().Match(html);
         if (!match.Success)

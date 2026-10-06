@@ -1363,6 +1363,18 @@ button.filter-flag:hover { opacity: 0.8; }
     opacity: 0.8;
 }
 
+/* Page-to-page links (/LivePlay <-> /Import), a slim bar above the page content. */
+.page-nav {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.2rem 0.1rem 0.35rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.78rem;
+}
+.page-nav a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.page-nav a:hover { opacity: 0.8; }
+
 /* ── Import page ── */
 
 .import-page { padding: 1rem; max-width: 700px; margin: 0 auto; }

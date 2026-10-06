@@ -5,6 +5,11 @@
 }
 
 <main class="import-page">
+    @if (Model.HasCurrentList)
+    {
+        <nav class="page-nav"><a href="/LivePlay">Back to current list</a></nav>
+    }
+
     <h1>Import Army List</h1>
     <p>Paste a GW-app 11th-edition army-list export below.</p>
 

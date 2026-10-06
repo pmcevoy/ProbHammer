@@ -229,6 +229,16 @@ new section, not a new design decision:
 
 ---
 
+## Page Nav (`import-flow-reliability`)
+
+`.page-nav` is a slim, right-aligned link bar above a page's content: "Import a new list" on
+`/LivePlay` (above the Army Header, inside `.live-play-content`), "Back to current list" on
+`/Import` (only when the session has a list). Existing tokens only: `--accent` link text at `600`
+weight (the same ink `.rule-reference` links use), a `--border` bottom rule, `0.78rem`, and the
+Hover fade. Deliberately quieter than a section bar, so it doesn't compete with the Army Header.
+
+---
+
 ## Phase/Turn Tracker (`live-play-phase-turn-tracker`)
 
 `.phase-turn-tracker` sat between `.army-header-meta` and the Rules section, inside `.army-header`,

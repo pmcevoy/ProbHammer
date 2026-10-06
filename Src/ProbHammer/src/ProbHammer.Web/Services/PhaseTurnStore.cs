@@ -10,6 +10,7 @@ public interface IPhaseTurnStore
 {
     void Save(ISession session, PhaseTurnSelection selection);
     PhaseTurnSelection? Load(ISession session);
+    void Clear(ISession session);
 }
 
 public sealed class PhaseTurnStore : IPhaseTurnStore
@@ -24,4 +25,6 @@ public sealed class PhaseTurnStore : IPhaseTurnStore
         var json = session.GetString(SessionKey);
         return json is null ? null : JsonSerializer.Deserialize<PhaseTurnSelection>(json);
     }
+
+    public void Clear(ISession session) => session.Remove(SessionKey);
 }

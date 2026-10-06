@@ -76,22 +76,6 @@ Static classes cannot be used as type parameters for `ILogger<T>`. Use `ILoggerF
 
 ---
 
-## RedirectToPage Is Ambiguous On A Page With Multiple Routes
-
-`Program.cs` gives `/Import` a second route (`options.Conventions.AddPageRoute("/Import", "")`,
-so it also serves the site root). After that, `RedirectToPage("/Import")` anywhere else in the
-app stopped generating `/Import` and started generating `/` instead — `LivePlay.cshtml.cs`'s
-no-active-session redirect silently changed URL and broke
-`ImportFlowTests.LivePlay_WithNoActiveSessionImport_RedirectsToImport` (caught by the test, not by
-`dotnet build`, since page-route resolution is a runtime concern). `RedirectToPage` resolves a
-page's route by name against however many route templates that page now has, and doesn't
-consistently prefer the "canonical" one. Fixed by switching that call to `LocalRedirect("/Import")`
-— a literal path bypasses route-name resolution entirely, so it's deterministic even as `/Import`
-picks up more routes in the future. Applies to any `RedirectToPage`/`Url.Page`/tag-helper
-`asp-page` reference to a page that has (or gains) more than one route.
-
----
-
 ## Popover Panels Inherit Their Host Cell's Descendant Selectors
 
 A popover panel is emitted as its trigger's sibling, so a weapon value's provenance popover sits

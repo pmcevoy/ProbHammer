@@ -7,6 +7,8 @@ const BATTLESHOCKED_STORAGE_KEY = 'probhammer.livePlay.battleShocked';
 // Condition activations: "{unitIndex}::{abilityName}" -> {conditions: [text], choices: {group: [option]}},
 // an entry pruned once it holds nothing.
 const ACTIVATION_STORAGE_KEY = 'probhammer.livePlay.activations';
+// The import the stored state above belongs to (see resetStateForNewImport).
+const IMPORT_ID_STORAGE_KEY = 'probhammer.livePlay.importId';
 
 // Per-unit selection (deselected select-keys) state, keyed by data-unit-index and kept OUTSIDE
 // initUnitSelection's own closure so it survives a casualty-triggered swapUnitBlock - a casualty
@@ -34,11 +36,26 @@ const activeKeywordFilters = new Set();
 let dirtyPopover = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+    resetStateForNewImport();
     document.querySelectorAll('.unit-block').forEach(initUnitBlock);
     initPhaseTurnTracker();
     refreshArmyKeywordFilters();
     void syncLivePlayState();
 });
+
+// Drops stored game state recorded for a different import. State with no recorded import (saved
+// before import ids existed) is kept, so a deploy doesn't wipe a game in progress.
+function resetStateForNewImport() {
+    const importId = document.querySelector('.live-play-page')?.dataset.importId;
+    if (!importId) return;
+
+    const storedId = localStorage.getItem(IMPORT_ID_STORAGE_KEY);
+    if (storedId && storedId !== importId) {
+        [CASUALTY_STORAGE_KEY, HALF_STRENGTH_STORAGE_KEY, BATTLESHOCKED_STORAGE_KEY, ACTIVATION_STORAGE_KEY]
+            .forEach(key => localStorage.removeItem(key));
+    }
+    localStorage.setItem(IMPORT_ID_STORAGE_KEY, importId);
+}
 
 // Phase/turn tracker - one page-wide control (Army Header), not one per
 // unit block, so wired once here rather than from initUnitBlock. Each of the twelve cells (ten
