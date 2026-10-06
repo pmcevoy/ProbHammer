@@ -17,13 +17,10 @@ record, not this file).
   profiles the player picks between; not flagged today.
 - **Split `Keywords` into unit-wide-union vs. per-component, or add `FactionKeywords`** — currently
   one unioned set.
-- **Split `wwwroot/css/site.css` into a `/LivePlay`-only stylesheet** — it still ships dead 10e
-  selectors interleaved with the live rules.
-- **Style cleanup and alternate colour themes.** Rename colour-named tokens to the state they mean:
-  `--amber` today carries two states (an active control, and a value an ability has something to
-  say about), so it splits into something like `--active` and `--noted`, alongside the semantic
-  `--cond` added by `granted-weapon-keyword-chips`. With semantic names in place, a theme is a set
-  of redefinitions on one selector. Pairs naturally with the stylesheet split above.
+- **Alternate colour themes.** Rename colour-named tokens to the state they mean: `--amber` carries
+  two states (an active control, and a value an ability has something to say about), so it splits
+  into something like `--active` and `--noted`, beside the already-semantic `--cond`. With semantic
+  names in place, a theme is a set of redefinitions on one selector.
 - **Provenance popover polish.** The popover table draws a rule under every row, so the Total row
   ends with a double line (its own top border plus the row rule above). Five minutes in `site.css`.
 - **Fill in `live-play-view`'s `## Purpose`.** Still the placeholder `openspec archive` wrote, so
@@ -62,12 +59,12 @@ record, not this file).
   More Dakka, Even More Dakka and Targetin' Gizmos carry its value/keyword effects, and others
   (Super Runts, War Cry, Intimidating Motivation) make a unit riled up. The Riled Up control shows
   on units with Waaagh! ("Friendly ORKS with this ability can... become riled up"). Hand-correct
-  the few consuming records first; prompt v3 extracts the field later. Also needs the Army-Rule
-  applicability fix: Waaagh!'s real classification targets `Keyword: ["Orks"]` with ArmyRule
-  origin, so `TryGetApplicableClassification` drops its effects even though New Recruit attaches
-  it to the right units (confirmed live 2026-10-04: no blue InSv on Boyz). Admit ArmyRule origin
-  like the DetachmentRule exception. Until then, condition toggles are the stopgap (user-agreed
-  2026-10-04).
+  the few consuming records first; prompt v3 extracts the field later. Condition toggles cover it
+  meanwhile.
+- **Admit ArmyRule-origin classifications in `TryGetApplicableClassification`**, like the existing
+  DetachmentRule exception. Waaagh!'s classification targets `Keyword: ["Orks"]` with ArmyRule
+  origin, so its effects are dropped even though New Recruit attaches it to the right units (no
+  conditional InSv on Boyz, confirmed live 2026-10-04). Prerequisite for the Riled Up work above.
 - **"Used" marker for usage-limited abilities.** Mark a once-per-battle ability as spent so it
   renders less prominently; separate from its condition toggle.
 - **Link a condition to another ability's activation.** Empyric Wellspring's +1 S applies "if that
@@ -79,8 +76,8 @@ record, not this file).
 
 ## `WeaponProfile`-targeting rule effects — deferred coverage
 
-Real corpus shapes found while classifying weapon-characteristic effects but not yet classified or
-resolved — candidates for a future phase, not scoped anywhere yet:
+Real corpus shapes the weapon-effect vocabulary can't express yet (a schema change plus prompt v3
+support each):
 - A model-keyword-subset selector ("weapons equipped by SERVITOR models in this unit") - Mindlock's
   five variants (BS/WS +1 while led by a Tech-Priest) need it.
 - An ability-flag-qualified weapon selector ("models from your army with this ability").
@@ -88,8 +85,7 @@ resolved — candidates for a future phase, not scoped anywhere yet:
 - A coordinate clause with a different amount per characteristic ("add 1 to Attacks... and add 2 to
   Strength...").
 - A two-branch conditional ("add 1..., if Battle-shocked, add 2... instead").
-- A `Set`-verb-shaped effect, and a dice-valued amount (`WeaponCharacteristicEffect.Amount` is `int`
-  today).
+- A dice-valued amount (`WeaponCharacteristicEffect.Amount` is `int`).
 
 **Permanent boundaries, not tasks**: an effect debuffing an *enemy's* weapon is unresolvable until
 the attacker/defender two-roster half of the app exists (no opposing-roster concept today).
@@ -137,8 +133,6 @@ design, not as a gap to eventually close.
     qualifier is only a damage source; `turnOwnership` only when the text says whose turn; don't
     split a multi-word weapon name on "and" ("Tyrnak and Fenrir"); split faction + type keywords
     ("LEGIONES DAEMONICA TZEENTCH"); emit JSON `null`, not the string `"null"`.
-  - **"Select N units"** selections (Wolf Master, Obscuroptikon) - covered by the planned
-    per-condition player toggle, not the schema.
   - **Incremental runs** (`submit` picks only unclassified hashes - proven 2026-10-03 with 5 InSv
     footnote texts): a small batch's requests run in parallel, so none reads the prompt cache and
     each pays the write premium (5 requests: 0 reads, 84k written). Consider skipping the cache
@@ -147,9 +141,9 @@ design, not as a gap to eventually close.
   unconditionally today, even though real rules text sometimes signals Model scope instead (e.g.
   "this model's Objective Control"). Could be a new field on the LLM classification schema.
 - **Characteristic modification engine.** A real engine for stacking multiple rules on one
-  characteristic (Set→Multiply→Add→Divide→Subtract order, per-characteristic clamp bounds) and
-  applying Improve/Worsen verbs. The sign/clamp resolver exists; the modifier/engine/mutator-rule
-  layers above it don't. Open sub-problems: Set-vs-Set conflicts (keep the better value and drop
+  characteristic (Set→Multiply→Add→Divide→Subtract order, per-characteristic clamp bounds). The
+  sign/clamp resolver applies each Improve/Worsen/Set effect today; an ordered stacking engine
+  above it doesn't exist. Open sub-problems: Set-vs-Set conflicts (keep the better value and drop
   the other), multi-characteristic abilities, a caveated characteristic naming more than one
   contributing ability, tier-3+ conditions (cross-unit or sibling-selection gating), a
   ranged-aura ability with no positional data to resolve against, and the "Ignore Modifiers" rule
