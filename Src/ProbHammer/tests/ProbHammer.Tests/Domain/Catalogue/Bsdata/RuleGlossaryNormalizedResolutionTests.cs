@@ -78,6 +78,28 @@ public class RuleGlossaryNormalizedResolutionTests
     }
 
     [Fact]
+    public void A_colon_qualified_token_resolves_against_its_base_rule()
+    {
+        var glossary = BuildGlossary();
+
+        var resolved = glossary.TryResolve("LETHAL HITS: non-MONSTER/VEHICLE");
+
+        resolved.Should().NotBeNull();
+        resolved!.Name.Should().Be("Lethal Hits");
+    }
+
+    [Fact]
+    public void A_value_and_qualifier_token_resolves_against_its_base_rule()
+    {
+        var glossary = BuildGlossary();
+
+        var resolved = glossary.TryResolve("SUSTAINED HITS 2: MONSTER/VEHICLE");
+
+        resolved.Should().NotBeNull();
+        resolved!.Name.Should().Be("Sustained Hits");
+    }
+
+    [Fact]
     public void A_title_case_hyphenated_name_resolves_despite_the_casing_difference()
     {
         var glossary = BuildGlossary();

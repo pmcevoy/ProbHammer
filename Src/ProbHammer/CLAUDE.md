@@ -74,7 +74,7 @@ auto-load limit. Each topic file is loaded on demand, by path, not by `@`-includ
 - `.claude/domain-model/army-list-import-pipeline.md` — the GW-app text export pipeline: parsing,
   BSData enrichment, Detachment resolution, session-backed storage.
 - `.claude/domain-model/battlescribe-import-pipeline.md` — the independent BattleScribe/NewRecruit
-  JSON import pipeline (no BSData involvement).
+  JSON import pipeline (BSData only for core rule text).
 - `.claude/domain-model/roster-context.md` — `Unit`/`AttachedUnit`/`ModelLine`/`ICombatUnit`,
   `AttachedUnitAggregator`'s aggregate view, `ArmyRoster`.
 - `.claude/domain-model/statline-flag-rules.md` — how an ability's classification derives a

@@ -20,13 +20,19 @@ RuleGlossary                          // Domain/Catalogue/Bsdata/RuleGlossary.cs
                                        // "Close-quarters")
   TryResolve(string nameOrAlias) -> RuleDefinition?   // see method's own doc comment (non-throwing,
                                        // same Normalize pipeline)
+  WithFallback(RuleGlossary fallback) -> RuleGlossary
+                                       // merged index, receiver's definition wins on a shared key;
+                                       // used to back a BattleScribe import's roster-scoped
+                                       // glossary with the game system's shared rules
 
   Normalize(string text) -> string    // private; every Name/Alias and query goes through this
-                                       // ordered pipeline (lowercase, strip trailing value/dice
-                                       // suffix, collapse "Anti-*" to bare "anti", strip non-
-                                       // alphanumeric) since real text references a generic
-                                       // mechanic's bare name with a value or target category
-                                       // appended (e.g. "SUSTAINED HITS 1") - see the method's own
+                                       // ordered pipeline (lowercase, drop a ": qualifier" via
+                                       // WeaponKeyword.SplitQualifier, strip trailing value/dice
+                                       // suffix, collapse "Anti-*"/"Anti *" to bare "anti", strip
+                                       // non-alphanumeric) since real text references a generic
+                                       // mechanic's bare name with a value, target category or
+                                       // qualifier appended (e.g. "SUSTAINED HITS 1", "LETHAL HITS:
+                                       // non-MONSTER/VEHICLE") - see the method's own
                                        // comment for the exact ordering constraints and real
                                        // examples. Dropped the full-corpus scan's (below) unresolved
                                        // bracket-token count from 1,964 to 2 - see

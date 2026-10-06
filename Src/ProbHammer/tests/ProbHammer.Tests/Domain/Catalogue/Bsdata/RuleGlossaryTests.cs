@@ -61,4 +61,27 @@ public class RuleGlossaryTests
         resolved.Should().NotBeNull();
         resolved!.Text.Should().Contain("Local definition");
     }
+
+    [Fact]
+    public void WithFallback_prefers_the_receivers_definition_when_both_define_a_name()
+    {
+        var primary = RuleGlossary.BuildFrom([new RuleDefinition("Lethal Hits", [], "Roster text", [])]);
+        var fallback = RuleGlossary.BuildFrom([new RuleDefinition("Lethal Hits", ["LETHAL HITS"], "Core text", [])]);
+
+        var resolved = primary.WithFallback(fallback).TryResolve("LETHAL HITS");
+
+        resolved!.Text.Should().Be("Roster text");
+    }
+
+    [Fact]
+    public void WithFallback_resolves_a_name_only_the_fallback_defines()
+    {
+        var primary = RuleGlossary.BuildFrom([new RuleDefinition("Waaagh!", [], "Roster text", [])]);
+        var fallback = RuleGlossary.BuildFrom([new RuleDefinition("Cleave", [], "Core text", [])]);
+
+        var combined = primary.WithFallback(fallback);
+
+        combined.TryResolve("CLEAVE 1")!.Text.Should().Be("Core text");
+        combined.TryResolve("Waaagh!")!.Text.Should().Be("Roster text");
+    }
 }

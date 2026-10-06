@@ -12,8 +12,8 @@ fixture data is unreferenced by `Web` but kept in-tree for future domain-model e
 `/Import` also recognizes a BattleScribe/NewRecruit roster JSON export and routes it through a
 second, independent pipeline (`Domain/Import/BattleScribe/` — see
 `.claude/domain-model/battlescribe-import-pipeline.md`) that
-synthesizes this same model directly from the JSON's own already-resolved data, no BSData
-involved. Coexists with the untouched, fully-superseded 10th-edition model
+synthesizes this same model directly from the JSON's own already-resolved data, using BSData
+only for the game system's core rule text. Coexists with the untouched, fully-superseded 10th-edition model
 (`.claude/domain-model.md`) — see `PROGRESS.md` for that history.
 
 ---
@@ -47,7 +47,7 @@ already uses for the archived 10e docs.
 - `.claude/domain-model/army-list-import-pipeline.md` — the GW-app text export pipeline: parsing,
   BSData enrichment, Detachment resolution, session-backed storage.
 - `.claude/domain-model/battlescribe-import-pipeline.md` — the independent BattleScribe/NewRecruit
-  JSON import pipeline (no BSData involvement).
+  JSON import pipeline (BSData only for core rule text).
 - `.claude/domain-model/roster-context.md` — `Unit`/`AttachedUnit`/`ModelLine`/`ICombatUnit`,
   `AttachedUnitAggregator`'s aggregate view, and `ArmyRoster`.
 - `.claude/domain-model/statline-flag-rules.md` — how an ability's classification derives a

@@ -41,7 +41,7 @@ public sealed partial record WeaponKeyword(string Identity, string? Value, strin
     private static double Magnitude(string value) =>
         DiceExpression.Parse(value.TrimEnd('+')).ExpectedValue();
 
-    private static (string Head, string? Qualifier) SplitQualifier(string text)
+    internal static (string Head, string? Qualifier) SplitQualifier(string text)
     {
         var colon = text.IndexOf(':');
         return colon < 0 ? (text, null) : (text[..colon], text[(colon + 1)..]);

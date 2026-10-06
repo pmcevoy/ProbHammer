@@ -80,8 +80,11 @@ public static class BsdataClosureResolver
     /// name to guess from, so this always scans every available file's own id - a
     /// one-time-per-closure cost, matching <see cref="ResolveImportFileName"/>'s existing
     /// fallback for a drifted catalogueLink name.</summary>
+    public static BsCatalogue? ResolveGameSystem(IBsdataCatalogueSource source, string gameSystemId) =>
+        ResolveGameSystem(source, source.ListFileNames(), gameSystemId);
+
     private static BsCatalogue? ResolveGameSystem(
-        IBsdataCatalogueSource source, HashSet<string> availableFiles, string gameSystemId)
+        IBsdataCatalogueSource source, IEnumerable<string> availableFiles, string gameSystemId)
     {
         foreach (var fileName in availableFiles)
         {

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using FluentAssertions;
 using ProbHammer.Core.Domain.Catalogue.Bsdata;
 
@@ -32,6 +33,28 @@ public class BsdataCatalogueCacheTests
         a.Should().NotBeSameAs(b);
         aAgain.Should().BeSameAs(a);
     }
+
+    [Fact]
+    public void GameSystemGlossary_ResolvesTheBundledGameSystemsSharedRules()
+    {
+        var cache = new BsdataCatalogueCache(new LocalDiskBsdataCatalogueSource(BundledBsDataRoot()));
+
+        var glossary = cache.GetGameSystemGlossary("sys-352e-adc2-7639-d610");
+
+        glossary!.TryResolve("LETHAL HITS")!.Name.Should().Be("Lethal Hits");
+    }
+
+    [Fact]
+    public void GameSystemGlossary_IsNull_WhenNoFileHasTheId()
+    {
+        var cache = new BsdataCatalogueCache(new CountingSource());
+
+        cache.GetGameSystemGlossary("sys-unknown").Should().BeNull();
+    }
+
+    private static string BundledBsDataRoot([CallerFilePath] string here = "") =>
+        Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "..", "..", "..", "src", "ProbHammer.Web",
+            "BsData"));
 
     private sealed class CountingSource : IBsdataCatalogueSource
     {

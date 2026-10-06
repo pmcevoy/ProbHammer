@@ -18,6 +18,7 @@ public sealed class BsRoster
 {
     public string Xmlns { get; set; } = "";
     public string Name { get; set; } = "";
+    public string GameSystemId { get; set; } = "";
     public List<BsRosterCost> Costs { get; set; } = [];
     public List<BsRosterCost> CostLimits { get; set; } = [];
     public List<BsRosterForce> Forces { get; set; } = [];

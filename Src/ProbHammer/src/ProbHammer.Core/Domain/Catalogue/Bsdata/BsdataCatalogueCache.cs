@@ -16,6 +16,16 @@ public sealed class BsdataCatalogueCache(IBsdataCatalogueSource source)
     private readonly ConcurrentDictionary<string, ResolvedBsdataCatalogue> _cache =
         new(StringComparer.OrdinalIgnoreCase);
 
+    private readonly ConcurrentDictionary<string, RuleGlossary?> _gameSystemGlossaries =
+        new(StringComparer.OrdinalIgnoreCase);
+
     public ResolvedBsdataCatalogue GetOrBuild(string startingFileName) =>
         _cache.GetOrAdd(startingFileName, fileName => ResolvedBsdataCatalogue.Build(source, fileName));
+
+    /// <summary>The game system's shared rules alone, or null when no file has this id.</summary>
+    public RuleGlossary? GetGameSystemGlossary(string gameSystemId) =>
+        _gameSystemGlossaries.GetOrAdd(gameSystemId, id =>
+            BsdataClosureResolver.ResolveGameSystem(source, id) is { } gameSystem
+                ? RuleGlossary.Build(new BsdataClosure([], gameSystem))
+                : null);
 }

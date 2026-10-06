@@ -57,10 +57,13 @@ public sealed class ArmyRosterProvider(
         return new ArmyRosterBuildResult(roster, catalogue.Glossary);
     }
 
-    private static ArmyRosterBuildResult BuildFromBattleScribe(BattleScribeArmyImport import)
+    private ArmyRosterBuildResult BuildFromBattleScribe(BattleScribeArmyImport import)
     {
         var roster = BattleScribeRosterMapper.Map(import.Roster);
         var glossary = BattleScribeRuleGlossaryBuilder.Build(import.Roster);
+        if (cache.GetGameSystemGlossary(import.Roster.GameSystemId) is { } coreRules)
+            glossary = glossary.WithFallback(coreRules);
+
         return new ArmyRosterBuildResult(roster, glossary);
     }
 }

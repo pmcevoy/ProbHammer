@@ -87,6 +87,17 @@ public sealed partial class RuleGlossary
         return new RuleGlossary(index);
     }
 
+    /// <summary>A glossary resolving every key this one does, plus every key only
+    /// <paramref name="fallback"/> has - this glossary's definition wins where both have one.</summary>
+    public RuleGlossary WithFallback(RuleGlossary fallback)
+    {
+        var index = new Dictionary<string, RuleDefinition>(_byNormalizedKey, StringComparer.Ordinal);
+        foreach (var (key, definition) in fallback._byNormalizedKey)
+            index.TryAdd(key, definition);
+
+        return new RuleGlossary(index);
+    }
+
     /// <summary>Resolves a normalized bracket token (per <see cref="RuleTextTokenizer"/>) or a
     /// literal weapon-keyword tag (per `WeaponAbilityTags()`) by comparing its own
     /// <see cref="Normalize"/>d form against every rule's Name/Alias, normalized the same way -
@@ -102,27 +113,28 @@ public sealed partial class RuleGlossary
     // form explicitly ("**[SUSTAINED HITS X]**", "**[ANTI-X Y+]**"). Normalize applies a small,
     // ordered pipeline so both sides of a comparison land on the same key regardless of that
     // appended value, casing, or punctuation. Order matters at every step:
-    //   1. Strip a trailing value/threshold/dice/placeholder suffix (a bare "x" placeholder, a
+    //   1. Drop a ": qualifier" (e.g. "LETHAL HITS: non-MONSTER/VEHICLE"), via the same split
+    //      WeaponKeyword uses - the qualifier narrows the targets, it never names a different rule.
+    //   2. Strip a trailing value/threshold/dice/placeholder suffix (a bare "x" placeholder, a
     //      digit run, a digit run with a trailing "+", or "d" + digits with an optional
-    //      "+"-suffix, e.g. "d3") - must run first, while the whitespace separator it matches on
-    //      is still present.
-    //   2. Collapse anything starting with "anti" followed by a space/hyphen/colon boundary to
-    //      bare "anti" - Anti's real referenced shape is two-part ("category" + "value", not just
-    //      a trailing value: confirmed further by a real negated-target variant,
-    //      "ANTI: non-MONSTER/VEHICLE 5+"), so trailing-suffix removal alone can't recover it. A
+    //      "+"-suffix, e.g. "d3") - must run before step 4, while the whitespace separator it
+    //      matches on is still present.
+    //   3. Collapse anything starting with "anti" followed by a space/hyphen boundary to bare
+    //      "anti" - Anti's real referenced shape is two-part ("category" + "value", not just a
+    //      trailing value), so trailing-suffix removal alone can't recover it. A
     //      blanket "cut at the first hyphen" rule was rejected as unsafe - "Twin-linked"'s hyphen
     //      is part of the rule's own name, not a category separator - so Anti gets this one named
     //      exception instead. The boundary check matters: without it, an
     //      unrelated word merely starting with "anti" (e.g. "Antimatter") would wrongly collapse
-    //      too - and it must run before step 3 removes that same boundary character, or there
+    //      too - and it must run before step 4 removes that same boundary character, or there
     //      would be nothing left to check.
-    //   3. Strip everything that isn't a letter or digit (spaces, hyphens, colons, slashes, "+")
+    //   4. Strip everything that isn't a letter or digit (spaces, hyphens, slashes, "+")
     //      - this is also what makes a casing/hyphenation variant like "Twin-Linked" collapse to
     //      the same key as "TWIN-LINKED" with no separate casing rule needed.
     // Lowercasing happens first so every pattern below can use plain lowercase literals.
     private static string Normalize(string text)
     {
-        var normalized = text.ToLowerInvariant();
+        var normalized = WeaponKeyword.SplitQualifier(text.ToLowerInvariant()).Head;
         foreach (var (pattern, replacement) in NormalizationSteps)
             normalized = pattern().Replace(normalized, replacement);
 
@@ -139,7 +151,7 @@ public sealed partial class RuleGlossary
     [GeneratedRegex(@"\s+(?:d\d+(?:\+\d+)?|\d+\+?|x)$")]
     private static partial Regex TrailingValueSuffixPattern();
 
-    [GeneratedRegex(@"^anti[\s\-:].*")]
+    [GeneratedRegex(@"^anti[\s\-].*")]
     private static partial Regex AntiPrefixPattern();
 
     [GeneratedRegex(@"[^a-z0-9]+")]
