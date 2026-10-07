@@ -21,8 +21,6 @@ record, not this file).
   two states (an active control, and a value an ability has something to say about), so it splits
   into something like `--active` and `--noted`, beside the already-semantic `--cond`. With semantic
   names in place, a theme is a set of redefinitions on one selector.
-- **Fill in `live-play-view`'s `## Purpose`.** Still the placeholder `openspec archive` wrote, so
-  `openspec validate --specs --strict` fails on it. Edit the main spec directly.
 - **A Feel No Pain stat box, mirroring InSv's.** Feel No Pain grants are common (153+ corpus hits)
   and the catalogue already loads them as `FeelNoPainEffect` (data only). A dedicated box beneath
   the M/T/Sv/W/Ld/Oc row - same treatment as the invulnerable-save box - would be its first

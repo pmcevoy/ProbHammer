@@ -1,7 +1,10 @@
 # live-play-view Specification
 
 ## Purpose
-TBD - created by archiving change render-aggregate-view. Update Purpose after archive.
+Renders the session's imported army at `/LivePlay` as a phone-first reference for the table: each
+unit (or Attached Unit) with its statlines, weapons, abilities and keywords, the values its rules
+change and why, and the player's live game state — casualties, unit status, condition activations
+and the current phase/turn — tracked per player and rebuilt from the stored list on every request.
 
 ## Requirements
 
