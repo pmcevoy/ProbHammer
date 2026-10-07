@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using FluentAssertions;
 using ProbHammer.Core.Domain.Import;
+using ProbHammer.Tests.Web;
 
 namespace ProbHammer.Tests.Domain.Import;
 
@@ -226,9 +227,9 @@ public class ArmyListParserTests
     }
 
     [Fact]
-    public void RealExport_WithNoDetachment_FailsWithAParseError_NotACrash()
+    public void AnExportWithNoDetachment_FailsWithAParseError_NotACrash()
     {
-        var act = () => ParseDataFile("gw-tanks.txt");
+        var act = () => new ArmyListParser().Parse(ImportTestHelper.ReadImportFixture("gw-export-no-detachment.txt"));
 
         act.Should().Throw<ArmyListParseException>().WithMessage("*Detachment*");
     }

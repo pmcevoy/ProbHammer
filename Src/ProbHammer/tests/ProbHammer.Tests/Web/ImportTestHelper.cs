@@ -31,6 +31,12 @@ internal static partial class ImportTestHelper
     public static string ReadRealExport(string fileName, [CallerFilePath] string here = "") =>
         File.ReadAllText(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "..", "data", fileName));
 
+    public static string ReadImportFixture(string fileName) =>
+        File.ReadAllText(Path.Combine(ImportFixturesDirectory(), fileName));
+
+    private static string ImportFixturesDirectory([CallerFilePath] string here = "") =>
+        Path.Combine(Path.GetDirectoryName(here)!, "..", "Domain", "Import", "Fixtures");
+
     public static string ExtractAntiForgeryToken(string html)
     {
         var match = AntiForgeryTokenRegex().Match(html);

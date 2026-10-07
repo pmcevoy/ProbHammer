@@ -57,6 +57,20 @@ record, not this file).
   on units with Waaagh! ("Friendly ORKS with this ability can... become riled up"). Hand-correct
   the few consuming records first; prompt v3 extracts the field later. Condition toggles (Waaagh!'s
   own riled-up switch) cover it meanwhile.
+- **Army Rule profiles.** Grow `ArmyRuleNameLookup` (~30 hand-verified rows) from a name list into
+  a small hand-maintained profile per rule, since the classifier handles Army Rules worst (of 25:
+  1 complete, 7 partial, 17 unclassifiable). Fields only as consumers appear: selection scope (once
+  for the army vs. per unit vs. none), a unit state it introduces (Riled Up), and an army resource
+  note (tokens/points/dice). First consumer: Templar Vows is chosen once for the army, but
+  activations are keyed per unit (`{unitIndex}::{abilityName}`), so today each unit picks its own
+  vow. Choose it in the Army Header's Templar Vows popover, store it once by ability name, apply it
+  to every unit carrying it, and show it read-only in unit-block popovers. Origin and choice-vs-
+  condition can't tell the scopes apart (Dark Pacts is a per-unit Army Rule choice).
+- **Army resource counter.** A named number with −/+ in the Army Header, stored like casualties,
+  covering "gain X, spend X" economies without modelling their rules. Text mentions tokens, points,
+  dice or a pool in Acts of Faith, Power from Pain, Battle Focus, Blessings of Khorne, Cabal of
+  Sorcerers, Prioritised Efficiency and Cult Ambush (keyword scan only, rules not read). Parked
+  until someone plays one of those armies.
 - **"Used" marker for usage-limited abilities.** Mark a once-per-battle ability as spent so it
   renders less prominently; separate from its condition toggle.
 - **Link a condition to another ability's activation.** Empyric Wellspring's +1 S applies "if that

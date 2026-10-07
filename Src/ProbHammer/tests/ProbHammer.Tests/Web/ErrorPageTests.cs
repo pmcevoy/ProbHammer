@@ -34,7 +34,7 @@ public class ErrorPageTests(WebApplicationFactory<Program> factory) : IClassFixt
     {
         var client = factory.CreateClient();
 
-        var response = await ImportAsync(client, ReadRealExport("gw-tanks.txt"));
+        var response = await ImportAsync(client, ReadImportFixture("gw-export-no-detachment.txt"));
 
         response.RequestMessage!.RequestUri!.AbsolutePath.Should().Be("/Import");
         var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
