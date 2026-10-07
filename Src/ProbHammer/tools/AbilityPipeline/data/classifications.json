@@ -76394,7 +76394,7 @@
       "TurnOwnership": null,
       "UsageLimit": null,
       "CoverageStatus": "unclassifiable",
-      "UnclassifiedResidue": "Improves the Weapon Skill characteristic of the unit\ractal's Medical scalpels by 1 while the unit contains a Quartermaster Revenant model - Weapon Skill is not one of the supported weapon characteristics (S/A/AP/D) for the WeaponCharacteristic effect kind"
+      "UnclassifiedResidue": "Improves the Weapon Skill characteristic of the unit's Medical scalpels by 1 while the unit contains a Quartermaster Revenant model - Weapon Skill is not one of the supported weapon characteristics (S/A/AP/D) for the WeaponCharacteristic effect kind"
     },
     "Resolution": {
       "Resolved": [],
@@ -76402,7 +76402,7 @@
     },
     "EffectiveCoverageStatus": "unclassifiable",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-07: restored apostrophes the v2 batch output wrote as a carriage-return escape plus junk."
   },
   "8cec497f8f6a3587b41dcddc742e7704fc9472d06f7f4ef3070cc1642be92d26": {
     "Hash": "8cec497f8f6a3587b41dcddc742e7704fc9472d06f7f4ef3070cc1642be92d26",
@@ -123197,8 +123197,8 @@
           "MaxSelect": 1,
           "Options": [
             "Abhor the Witch, Destroy the Witch: re-roll Charge rolls against Psykers, and melee weapons have [PRECISION] while targeting Psyker units",
-            "Accept Any Challenge, No Matter the Odds: add 1 to the wound roll if the attacker\ractes1 Strength is less than or equal to the target\ractes1 Toughness",
-            "Suffer Not the Unclean to Live: eligible to declare a charge after Falling Back, and Pile-in/Consolidation moves don\ractes1t need to end closer to the closest enemy model",
+            "Accept Any Challenge, No Matter the Odds: add 1 to the wound roll if the attacker's Strength is less than or equal to the target's Toughness",
+            "Suffer Not the Unclean to Live: eligible to declare a charge after Falling Back, and Pile-in/Consolidation moves don't need to end closer to the closest enemy model",
             "Uphold the Honour of the Emperor: for Infantry units, retains contested objective control at the end of your Command phase, and eligible to perform an Action after Advancing"
           ],
           "ConditionText": null
@@ -123212,7 +123212,7 @@
       "TurnOwnership": null,
       "UsageLimit": null,
       "CoverageStatus": "partial",
-      "UnclassifiedResidue": "Made once, at the start of the first battle round - not one of this schema\ractes1s usageLimit values. Vow 1\ractes1s own re-roll-the-Charge-roll clause has no effect kind (reroll mechanics aren\ractes1t modeled); Vows 2-4 have no effect-kind representation at all (a to-wound-roll modifier, charge-after-Fall-Back/Pile-in-Consolidation exemptions, objective-control retention, and Action-after-Advance eligibility)"
+      "UnclassifiedResidue": "Made once, at the start of the first battle round - not one of this schema's usageLimit values. Vow 1's own re-roll-the-Charge-roll clause has no effect kind (reroll mechanics aren't modeled); Vows 2-4 have no effect-kind representation at all (a to-wound-roll modifier, charge-after-Fall-Back/Pile-in-Consolidation exemptions, objective-control retention, and Action-after-Advance eligibility)"
     },
     "Resolution": {
       "Resolved": [
@@ -123231,7 +123231,7 @@
     },
     "EffectiveCoverageStatus": "partial",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-07: restored apostrophes the v2 batch output wrote as a carriage-return escape plus junk."
   },
   "e4db131f306fadc061aed262b0eade96bdc8b5243d23c990642391662f6b8535": {
     "Hash": "e4db131f306fadc061aed262b0eade96bdc8b5243d23c990642391662f6b8535",
@@ -132598,7 +132598,7 @@
       "TurnOwnership": null,
       "UsageLimit": null,
       "CoverageStatus": "unclassifiable",
-      "UnclassifiedResidue": "Subtracts 1 from the Hit roll for attacks against the bearer\ractor's unit made by models within 12\" - no Hit-roll-modifier effect kind exists in this schema"
+      "UnclassifiedResidue": "Subtracts 1 from the Hit roll for attacks against the bearer's unit made by models within 12\" - no Hit-roll-modifier effect kind exists in this schema"
     },
     "Resolution": {
       "Resolved": [],
@@ -132606,7 +132606,7 @@
     },
     "EffectiveCoverageStatus": "unclassifiable",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-07: restored apostrophes the v2 batch output wrote as a carriage-return escape plus junk."
   },
   "f4da4a3e8e3586615331c99c9ecc03e6f09d419fbb73ee46a9110bbd88ddd0d0": {
     "Hash": "f4da4a3e8e3586615331c99c9ecc03e6f09d419fbb73ee46a9110bbd88ddd0d0",

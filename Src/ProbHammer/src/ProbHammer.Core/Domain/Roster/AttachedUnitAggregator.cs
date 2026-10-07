@@ -200,33 +200,35 @@ public static class AttachedUnitAggregator
 
     // A classification whose own target this capability can't yet apply (KeywordRuleTarget/
     // UnconditionalRuleTarget - no roster-wide predicate evaluation exists) produces no match at all,
-    // the same outcome as an unclassified ability - EXCEPT a DetachmentRule-origin ability
-    // (statline-flag-rules' Target-Scoped Application exception): its own keyword target has already
-    // been evaluated against the resolved roster by DetachmentRuleInboundAbilityResolver before it
-    // was ever attached as a present ability here. Shared by the Statline and weapon paths.
+    // the same outcome as an unclassified ability - EXCEPT a whole-unit-scoped origin (statline-flag-
+    // rules' Target-Scoped Application exceptions; see IsWholeUnitScopedOrigin). Shared by the
+    // Statline and weapon paths.
     private static AbilityClassification? TryGetApplicableClassification(
         AbilityClassificationCatalogue classifications, Ability ability) =>
         classifications.TryGet(ability.Text, out var classification) &&
-        (classification.Target is SelfRuleTarget or AttachedUnitRuleTarget ||
-         ability.Origin == AbilityOrigin.DetachmentRule)
+        (classification.Target is SelfRuleTarget or AttachedUnitRuleTarget || IsWholeUnitScopedOrigin(ability))
             ? classification
             : null;
+
+    // A DetachmentRule ability's keyword target was already evaluated against the roster by
+    // DetachmentRuleInboundAbilityResolver; an ArmyRule ability is only present on a unit that carries it.
+    private static bool IsWholeUnitScopedOrigin(Ability ability) =>
+        ability.Origin is AbilityOrigin.DetachmentRule or AbilityOrigin.ArmyRule;
 
     // SelfRuleTarget applies to the matched ability's own (ComponentName, StatlineName): one specific
     // model-line when StatlineName is set, the whole component when it's null (a Datasheet-level or
     // Enhancement-sourced ability). AttachedUnitRuleTarget applies to every row regardless, since the
-    // matched ability is already confirmed present on this ICombatUnit - a DetachmentRule-origin
-    // ability resolves the same unconditional way (design.md D4): its own eligibility was already
-    // decided by the roster-wide keyword match that attached it, so this check doesn't re-derive
-    // scope from its own classified Target. Takes the raw bearer identity rather than a full
-    // AggregateStatlineEntry so both the Statline call site (above) and BuildWeapons' own
-    // weapon-contribution call site (below) can share this one check - a weapon contribution carries
-    // the same (ComponentName, StatlineName) shape a statline entry does, just not wrapped in that
-    // record.
+    // matched ability is already confirmed present on this ICombatUnit - a whole-unit-scoped origin
+    // (DetachmentRule/ArmyRule) resolves the same unconditional way, whatever its own classified
+    // Target, since its eligibility was already decided before it became present here. Takes the raw
+    // bearer identity rather than a full AggregateStatlineEntry so both the Statline call site
+    // (above) and BuildWeapons' own weapon-contribution call site (below) can share this one check -
+    // a weapon contribution carries the same (ComponentName, StatlineName) shape a statline entry
+    // does, just not wrapped in that record.
     private static bool IsBearerOf(AggregateAbilityEntry abilityEntry, RuleTarget target,
         string componentName, string? statlineName)
     {
-        if (target is AttachedUnitRuleTarget || abilityEntry.Ability.Origin == AbilityOrigin.DetachmentRule)
+        if (target is AttachedUnitRuleTarget || IsWholeUnitScopedOrigin(abilityEntry.Ability))
             return true;
 
         return abilityEntry.StatlineName is not null

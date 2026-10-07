@@ -55,12 +55,8 @@ record, not this file).
   More Dakka, Even More Dakka and Targetin' Gizmos carry its value/keyword effects, and others
   (Super Runts, War Cry, Intimidating Motivation) make a unit riled up. The Riled Up control shows
   on units with Waaagh! ("Friendly ORKS with this ability can... become riled up"). Hand-correct
-  the few consuming records first; prompt v3 extracts the field later. Condition toggles cover it
-  meanwhile.
-- **Admit ArmyRule-origin classifications in `TryGetApplicableClassification`**, like the existing
-  DetachmentRule exception. Waaagh!'s classification targets `Keyword: ["Orks"]` with ArmyRule
-  origin, so its effects are dropped even though New Recruit attaches it to the right units (no
-  conditional InSv on Boyz, confirmed live 2026-10-04). Prerequisite for the Riled Up work above.
+  the few consuming records first; prompt v3 extracts the field later. Condition toggles (Waaagh!'s
+  own riled-up switch) cover it meanwhile.
 - **"Used" marker for usage-limited abilities.** Mark a once-per-battle ability as spent so it
   renders less prominently; separate from its condition toggle.
 - **Link a condition to another ability's activation.** Empyric Wellspring's +1 S applies "if that
@@ -129,6 +125,9 @@ design, not as a gap to eventually close.
     qualifier is only a damage source; `turnOwnership` only when the text says whose turn; don't
     split a multi-word weapon name on "and" ("Tyrnak and Fenrir"); split faction + type keywords
     ("LEGIONES DAEMONICA TZEENTCH"); emit JSON `null`, not the string `"null"`.
+  - **Scan the output for control characters before exporting.** v2 wrote a `\r` escape plus junk
+    in place of an apostrophe in 3 records (Templar Vows, Mindlock, Radiant Mantle; hand-corrected
+    2026-10-07).
   - **Incremental runs** (`submit` picks only unclassified hashes - proven 2026-10-03 with 5 InSv
     footnote texts): a small batch's requests run in parallel, so none reads the prompt cache and
     each pays the write premium (5 requests: 0 reads, 84k written). Consider skipping the cache

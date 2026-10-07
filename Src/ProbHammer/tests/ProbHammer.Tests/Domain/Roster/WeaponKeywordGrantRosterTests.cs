@@ -131,6 +131,22 @@ public class WeaponKeywordGrantRosterTests
     }
 
     [Fact]
+    public void AConditionalArmyRuleKeywordTargetedGrant_IsRecordedAsNotAppliedOnEveryComponentsRangedWeapon()
+    {
+        var waaagh = AbilityWith("Waaagh!", AbilityOrigin.ArmyRule);
+        var slugga = new RangedWeapon("Slugga", Range: 12, A: 1, Bs: 5, S: 4, Ap: 0, D: 1);
+
+        var view = AttachedUnitAggregator.Build(SquadLedBy(waaagh, slugga),
+            Grants(waaagh, new KeywordRuleTarget(["ORKS"]), "Assault", conditional: true,
+                selector: new WeaponClass(WeaponType.Ranged)));
+
+        var entry = view.Weapons.Should().ContainSingle().Subject;
+        entry.Profile.KeywordsText.Should().BeEmpty();
+        entry.NotAppliedKeywordGrants.Should().ContainSingle(g => g.Keyword == "Assault" && g.SourceAbility == waaagh);
+        entry.Contributions.Should().HaveCount(2).And.OnlyContain(c => c.NotAppliedKeywordGrants.Count == 1);
+    }
+
+    [Fact]
     public void AKeywordTargetedGrantFromANonDetachmentAbility_ReachesNoWeapon()
     {
         var aura = AbilityWith("Aura");

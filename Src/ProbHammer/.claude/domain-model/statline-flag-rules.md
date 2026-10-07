@@ -15,11 +15,13 @@ AttachedUnitAggregator.ApplyStatlineFlagRules(statlines, abilities, classificati
                                        // looks up each present AggregateAbilityEntry's own Ability
                                        // .Text in the catalogue - a classification whose Target is
                                        // SelfRuleTarget or AttachedUnitRuleTarget is applicable
-                                       // (TryGetStatlineClassification); KeywordRuleTarget/
+                                       // (TryGetApplicableClassification); KeywordRuleTarget/
                                        // UnconditionalRuleTarget produce no match, the same outcome
-                                       // as no classification at all - EXCEPT a DetachmentRule-
-                                       // origin ability, whose keyword target was already evaluated
-                                       // by DetachmentRuleInboundAbilityResolver. Only the
+                                       // as no classification at all - EXCEPT two whole-unit-scoped
+                                       // origins (IsWholeUnitScopedOrigin): a DetachmentRule-origin
+                                       // ability, whose keyword target was already evaluated by
+                                       // DetachmentRuleInboundAbilityResolver, and an ArmyRule-origin
+                                       // ability, only ever present on a unit that carries it. Only the
                                        // classification's unconditional effects apply; its
                                        // conditional Scalar/InvulnerableSave effects are recorded
                                        // on the same entries' NotAppliedEffects instead.
@@ -29,7 +31,10 @@ IsBearerOf(abilityEntry, target, componentName, statlineName) -> bool
                                        // .StatlineName is set, the whole owning component when it's
                                        // null (a Datasheet-level or Enhancement-sourced ability);
                                        // AttachedUnitRuleTarget - every row of the whole
-                                       // ICombatUnit regardless of which component granted it.
+                                       // ICombatUnit regardless of which component granted it. A
+                                       // DetachmentRule- or ArmyRule-origin ability also gets every
+                                       // row, whatever its classified Target (an Army Rule entry is
+                                       // promoted to ComponentName null, so Self would match none).
 ApplyEffect(statline, effect, sourceAbility) -> Statline
                                        // ScalarCharacteristicEffect -> ApplyScalarEffect;
                                        // InvulnerableSaveCharacteristicEffect ->

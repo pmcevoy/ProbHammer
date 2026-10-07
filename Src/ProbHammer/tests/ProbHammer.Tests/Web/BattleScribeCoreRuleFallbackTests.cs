@@ -51,4 +51,16 @@ public class BattleScribeCoreRuleFallbackTests(WebApplicationFactory<Program> fa
             .And.MatchRegex("weapon-tag weapon-tag-resolved\"[^>]*>LETHAL HITS: non-MONSTER/VEHICLE<")
             .And.MatchRegex("weapon-tag weapon-tag-resolved\"[^>]*>CLEAVE 2<");
     }
+
+    [Fact]
+    public async Task ImportingNrOrks_RendersWaaaghsConditionalInvulnerableSaveAndAssaultChip()
+    {
+        var client = factory.CreateClient();
+
+        var response = await ImportAsync(client, ReadRealExport("nr-orks.json"));
+
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        html.Should().Contain("stat-tile insv-tile provenance-tile provenance-cond")
+            .And.MatchRegex("class=\"weapon-tag weapon-tag-cond\"[^>]*>Assault<");
+    }
 }

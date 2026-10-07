@@ -70,21 +70,24 @@ resolved unit regardless of which component granted the matched ability (the exi
 scope). A matched record whose own classified target is a set of keywords, or is unconditionally
 roster-wide with no bearer/unit qualifier at all, SHALL NOT produce a flagged value — the same
 outcome as an unmatched ability — since no roster-wide keyword-predicate evaluation exists in this
-capability, with one exception: an ability whose Origin is Detachment Rule (per
+capability, with two exceptions: an ability whose Origin is Detachment Rule (per
 `army-roster-enrichment`'s Detachment Rule Keyword Target Resolution) has already had its own
 keyword target evaluated against the resolved roster before it was ever attached as a present
-ability on this unit, so it SHALL be treated as WholeUnit-scoped for the purposes of this
-requirement regardless of its own record's classified target.
+ability on this unit, and an ability whose Origin is Army Rule is only ever present on a unit whose
+own datasheet or roster entry carries it. Either SHALL be treated as WholeUnit-scoped for the
+purposes of this requirement regardless of its own record's classified target.
 
 #### Scenario: A keyword-scoped match produces no flagged value
 - **WHEN** a resolved unit carries an ability whose catalogue record's own classified target is a set
-  of keywords rather than the bearer or its unit, and that ability's Origin is not Detachment Rule
+  of keywords rather than the bearer or its unit, and that ability's Origin is neither Detachment
+  Rule nor Army Rule
 - **THEN** no Statline characteristic is flagged on that unit's behalf by this capability, the same
   outcome as if no record had matched at all
 
 #### Scenario: An unconditionally roster-wide match produces no flagged value
 - **WHEN** a resolved unit carries an ability whose catalogue record's own classified target names no
-  bearer, unit, or keyword qualifier at all
+  bearer, unit, or keyword qualifier at all, and that ability's Origin is neither Detachment Rule nor
+  Army Rule
 - **THEN** no Statline characteristic is flagged on that unit's behalf by this capability
 
 #### Scenario: A Detachment-Rule-origin ability applies as WholeUnit-scoped despite its own keyword-classified target
@@ -93,6 +96,20 @@ requirement regardless of its own record's classified target.
 - **THEN** the flagged value applies to every row of the whole resolved unit, the same treatment as
   an ordinary WholeUnit-scoped match, not the "no flagged value" outcome that keyword target would
   otherwise produce
+
+#### Scenario: An Army-Rule-origin ability applies as WholeUnit-scoped despite its own keyword-classified target
+- **WHEN** a resolved unit carries a present ability whose Origin is Army Rule (e.g. Waaagh!) and
+  whose catalogue record's own classified target is a set of keywords (e.g. `ORKS`)
+- **THEN** its effects apply to every row of the whole resolved unit, the same treatment as an
+  ordinary WholeUnit-scoped match; a conditional effect (Waaagh!'s 5+ InSv while riled up) is
+  recorded as not added rather than applied, per Conditional Statline Effects Are Recorded Without
+  Being Applied
+
+#### Scenario: An Army-Rule-origin ability with a bearer-scoped target also applies WholeUnit-scoped
+- **WHEN** a resolved unit carries a present Army-Rule-origin ability whose catalogue record's own
+  classified target is the bearer
+- **THEN** its effects apply to every row of the whole resolved unit, since an Army Rule is
+  reported as belonging to the whole unit rather than to any one component
 
 ### Requirement: Source Ability Always Remains Visible
 A rule's match SHALL NOT remove, hide, or otherwise suppress the source ability from the unit's

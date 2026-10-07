@@ -296,6 +296,65 @@ public class StatlineFlagRuleTests
         view.Statlines.Should().ContainSingle(s => s.StatlineName == "Ancient" && s.Statline.Oc.Value == 2);
     }
 
+    private static readonly Ability ArmyRule = new()
+    {
+        Name = "Waaagh!", Text = "Army Rule test text.", Scope = AbilityScope.Unit, Origin = AbilityOrigin.ArmyRule
+    };
+
+    private static AttachedUnit BoyzLedByWarboss()
+    {
+        var bodyguardDatasheet = new Datasheet(
+            "Boyz", keywords: [], abilities: [ArmyRule],
+            statlines: [("Boy", new Statline(6, 5, 5, 1, 7, 2))], weaponProfiles: []);
+        var bodyguard = new Unit(bodyguardDatasheet, [], [new ModelLine("Boy", [], count: 9)]);
+        var leaderDatasheet = new Datasheet(
+            "Warboss", keywords: [], abilities: [],
+            statlines: [("Warboss", new Statline(6, 5, 4, 6, 6, 1))], weaponProfiles: []);
+        var leader = new Unit(leaderDatasheet, [], [new ModelLine("Warboss", [], count: 1)]);
+        return new AttachedUnit(bodyguard, [leader]);
+    }
+
+    [Theory]
+    [MemberData(nameof(ArmyRuleTargets))]
+    public void ArmyRuleOriginAbility_AppliesToEveryRowOfTheWholeUnit_WhateverItsClassifiedTarget(RuleTarget target)
+    {
+        var classifications = ClassificationFixtures.Catalogue(
+        [
+            ClassificationFixtures.Entry(
+                text: ArmyRule.Text, target: target,
+                effects: [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)])
+        ]);
+
+        var view = AttachedUnitAggregator.Build(BoyzLedByWarboss(), classifications);
+
+        view.Statlines.Should().HaveCount(2);
+        view.Statlines.Should().OnlyContain(s => s.Statline.Oc.ContributingAbilities.Count == 1);
+        view.Statlines.Should().ContainSingle(s => s.StatlineName == "Boy" && s.Statline.Oc.Value == 3);
+        view.Statlines.Should().ContainSingle(s => s.StatlineName == "Warboss" && s.Statline.Oc.Value == 2);
+    }
+
+    public static TheoryData<RuleTarget> ArmyRuleTargets() =>
+        new() { new KeywordRuleTarget(["ORKS"]), new SelfRuleTarget() };
+
+    [Fact]
+    public void ArmyRuleOriginAbility_AConditionalInvulnerableSave_IsRecordedOnEveryRow_NotApplied()
+    {
+        var classifications = ClassificationFixtures.Catalogue(
+        [
+            ClassificationFixtures.Entry(
+                text: ArmyRule.Text, target: new KeywordRuleTarget(["ORKS"]),
+                effects: [new InvulnerableSaveCharacteristicEffect(new InvulnerableSave(5, 5))], conditional: true)
+        ]);
+
+        var view = AttachedUnitAggregator.Build(BoyzLedByWarboss(), classifications);
+
+        view.Statlines.Should().HaveCount(2).And.OnlyContain(s =>
+            s.Statline.InSv.ContributingAbilities.Count == 0 &&
+            s.NotAppliedEffects.Count == 1 &&
+            s.NotAppliedEffects[0].SourceAbility.Name == "Waaagh!" &&
+            s.NotAppliedEffects[0].Effect is InvulnerableSaveCharacteristicEffect);
+    }
+
     [Fact]
     public void UnconditionallyRosterWideMatch_ProducesNoFlaggedValue()
     {
