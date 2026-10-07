@@ -133,7 +133,9 @@ selector, same mechanism as before, just no longer the default case.
   full opacity with the existing Hover convention above as its only "this is tappable" cue; a chip
   with no match (`.weapon-tag-unresolved`, a plain non-interactive `<span>`) is dimmed via the
   existing Disabled convention (`opacity: 0.55`) rather than a distinct color, so it reads as "not
-  tappable" without inventing a new state.
+  tappable" without inventing a new state. Every chip, tappable or not, uses `.weapon-tag`'s
+  `0.65rem`, weight 400, uppercase text (GW datasheet style); the button reset on tappable chips
+  touches only `font-family`, since a `font: inherit` there overrode it with the table cell's text.
 - **Unit status toolbar, and the rule it establishes** (`consolidate-unit-toolbar`, superseding
   `half-strength-and-battleshock-indicators`' original unit-header placement): Half Strength,
   Battle-shock, and Reset Casualties (the latter relocated here from the Statline section's own

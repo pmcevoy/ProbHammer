@@ -1003,9 +1003,7 @@ button.filter-flag:hover { opacity: 0.8; }
 .weapon-tag-resolved,
 .weapon-tag-granted,
 .weapon-tag-cond {
-    font: inherit;
-    text-transform: inherit;
-    letter-spacing: inherit;
+    font-family: inherit;
     cursor: pointer;
 }
 .weapon-tag-resolved:hover,
