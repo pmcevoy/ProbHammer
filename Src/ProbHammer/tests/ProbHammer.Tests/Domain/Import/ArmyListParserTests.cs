@@ -225,6 +225,22 @@ public class ArmyListParserTests
         act.Should().NotThrow();
     }
 
+    [Fact]
+    public void RealExport_WithNoDetachment_FailsWithAParseError_NotACrash()
+    {
+        var act = () => ParseDataFile("gw-tanks.txt");
+
+        act.Should().Throw<ArmyListParseException>().WithMessage("*Detachment*");
+    }
+
+    [Fact]
+    public void AnExportThatEndsEarly_FailsWithAParseError_NotACrash()
+    {
+        var act = () => new ArmyListParser().Parse("My Army (500 Points)\n\nOrks\nWar Horde (1 Detachment Points)");
+
+        act.Should().Throw<ArmyListParseException>().WithMessage("*ended*");
+    }
+
     // --- Real Android-export regression coverage ---
 
     [Fact]

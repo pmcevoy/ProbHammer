@@ -1,0 +1,83 @@
+
+Tank Attack (1,285 Points)
+
+Space Marines
+Black Templars
+Ironstorm Spearhead and Tactical Brethren (2 Detachment Points)
+Purge the Foe
+Strike Force (2,000 Points)
+
+ATTACHED UNITS
+
+Attached unit 1
+
+Chaplain in Terminator Armour (75 Points)
+  • Attached as: Leader (Character)
+  • 1x Crozius Arcanum
+  • 1x Storm Bolter
+
+Terminator Assault Squad (170 Points)
+  • Attached as: Bodyguard
+  • 1x Terminator Sergeant
+     ◦ 1x Twin Lightning Claws
+  • 4x Terminator
+     ◦ 4x Twin Lightning Claws
+
+CHARACTERS
+
+Captain in Terminator Armour (90 Points)
+  • Warlord
+  • 1x Relic Weapon
+  • 1x Storm Bolter
+
+BATTLELINE
+
+Intercessor Squad (85 Points)
+  • 4x Intercessor
+     ◦ 4x Bolt Pistol
+     ◦ 4x Bolt Rifle
+     ◦ 4x Knives and Fists
+  • 1x Intercessor Sergeant
+     ◦ 1x Bolt Pistol
+     ◦ 1x Bolt Rifle
+     ◦ 1x Knives and Fists
+
+DEDICATED TRANSPORTS
+
+Impulsor (70 Points)
+  • 1x Armoured Hull
+  • 1x Storm Bolters
+
+OTHER DATASHEETS
+
+Infernus Squad (95 Points)
+  • 1x Infernus Sergeant
+     ◦ 1x Bolt Pistol
+     ◦ 1x Ceramite Fists
+     ◦ 1x Pyreblaster
+  • 4x Infernus Marine
+     ◦ 4x Bolt Pistol
+     ◦ 4x Ceramite Fists
+     ◦ 4x Pyreblaster
+
+Redemptor Dreadnought (170 Points)
+  • 1x Fragstorm Grenade Launchers
+  • 1x Heavy Flamer
+  • 1x Heavy Onslaught Gatling Cannon
+  • 1x Redemptor Fist
+
+Repulsor Executioner (265 Points)
+  • 1x Armoured Hull
+  • 1x Defensive Array
+  • 1x Heavy Laser Destroyer
+  • 1x Heavy Onslaught Gatling Cannon
+  • 1x Twin Heavy Bolter
+
+Repulsor Executioner (265 Points)
+  • 1x Armoured Hull
+  • 1x Defensive Array
+  • 1x Heavy Laser Destroyer
+  • 1x Heavy Onslaught Gatling Cannon
+  • 1x Twin Heavy Bolter
+
+Exported with App Version: v2.7.2 (2), Data Version: v972

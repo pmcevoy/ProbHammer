@@ -1,0 +1,15 @@
+@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "Something went wrong";
+}
+
+<main class="import-page">
+    <nav class="page-nav"><a href="/LivePlay">Current list</a>&nbsp;&middot;&nbsp;<a href="/Import">Import</a></nav>
+    <h1>Something went wrong</h1>
+    @if (Model.Message != null)
+    {
+        <p class="import-error">@Model.Message</p>
+    }
+    <p>Reference @Model.Reference at @Model.Time.ToString("yyyy-MM-dd HH:mm:ss") UTC.</p>
+</main>

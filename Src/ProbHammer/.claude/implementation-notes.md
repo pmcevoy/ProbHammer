@@ -70,6 +70,16 @@ future save-resolution logic built on the 11e model should keep `effectiveSave =
 
 ---
 
+## UseExceptionHandler Needs A Real Error Page
+
+`UseExceptionHandler("/Error")` (Production only) re-executes the failed request, with its own
+method, against `/Error`. With no such page the handler gets a 404 and gives up with an empty
+500, so every unhandled exception showed as a blank page on the phone. `Pages/Error.cshtml` handles
+GET and POST, ignores antiforgery, and shows the message plus a reference/UTC time to match
+against the Cloud Run logs. `ErrorPageTests` covers it in Production mode.
+
+---
+
 ## Static Classes and ILogger
 
 Static classes cannot be used as type parameters for `ILogger<T>`. Use `ILoggerFactory.CreateLogger("Name")` for loggers inside static classes.

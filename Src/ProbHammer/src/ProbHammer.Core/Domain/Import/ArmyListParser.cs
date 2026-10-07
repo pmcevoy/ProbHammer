@@ -28,6 +28,11 @@ public sealed partial class ArmyListParser : IArmyListParser
         while (cursor.HasMore && !TryParseDetachment(cursor.Peek().Content, out _))
             faction.Add(cursor.Next().Content);
 
+        if (!cursor.HasMore)
+            throw new ArmyListParseException(
+                "No Detachment line found (expected '<Name> (<N> Detachment Points)' after the faction). " +
+                "If the GW app shows errors for this list, fix them there and export again.");
+
         var detachments = new List<string>();
         while (cursor.HasMore && TryParseDetachment(cursor.Peek().Content, out var detachmentName))
         {
@@ -382,8 +387,11 @@ public sealed partial class ArmyListParser : IArmyListParser
 
         public bool HasMore => _index < lines.Count;
 
-        public Line Peek() => lines[_index];
+        public Line Peek() => HasMore ? lines[_index] : throw EndedEarly();
 
-        public Line Next() => lines[_index++];
+        public Line Next() => HasMore ? lines[_index++] : throw EndedEarly();
+
+        private static ArmyListParseException EndedEarly() =>
+            new("The export ended before the army list was complete - check the whole export was pasted.");
     }
 }
