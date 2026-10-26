@@ -1,7 +1,7 @@
 namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 
 /// <summary>
-/// Seed "known limitation" allowlist for <see cref="WeaponKeywordScanTests"/> - 19 distinct
+/// Seed "known limitation" allowlist for <see cref="WeaponKeywordScanTests"/> - distinct
 /// tokens from a real run against the live clone that don't resolve against a closure's own
 /// <see cref="ProbHammer.Core.Domain.Catalogue.Bsdata.RuleGlossary"/>, none of them fixed here:
 /// adding a glossary entry (or a `sharedRule` alias) for a genuinely unmodeled mechanic is out of
@@ -44,27 +44,10 @@ public static class WeaponKeywordAllowlist
             "'Sonic Devastation' - weapon-specific named ability (Adeptus Mechanicus Syntaxik Charger), no glossary entry.",
             t => t == "Sonic Devastation"),
 
-        // Target-conditional variants of a generic mechanic that DOES have a glossary entry under
-        // its bare name - RuleGlossary.Normalize's "anti"-prefix collapse is Anti-specific (see its
-        // own doc comment); it has no equivalent rule for a trailing "target category" suffix on
-        // Devastating Wounds/Lethal Hits/Sustained Hits, so these remain a genuinely different key
-        // from the bare mechanic they specialize, by design - must never be silently mapped to it.
-        new(
-            "'Devastating Wounds: Monster/Vehicle' - target-conditional variant, distinct key from the bare 'Devastating Wounds' glossary entry.",
-            t => t == "Devastating Wounds: Monster/Vehicle"),
-        new("'DEVASTATING WOUNDS: MONSTER/VEHICLE' - all-caps spelling of the same target-conditional variant.",
-            t => t == "DEVASTATING WOUNDS: MONSTER/VEHICLE"),
-        new("'Devastating Wounds: non-Monster/Vehicle' - negated-target-conditional variant, distinct key.",
-            t => t == "Devastating Wounds: non-Monster/Vehicle"),
-        new("'DEVASTATING WOUNDS: INFANTRY' - all-caps target-conditional variant naming a different category.",
-            t => t == "DEVASTATING WOUNDS: INFANTRY"),
-        new("'LETHAL HITS: non-MONSTER/VEHICLE' - negated-target-conditional variant of 'Lethal Hits', distinct key.",
-            t => t == "LETHAL HITS: non-MONSTER/VEHICLE"),
-        new(
-            "'LETHAL HITS: non-' - truncated source-data variant of the same negated-target-conditional shape (Orks.json's Dual Big Shoota).",
-            t => t == "LETHAL HITS: non-"),
-        new(
-            "'SUSTAINED HITS 2: MONSTER/VEHICLE' - value- and target-conditional variant of 'Sustained Hits', distinct key.",
-            t => t == "SUSTAINED HITS 2: MONSTER/VEHICLE"),
+
+        // Defined only as a rule local to Adeptus Custodes' Auriferous Orb, with a different text on
+        // its Enhancement entry, so RuleGlossary (catalogue and game-system rules only) can't index it.
+        new("'Blinding Light' - Auriferous Orb's own local rule, two differing texts, no glossary entry.",
+            t => t == "Blinding Light"),
     ];
 }

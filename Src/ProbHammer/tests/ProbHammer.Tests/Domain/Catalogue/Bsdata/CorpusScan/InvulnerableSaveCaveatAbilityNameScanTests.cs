@@ -18,9 +18,8 @@ namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 /// own doc comment, never a "rule"-type InfoLink) rather than through BsdataDatasheetMapper
 /// .BuildDatasheet, since that already applies the exclusion this scan needs to audit - it would
 /// filter every occurrence away before this scan ever saw it. Every occurrence is checked against a
-/// single shared semantic signal ("invulnerable save" in its own Description text) via the same
-/// AllowlistEntry/AllowlistCheck pattern the other CorpusScan tests use - one confirmed real anomaly
-/// (Orks' Makari) is allowlisted rather than special-cased.
+/// shared semantic signal (its Description mentions an invulnerable save, or is just an attack-type
+/// restriction) via the same AllowlistEntry/AllowlistCheck pattern the other CorpusScan tests use.
 /// </summary>
 public class InvulnerableSaveCaveatAbilityNameScanTests
 {
@@ -38,17 +37,15 @@ public class InvulnerableSaveCaveatAbilityNameScanTests
         public override string ToString() => $"{FileName} :: '{EntryName}' / '{AbilityName}' -> \"{Text}\"";
     }
 
-    private static readonly IReadOnlyList<AllowlistEntry<NamedOccurrence>> Allowlist =
-    [
-        new(
-            "Orks' Makari - the confirmed real anomaly this project already documents (see " +
-            "InvulnerableSaveCaveatResolutionAllowlist's own pre-existing entry): the linked " +
-            "ability restricts re-rolling save rolls, not an attack-type split, so its own text " +
-            "never mentions invulnerable save even though it's genuinely the digit-parameterized " +
-            "caveat-internal ability this mechanism resolves by id.",
-            (NamedOccurrence o) => o.FileName == "Orks.json" && o.EntryName == "Makari" &&
-                                   o.AbilityName == "Invulnerable Save (2+*)")
-    ];
+    private static readonly IReadOnlyList<AllowlistEntry<NamedOccurrence>> Allowlist = [];
+
+    // The 2026 Space Marine codex shortened Judiciar's footnote to "Against melee attacks only".
+    private static readonly Regex AttackTypeOnlyPattern =
+        new(@"^Against (melee|ranged) attacks only\.?$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static bool DescribesTheSave(string text) =>
+        text.Contains("invulnerable save", StringComparison.OrdinalIgnoreCase) ||
+        AttackTypeOnlyPattern.IsMatch(text.Trim());
 
     [Fact(Explicit = true)]
     public void Full_corpus_invulnerable_save_caveat_ability_name_scan()
@@ -71,7 +68,7 @@ public class InvulnerableSaveCaveatAbilityNameScanTests
             "finding anything real.");
 
         var differentIntent =
-            results.Where(r => !r.Text.Contains("invulnerable save", StringComparison.OrdinalIgnoreCase)).ToList();
+            results.Where(r => !DescribesTheSave(r.Text)).ToList();
 
         AllowlistCheck.AssertClean(differentIntent, Allowlist, r => r.ToString());
     }

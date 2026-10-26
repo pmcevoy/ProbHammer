@@ -555,16 +555,22 @@ public static partial class BsdataDatasheetMapper
     /// the link/local-ability on the same entry as the footnoted characteristic itself - confirmed
     /// on Howling Banshees, where the squad's own top-level entry carries the "Invulnerable Save
     /// (4+*)" infoLink but the footnoted InSv characteristic sits on a nested child model entry
-    /// one level down. Each candidate entry's own locally-nested Abilities profiles are checked
+    /// one level down. A plain "Invulnerable Save" is tried only when neither convention matches. Each candidate entry's own locally-nested Abilities profiles are checked
     /// before its own "profile"-type InfoLinks (confirmed shape: Orks' Makari, whose "Invulnerable
     /// Save (2+*)" sits directly in his own entry.Profiles, not behind any link). Throws when no
     /// entry in the ancestry has a matching candidate under either naming convention - a footnote
     /// with no resolvable ability is a new, unprecedented shape, not something to guess at.</summary>
     private static Ability ResolveCaveatAbility(int digit, IReadOnlyList<BsSelectionEntry> ancestry, WalkContext ctx,
-        string rawText)
-    {
-        var expectedNames = new[] { $"Invulnerable Save ({digit}+*)", "*Invulnerable Save" };
+        string rawText) =>
+        FindCaveatAbility([$"Invulnerable Save ({digit}+*)", "*Invulnerable Save"], ancestry, ctx)
+        // Hounds of Morkai explains its "6+*" with a plain "Invulnerable Save", a name other units
+        // use for an ordinary ability, so it is only a fallback.
+        ?? FindCaveatAbility(["Invulnerable Save"], ancestry, ctx)
+        ?? throw new AmbiguousCharacteristicException("InSv", rawText);
 
+    private static Ability? FindCaveatAbility(string[] expectedNames, IReadOnlyList<BsSelectionEntry> ancestry,
+        WalkContext ctx)
+    {
         for (var i = ancestry.Count - 1; i >= 0; i--)
         {
             var candidate = ancestry[i];
@@ -582,7 +588,7 @@ public static partial class BsdataDatasheetMapper
                 return MapAbility(linkedProfile, AbilityOrigin.Intrinsic);
         }
 
-        throw new AmbiguousCharacteristicException("InSv", rawText);
+        return null;
     }
 
     [GeneratedRegex(@"^(\d+)\+\s*\((Ranged|Melee)\)$")]

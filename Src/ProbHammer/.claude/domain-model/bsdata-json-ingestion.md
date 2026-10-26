@@ -81,7 +81,9 @@ InSv-caveat-internal check) also excludes the two ability-name conventions
 `BsdataDatasheetMapper.ResolveCaveatAbility` looks for by id ("Invulnerable Save ({N}+*)",
 "*Invulnerable Save") — see "BSData JSON Ingestion" above for the resolution-scope bug this fixes,
 and its own corpus-scan regression test (`InvulnerableSaveCaveatAbilityNameScanTests`, mirroring
-`LeaderSupportAttachedUnitNameScanTests` exactly).
+`LeaderSupportAttachedUnitNameScanTests` exactly). When neither convention matches, a plain
+"Invulnerable Save" is tried as a fallback (Hounds of Morkai's "6+*"); it is not excluded from the
+ability walk, since other Legends units use that name for an ordinary ability.
 
 **Core Rule Ability Extraction** (`resolve-core-rule-abilities`): a fourth ability-sourcing shape —
 an `infoLink` with `"type": "rule"` (real: Impulsor's "Oath of Moment"/"Deadly Demise"/"Firing

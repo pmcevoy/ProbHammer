@@ -25,7 +25,8 @@ public class CharacteristicEffectRealCorpusTests
         var parsed = new ParsedArmyList(
             Name: "Test Army", PointsSpent: 0, Faction: faction, Detachments: [], ForceDisposition: "Test",
             BattleSize: "Incursion", PointsLimit: 1000, AttachmentGroups: [],
-            StandaloneUnits: [new ParsedUnit(unitName, [new ParsedModelGroup(modelName ?? unitName, 1, weapons)], enhancements)]);
+            StandaloneUnits:
+            [new ParsedUnit(unitName, [new ParsedModelGroup(modelName ?? unitName, 1, weapons)], enhancements)]);
 
         var source = new LocalDiskBsdataCatalogueSource(BundledBsDataRoot());
         var fileName = BsdataFactionResolver.ResolveStartingFileName(faction, source.ListFileNames());
@@ -55,13 +56,28 @@ public class CharacteristicEffectRealCorpusTests
     {
         // "4+* / 5+": the footnote names melee 4+ only, so ranged keeps the plain 5+.
         var roster = EnrichStandaloneUnit(
-            ["Aeldari", "Craftworlds"], "Howling Banshees", weapons: [], enhancements: [], modelName: "Howling Banshee");
+            ["Aeldari", "Craftworlds"], "Howling Banshees", weapons: [], enhancements: [],
+            modelName: "Howling Banshee");
         var banshees = roster.Units.Single();
 
         var view = AttachedUnitAggregator.Build(banshees, ClassificationFixtures.CheckedIn);
 
         view.Statlines.Should().NotBeEmpty().And.OnlyContain(e =>
             !e.Statline.InSv.IsCaveated && e.Statline.InSv.Value == new InvulnerableSave(4, 5));
+    }
+
+    [Fact]
+    public void HoundsOfMorkai_FootnotedSave_LinksItsPlainInvulnerableSaveAbility()
+    {
+        var roster = EnrichStandaloneUnit(
+            ["Space Marines", "Space Wolves"], "Hounds of Morkai [Legends]", weapons: [], enhancements: [],
+            modelName: "Hounds of Morkai");
+
+        var insv = ((Unit)roster.Units.Single()).Datasheet.Statlines.Single().Statline.InSv;
+
+        insv.IsCaveated.Should().BeTrue();
+        insv.Value.Should().Be(new InvulnerableSave(6, 6));
+        insv.ContributingAbilities.Should().ContainSingle(a => a.Name == "Invulnerable Save");
     }
 
     [Fact]

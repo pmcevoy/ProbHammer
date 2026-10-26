@@ -1622,10 +1622,9 @@ follow-up until the base Android import bug is fixed first. No code for this has
   auto-memory. Not exhaustively proven against the *full* corpus (only the three captured exports,
   covering ~4 factions) - a future corpus-wide scan (mirroring `bsdata-corpus-scan-tests`'s existing
   pattern) could surface further shapes the three captured exports don't exercise.
-- 3 Ork weapons carry Strength as a dice expression (Battlewagon `D6+6`, Big Gunz [Legends] `2D6`,
-  Deff Rolla Battle Fortress [Legends] `2D6`), which `WeaponProfile.S: int` can't represent. Needs a
-  decision: leave failing / round to `DiceExpression.ExpectedValue()` / widen `S` to
-  `DiceExpression`. Tracked (not resolved) by `CharacteristicResolutionScanTests`'s allowlist.
+- No weapon in the 2026-10-26 BSData has dice-notation Strength any more (the 3 Ork weapons that did
+  were changed), so its allowlist entry was dropped. `WeaponProfile.S: int` still can't represent
+  one if it returns; `CharacteristicResolutionScanTests` would flag it.
 ---
 
 ## Spec Debt
