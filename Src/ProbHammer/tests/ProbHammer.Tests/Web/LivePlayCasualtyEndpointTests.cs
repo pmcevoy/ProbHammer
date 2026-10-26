@@ -13,7 +13,7 @@ namespace ProbHammer.Tests.Web;
 /// to end (roster rebuild, adjustment resolution, and Razor-partial-to-string rendering via
 /// RazorPartialRenderer) rather than any one piece in isolation. Since `/LivePlay` now renders the
 /// session's own imported-and-enriched ArmyRoster (see live-play-view's Modified Requirements),
-/// each test first imports the real captured `gw-app-export.txt` via the same client so the session
+/// each test first imports the real captured `gw-templars-for-unit-tests.txt` via the same client so the session
 /// this endpoint reads from has an active army list, matching the coordinates
 /// (`"Crusader Squad"`/`"Neophyte"`) this suite has always asserted against.</summary>
 public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory<Program>>
@@ -25,7 +25,7 @@ public class LivePlayCasualtyEndpointTests : IClassFixture<WebApplicationFactory
     private async Task<HttpClient> ClientWithImportedArmyAsync()
     {
         var client = _factory.CreateClient();
-        var response = await ImportAsync(client, ReadRealExport("gw-app-export.txt"));
+        var response = await ImportAsync(client, ReadRealExport("gw-templars-for-unit-tests.txt"));
         response.EnsureSuccessStatusCode();
         return client;
     }

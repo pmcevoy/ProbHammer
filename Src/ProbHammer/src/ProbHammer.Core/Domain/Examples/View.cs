@@ -7,7 +7,7 @@ public static class View
 {
     /// <summary>The full army list - the same nine-unit roster <see cref="MyArmyRoster"/> and
     /// <see cref="MyArmy"/> read from, wrapped with the army-level metadata a real GW app export
-    /// carries. Sample values transcribed from <c>data/gw-app-export.txt</c>, except
+    /// carries. Sample values transcribed from a real GW-app Black Templars export, except
     /// <see cref="Units.CanisRex"/>, <see cref="Units.HowlingBanshee"/>, and
     /// <see cref="Units.TwinWardSentinel"/> - none part of the captured export, added purely so
     /// `/LivePlay` has real examples of every invulnerable-save render shape (`CanisRex`/

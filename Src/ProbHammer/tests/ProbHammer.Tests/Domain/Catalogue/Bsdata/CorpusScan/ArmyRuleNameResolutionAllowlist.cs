@@ -20,7 +20,7 @@ namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 /// specific rules via the BSData text pipeline today (mirrors ProcessRuleInfoLink's own
 /// "unresolvable rule name... silently produce no Ability" convention) - the BattleScribe/JSON
 /// pipeline is unaffected, since it reads a roster's own already-resolved rule text directly with
-/// no BSData closure involved at all (confirmed: data/gw-android-export-deathguard.json's own
+/// no BSData closure involved at all (confirmed: a real Death Guard NewRecruit export's own
 /// "Nurgle's Gift (Aura)" entry resolves fine there). See PROGRESS.md's Known Issues.
 /// </summary>
 public static class ArmyRuleNameResolutionAllowlist

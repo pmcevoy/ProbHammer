@@ -4,7 +4,7 @@
     "id": "sys-352e-adc2-7639-d610",
     "battleScribeVersion": 2.03,
     "readme": "",
-    "revision": 14,
+    "revision": 18,
     "type": "gameSystem",
     "xmlns": "http://www.battlescribe.net/schema/gameSystemSchema",
     "categoryEntries": [
@@ -796,7 +796,56 @@
       {"name": "Faction: Agents of the Imperium", "id": "5128-90b-e4a5-dcbd", "hidden": false},
       {"name": "Faction: Dark Angels", "id": "aab1-4f05-fabe-5ba5", "hidden": false},
       {"name": "Faction: Salamanders", "id": "65e4-13-4fa8-b36c", "hidden": false},
-      {"name": "Faction: Deathwatch", "id": "d39c-9989-db7f-d815", "hidden": false},
+      {
+        "name": "Faction: Deathwatch",
+        "id": "d39c-9989-db7f-d815",
+        "hidden": false,
+        "constraints": [
+          {
+            "id": "75c7-ad15-2fe7-5b5f",
+            "field": "51b2-306e-1021-d207",
+            "includeChildForces": true,
+            "includeChildSelections": true,
+            "scope": "roster",
+            "shared": true,
+            "type": "max",
+            "value": -1
+          }
+        ],
+        "modifiers": [
+          {
+            "field": "75c7-ad15-2fe7-5b5f",
+            "type": "set",
+            "value": 500,
+            "conditionGroups": [
+              {
+                "type": "and",
+                "conditions": [
+                  {
+                    "childId": "f89b-84e0-6e3b-f1e2",
+                    "childName": "Imperium - Adeptus Astartes - Deathwatch",
+                    "field": "selections",
+                    "scope": "primary-catalogue",
+                    "shared": true,
+                    "type": "notInstanceOf",
+                    "value": 1
+                  },
+                  {
+                    "childId": "bb9d-299a-ed60-2d8a",
+                    "childName": "Army Roster",
+                    "field": "selections",
+                    "includeChildSelections": true,
+                    "scope": "force",
+                    "shared": true,
+                    "type": "instanceOf",
+                    "value": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
       {"name": "Faction: Blood Angels", "id": "62ac-ef42-27b4-ae7", "hidden": false},
       {"name": "Faction: Ultramarines", "id": "1a2d-2f00-c054-4dcb", "hidden": false},
       {"name": "Faction: Space Wolves", "id": "a0d9-c115-2a-8330", "hidden": false},
@@ -857,7 +906,6 @@
       {"name": "Striding Behemoths", "id": "0dce-ed3d-83af-2f27", "comment": "Crusade content", "hidden": false},
       {"name": "Monster Hunters", "id": "1532-9501-d870-4514", "comment": "Crusade content", "hidden": false},
       {"name": "Psychic Weapon", "id": "4546-4a0c-b3be-e84c", "hidden": true},
-      {"name": "Extra Attacks Weapon", "id": "84c4-6d1e-e724-bd6e", "hidden": true},
       {"name": "Torrent Weapon", "id": "064a-0470-60eb-e3ef", "hidden": true},
       {"name": "Ranged Weapon", "id": "eeda-8544-a2f3-3fab", "comment": "Used for Enhancement / Crusade Relic upgrades", "hidden": true},
       {"name": "Melee Weapon", "id": "ccdd-3987-11ed-90cd", "comment": "Used for Enhancement / Crusade Relic upgrades", "hidden": true},
@@ -893,13 +941,51 @@
         "name": "Ministorum Priest",
         "id": "cc88-9467-86ac-4ca2",
         "hidden": false,
-        "constraints": [{"id": "9ad1-8aef-0d46-3b1b", "field": "selections", "includeChildSelections": true, "scope": "roster", "shared": true, "type": "max", "value": 3}]
+        "constraints": [{"id": "9ad1-8aef-0d46-3b1b", "field": "selections", "includeChildSelections": true, "scope": "roster", "shared": true, "type": "max", "value": 3}],
+        "modifiers": [
+          {
+            "field": "9ad1-8aef-0d46-3b1b",
+            "type": "set",
+            "value": 2,
+            "conditions": [
+              {
+                "childId": "d62d-db22-4893-4bc0",
+                "childName": "1. Incursion (1000 Point limit)",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ]
+          }
+        ]
       },
       {
         "name": "Sanctifiers",
         "id": "9d4f-4beb-107d-3175",
         "hidden": false,
-        "constraints": [{"id": "3b97-07bb-1241-9cc6", "field": "selections", "includeChildSelections": true, "scope": "roster", "shared": true, "type": "max", "value": 3}]
+        "constraints": [{"id": "3b97-07bb-1241-9cc6", "field": "selections", "includeChildSelections": true, "scope": "roster", "shared": true, "type": "max", "value": 3}],
+        "modifiers": [
+          {
+            "field": "3b97-07bb-1241-9cc6",
+            "type": "set",
+            "value": 2,
+            "conditions": [
+              {
+                "childId": "d62d-db22-4893-4bc0",
+                "childName": "1. Incursion (1000 Point limit)",
+                "field": "selections",
+                "includeChildSelections": true,
+                "scope": "force",
+                "shared": true,
+                "type": "atLeast",
+                "value": 1
+              }
+            ]
+          }
+        ]
       },
       {
         "name": "Pilot",
@@ -1163,7 +1249,14 @@
       },
       {"name": "Melta Weapon", "id": "a5ab-185a-4855-0cb8", "hidden": true},
       {"name": "Possessed", "id": "3d1c-7f16-1489-fac3", "hidden": false},
-      {"name": "Plasma", "id": "cb29-f4bb-ff15-6b11", "hidden": false}
+      {"name": "Plasma", "id": "cb29-f4bb-ff15-6b11", "hidden": false},
+      {"name": "Allies: Deathwatch", "id": "8886-848f-a0f9-1e19", "hidden": false},
+      {"name": "Gravis", "id": "81f0-f40e-c36c-5a30", "hidden": false},
+      {"name": "Tacticus", "id": "5179-8ede-45e3-49a2", "hidden": false},
+      {"name": "Fortis Kill Team", "id": "94a4-4c41-84a4-d038", "hidden": false},
+      {"name": "Indomitor Kill Team", "id": "2546-062b-7236-7fa3", "hidden": false},
+      {"name": "Spectrus Kill Team", "id": "2b33-05a8-bf42-72f9", "hidden": false},
+      {"name": "Allies: Tyranids", "id": "747a-c6a9-6f4f-7f09", "hidden": false}
     ],
     "costTypes": [
       {
@@ -1354,7 +1447,7 @@
         "name": "Army Roster",
         "id": "bb9d-299a-ed60-2d8a",
         "hidden": false,
-        "readme": "Please report any issues with the data via the Report Issue functionality found either at the top right of the app (on web) or in the Roster menu (on mobile), ensuring you select the correct option based on the problem you are experiencing.\n\nIssues with Yellowscribe/TTS should first be reported as New Recruit issues, not data issues.\n\n**PLEASE DO NOT REPORT ISSUES ON DISCORD!**\n",
+        "readme": "#PLEASE NOTE: Space Marine Legends may have some errors, we are aware and still working on them. \n\nPlease report any issues with the data via the Report Issue functionality found either at the top right of the app (on web) or in the Roster menu (on mobile), ensuring you select the correct option based on the problem you are experiencing.\n\nIssues with Yellowscribe/TTS should first be reported as New Recruit issues, not data issues.\n\n**PLEASE DO NOT REPORT ISSUES ON DISCORD!**\n",
         "categoryLinks": [
           {"name": "Configuration", "id": "d5de-ee57-ad4b-e4b7", "hidden": false, "primary": false, "targetId": "4ac9-fd30-1e3d-b249"},
           {"name": "Epic Hero", "id": "16fc-8e39-ee82-cf96", "hidden": false, "primary": false, "targetId": "4f3a-f0f7-6647-348d"},
@@ -1421,16 +1514,18 @@
           {"name": "Dedicated Transport", "id": "cf3e-2c24-fe34-39f9", "hidden": false, "primary": false, "targetId": "ba07-411c-2832-1f79"},
           {"name": "Fortification", "id": "9198-c35d-71cd-eea3", "hidden": false, "primary": false, "targetId": "19d7-9c74-2140-5851"},
           {"name": "Unit", "id": "a41a-6330-4718-d8d2", "hidden": false, "primary": false, "targetId": "1160-70ae-a862-b1a8"},
+          {"name": "Allies: Adeptus Titanicus", "id": "d30c-1ea7-4805-b4be", "hidden": false, "targetId": "9988-6b5e-660e-d973"},
           {"name": "Allies: Astra Militarum", "id": "58e9-03a9-8da7-f45b", "hidden": false, "targetId": "8247-35f6-ec2a-7caa"},
           {"name": "Allies: Chaos Knights", "id": "748a-f332-43fb-8218", "hidden": false, "targetId": "8dd6-af11-abd3-55f1"},
+          {"name": "Allies: Deathwatch", "id": "281e-8dfd-6a10-d24b", "hidden": false, "targetId": "8886-848f-a0f9-1e19"},
           {"name": "Allies: Heretic Astartes", "id": "5691-7287-9ec8-7e8d", "hidden": false, "targetId": "92e6-f82e-0a48-2276"},
           {"name": "Allies: Imperial Agents", "id": "1fad-7176-9fd5-de0b", "hidden": false, "targetId": "742f-5727-1bc9-6da5"},
           {"name": "Allies: Imperial Knights", "id": "3cd2-4515-973d-0e93", "hidden": false, "targetId": "5e03-9044-273d-e818"},
           {"name": "Allies: Legiones Daemonica", "id": "9cf7-d024-063a-f77d", "hidden": false, "targetId": "e1ea-71b9-f0ef-d788"},
           {"name": "Allies: Titanicus Traitoris", "id": "722c-1b43-cac8-8d7a", "hidden": false, "targetId": "24fa-8caf-cd68-31fb"},
+          {"name": "Allies: Tyranids", "id": "2a70-f48a-2223-f633", "hidden": false, "targetId": "747a-c6a9-6f4f-7f09"},
           {"name": "Allies: Unaligned Forces", "id": "ea72-49d5-9b60-d6cf", "hidden": false, "targetId": "07d9-ab1c-cf28-0939"},
-          {"name": "Reference", "id": "3761-5a4e-79e0-3c18", "hidden": false, "targetId": "eef1-be80-500a-edfc"},
-          {"name": "Allies: Adeptus Titanicus", "id": "d30c-1ea7-4805-b4be", "hidden": false, "targetId": "9988-6b5e-660e-d973"}
+          {"name": "Reference", "id": "3761-5a4e-79e0-3c18", "hidden": false, "targetId": "eef1-be80-500a-edfc"}
         ],
         "constraints": [
           {"id": "95c5-effd-74f1-c8f4", "field": "82ae-1066-5107-6ae0", "includeChildSelections": true, "scope": "parent", "shared": true, "type": "max", "value": 2},
@@ -1743,16 +1838,18 @@
           {"name": "Fortification", "id": "9521-ccd2-1cb5-eef5", "hidden": false, "primary": false, "targetId": "19d7-9c74-2140-5851"},
           {"name": "Unit", "id": "4657-058c-657b-3d14", "hidden": false, "primary": false, "targetId": "1160-70ae-a862-b1a8"},
           {"name": "Pilot", "id": "3577-efe1-f844-d1e0", "hidden": false, "targetId": "5b15-724e-2eeb-8cb7"},
+          {"name": "Allies: Adeptus Titanicus", "id": "0b08-32da-55ba-d541", "hidden": false, "targetId": "9988-6b5e-660e-d973"},
           {"name": "Allies: Astra Militarum", "id": "ba9f-9f8a-b77f-14e6", "hidden": false, "targetId": "8247-35f6-ec2a-7caa"},
           {"name": "Allies: Chaos Knights", "id": "5037-1e14-c070-cfcd", "hidden": false, "targetId": "8dd6-af11-abd3-55f1"},
+          {"name": "Allies: Deathwatch", "id": "8f04-18c9-df5a-d189", "hidden": false, "targetId": "8886-848f-a0f9-1e19"},
           {"name": "Allies: Heretic Astartes", "id": "9b49-7348-a883-2d9c", "hidden": false, "targetId": "92e6-f82e-0a48-2276"},
           {"name": "Allies: Imperial Agents", "id": "9817-f3fe-d2ba-a4b4", "hidden": false, "targetId": "742f-5727-1bc9-6da5"},
           {"name": "Allies: Imperial Knights", "id": "cb49-46dc-6303-c205", "hidden": false, "targetId": "5e03-9044-273d-e818"},
           {"name": "Allies: Legiones Daemonica", "id": "9293-f76b-8512-9b2e", "hidden": false, "targetId": "e1ea-71b9-f0ef-d788"},
           {"name": "Allies: Titanicus Traitoris", "id": "3ec3-1293-b44c-f03d", "hidden": false, "targetId": "24fa-8caf-cd68-31fb"},
+          {"name": "Allies: Tyranids", "id": "93b1-3632-04ed-841c", "hidden": false, "targetId": "747a-c6a9-6f4f-7f09"},
           {"name": "Allies: Unaligned Forces", "id": "6830-ae83-9843-426d", "hidden": false, "targetId": "07d9-ab1c-cf28-0939"},
-          {"name": "Reference", "id": "14de-c9cb-628a-6881", "hidden": false, "targetId": "eef1-be80-500a-edfc"},
-          {"name": "Allies: Adeptus Titanicus", "id": "0b08-32da-55ba-d541", "hidden": false, "targetId": "9988-6b5e-660e-d973"}
+          {"name": "Reference", "id": "14de-c9cb-628a-6881", "hidden": false, "targetId": "eef1-be80-500a-edfc"}
         ],
         "constraints": [
           {
@@ -2020,7 +2117,7 @@
           {
             "field": "readme",
             "type": "set",
-            "value": "Please report any issues with the data via the Report Issue functionality found either at the top right of the app (on web) or in the Roster menu (on mobile), ensuring you select the correct option based on the problem you are experiencing.\n**PLEASE DO NOT REPORT ISSUES ON DISCORD!**\n\n**Reminder: Your Crusade Force is every model available to your faction in Crusade Mode. Your Crusade Army is the list of units you intend to use in a game.**",
+            "value": "#PLEASE NOTE: Space Marine Legends may have some errors, we are aware and still working on them.\n\nPlease report any issues with the data via the Report Issue functionality found either at the top right of the app (on web) or in the Roster menu (on mobile), ensuring you select the correct option based on the problem you are experiencing.\n**PLEASE DO NOT REPORT ISSUES ON DISCORD!**\n\n**Reminder: Your Crusade Force is every model available to your faction in Crusade Mode. Your Crusade Army is the list of units you intend to use in a game.**",
             "conditions": [
               {
                 "childId": "ff7b-8f73-1756-650a",
@@ -2037,7 +2134,7 @@
           {
             "field": "readme",
             "type": "set",
-            "value": "Please report any issues with the data via the Report Issue functionality found either at the top right of the app (on web) or in the Roster menu (on mobile), ensuring you select the correct option based on the problem you are experiencing.\n**PLEASE DO NOT REPORT ISSUES ON DISCORD!**\n\n\n**Reminder: Your Crusade Force is every model available to your faction in Crusade Mode. Your Crusade Army is the list of units you intend to use in a game. You can add the Crusade Army for your faction from the *Forces* unit section or the *Add Force* menu option.**",
+            "value": "#PLEASE NOTE: Space Marine Legends may have some errors, we are aware and still working on them.\n\nPlease report any issues with the data via the Report Issue functionality found either at the top right of the app (on web) or in the Roster menu (on mobile), ensuring you select the correct option based on the problem you are experiencing.\n**PLEASE DO NOT REPORT ISSUES ON DISCORD!**\n\n**Reminder: Your Crusade Force is every model available to your faction in Crusade Mode. Your Crusade Army is the list of units you intend to use in a game. You can add the Crusade Army for your faction from the *Forces* unit section or the *Add Force* menu option.**",
             "conditions": [
               {
                 "childId": "ff7b-8f73-1756-650a",
@@ -2066,11 +2163,8 @@
           {"name": "W", "id": "750a-a2ec-90d3-21fe"},
           {"name": "LD", "id": "58d2-b879-49c7-43bc"},
           {"name": "OC", "id": "bef7-942a-1a23-59f8"},
-          {
-            "name": "InSv",
-            "id": "55a7-5b54-c60d-11dc",
-            "formatRules": [{"name": "New Format Rule", "id": "11c5-ee61-344f-d1a1", "comment": "Empty → -", "hidden": false, "match": "^$", "replace": "-", "type": "regex"}]
-          }
+          {"name": "InSv", "id": "55a7-5b54-c60d-11dc"},
+          {"name": "Base", "id": "nr-base-size"}
         ]
       },
       {
@@ -3606,7 +3700,8 @@
               {"name": "W", "$text": "18", "typeId": "750a-a2ec-90d3-21fe"},
               {"name": "LD", "$text": "6+", "typeId": "58d2-b879-49c7-43bc"},
               {"name": "OC", "$text": "5", "typeId": "bef7-942a-1a23-59f8"},
-              {"name": "InSv", "$text": "4+", "typeId": "55a7-5b54-c60d-11dc"}
+              {"name": "InSv", "$text": "4+", "typeId": "55a7-5b54-c60d-11dc"},
+              {"name": "Base", "$text": "100mm", "typeId": "nr-base-size"}
             ]
           }
         ],
@@ -3771,7 +3866,8 @@
                   {"name": "W", "$text": "1", "typeId": "750a-a2ec-90d3-21fe"},
                   {"name": "LD", "$text": "7+", "typeId": "58d2-b879-49c7-43bc"},
                   {"name": "OC", "$text": "1", "typeId": "bef7-942a-1a23-59f8"},
-                  {"name": "InSv", "$text": "5+", "typeId": "55a7-5b54-c60d-11dc"}
+                  {"name": "InSv", "$text": "5+", "typeId": "55a7-5b54-c60d-11dc"},
+                  {"name": "Base", "$text": "32mm", "typeId": "nr-base-size"}
                 ]
               }
             ],
@@ -3888,7 +3984,8 @@
                   {"name": "W", "$text": "4", "typeId": "750a-a2ec-90d3-21fe"},
                   {"name": "LD", "$text": "7+", "typeId": "58d2-b879-49c7-43bc"},
                   {"name": "OC", "$text": "1", "typeId": "bef7-942a-1a23-59f8"},
-                  {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+                  {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+                  {"name": "Base", "$text": "50mm", "typeId": "nr-base-size"}
                 ]
               }
             ],
@@ -4006,7 +4103,8 @@
                   {"name": "W", "$text": "4", "typeId": "750a-a2ec-90d3-21fe"},
                   {"name": "LD", "$text": "7+", "typeId": "58d2-b879-49c7-43bc"},
                   {"name": "OC", "$text": "2", "typeId": "bef7-942a-1a23-59f8"},
-                  {"name": "InSv", "$text": "5+", "typeId": "55a7-5b54-c60d-11dc"}
+                  {"name": "InSv", "$text": "5+", "typeId": "55a7-5b54-c60d-11dc"},
+                  {"name": "Base", "$text": "75x42mm", "typeId": "nr-base-size"}
                 ]
               }
             ],
@@ -4649,16 +4747,6 @@
                   {"affects": "profiles.Ranged Weapons", "arg": "+0", "field": "3bb-c35f-f54-fb08", "scope": "upgrade", "type": "replace"},
                   {"affects": "profiles.Melee Weapons", "arg": "+0", "field": "2337-daa1-6682-b110", "scope": "upgrade", "type": "replace"},
                   {"affects": "e993-e086-6de1-12af", "arg": "+0", "field": "category", "scope": "upgrade", "type": "add", "value": "6337-b83b-0d1e-5770"}
-                ]
-              }
-            ],
-            "modifiers": [
-              {
-                "field": "hidden",
-                "type": "set",
-                "value": true,
-                "conditions": [
-                  {"childId": "84c4-6d1e-e724-bd6e", "field": "selections", "includeChildSelections": true, "scope": "upgrade", "shared": true, "type": "instanceOf", "value": 1}
                 ]
               }
             ]

@@ -12,7 +12,7 @@ Serves NewRecruit-only users (whose per-army-book content in the official GW app
 directly, and gives Android GW-app users a reliable alternative when the native text export hits
 one of that pipeline's own still-open ambiguities: export from GW app, clean up in NewRecruit,
 export as JSON. Analyzed against exactly one real captured sample
-(`data/gw-app-export-templars.json`) — several shapes below remain UNVERIFIED pending a second,
+(a 2026 Black Templars export, since replaced by `data/nr-templars-for-unit-tests.json`) — several shapes below remain UNVERIFIED pending a second,
 independently-sourced sample.
 
 Namespace: `ProbHammer.Core.Domain.Import.BattleScribe`, JSON DTOs in its own `Json`
@@ -76,7 +76,9 @@ Weapon/ability collection (`CollectWeaponsAndAbilities`): see the method's own d
 exact wiring and the Storm-Bolters-style wrapper example — dividing a weapon-carrying child's own
 `number` by the loadout's model count recovers the per-model quantity; an "Abilities"-typeName
 child becomes an OptionalGrant-origin Ability, mirroring the BSData pipeline's equivalent
-classification.
+classification. Wargear taken by the unit rather than a model (a non-model child of a unit that has
+model children, e.g. Custodian Wardens' Vexilla in the 2026 Custodes codex) is not under any model
+line, so `UnitWargearAbilities` adds its "Abilities" profiles to the Datasheet's abilities instead.
 
 Characteristic-text parsing reuses `DiceExpression.Parse` (A/D) and `WeaponKeywordParser.Apply`
 (Keywords) directly — this format's own text shapes are byte-for-byte the same convention BSData

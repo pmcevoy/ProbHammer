@@ -133,7 +133,7 @@ nesting level: `id`, `name`, `type`, `number`, `profiles`, `rules`, `costs`, `se
 `associations`).
 
 ```bash
-R="data/nr-export-chaos-lord-terminator-armour.json"
+R="data/nr-templars-for-unit-tests.json"
 
 # Top-level roster metadata
 jq '.roster | {name, gameSystemName, costs}' "$R"

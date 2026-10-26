@@ -8,7 +8,7 @@ using ProbHammer.Tests.Domain.Fixtures;
 namespace ProbHammer.Tests.Domain.Import.BattleScribe;
 
 /// <summary>Fixture-based unit tests for <see cref="BattleScribeRosterMapper"/> against a trimmed
-/// real excerpt of <c>data/gw-app-export-templars.json</c> (see Fixtures/templars-excerpt.json -
+/// real NewRecruit Templars export (see Fixtures/templars-excerpt.json -
 /// same "trimmed real excerpt" convention as <c>tests/ProbHammer.Tests/Domain/Fixtures/Bsdata/</c>),
 /// covering: attachment resolution (2-member and Leader-only real shapes), the pre-split
 /// model-group shape, a multi-profile weapon (Sword of the High Marshals), an Enhancement
@@ -55,7 +55,7 @@ public class BattleScribeRosterMapperTests
     [Fact]
     public void PluralDetachmentsGroupName_StillResolvesTheSelectedDetachment()
     {
-        // A real Adeptus Custodes NewRecruit export (data/gw-android-export-custodes.json) names
+        // A real Adeptus Custodes NewRecruit export names
         // its top-level Detachment-choice selection "Detachments" (plural), not "Detachment"
         // (singular, as Death Guard/Black Templars use) - mirroring the same singular-vs-plural
         // inconsistency the BSData pipeline's own DetachmentGroupNameScanTests already documents
@@ -232,7 +232,7 @@ public class BattleScribeRosterMapperTests
     [Fact]
     public void TopLevelSelectionsOwnCategories_PopulateTheSynthesizedDatasheetsKeywords()
     {
-        // Trimmed real excerpt of data/nr-app-export-masters-of-the-maelstrom.json - see
+        // Trimmed real excerpt of a Masters of the Maelstrom NewRecruit export - see
         // Fixtures/masters-of-the-maelstrom-keywords-excerpt.json.
         var army = BuildRoster("masters-of-the-maelstrom-keywords-excerpt.json");
         var unit = FindUnit(army, "Masters of the Maelstrom");
@@ -272,29 +272,36 @@ public class BattleScribeRosterMapperTests
     [Fact]
     public void SameNameMultiProfileWeapon_IsCountedOnceNotOncePerProfile()
     {
-        // Real bug found live (2026-09-11, user's own import): Adeptus Custodes' Guardian Spear
-        // exports as two profiles under one wargear selection - a "Melee Weapons" mode and a
-        // "Ranged Weapons" (thrown) mode - both sharing the identical Name "Guardian Spear". Unlike
-        // "Sword of the High Marshals" (MultiProfileWeaponSelection_RetainsEveryResolvedProfile,
-        // above - two profiles with genuinely DISTINCT names), this is one physical weapon copy per
-        // model, not two. Before the fix, CollectWeaponsAndAbilities added the weapon name once per
-        // PROFILE instead of once per distinct name, so a 5-model Custodian Wardens unit reported
-        // Guardian Spear's total Attacks as 50 instead of the correct 25.
-        var json = File.ReadAllText(RealCorpusRosterPath("nr-custodes-talons.json"));
+        // Guardian Spear exports as two profiles (melee and thrown) sharing one name; it is one weapon
+        // per model, so a unit's total Attacks must count it once, not once per profile.
+        var json = File.ReadAllText(RealCorpusRosterPath("nr-custodes-for-unit-tests.json"));
         BattleScribeRosterFormat.TryParse(json, out var roster).Should().BeTrue();
         var army = BattleScribeRosterMapper.Map(roster!);
 
-        var wardens = army.Units.SelectMany(u => u.Components)
-            .Single(u => u.Datasheet.Name == "Custodian Wardens");
-        var guardianSpearLines = wardens.ModelLines.Where(ml => ml.Weapons.Contains("Guardian Spear")).ToList();
+        var guard = army.Units.SelectMany(u => u.Components)
+            .Single(u => u.Datasheet.Name == "Custodian Guard Sodality");
+        var guardianSpearLines = guard.ModelLines.Where(ml => ml.Weapons.Contains("Guardian Spear")).ToList();
         guardianSpearLines.Should().NotBeEmpty();
         foreach (var line in guardianSpearLines)
             line.Weapons.Count(w => w == "Guardian Spear").Should().Be(1);
 
-        var view = AttachedUnitAggregator.Build(wardens, AbilityClassificationCatalogue.Empty);
+        var view = AttachedUnitAggregator.Build(guard, AbilityClassificationCatalogue.Empty);
         var guardianSpear = view.Weapons.Single(w => w.Name == "Guardian Spear");
-        var totalWardens = guardianSpearLines.Sum(ml => ml.Count);
-        guardianSpear.TotalAttacks.Should().Be(DiceExpression.Fixed(5 * totalWardens));
+        var totalGuard = guardianSpearLines.Sum(ml => ml.Count);
+        guardianSpear.TotalAttacks.Should().Be(DiceExpression.Fixed(6 * totalGuard));
+    }
+
+    [Fact]
+    public void UnitLevelWargearAbility_IsADatasheetAbility()
+    {
+        var json = File.ReadAllText(RealCorpusRosterPath("nr-custodes-for-unit-tests.json"));
+        BattleScribeRosterFormat.TryParse(json, out var roster).Should().BeTrue();
+        var army = BattleScribeRosterMapper.Map(roster!);
+
+        var wardens = army.Units.SelectMany(u => u.Components).Single(u => u.Datasheet.Name == "Custodian Wardens");
+
+        wardens.Datasheet.Abilities.Should().ContainSingle(a =>
+            a.Name == "Vexilla" && a.Origin == AbilityOrigin.OptionalGrant && a.Text.Contains("+1 OC"));
     }
 
     private static string RealCorpusRosterPath(string fileName, [CallerFilePath] string here = "") =>

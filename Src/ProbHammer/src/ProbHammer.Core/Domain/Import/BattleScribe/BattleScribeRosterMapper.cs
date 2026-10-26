@@ -154,7 +154,7 @@ public static partial class BattleScribeRosterMapper
         var datasheet = new Datasheet(
             top.Name,
             keywords: MapCategories(top.Categories),
-            abilities: intrinsicAbilities.Concat(coreRuleAbilities).ToList(),
+            abilities: intrinsicAbilities.Concat(coreRuleAbilities).Concat(UnitWargearAbilities(top)).ToList(),
             statlines: statlines,
             weaponProfiles: weapons.Values);
 
@@ -265,6 +265,16 @@ public static partial class BattleScribeRosterMapper
             }
         }
     }
+
+    // Wargear taken by the unit rather than one of its models (Custodian Wardens' Vexilla). A solo
+    // model's own wargear is already walked as its model line, so only units with model children count.
+    private static IEnumerable<Ability> UnitWargearAbilities(BsRosterSelection top) =>
+        top.Selections.Any(s => s.Type == "model")
+            ? top.Selections
+                .Where(s => s.Type != "model" && !IsEnhancement(s))
+                .SelectMany(s => s.Profiles.Where(p => p.TypeName == "Abilities"))
+                .Select(p => MapAbility(p, AbilityOrigin.OptionalGrant))
+            : [];
 
     private static bool IsEnhancement(BsRosterSelection selection) =>
         selection.Costs.Any(c => string.Equals(c.Name, "Enhancements", StringComparison.OrdinalIgnoreCase));

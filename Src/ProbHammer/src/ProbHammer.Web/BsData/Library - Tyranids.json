@@ -8,7 +8,7 @@
     "gameSystemId": "sys-352e-adc2-7639-d610",
     "gameSystemRevision": 77,
     "library": true,
-    "revision": 2,
+    "revision": 5,
     "type": "catalogue",
     "xmlns": "http://www.battlescribe.net/schema/catalogueSchema",
     "categoryEntries": [
@@ -190,7 +190,8 @@
           {"name": "W", "$text": "4", "typeId": "750a-a2ec-90d3-21fe"},
           {"name": "LD", "$text": "8+", "typeId": "58d2-b879-49c7-43bc"},
           {"name": "OC", "$text": "0", "typeId": "bef7-942a-1a23-59f8"},
-          {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+          {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+          {"name": "Base", "$text": "40mm", "typeId": "nr-base-size"}
         ]
       },
       {
@@ -489,6 +490,12 @@
                 "value": 1
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -505,7 +512,8 @@
               {"name": "W", "$text": "10", "typeId": "750a-a2ec-90d3-21fe"},
               {"name": "LD", "$text": "7+", "typeId": "58d2-b879-49c7-43bc"},
               {"name": "OC", "$text": "3", "typeId": "bef7-942a-1a23-59f8"},
-              {"name": "InSv", "$text": "4+", "typeId": "55a7-5b54-c60d-11dc"}
+              {"name": "InSv", "$text": "4+", "typeId": "55a7-5b54-c60d-11dc"},
+              {"name": "Base", "$text": "60mm", "typeId": "nr-base-size"}
             ]
           },
           {
@@ -995,6 +1003,12 @@
                 "value": 1
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -1039,7 +1053,8 @@
               {"name": "W", "$text": "6", "typeId": "750a-a2ec-90d3-21fe"},
               {"name": "LD", "$text": "7+", "typeId": "58d2-b879-49c7-43bc"},
               {"name": "OC", "$text": "1", "typeId": "bef7-942a-1a23-59f8"},
-              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+              {"name": "Base", "$text": "50mm", "typeId": "nr-base-size"}
             ]
           },
           {
@@ -1263,6 +1278,14 @@
             ]
           }
         ],
+        "modifiers": [
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
+          }
+        ],
         "profiles": [
           {
             "name": "Deathleaper",
@@ -1277,7 +1300,8 @@
               {"name": "W", "$text": "7", "typeId": "750a-a2ec-90d3-21fe"},
               {"name": "LD", "$text": "7+", "typeId": "58d2-b879-49c7-43bc"},
               {"name": "OC", "$text": "1", "typeId": "bef7-942a-1a23-59f8"},
-              {"name": "InSv", "$text": "4+", "typeId": "55a7-5b54-c60d-11dc"}
+              {"name": "InSv", "$text": "4+", "typeId": "55a7-5b54-c60d-11dc"},
+              {"name": "Base", "$text": "60mm", "typeId": "nr-base-size"}
             ]
           },
           {
@@ -1356,7 +1380,7 @@
           {"id": "904c-690d-ad87-7674", "field": "selections", "includeChildSelections": true, "scope": "force", "shared": true, "type": "max", "value": 6}
         ],
         "costs": [
-          {"name": "pts", "typeId": "51b2-306e-1021-d207", "value": 80},
+          {"name": "pts", "typeId": "51b2-306e-1021-d207", "value": 75},
           {"name": "Crusade Points", "typeId": "b03b-c239-15a5-da55", "value": 0},
           {"name": "Crusade: Battle Honours", "typeId": "75bb-ded1-c86d-bdf0", "value": 0},
           {"name": "Crusade: Experience", "typeId": "a623-fe74-1d33-cddf", "value": 0},
@@ -1561,7 +1585,7 @@
           {
             "field": "51b2-306e-1021-d207",
             "type": "set",
-            "value": 155,
+            "value": 150,
             "conditions": [{"childId": "model", "field": "selections", "includeChildSelections": true, "scope": "self", "shared": true, "type": "greaterThan", "value": 10}]
           },
           {
@@ -1580,6 +1604,12 @@
                 "value": 1
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -1645,7 +1675,8 @@
                   {"name": "W", "$text": "1", "typeId": "750a-a2ec-90d3-21fe"},
                   {"name": "LD", "$text": "8+", "typeId": "58d2-b879-49c7-43bc"},
                   {"name": "OC", "$text": "2", "typeId": "bef7-942a-1a23-59f8"},
-                  {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+                  {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+                  {"name": "Base", "$text": "32mm Flying", "typeId": "nr-base-size"}
                 ]
               }
             ],
@@ -2063,6 +2094,12 @@
                 "value": 1
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -2150,7 +2187,8 @@
                   {"name": "W", "$text": "6", "typeId": "750a-a2ec-90d3-21fe"},
                   {"name": "LD", "$text": "7+", "typeId": "58d2-b879-49c7-43bc"},
                   {"name": "OC", "$text": "1", "typeId": "bef7-942a-1a23-59f8"},
-                  {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+                  {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+                  {"name": "Base", "$text": "40mm", "typeId": "nr-base-size"}
                 ]
               }
             ],
@@ -2246,7 +2284,8 @@
                       {"name": "W", "$text": "3", "typeId": "750a-a2ec-90d3-21fe"},
                       {"name": "LD", "$text": "8+", "typeId": "58d2-b879-49c7-43bc"},
                       {"name": "OC", "$text": "1", "typeId": "bef7-942a-1a23-59f8"},
-                      {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+                      {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+                      {"name": "Base", "$text": "40mm", "typeId": "nr-base-size"}
                     ]
                   }
                 ]
@@ -2289,7 +2328,8 @@
                       {"name": "W", "$text": "3", "typeId": "750a-a2ec-90d3-21fe"},
                       {"name": "LD", "$text": "8+", "typeId": "58d2-b879-49c7-43bc"},
                       {"name": "OC", "$text": "1", "typeId": "bef7-942a-1a23-59f8"},
-                      {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+                      {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+                      {"name": "Base", "$text": "40mm", "typeId": "nr-base-size"}
                     ]
                   }
                 ],
@@ -2683,6 +2723,12 @@
                 "value": 1
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -2699,7 +2745,8 @@
               {"name": "W", "$text": "6", "typeId": "750a-a2ec-90d3-21fe"},
               {"name": "LD", "$text": "7+", "typeId": "58d2-b879-49c7-43bc"},
               {"name": "OC", "$text": "1", "typeId": "bef7-942a-1a23-59f8"},
-              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+              {"name": "Base", "$text": "50mm", "typeId": "nr-base-size"}
             ]
           },
           {
@@ -2771,12 +2818,14 @@
           {"id": "d06a-ca47-2c11-ff1d", "field": "selections", "includeChildSelections": true, "scope": "force", "shared": true, "type": "max", "value": 3}
         ],
         "costs": [
-          {"name": "pts", "typeId": "51b2-306e-1021-d207", "value": 135},
+          {"name": "pts", "typeId": "51b2-306e-1021-d207", "value": 130},
           {"name": "Crusade Points", "typeId": "b03b-c239-15a5-da55", "value": 0},
           {"name": "Crusade: Battle Honours", "typeId": "75bb-ded1-c86d-bdf0", "value": 0},
           {"name": "Crusade: Experience", "typeId": "a623-fe74-1d33-cddf", "value": 0},
           {"name": "Crusade: Weapon Modifications", "typeId": "716d-91b7-d55a-1022", "value": 0},
-          {"name": "Blackstone Fragments", "typeId": "ac6b-ced3-9b5e-9a6e", "value": 0}
+          {"name": "Blackstone Fragments", "typeId": "ac6b-ced3-9b5e-9a6e", "value": 0},
+          {"name": "Detachment Points", "typeId": "82ae-1066-5107-6ae0", "value": 0},
+          {"name": "Enhancements", "typeId": "f759-1bc4-cb3a-f0d2", "value": 0}
         ],
         "entryLinks": [
           {
@@ -2959,6 +3008,12 @@
                 "value": 1
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -2989,7 +3044,8 @@
               {"name": "W", "$text": "14", "typeId": "750a-a2ec-90d3-21fe"},
               {"name": "LD", "$text": "8+", "typeId": "58d2-b879-49c7-43bc"},
               {"name": "OC", "$text": "4", "typeId": "bef7-942a-1a23-59f8"},
-              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+              {"name": "Base", "$text": "120x92mm", "typeId": "nr-base-size"}
             ]
           }
         ],
@@ -3006,7 +3062,6 @@
                 "hidden": false,
                 "import": true,
                 "type": "upgrade",
-                "categoryLinks": [{"name": "Extra Attacks Weapon", "id": "9fad-976f-1144-30ef", "hidden": false, "primary": false, "targetId": "84c4-6d1e-e724-bd6e"}],
                 "constraints": [
                   {"id": "9e6b-8bde-fcf2-e4a0", "field": "selections", "includeChildSelections": true, "scope": "parent", "shared": true, "type": "max", "value": 1},
                   {"id": "9e47-fb21-da89-73dd", "field": "selections", "includeChildSelections": true, "scope": "parent", "shared": true, "type": "min", "value": 1}
@@ -3454,6 +3509,12 @@
                 "value": 1
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -3470,7 +3531,8 @@
               {"name": "W", "$text": "7", "typeId": "750a-a2ec-90d3-21fe"},
               {"name": "LD", "$text": "7+", "typeId": "58d2-b879-49c7-43bc"},
               {"name": "OC", "$text": "1", "typeId": "bef7-942a-1a23-59f8"},
-              {"name": "InSv", "$text": "4+", "typeId": "55a7-5b54-c60d-11dc"}
+              {"name": "InSv", "$text": "4+", "typeId": "55a7-5b54-c60d-11dc"},
+              {"name": "Base", "$text": "50mm", "typeId": "nr-base-size"}
             ]
           },
           {
@@ -3577,7 +3639,7 @@
           {"id": "6d1a-19ea-f5b6-0937", "field": "selections", "includeChildSelections": true, "scope": "force", "shared": true, "type": "max", "value": 3}
         ],
         "costs": [
-          {"name": "pts", "typeId": "51b2-306e-1021-d207", "value": 70},
+          {"name": "pts", "typeId": "51b2-306e-1021-d207", "value": 65},
           {"name": "Crusade Points", "typeId": "b03b-c239-15a5-da55", "value": 0},
           {"name": "Crusade: Battle Honours", "typeId": "75bb-ded1-c86d-bdf0", "value": 0},
           {"name": "Crusade: Experience", "typeId": "a623-fe74-1d33-cddf", "value": 0},
@@ -3756,6 +3818,12 @@
                 "value": 1
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -3800,7 +3868,8 @@
               {"name": "W", "$text": "5", "typeId": "750a-a2ec-90d3-21fe"},
               {"name": "LD", "$text": "8+", "typeId": "58d2-b879-49c7-43bc"},
               {"name": "OC", "$text": "1", "typeId": "bef7-942a-1a23-59f8"},
-              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+              {"name": "Base", "$text": "40mm", "typeId": "nr-base-size"}
             ]
           }
         ],
@@ -3817,10 +3886,7 @@
                 "hidden": false,
                 "import": true,
                 "type": "upgrade",
-                "categoryLinks": [
-                  {"name": "Melee Weapon", "id": "8fa5-8d1d-c159-acd4", "hidden": false, "primary": false, "targetId": "ccdd-3987-11ed-90cd"},
-                  {"name": "Extra Attacks Weapon", "id": "0b9e-f25f-903b-c1a8", "hidden": false, "primary": false, "targetId": "84c4-6d1e-e724-bd6e"}
-                ],
+                "categoryLinks": [{"name": "Melee Weapon", "id": "8fa5-8d1d-c159-acd4", "hidden": false, "primary": false, "targetId": "ccdd-3987-11ed-90cd"}],
                 "constraints": [
                   {"id": "f454-c472-689-70be", "field": "selections", "includeChildSelections": true, "scope": "parent", "shared": true, "type": "min", "value": 1},
                   {"id": "e579-e46d-86db-ee03", "field": "selections", "includeChildSelections": true, "scope": "parent", "shared": true, "type": "max", "value": 1}
@@ -4285,6 +4351,12 @@
                 "value": 1
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -4434,7 +4506,8 @@
                       {"name": "W", "$text": "3", "typeId": "750a-a2ec-90d3-21fe"},
                       {"name": "LD", "$text": "8+", "typeId": "58d2-b879-49c7-43bc"},
                       {"name": "OC", "$text": "1", "typeId": "bef7-942a-1a23-59f8"},
-                      {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+                      {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+                      {"name": "Base", "$text": "40mm", "typeId": "nr-base-size"}
                     ]
                   }
                 ],
@@ -4499,11 +4572,14 @@
           {"id": "798d-2ab1-3dfe-5c67", "field": "selections", "includeChildSelections": true, "scope": "force", "shared": true, "type": "max", "value": 3}
         ],
         "costs": [
-          {"name": "pts", "typeId": "51b2-306e-1021-d207", "value": 140},
+          {"name": "pts", "typeId": "51b2-306e-1021-d207", "value": 135},
           {"name": "Crusade Points", "typeId": "b03b-c239-15a5-da55", "value": 0},
           {"name": "Crusade: Battle Honours", "typeId": "75bb-ded1-c86d-bdf0", "value": 0},
           {"name": "Crusade: Experience", "typeId": "a623-fe74-1d33-cddf", "value": 0},
-          {"name": "Crusade: Weapon Modifications", "typeId": "716d-91b7-d55a-1022", "value": 0}
+          {"name": "Crusade: Weapon Modifications", "typeId": "716d-91b7-d55a-1022", "value": 0},
+          {"name": "Blackstone Fragments", "typeId": "ac6b-ced3-9b5e-9a6e", "value": 0},
+          {"name": "Detachment Points", "typeId": "82ae-1066-5107-6ae0", "value": 0},
+          {"name": "Enhancements", "typeId": "f759-1bc4-cb3a-f0d2", "value": 0}
         ],
         "entryLinks": [
           {
@@ -4766,6 +4842,12 @@
                 "value": 1
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -4796,7 +4878,8 @@
               {"name": "W", "$text": "14", "typeId": "750a-a2ec-90d3-21fe"},
               {"name": "LD", "$text": "8+", "typeId": "58d2-b879-49c7-43bc"},
               {"name": "OC", "$text": "4", "typeId": "bef7-942a-1a23-59f8"},
-              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+              {"name": "Base", "$text": "120x92mm", "typeId": "nr-base-size"}
             ]
           }
         ],
@@ -5147,6 +5230,12 @@
                 ]
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -5163,7 +5252,8 @@
               {"name": "W", "$text": "10", "typeId": "750a-a2ec-90d3-21fe"},
               {"name": "LD", "$text": "8+", "typeId": "58d2-b879-49c7-43bc"},
               {"name": "OC", "$text": "2", "typeId": "bef7-942a-1a23-59f8"},
-              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+              {"name": "Base", "$text": "100mm", "typeId": "nr-base-size"}
             ]
           },
           {
@@ -5586,6 +5676,12 @@
                 "value": 1
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -5687,7 +5783,8 @@
                       {"name": "W", "$text": "3", "typeId": "750a-a2ec-90d3-21fe"},
                       {"name": "LD", "$text": "8+", "typeId": "58d2-b879-49c7-43bc"},
                       {"name": "OC", "$text": "1", "typeId": "bef7-942a-1a23-59f8"},
-                      {"name": "InSv", "$text": "6+", "typeId": "55a7-5b54-c60d-11dc"}
+                      {"name": "InSv", "$text": "6+", "typeId": "55a7-5b54-c60d-11dc"},
+                      {"name": "Base", "$text": "40mm", "typeId": "nr-base-size"}
                     ]
                   }
                 ],
@@ -6045,6 +6142,12 @@
                 "value": 1
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "selectionEntries": [
@@ -6265,10 +6368,7 @@
         "hidden": false,
         "import": true,
         "type": "upgrade",
-        "categoryLinks": [
-          {"name": "Melee Weapon", "id": "3985-176d-31c6-404d", "hidden": false, "primary": false, "targetId": "ccdd-3987-11ed-90cd"},
-          {"name": "Extra Attacks Weapon", "id": "69ab-ee95-3dd8-05f3", "hidden": false, "primary": false, "targetId": "84c4-6d1e-e724-bd6e"}
-        ],
+        "categoryLinks": [{"name": "Melee Weapon", "id": "3985-176d-31c6-404d", "hidden": false, "primary": false, "targetId": "ccdd-3987-11ed-90cd"}],
         "costs": [{"name": "pts", "typeId": "51b2-306e-1021-d207", "value": 0}],
         "infoLinks": [{"name": "Extra Attacks", "id": "3b0-6790-786-73ba", "hidden": false, "targetId": "115b-79dc-f723-d761", "type": "rule"}],
         "profiles": [
@@ -6767,6 +6867,12 @@
                 "value": 1
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -6783,7 +6889,8 @@
               {"name": "W", "$text": "6", "typeId": "750a-a2ec-90d3-21fe"},
               {"name": "LD", "$text": "7+", "typeId": "58d2-b879-49c7-43bc"},
               {"name": "OC", "$text": "1", "typeId": "bef7-942a-1a23-59f8"},
-              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+              {"name": "Base", "$text": "50mm", "typeId": "nr-base-size"}
             ]
           },
           {
@@ -7248,6 +7355,12 @@
                 "value": 1
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -7264,7 +7377,8 @@
               {"name": "W", "$text": "9", "typeId": "750a-a2ec-90d3-21fe"},
               {"name": "LD", "$text": "7+", "typeId": "58d2-b879-49c7-43bc"},
               {"name": "OC", "$text": "3", "typeId": "bef7-942a-1a23-59f8"},
-              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+              {"name": "Base", "$text": "-", "typeId": "nr-base-size"}
             ]
           },
           {
@@ -7626,6 +7740,12 @@
                 "value": 1
               }
             ]
+          },
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -7642,7 +7762,8 @@
               {"name": "W", "$text": "14", "typeId": "750a-a2ec-90d3-21fe"},
               {"name": "LD", "$text": "8+", "typeId": "58d2-b879-49c7-43bc"},
               {"name": "OC", "$text": "4", "typeId": "bef7-942a-1a23-59f8"},
-              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+              {"name": "Base", "$text": "-", "typeId": "nr-base-size"}
             ]
           },
           {
@@ -8123,12 +8244,14 @@
           }
         ],
         "costs": [
-          {"name": "pts", "typeId": "51b2-306e-1021-d207", "value": 130},
+          {"name": "pts", "typeId": "51b2-306e-1021-d207", "value": 120},
           {"name": "Crusade Points", "typeId": "b03b-c239-15a5-da55", "value": 0},
           {"name": "Crusade: Battle Honours", "typeId": "75bb-ded1-c86d-bdf0", "value": 0},
           {"name": "Crusade: Experience", "typeId": "a623-fe74-1d33-cddf", "value": 0},
           {"name": "Crusade: Weapon Modifications", "typeId": "716d-91b7-d55a-1022", "value": 0},
-          {"name": "Blackstone Fragments", "typeId": "ac6b-ced3-9b5e-9a6e", "value": 0}
+          {"name": "Blackstone Fragments", "typeId": "ac6b-ced3-9b5e-9a6e", "value": 0},
+          {"name": "Detachment Points", "typeId": "82ae-1066-5107-6ae0", "value": 0},
+          {"name": "Enhancements", "typeId": "f759-1bc4-cb3a-f0d2", "value": 0}
         ],
         "entryLinks": [{"name": "Warlord", "id": "f866-abf5-a5a5-1bfb", "hidden": false, "import": true, "sortIndex": 2, "targetId": "ceab-62d9-31bf-7c61", "type": "selectionEntry"}],
         "infoLinks": [
@@ -8147,6 +8270,14 @@
                 "conditions": [{"childId": "1d6e-2579-8e7f-1ed4", "field": "selections", "includeChildSelections": true, "scope": "force", "shared": true, "type": "instanceOf", "value": 1}]
               }
             ]
+          }
+        ],
+        "modifiers": [
+          {
+            "field": "category",
+            "type": "set-primary",
+            "value": "747a-c6a9-6f4f-7f09",
+            "conditions": [{"childId": "3bdf-a114-5035-c6ac", "field": "selections", "scope": "primary-catalogue", "shared": true, "type": "instanceOf", "value": 1}]
           }
         ],
         "profiles": [
@@ -8177,7 +8308,8 @@
               {"name": "W", "$text": "9", "typeId": "750a-a2ec-90d3-21fe"},
               {"name": "LD", "$text": "8+", "typeId": "58d2-b879-49c7-43bc"},
               {"name": "OC", "$text": "3", "typeId": "bef7-942a-1a23-59f8"},
-              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"}
+              {"name": "InSv", "$text": "", "typeId": "55a7-5b54-c60d-11dc"},
+              {"name": "Base", "$text": "100mm", "typeId": "nr-base-size"}
             ]
           },
           {
@@ -11321,7 +11453,7 @@
                 ]
               },
               {
-                "name": "Synaptic Synergy",
+                "name": "Synaptic Strategy",
                 "id": "4632-bb29-3e38-bb30",
                 "collective": false,
                 "hidden": false,
@@ -14861,7 +14993,8 @@
             "type": "upgrade",
             "categoryLinks": [
               {"name": "Take and Hold", "id": "7386-4f13-cdc4-e68b", "hidden": false, "primary": false, "targetId": "1cc1-f11a-4e8f-1bcc"},
-              {"name": "3DP Detachment", "id": "6f71-7835-798f-65d1", "hidden": false, "primary": false, "targetId": "7d80-2de5-816e-9d2b"}
+              {"name": "3DP Detachment", "id": "6f71-7835-798f-65d1", "hidden": false, "primary": false, "targetId": "7d80-2de5-816e-9d2b"},
+              {"name": "Priority Assets", "id": "2522-3812-3f91-e9c9", "hidden": false, "primary": false, "targetId": "0936-9767-1cc7-52ae"}
             ],
             "constraints": [{"id": "71fe-075b-7b7f-a697", "field": "selections", "includeChildSelections": false, "scope": "parent", "shared": true, "type": "max", "value": 1}],
             "costs": [
@@ -14926,7 +15059,7 @@
               {
                 "name": "Feed the Swarm",
                 "id": "0442-1dce-2f22-5bbc",
-                "description": "n your Command phase, each **HARVESTER** unit from your army can Regenerate one friendly **TYRANIDS** unit that is within 6\" of it. A unit can only be regenerated once per phase. Each time a unit regenerates, do one of the following:\n▪ One model in that unit regains up to D3+1 lost wounds.\n▪ One destroyed **INFANTRY** model (excluding **CHARACTERS**) is returned to that unit with its full wounds remaining. If that unit is an **ENDLESS MULTITUDE** unit, up to 3 destroyed models are returned instead.",
+                "description": "In your Command phase, each **HARVESTER** unit from your army can Regenerate one friendly **TYRANIDS** unit that is within 6\" of it. A unit can only be regenerated once per phase. Each time a unit regenerates, do one of the following:\n▪ One model in that unit regains up to D3+1 lost wounds.\n▪ One destroyed **INFANTRY** model (excluding **CHARACTERS**) is returned to that unit with its full wounds remaining. If that unit is an **ENDLESS MULTITUDE** unit, up to 3 destroyed models are returned instead.",
                 "hidden": false
               }
             ]
@@ -15120,7 +15253,8 @@
             "type": "upgrade",
             "categoryLinks": [
               {"name": "Disruption", "id": "df4a-ea20-d5af-e051", "hidden": false, "primary": false, "targetId": "ecf8-cf72-7d5b-1b5b"},
-              {"name": "3DP Detachment", "id": "3b1f-590e-b7ac-b987", "hidden": false, "primary": false, "targetId": "7d80-2de5-816e-9d2b"}
+              {"name": "3DP Detachment", "id": "3b1f-590e-b7ac-b987", "hidden": false, "primary": false, "targetId": "7d80-2de5-816e-9d2b"},
+              {"name": "Reconnaissance", "id": "d3e4-d288-7321-694b", "hidden": false, "primary": false, "targetId": "b4a7-5083-fe94-4d24"}
             ],
             "constraints": [{"id": "7aec-f0f3-0e54-be16", "field": "selections", "includeChildSelections": false, "scope": "parent", "shared": true, "type": "max", "value": 1}],
             "costs": [
@@ -17517,7 +17651,8 @@
             "categoryLinks": [
               {"name": "Hosts", "id": "5b2d-2fe2-d1ac-fbd1", "hidden": false, "primary": false, "targetId": "93df-6aba-9508-326f"},
               {"name": "Take and Hold", "id": "c609-e141-5e79-3476", "hidden": false, "primary": false, "targetId": "1cc1-f11a-4e8f-1bcc"},
-              {"name": "3DP Detachment", "id": "c0f3-6db9-7c0b-884b", "hidden": false, "primary": false, "targetId": "7d80-2de5-816e-9d2b"}
+              {"name": "3DP Detachment", "id": "c0f3-6db9-7c0b-884b", "hidden": false, "primary": false, "targetId": "7d80-2de5-816e-9d2b"},
+              {"name": "Reconnaissance", "id": "5b6c-bd3b-24a6-5690", "hidden": false, "primary": false, "targetId": "b4a7-5083-fe94-4d24"}
             ],
             "constraints": [{"id": "fab9-bbeb-18a4-13c9", "field": "selections", "includeChildSelections": false, "scope": "parent", "shared": true, "type": "max", "value": 1}],
             "costs": [
@@ -17592,10 +17727,7 @@
             "hidden": false,
             "import": true,
             "type": "upgrade",
-            "categoryLinks": [
-              {"name": "Purestrain", "id": "4bf1-c5d2-9fb1-bc85", "hidden": false, "primary": false, "targetId": "a552-36b4-181a-b833"},
-              {"name": "Take and Hold", "id": "b8c7-3a79-436f-706e", "hidden": false, "primary": false, "targetId": "1cc1-f11a-4e8f-1bcc"}
-            ],
+            "categoryLinks": [{"name": "Take and Hold", "id": "b8c7-3a79-436f-706e", "hidden": false, "primary": false, "targetId": "1cc1-f11a-4e8f-1bcc"}],
             "constraints": [{"id": "f8fc-3a62-a642-e77c", "field": "selections", "includeChildSelections": false, "scope": "parent", "shared": true, "type": "max", "value": 1}],
             "costs": [
               {"name": "pts", "typeId": "51b2-306e-1021-d207", "value": 0},
@@ -17868,10 +18000,7 @@
             "hidden": false,
             "import": true,
             "type": "upgrade",
-            "categoryLinks": [
-              {"name": "Purestrain", "id": "871e-63d8-6f0e-b979", "hidden": false, "primary": false, "targetId": "a552-36b4-181a-b833"},
-              {"name": "Priority Assets", "id": "cb56-67ed-9933-6a80", "hidden": false, "primary": false, "targetId": "0936-9767-1cc7-52ae"}
-            ],
+            "categoryLinks": [{"name": "Priority Assets", "id": "cb56-67ed-9933-6a80", "hidden": false, "primary": false, "targetId": "0936-9767-1cc7-52ae"}],
             "constraints": [{"id": "8f9b-2111-6a83-6744", "field": "selections", "includeChildSelections": false, "scope": "parent", "shared": true, "type": "max", "value": 1}],
             "costs": [
               {"name": "pts", "typeId": "51b2-306e-1021-d207", "value": 0},
@@ -18287,7 +18416,9 @@
                 "type": "and",
                 "modifiers": [
                   {"field": "category", "scope": "root-entry", "type": "add", "value": "13bf-2bee-3ae0-b414"},
-                  {"field": "category", "scope": "root-entry", "type": "add", "value": "4129-a453-686a-d38a"}
+                  {"field": "category", "scope": "root-entry", "type": "add", "value": "4129-a453-686a-d38a"},
+                  {"affects": "profiles.Unit", "field": "annotation", "join": ", ", "scope": "model", "skipIfPresent": "Leader-beast", "type": "append", "value": "Leader-beast"},
+                  {"affects": "profiles.Unit", "field": "55a7-5b54-c60d-11dc", "scope": "model", "type": "set", "value": "4+"}
                 ]
               }
             ],

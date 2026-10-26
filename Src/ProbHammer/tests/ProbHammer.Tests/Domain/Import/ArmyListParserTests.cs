@@ -12,10 +12,13 @@ public class ArmyListParserTests
 
     private static ParsedArmyList ParseDataFile(string fileName) => new ArmyListParser().Parse(ReadDataFile(fileName));
 
+    private static ParsedArmyList ParseFixture(string fileName) =>
+        new ArmyListParser().Parse(ImportTestHelper.ReadImportFixture(fileName));
+
     [Fact]
     public void RealExport_ParsesArmyMetadata()
     {
-        var army = ParseDataFile("gw-app-export.txt");
+        var army = ParseFixture("gw-app-export.txt");
 
         army.Name.Should().Be("For the Emperor");
         army.PointsSpent.Should().Be(1065);
@@ -37,7 +40,7 @@ public class ArmyListParserTests
     [Fact]
     public void RealExport_ParsesThreeAttachmentGroups()
     {
-        var army = ParseDataFile("gw-app-export.txt");
+        var army = ParseFixture("gw-app-export.txt");
 
         army.AttachmentGroups.Should().HaveCount(3);
     }
@@ -45,7 +48,7 @@ public class ArmyListParserTests
     [Fact]
     public void RealExport_FirstGroup_IdentifiesBodyguardAndPreservesAttachedOrder()
     {
-        var army = ParseDataFile("gw-app-export.txt");
+        var army = ParseFixture("gw-app-export.txt");
 
         var group = army.AttachmentGroups[0];
         group.Bodyguard.Name.Should().Be("Crusader Squad");
@@ -57,7 +60,7 @@ public class ArmyListParserTests
     {
         // Attached unit 3's "Sword Brethren Squad" role line is "Attached as: Bodyguard" - no
         // parenthetical category, unlike the other groups' "(Battleline)"/"(Character)" lines.
-        var army = ParseDataFile("gw-app-export.txt");
+        var army = ParseFixture("gw-app-export.txt");
 
         army.AttachmentGroups[2].Bodyguard.Name.Should().Be("Sword Brethren Squad");
     }
@@ -77,7 +80,7 @@ public class ArmyListParserTests
     [Fact]
     public void RealExport_UniformModelGroup_ParsesToOneSubGroupWithAllWeapons()
     {
-        var army = ParseDataFile("gw-app-export.txt");
+        var army = ParseFixture("gw-app-export.txt");
 
         var neophyte = army.AttachmentGroups[0].Bodyguard.ModelGroups
             .Single(g => g.ModelName == "Neophyte");
@@ -89,7 +92,7 @@ public class ArmyListParserTests
     [Fact]
     public void RealExport_MixedLoadoutModelGroup_SplitsIntoTwoSubGroups_SharedWeaponsOnBoth()
     {
-        var army = ParseDataFile("gw-app-export.txt");
+        var army = ParseFixture("gw-app-export.txt");
 
         var initiateGroups = army.AttachmentGroups[0].Bodyguard.ModelGroups
             .Where(g => g.ModelName == "Initiate")
@@ -111,7 +114,7 @@ public class ArmyListParserTests
     [Fact]
     public void RealExport_SingleModelUnitWithDirectWeaponBullets_SynthesizesOneImplicitGroup()
     {
-        var army = ParseDataFile("gw-app-export.txt");
+        var army = ParseFixture("gw-app-export.txt");
 
         var helbrecht = army.AttachmentGroups[0].Attached.Single(u => u.Name == "High Marshal Helbrecht");
 
@@ -128,7 +131,7 @@ public class ArmyListParserTests
         // Impulsor is a single-model vehicle carrying 2 Storm bolters - "2x Storm bolter" must
         // expand to two entries in the flat per-model weapon list, not be treated as an
         // alternative-loadout split (there's only one model to assign weapons to).
-        var army = ParseDataFile("gw-app-export.txt");
+        var army = ParseFixture("gw-app-export.txt");
 
         var impulsor = army.StandaloneUnits.Single(u => u.Name == "Impulsor");
 
@@ -141,7 +144,7 @@ public class ArmyListParserTests
     [Fact]
     public void RealExport_StandaloneUnitsAreNotWrappedInAttachmentGroups()
     {
-        var army = ParseDataFile("gw-app-export.txt");
+        var army = ParseFixture("gw-app-export.txt");
 
         army.StandaloneUnits.Select(u => u.Name).Should().Equal(
             "Emperor’s Champion", "Assault Intercessor Squad", "Impulsor", "Scout Squad");
@@ -150,7 +153,7 @@ public class ArmyListParserTests
     [Fact]
     public void RealExport_TypographicApostropheInUnitName_IsPreservedVerbatim()
     {
-        var army = ParseDataFile("gw-app-export.txt");
+        var army = ParseFixture("gw-app-export.txt");
 
         army.StandaloneUnits.Should().Contain(u => u.Name == "Emperor’s Champion");
     }
@@ -180,7 +183,7 @@ public class ArmyListParserTests
     [Fact]
     public void RealExport_TrailerLine_StopsParsingWithoutError()
     {
-        var act = () => ParseDataFile("gw-app-export.txt");
+        var act = () => ParseFixture("gw-app-export.txt");
 
         act.Should().NotThrow();
     }
@@ -188,7 +191,7 @@ public class ArmyListParserTests
     [Fact]
     public void RealExport_CommaBearingDetachmentName_IsCapturedAsOneEntry()
     {
-        var army = ParseDataFile("gw-app-export-3-dp.txt");
+        var army = ParseFixture("gw-app-export-3-dp.txt");
 
         army.Detachments.Should().Equal("Fulguris Task Force, Marshal's Household, and Subversion Assets");
     }
@@ -199,7 +202,7 @@ public class ArmyListParserTests
         // Company Veteran: "1x Master-crafted bolt rifle" and "1x Master-crafted heavy bolter"
         // share the same count (1) but must produce two distinct 1-model sub-groups, not one
         // sub-group carrying both weapons.
-        var army = ParseDataFile("gw-app-export-3-dp.txt");
+        var army = ParseFixture("gw-app-export-3-dp.txt");
 
         var veteranGroups = army.StandaloneUnits.Single(u => u.Name == "Company Heroes").ModelGroups
             .Where(g => g.ModelName == "Company Veteran")
@@ -216,10 +219,10 @@ public class ArmyListParserTests
     }
 
     [Theory]
-    [InlineData("gw-app-export.txt")]
-    [InlineData("gw-app-export-3-dp.txt")]
+    [InlineData("gw-templars-for-unit-tests.txt")]
+    [InlineData("gw-app-export-chaos-lord-terminator-armour.txt")]
     [InlineData("gw-app-export-masters-of-the-maelstrom.txt")]
-    public void AllThreeRealExports_ParseWithoutThrowing(string fileName)
+    public void EveryRealTextExport_ParsesWithoutThrowing(string fileName)
     {
         var act = () => ParseDataFile(fileName);
 
@@ -250,7 +253,7 @@ public class ArmyListParserTests
         // No attached units and no partition ambiguity - the whole file is expected to succeed.
         // Also has no ForceDisposition line at all (goes straight from the Detachment line to the
         // BattleSize line) - ForceDisposition is optional.
-        var army = ParseDataFile("gw-android-export-deathguard.txt");
+        var army = ParseFixture("gw-android-export-deathguard.txt");
 
         army.Name.Should().Be("11th First");
         army.PointsSpent.Should().Be(960);
@@ -264,7 +267,7 @@ public class ArmyListParserTests
     [Fact]
     public void RealExport_AndroidDeathGuard_HasNoAttachmentGroups()
     {
-        var army = ParseDataFile("gw-android-export-deathguard.txt");
+        var army = ParseFixture("gw-android-export-deathguard.txt");
 
         army.AttachmentGroups.Should().BeEmpty();
     }
@@ -272,7 +275,7 @@ public class ArmyListParserTests
     [Fact]
     public void RealExport_AndroidDeathGuard_ParsesEveryStandaloneUnitName()
     {
-        var army = ParseDataFile("gw-android-export-deathguard.txt");
+        var army = ParseFixture("gw-android-export-deathguard.txt");
 
         army.StandaloneUnits.Select(u => u.Name).Should().Equal(
             "Daemon Prince of Nurgle", "Plague Marines", "Plague Marines", "Defiler",
@@ -284,7 +287,7 @@ public class ArmyListParserTests
     {
         // "1x Infernal cannon" carries no bullet of its own in the raw export - it continues
         // "1x Hellforged weapons"' own bulleted line.
-        var army = ParseDataFile("gw-android-export-deathguard.txt");
+        var army = ParseFixture("gw-android-export-deathguard.txt");
 
         var daemonPrince = army.StandaloneUnits.Single(u => u.Name == "Daemon Prince of Nurgle");
 
@@ -298,7 +301,7 @@ public class ArmyListParserTests
         // "1x Boltgun" re-adopts the "•" bullet for its model group's own first nested weapon
         // (Android has no distinct "◦" glyph); "1x Plague knives" continues that same nested list
         // with no bullet at all.
-        var army = ParseDataFile("gw-android-export-deathguard.txt");
+        var army = ParseFixture("gw-android-export-deathguard.txt");
 
         var plagueMarines = army.StandaloneUnits.First(u => u.Name == "Plague Marines");
 
@@ -314,7 +317,7 @@ public class ArmyListParserTests
     [Fact]
     public void RealExport_AndroidDeathGuard_Defiler_FourConsecutiveContinuationLinesAllExtendTheSameList()
     {
-        var army = ParseDataFile("gw-android-export-deathguard.txt");
+        var army = ParseFixture("gw-android-export-deathguard.txt");
 
         var defiler = army.StandaloneUnits.Single(u => u.Name == "Defiler");
 
@@ -327,7 +330,7 @@ public class ArmyListParserTests
     [Fact]
     public void RealExport_AndroidDeathGuard_Poxwalkers_UniformGroupNeedsNoSplit()
     {
-        var army = ParseDataFile("gw-android-export-deathguard.txt");
+        var army = ParseFixture("gw-android-export-deathguard.txt");
 
         var poxwalkers = army.StandaloneUnits.First(u => u.Name == "Poxwalkers");
 
@@ -346,7 +349,7 @@ public class ArmyListParserTests
         // parse throws there before ever reaching Custodian Guard or Allarus Custodians. Their own
         // successful/failing behavior is verified in isolation below, using fragments extracted
         // verbatim from this same real file.
-        var act = () => ParseDataFile("gw-android-export-custodes.txt");
+        var act = () => ParseFixture("gw-android-export-custodes.txt");
 
         act.Should().Throw<ArmyListParseException>()
             .Which.UnitName.Should().Be("Custodian Wardens");
@@ -408,7 +411,7 @@ public class ArmyListParserTests
     /// failing units together.</summary>
     private static ParsedArmyList ParseCustodesUnitInIsolation(string unitHeaderPrefix)
     {
-        var fullText = ReadDataFile("gw-android-export-custodes.txt");
+        var fullText = ImportTestHelper.ReadImportFixture("gw-android-export-custodes.txt");
         var block = ExtractUnitBlock(fullText, unitHeaderPrefix);
         return new ArmyListParser().Parse(SingleUnitArmyListText(block));
     }
