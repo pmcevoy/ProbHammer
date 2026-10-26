@@ -42,10 +42,10 @@ public class ArmyRuleOriginClassificationTests
     [Fact]
     public void ARuleMatchingTheCuratedLookupForTheRostersFaction_HasArmyRuleOrigin()
     {
-        var roster = BattleScribeRosterMapper.Map(RosterWithRule("Imperium - Adeptus Astartes - Black Templars", "Templar Vows"));
+        var roster = BattleScribeRosterMapper.Map(RosterWithRule("Imperium - Adeptus Astartes - Black Templars", "Combat Doctrines"));
 
         var ability = roster.Units[0].Components[0].Datasheet.Abilities.Should().ContainSingle().Subject;
-        ability.Name.Should().Be("Templar Vows");
+        ability.Name.Should().Be("Combat Doctrines");
         ability.Origin.Should().Be(AbilityOrigin.ArmyRule);
     }
 

@@ -166,16 +166,14 @@ public class BattleScribeRosterMapperTests
     [Fact]
     public void CoreRuleReference_ResolvesWithFullTextAndNoAdditionalGating()
     {
-        // "Templar Vows" matches the curated lookup for this roster's own ("Black Templars")
-        // Faction, so it classifies ArmyRule, not plain CoreRule - the same name-match
-        // classification the BSData pipeline uses (see ArmyRuleOriginClassificationTests). "No
-        // additional gating" still holds: this pipeline applies no separate chapter/game-mode
-        // gating pass of its own.
+        // This excerpt predates the 2026 Space Marine codex, which made Templar Vows a Detachment
+        // rule, so it no longer matches the Black Templars Army Rule lookup and stays CoreRule. This
+        // pipeline applies no chapter/game-mode gating pass of its own.
         var army = BuildRoster();
         var crusaderSquad = FindUnit(army, "Crusader Squad");
 
         var vows = crusaderSquad.Datasheet.Abilities.Should().ContainSingle(a => a.Name == "Templar Vows").Subject;
-        vows.Origin.Should().Be(AbilityOrigin.ArmyRule);
+        vows.Origin.Should().Be(AbilityOrigin.CoreRule);
         vows.Text.Should().NotBeNullOrWhiteSpace();
     }
 

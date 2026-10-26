@@ -43,7 +43,8 @@ public static partial class BsdataDatasheetMapper
         IReadOnlyList<BsForceEntry>? forceEntries = null,
         RuleGlossary? glossary = null,
         string? primaryCatalogueId = null,
-        IReadOnlySet<string>? knownArmyRuleNames = null)
+        IReadOnlySet<string>? knownArmyRuleNames = null,
+        IReadOnlySet<string>? excludedRuleNames = null)
     {
         var gateIds = (forceEntries ?? [])
             .Where(f => GameModeGateNames.Contains(f.Name, StringComparer.OrdinalIgnoreCase))
@@ -51,7 +52,7 @@ public static partial class BsdataDatasheetMapper
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var context = new WalkContext(idIndex, groupIdIndex, profileIdIndex ?? new Dictionary<string, BsProfile>(),
-            gateIds, glossary, primaryCatalogueId, knownArmyRuleNames);
+            gateIds, glossary, primaryCatalogueId, knownArmyRuleNames, excludedRuleNames);
         WalkEntry(entry, context, [], enclosingGroupName: null);
 
         return new Datasheet(
@@ -81,7 +82,8 @@ public static partial class BsdataDatasheetMapper
         IReadOnlySet<string> gameModeGateIds,
         RuleGlossary? glossary = null,
         string? primaryCatalogueId = null,
-        IReadOnlySet<string>? knownArmyRuleNames = null)
+        IReadOnlySet<string>? knownArmyRuleNames = null,
+        IReadOnlySet<string>? excludedRuleNames = null)
     {
         public IReadOnlyDictionary<string, BsSelectionEntry> IdIndex { get; } = idIndex;
         public IReadOnlyDictionary<string, BsSelectionEntryGroup> GroupIdIndex { get; } = groupIdIndex;
@@ -104,6 +106,11 @@ public static partial class BsdataDatasheetMapper
         /// CoreRule, same fail-open-default shape as PrimaryCatalogueId/GameModeGateIds.</summary>
         public IReadOnlySet<string> KnownArmyRuleNames { get; } =
             knownArmyRuleNames ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>Rule names a datasheet links but the roster doesn't have, e.g. the rule of a
+        /// Detachment the army didn't choose (Templar Vows since the 2026 Space Marine codex).</summary>
+        public IReadOnlySet<string> ExcludedRuleNames { get; } =
+            excludedRuleNames ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public List<(string Name, Statline Statline)> Statlines { get; } = [];
         public HashSet<string> SeenStatlineNames { get; } = new(StringComparer.OrdinalIgnoreCase);
@@ -354,7 +361,7 @@ public static partial class BsdataDatasheetMapper
         if (rule is null)
             return;
 
-        if (IsGameModeGated(rule.Modifiers, ctx))
+        if (IsGameModeGated(rule.Modifiers, ctx) || ctx.ExcludedRuleNames.Contains(rule.Name))
             return;
 
         var name = BuildAppendedName(link);

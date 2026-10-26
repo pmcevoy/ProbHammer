@@ -1,38 +1,25 @@
 using FluentAssertions;
+using ProbHammer.Core.Domain.Catalogue;
 using ProbHammer.Core.Domain.Catalogue.Bsdata;
 
 namespace ProbHammer.Tests.Domain.Catalogue.Bsdata.CorpusScan;
 
-/// <summary>Not a full-corpus scan - a small, targeted, [Fact(Explicit = true)] regression check
-/// (needs the live clone) resolving the same real "Scout Squad" case gate-and-dedupe-core-rule-
-/// abilities was found and fixed against by hand this session: before the fix, resolving against
-/// both a Black Templars and a Salamanders starting closure produced the identical ability list
-/// (both "Oath of Moment" and "Templar Vows" together) - factually wrong for both, since the two
-/// rules are chapter-exclusive replacements for each other. Keeps that specific real-world case
-/// from silently regressing.</summary>
+/// <summary>Explicit regression checks against the live clone: every Space Marine chapter's Army Rule
+/// is Combat Doctrines since the 2026 codex, and the retired Oath of Moment no longer resolves.</summary>
 public class ChapterExclusiveCoreRuleRegressionTests
 {
-    [Fact(Explicit = true)]
-    public void BlackTemplars_GetsTemplarVowsOnly_NotOathOfMoment()
+    [Theory(Explicit = true)]
+    [InlineData("Imperium - Black Templars.json", "Black Templars")]
+    [InlineData("Imperium - Salamanders.json", "Salamanders")]
+    public void ScoutSquad_GetsCombatDoctrinesAsItsArmyRule_NotOathOfMoment(string startingFile, string chapter)
     {
-        var source = LiveClone.RequireSource();
-        var catalogue = ResolvedBsdataCatalogue.Build(source, "Imperium - Black Templars.json");
+        var catalogue = ResolvedBsdataCatalogue.Build(LiveClone.RequireSource(), startingFile);
 
-        var scoutSquad = catalogue.ResolveDatasheet("Scout Squad");
+        var scoutSquad =
+            catalogue.ResolveDatasheet("Scout Squad", ArmyRuleNameLookup.Resolve(["Space Marines", chapter]));
 
-        scoutSquad.Abilities.Select(a => a.Name).Should().Contain("Templar Vows");
-        scoutSquad.Abilities.Select(a => a.Name).Should().NotContain("Oath of Moment");
-    }
-
-    [Fact(Explicit = true)]
-    public void Salamanders_GetsOathOfMomentOnly_NotTemplarVows()
-    {
-        var source = LiveClone.RequireSource();
-        var catalogue = ResolvedBsdataCatalogue.Build(source, "Imperium - Salamanders.json");
-
-        var scoutSquad = catalogue.ResolveDatasheet("Scout Squad");
-
-        scoutSquad.Abilities.Select(a => a.Name).Should().Contain("Oath of Moment");
-        scoutSquad.Abilities.Select(a => a.Name).Should().NotContain("Templar Vows");
+        scoutSquad.Abilities.Should()
+            .ContainSingle(a => a.Name == "Combat Doctrines" && a.Origin == AbilityOrigin.ArmyRule);
+        scoutSquad.Abilities.Should().NotContain(a => a.Name == "Oath of Moment");
     }
 }

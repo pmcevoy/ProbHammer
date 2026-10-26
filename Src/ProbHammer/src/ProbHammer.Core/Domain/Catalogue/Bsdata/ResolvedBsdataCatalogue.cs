@@ -43,13 +43,15 @@ public sealed class ResolvedBsdataCatalogue(
             BsdataNameResolver.ResolveDetachmentEntries(closure));
     }
 
-    public Datasheet ResolveDatasheet(string entryName, IReadOnlySet<string>? knownArmyRuleNames = null)
+    public Datasheet ResolveDatasheet(string entryName, IReadOnlySet<string>? knownArmyRuleNames = null,
+        IReadOnlySet<string>? excludedRuleNames = null)
     {
         var entry = BsdataNameResolver.Resolve(Closure, entryName)
                     ?? throw new BsdataNameResolutionException(entryName, BuildFailureMessage(entryName));
 
         return BsdataDatasheetMapper.BuildDatasheet(entry, IdIndex, GroupIdIndex, ProfileIdIndex,
-            Closure.GameSystem?.ForceEntries, Glossary, Closure.Files[0].Catalogue.Id, knownArmyRuleNames);
+            Closure.GameSystem?.ForceEntries, Glossary, Closure.Files[0].Catalogue.Id, knownArmyRuleNames,
+            excludedRuleNames);
     }
 
     /// <summary>Exact-name lookup against <see cref="DetachmentEntries"/> - used by

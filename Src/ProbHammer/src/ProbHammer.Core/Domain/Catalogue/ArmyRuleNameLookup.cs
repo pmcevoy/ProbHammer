@@ -17,8 +17,8 @@ namespace ProbHammer.Core.Domain.Catalogue;
 public static class ArmyRuleNameLookup
 {
     /// <summary>Keyed by the most-specific Faction entry (see <see cref="Resolve"/>). Every named
-    /// Space Marine chapter gets its own row even though all but Black Templars/Grey Knights
-    /// currently resolve to the same name - each chapter has its own dedicated catalogue file and
+    /// Space Marine chapter gets its own row even though all but Grey Knights currently resolve to
+    /// the same name - each chapter has its own dedicated catalogue file and
     /// is therefore its own most-specific Faction entry.</summary>
     private static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> InclusionTable =
         new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase)
@@ -40,7 +40,6 @@ public static class ArmyRuleNameLookup
             ["Genestealer Cults"] = ["Cult Ambush"],
             ["Chaos Knights"] = ["Harbingers of Dread"],
             ["Imperial Knights"] = ["Code Chivalric"],
-            ["Black Templars"] = ["Templar Vows"],
             ["Grey Knights"] = ["Gate of Infinity"],
             // Both rule definitions live in the shared "Library - Tyranids.json" file, gated by
             // primary-catalogue (hidden unless the army's primary catalogue IS Tyranids), and
@@ -87,21 +86,24 @@ public static class ArmyRuleNameLookup
             // an explicit empty entry rather than a guess.
             ["Adeptus Titanicus"] = [],
             ["Titanicus Traitoris"] = [],
-            ["Space Marines"] = ["Oath of Moment"],
-            ["Blood Angels"] = ["Oath of Moment"],
-            ["Dark Angels"] = ["Oath of Moment"],
-            ["Deathwatch"] = ["Oath of Moment"],
-            ["Imperial Fists"] = ["Oath of Moment"],
-            ["Iron Hands"] = ["Oath of Moment"],
-            ["Raven Guard"] = ["Oath of Moment"],
-            ["Salamanders"] = ["Oath of Moment"],
-            ["Space Wolves"] = ["Oath of Moment"],
-            ["Ultramarines"] = ["Oath of Moment"],
-            ["White Scars"] = ["Oath of Moment"]
+            // Since the 2026 Space Marine codex every chapter shares Combat Doctrines; Templar Vows
+            // became the Vow-Sworn Crusaders Detachment rule.
+            ["Space Marines"] = ["Combat Doctrines"],
+            ["Black Templars"] = ["Combat Doctrines"],
+            ["Blood Angels"] = ["Combat Doctrines"],
+            ["Dark Angels"] = ["Combat Doctrines"],
+            ["Deathwatch"] = ["Combat Doctrines"],
+            ["Imperial Fists"] = ["Combat Doctrines"],
+            ["Iron Hands"] = ["Combat Doctrines"],
+            ["Raven Guard"] = ["Combat Doctrines"],
+            ["Salamanders"] = ["Combat Doctrines"],
+            ["Space Wolves"] = ["Combat Doctrines"],
+            ["Ultramarines"] = ["Combat Doctrines"],
+            ["White Scars"] = ["Combat Doctrines"]
         };
 
-    /// <summary>Confirmed mustering/composition rules that carry BSData's chapter/sub-faction
-    /// "primary-catalogue"-scoped gating shape but are not genuine army-wide gameplay rules.
+    /// <summary>Confirmed rules that carry BSData's chapter/sub-faction "primary-catalogue"-scoped
+    /// gating shape but are not Army Rules (mustering/composition rules, or a Detachment's rule).
     /// Consulted only by an offline corpus-scan triage check, never by
     /// <see cref="Resolve"/>.</summary>
     public static IReadOnlyList<(string Name, string Reason)> ExclusionList { get; } =
@@ -109,7 +111,9 @@ public static class ArmyRuleNameLookup
         ("Assigned Agents", "Composition eligibility for allied Agents of the Imperium units, not a gameplay rule"),
         ("Disparate Paths", "Composition eligibility for allied Harlequins units (Aeldari), not a gameplay rule"),
         ("Corsairs and Travelling Players",
-            "Composition eligibility for allied Harlequins/Anhrathe units (Drukhari), not a gameplay rule")
+            "Composition eligibility for allied Harlequins/Anhrathe units (Drukhari), not a gameplay rule"),
+        ("Templar Vows",
+            "Vow-Sworn Crusaders Detachment rule since the 2026 Space Marine codex; BSData still gates it to Black Templars")
     ];
 
     /// <summary>Every distinct rule name appearing anywhere in <see cref="InclusionTable"/>,

@@ -67,7 +67,7 @@ datasheet-wide reference to a separately-defined Core/faction rule (Oath of Mome
 Vows, Deadly Demise, Firing Deck, Infiltrators, Scouts) — see `AbilityOrigin.CoreRule`'s own doc
 comment for why it's always exposed rather than an on-demand grant. **ArmyRule**: a CoreRule-shaped
 reference whose Name matches `classify-known-army-rules`' curated per-faction `ArmyRuleNameLookup`
-table (e.g. Oath of Moment, Templar Vows, Nurgle's Gift (Aura)) — see "Core Versus Army Rule Origin
+table (e.g. Combat Doctrines, Nurgle's Gift (Aura)) — see "Core Versus Army Rule Origin
 Classification" in bsdata-json-ingestion.md.
 
 **Key design points:**

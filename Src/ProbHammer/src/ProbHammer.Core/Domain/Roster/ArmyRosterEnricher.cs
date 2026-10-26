@@ -18,15 +18,16 @@ public static class ArmyRosterEnricher
     public static ArmyRoster Enrich(ParsedArmyList parsedArmyList, ResolvedBsdataCatalogue catalogue)
     {
         var knownArmyRuleNames = ArmyRuleNameLookup.Resolve(parsedArmyList.Faction);
-
-        var units = new List<ICombatUnit>();
-        units.AddRange(
-            parsedArmyList.AttachmentGroups.Select(g => BuildAttachedUnit(g, catalogue, knownArmyRuleNames)));
-        units.AddRange(parsedArmyList.StandaloneUnits.Select(u => BuildUnit(u, catalogue, knownArmyRuleNames)));
-
         var detachments = parsedArmyList.Detachments
             .SelectMany(text => DetachmentNameResolver.Resolve(text, catalogue))
             .ToList();
+        var unchosenDetachmentRuleNames = UnchosenDetachmentRuleNames(catalogue, detachments);
+
+        var units = new List<ICombatUnit>();
+        units.AddRange(parsedArmyList.AttachmentGroups.Select(g =>
+            BuildAttachedUnit(g, catalogue, knownArmyRuleNames, unchosenDetachmentRuleNames)));
+        units.AddRange(parsedArmyList.StandaloneUnits.Select(u =>
+            BuildUnit(u, catalogue, knownArmyRuleNames, unchosenDetachmentRuleNames)));
 
         return new ArmyRoster(
             parsedArmyList.Name,
@@ -39,16 +40,32 @@ public static class ArmyRosterEnricher
             units);
     }
 
-    private static AttachedUnit BuildAttachedUnit(
-        ParsedAttachmentGroup group, ResolvedBsdataCatalogue catalogue, IReadOnlySet<string> knownArmyRuleNames) =>
-        new(BuildUnit(group.Bodyguard, catalogue, knownArmyRuleNames),
-            group.Attached.Select(u => BuildUnit(u, catalogue, knownArmyRuleNames)));
+    // Datasheets can link a Detachment's rule directly (every Space Marine datasheet links Templar
+    // Vows); it only applies when that Detachment is chosen.
+    private static IReadOnlySet<string> UnchosenDetachmentRuleNames(ResolvedBsdataCatalogue catalogue,
+        IReadOnlyList<ResolvedDetachment> chosen)
+    {
+        var chosenNames = chosen.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var chosenRules = chosen.SelectMany(d => d.Rules).Select(r => r.Name);
+
+        return catalogue.DetachmentEntries
+            .Where(e => !chosenNames.Contains(e.Name))
+            .SelectMany(e => DetachmentRuleTextExtractor.Extract(e, catalogue.Glossary))
+            .Select(r => r.Name)
+            .Except(chosenRules, StringComparer.OrdinalIgnoreCase)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static AttachedUnit BuildAttachedUnit(ParsedAttachmentGroup group, ResolvedBsdataCatalogue catalogue,
+        IReadOnlySet<string> knownArmyRuleNames, IReadOnlySet<string> excludedRuleNames) =>
+        new(BuildUnit(group.Bodyguard, catalogue, knownArmyRuleNames, excludedRuleNames),
+            group.Attached.Select(u => BuildUnit(u, catalogue, knownArmyRuleNames, excludedRuleNames)));
 
     private static Unit BuildUnit(ParsedUnit parsedUnit, ResolvedBsdataCatalogue catalogue,
-        IReadOnlySet<string> knownArmyRuleNames)
+        IReadOnlySet<string> knownArmyRuleNames, IReadOnlySet<string> excludedRuleNames)
     {
         var unitName = BsdataNameNormalization.Normalize(parsedUnit.Name);
-        var datasheet = catalogue.ResolveDatasheet(unitName, knownArmyRuleNames);
+        var datasheet = catalogue.ResolveDatasheet(unitName, knownArmyRuleNames, excludedRuleNames);
         var modelLines = parsedUnit.ModelGroups.Select(g => BuildModelLine(g, datasheet)).ToList();
         var enhancements = ResolveEnhancements(parsedUnit.Enhancements, datasheet);
 

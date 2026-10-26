@@ -42,12 +42,14 @@ record, not this file).
 - **Army Rule profiles.** Grow `ArmyRuleNameLookup` (~30 hand-verified rows) from a name list into
   a small hand-maintained profile per rule, since the classifier handles Army Rules worst (of 25:
   1 complete, 7 partial, 17 unclassifiable). Fields only as consumers appear: selection scope (once
-  for the army vs. per unit vs. none), a unit state it introduces (Riled Up), and an army resource
-  note (tokens/points/dice). First consumer: Templar Vows is chosen once for the army, but
-  activations are keyed per unit (`{unitIndex}::{abilityName}`), so today each unit picks its own
-  vow. Choose it in the Army Header's Templar Vows popover, store it once by ability name, apply it
-  to every unit carrying it, and show it read-only in unit-block popovers. Origin and choice-vs-
-  condition can't tell the scopes apart (Dark Pacts is a per-unit Army Rule choice).
+  for the army vs. per unit vs. none), when the choice is made (once per battle vs. each Command
+  phase), a unit state it introduces (Riled Up), and an army resource note (tokens/points/dice).
+  First consumer: Space Marines' Combat Doctrines (2026 codex) is one army-wide choice remade each
+  Command phase, but activations are keyed per unit (`{unitIndex}::{abilityName}`), so today each
+  unit picks its own. Choose it in the Army Header's popover, store it once by ability name, apply it
+  to every unit carrying it, and show it read-only in unit-block popovers. Templar Vows, now the
+  Vow-Sworn Crusaders Detachment rule, is the same shape chosen once per battle. Origin and
+  choice-vs-condition can't tell the scopes apart (Dark Pacts is a per-unit Army Rule choice).
 - **Army resource counter.** A named number with −/+ in the Army Header, stored like casualties,
   covering "gain X, spend X" economies without modelling their rules. Text mentions tokens, points,
   dice or a pool in Acts of Faith, Power from Pain, Battle Focus, Blessings of Khorne, Cabal of
@@ -101,7 +103,7 @@ design, not as a gap to eventually close.
     control, list legality). Only the former blocks `complete`; for the latter, phase/target/timing
     is the whole extraction.
   - **Roll-modifier effect kind** - the largest in-scope gap (Army/Detachment rules are 1/25 and
-    24/332 complete; Oath of Moment fails on this alone) and a core simulation input. Draft fields:
+    24/332 complete; the old Oath of Moment failed on this alone) and a core simulation input. Draft fields:
     roll (Hit/Wound/Damage/Save/Advance/Charge/Battle-shock), modifier (re-roll / re-roll 1s / +N /
     -N / critical on X+), direction (made by vs. targeting this unit), existing weapon selector.
     LivePlay: parked - a roll modifier changes no printed value, so value-provenance amber can't

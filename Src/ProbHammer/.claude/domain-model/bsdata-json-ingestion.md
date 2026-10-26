@@ -99,6 +99,12 @@ comment for the real chapter-exclusivity bug this fixes (Black Templars showing 
 and Templar Vows together). A gated reference produces no Ability, the same silent-skip as an
 unresolvable name; this gating has no bearing on Origin.
 
+A datasheet can also link a Detachment's rule directly: since the 2026 Space Marine codex every
+Space Marine datasheet links Templar Vows, the Vow-Sworn Crusaders Detachment rule. `ArmyRosterEnricher`
+collects the rule names of every Detachment the army didn't choose (minus the chosen ones' rules) and
+passes them to `ResolveDatasheet` as `excludedRuleNames`, which `ProcessRuleInfoLink` skips. The
+NewRecruit pipeline needs no equivalent: NewRecruit only exports the rules the roster actually has.
+
 **Core Versus Army Rule Origin Classification** (`classify-known-army-rules`): Origin is `ArmyRule`
 when the resolved rule's Name matches the known army-wide rule names for the roster's Faction, via
 `ArmyRuleNameLookup.Resolve` (`Domain.Catalogue`, decoupled from Bsdata so the BattleScribe pipeline

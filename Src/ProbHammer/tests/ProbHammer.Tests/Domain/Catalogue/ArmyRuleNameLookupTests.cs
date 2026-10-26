@@ -22,10 +22,9 @@ public class ArmyRuleNameLookupTests
     [Fact]
     public void ASubFaction_ResolvesAgainstItsOwnEntry_NotItsParentCodexs()
     {
-        var names = ArmyRuleNameLookup.Resolve(["Space Marines", "Black Templars"]);
+        var names = ArmyRuleNameLookup.Resolve(["Imperium", "Adeptus Custodes"]);
 
-        names.Should().Contain("Templar Vows");
-        names.Should().NotContain("Oath of Moment");
+        names.Should().Equal("Martial Ka'tah");
     }
 
     [Fact]
