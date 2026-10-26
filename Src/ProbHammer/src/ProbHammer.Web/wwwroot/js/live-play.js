@@ -139,8 +139,8 @@ function recordActivation(input) {
         if (entry.choices[group].length === 0) delete entry.choices[group];
     }
 
-    if (entry.conditions.length === 0 && Object.keys(entry.choices).length === 0) delete stored[key];
-    else stored[key] = entry;
+    // Kept even when empty, so the sync still names this unit and the server re-renders it.
+    stored[key] = entry;
     writeJsonMap(ACTIVATION_STORAGE_KEY, stored);
 }
 
