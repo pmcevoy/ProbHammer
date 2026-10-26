@@ -49,7 +49,8 @@
 - [x] 4.1 Add an import-flow test importing `data/gw-android-export-custodes.json`, asserting the
   Wardens' conditional FNP tile renders and no valueless "Feel No Pain" entry is listed. Verify it
   passes, and the full suite stays green.
-- [ ] 4.2 In the running app at 667×315: Custodian Wardens show a blue "–" FNP tile; Living
+- [x] 4.2 In the running app at 667×315: Custodian Wardens show a blue "–" FNP tile; Living
   Fortress's popover offers its switch, and turning it on shows an amber 4+; a Death Guard unit with
   "Feel No Pain 5+" shows an amber 5+ tile whose popover names "Feel No Pain 5+"; a wargear FNP shows
-  only on its own row.
+  only on its own row. (No real export has a wargear FNP; that item is covered by
+  `StatlineFlagRuleTests.AWargearFeelNoPain_AppliesToItsOwnRowOnly` only.)

@@ -58,6 +58,13 @@ record, not this file).
 - **Link a condition to another ability's activation.** Empyric Wellspring's +1 S applies "if that
   unit makes a Dark Pact"; a structured "requires ability X active" field would derive it from the
   Dark Pacts toggle instead of its own switch.
+- **A marker for a limited-only FNP tile.** A tile whose only FNP is limited (e.g. against Psychic
+  Attacks and mortal wounds) shows an amber "–", with the limit in its popover. Something like
+  "FNP: *" might read better; waiting on table feedback before changing it.
+- **Keyword-targeted aura grants that reach their own bearer.** Nekrosor Ammentar's "Feel No Pain
+  5+*" stays caveated because Nullstone Field Generator is a Necrons-keyword aura, and keyword
+  targets aren't evaluated on a unit, so its qualified 5+ never reaches the bearer to explain the
+  footnote.
 - **Consume the remaining data-only effect kinds.** `NamedAbilityGrant` (an inbound ability; needs
   `RuleGlossary.Normalize` to strip a trailing `9"`-style value so `Scouts 9"` resolves),
   `NamedAbilityRemoval` (hide or strike the removed ability).
@@ -109,8 +116,10 @@ design, not as a gap to eventually close.
     Medicae Medi-packs). Not a composite target - `Target` is who benefits.
     `KeywordResolution.EffectiveKeywords` is already casualty-aware. Check first that no bodyguard
     datasheet carries CHARACTER itself.
-  - **FNP qualifier vocabulary** (mortal wounds / Psychic Attacks / both) for the FNP-like-InSv
-    display; `export` already maps "unqualified" sentinels to `null`.
+  - **FNP qualifier vocabulary** (mortal wounds / Psychic Attacks / both). 8 records put a model
+    subset or situation in the qualifier (CHARACTER models only, Vehicle models, within an
+    objective), which the FNP tile shows as a damage-source caveat; `export` already maps
+    "unqualified" sentinels to `null`.
   - **Prompt fixes:** event triggers ("each time this unit Advances/makes a Charge move") are
     `never`, not `none` - v2 gets this right only when the text also has an always-on part (Feral
     Rage, Spearpoint Paragon); a trigger-only text is folded into `phases` and applied permanently.

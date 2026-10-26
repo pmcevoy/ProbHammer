@@ -7,7 +7,9 @@ resolved unit's Statline characteristic (an invulnerable save, Objective Control
 derives a flagged value for display wherever that specific ability is currently present on that
 specific resolved unit — without ever removing the source ability from its normal place in the
 unit's Abilities or Enhancements.
+
 ## Requirements
+
 ### Requirement: Closed-Vocabulary Ability-to-Characteristic Rules
 The system SHALL recognize a rule/ability by looking up its text in the ability-classification
 catalogue (per `ability-classification-catalogue`'s Catalogue Lookup By Normalized-Text Content
@@ -17,13 +19,15 @@ record, nor from any of a record's conditional effects (per `ability-classificat
 Unconditional Effect Rule). When a record's matched ability is present on a specific resolved unit
 (per Mutation Liveness Follows Ability Presence below) and that record's own classified target scope
 is one this capability applies to (per Target-Scoped Application below), the system SHALL derive a
-flagged value for the Statline characteristic(s) named by that record's unconditional Statline scalar
-and invulnerable-save effects, replacing or adjusting the Datasheet's own base value for display on
-that unit, and SHALL record a reference back to the matched ability for each flagged value. An
-invulnerable-save effect SHALL be combined with the existing value per side (melee, ranged), keeping
+flagged value for the Statline characteristic(s) named by that record's unconditional Statline scalar,
+invulnerable-save and Feel No Pain effects, replacing or adjusting the Datasheet's own base value for
+display on that unit, and SHALL record a reference back to the matched ability for each flagged value.
+An invulnerable-save effect SHALL be combined with the existing value per side (melee, ranged), keeping
 the better save, so that a side the effect does not name, or names with a worse save, keeps its
-existing value; an effect improving neither side SHALL leave the value unflagged. Effects of any other
-kind SHALL NOT affect the Statline.
+existing value; an effect improving neither side SHALL leave the value unflagged. A Feel No Pain effect
+SHALL be combined per `feel-no-pain`'s A Feel No Pain Grant Keeps The Better Threshold. A Feel No Pain
+effect whose record names a qualifier (a damage source or a subset of models it applies to) SHALL NOT
+change the value. Effects of any other kind SHALL NOT affect the Statline.
 
 #### Scenario: A matched ability grants a new invulnerable save value
 - **WHEN** a resolved unit carries an ability whose text has a catalogue record classifying it ("The
@@ -48,6 +52,16 @@ kind SHALL NOT affect the Statline.
   Objective Control improvement of 1, targeting the bearer's unit
 - **THEN** every model in that unit's Objective Control is flagged with the Datasheet's base value
   plus 1, referencing that ability as its source
+
+#### Scenario: A matched ability grants Feel No Pain
+- **WHEN** a unit with no Feel No Pain carries an ability whose catalogue record classifies it as an
+  unconditional Feel No Pain 5+ with no qualifier, targeting the bearer's unit
+- **THEN** every entry of that unit has Feel No Pain 5+, referencing that ability as its source
+
+#### Scenario: A qualified Feel No Pain effect leaves the value unchanged
+- **WHEN** a unit carries an ability whose catalogue record classifies it as an unconditional Feel No
+  Pain 5+ against mortal wounds
+- **THEN** that unit's Feel No Pain value is unchanged and not flagged by that effect
 
 #### Scenario: An unmatched ability produces no flagged value
 - **WHEN** a resolved unit carries an ability whose text has no catalogue record
@@ -147,8 +161,8 @@ characteristic to the Datasheet's own base value.
   present
 
 ### Requirement: Conditional Statline Effects Are Recorded Without Being Applied
-When a present ability's catalogue record contains a conditional Statline scalar or invulnerable-save
-effect, the system SHALL record it on every Statline entry an unconditional effect of that record
+When a present ability's catalogue record contains a conditional Statline scalar, invulnerable-save or
+Feel No Pain effect, the system SHALL record it on every Statline entry an unconditional effect of that record
 would reach (per Target-Scoped Application), naming the source ability, the characteristic, the
 effect's value and its condition, and SHALL NOT change that entry's value. An effect the player has
 activated, or one in an unselected option of a choice group with a selection, SHALL NOT be recorded
@@ -173,8 +187,8 @@ activated, or one in an unselected option of a choice group with a selection, SH
   effect follows
 
 #### Scenario: A keyword-targeted conditional effect is not recorded
-- **WHEN** a present ability whose Origin is not Detachment Rule carries a conditional Statline
-  effect and its catalogue record's classified target is a set of keywords
+- **WHEN** a present ability whose Origin is neither Detachment Rule nor Army Rule carries a
+  conditional Statline effect and its catalogue record's classified target is a set of keywords
 - **THEN** no not-applied effect is recorded for it, the same outcome as for an unconditional effect
   with that target
 
@@ -182,3 +196,14 @@ activated, or one in an unselected option of a choice group with a selection, SH
 - **WHEN** the player activates Martial Honour on Helbrecht's Crusader Squad
 - **THEN** the bearer's OC is improved by 5 and no not-applied effect for Martial Honour is recorded
 
+#### Scenario: A once-per-battle Feel No Pain is recorded, not applied
+- **WHEN** a Custodian Wardens unit carries Living Fortress ("Once per battle, at the start of any
+  phase ... models in this unit have the Feel No Pain 4+ ability"), classified as Feel No Pain 4+
+  with the usage limit once per battle and no qualifier
+- **THEN** each of that unit's Statline entries records a not-applied Feel No Pain 4+ effect naming
+  Living Fortress, and its Feel No Pain stays absent
+
+#### Scenario: An activated Feel No Pain is applied
+- **WHEN** the player activates Living Fortress on a Custodian Wardens unit
+- **THEN** each of that unit's Statline entries has Feel No Pain 4+ referencing Living Fortress, and
+  no not-applied effect for Living Fortress is recorded

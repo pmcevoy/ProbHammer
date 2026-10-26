@@ -130,7 +130,7 @@ rebuilding every unit block fresh from the server on each request.
 ### Requirement: Statline Section Rendering
 Each unit block SHALL group the view's `Statlines` into contiguous runs, where consecutive entries
 belong to the same run only if they share both the same `ComponentName` and an identical Statline
-value (M/T/Sv/W/Ld/Oc, and InSv when present); an entry whose `ComponentName` or Statline value
+value (M/T/Sv/W/Ld/Oc, and InSv and FNP when present); an entry whose `ComponentName` or Statline value
 differs from its immediate predecessor starts a new run. For each run, the unit block SHALL render
 one shared stat-tile showing that run's M/T/Sv/W/Ld/Oc values, and SHALL render one header line per
 entry in the run — showing that entry's own name and remaining/initial model count as its own
@@ -169,6 +169,11 @@ alongside the value itself, inside the tile:
   non-caveated tile's background, per "Flagged Statline Characteristic Rendering" below, which
   governs how the save's source is shown to the player.
 - A save whose melee and ranged values are both 0 (the default) renders no box at all.
+
+A run's shared Feel No Pain, when present, SHALL render as its own tile in the same family, labelled
+"FNP", on the same row as the invulnerable save tile and aligned under the W tile, showing its
+threshold (e.g. "5+"). A run with no Feel No Pain renders no FNP tile, unless the tile is highlighted
+(see "Value Provenance Highlight"), in which case it shows "–".
 
 Each entry's header line, and each of its nested loadout lines when rendered, SHALL act as an
 independent selection toggle within the unit block's shared selection state (see "Selection-Scoped
@@ -302,6 +307,20 @@ requirement already govern.
 - **WHEN** a run's shared Statline value has an invulnerable save whose melee and ranged values are
   both 0 (the default)
 - **THEN** the run renders no invulnerable save tile
+
+#### Scenario: Feel No Pain renders under W
+- **WHEN** a run's shared Statline value has a Feel No Pain of 5+
+- **THEN** the run renders a tile labelled "FNP" showing "5+", below the stat row and aligned under
+  the W tile
+
+#### Scenario: Feel No Pain is omitted when absent and untouched
+- **WHEN** a run has no Feel No Pain and no ability has anything to say about it
+- **THEN** the run renders no FNP tile
+
+#### Scenario: Runs differing only in Feel No Pain stay separate
+- **WHEN** two consecutive same-component entries share M/T/Sv/W/Ld/Oc and invulnerable save but only
+  one has a Feel No Pain
+- **THEN** they render under two separate stat-tiles
 
 #### Scenario: Melee-only invulnerable save renders with a melee-specific indicator
 - **WHEN** a run's shared Statline value has a non-caveated invulnerable save whose ranged value is
@@ -1527,7 +1546,7 @@ initially inactive (not automatically reactivated).
 - **THEN** every unit matching that active keyword remains expanded and flagged as before
 
 ### Requirement: Value Provenance Highlight
-A Statline tile (M, T, Sv, W, Ld, OC, InSv) or a weapon-table Attacks, BS/WS, Strength, AP or Damage value
+A Statline tile (M, T, Sv, W, Ld, OC, InSv, FNP) or a weapon-table Attacks, BS/WS, Strength, AP or Damage value
 SHALL render as an inset tile with a corner tick whenever an ability has something to say
 about it: an applied ability change, a caveat left unresolved, or a conditional effect that was not
 added. The tile SHALL be amber, except that a value reached only by conditional effects that were
@@ -1563,6 +1582,21 @@ touches SHALL render plain.
 - **WHEN** one value is reached by an applied ability change and by a different ability's conditional
   effect that was not added
 - **THEN** that value renders highlighted in amber, not the conditional colour
+
+#### Scenario: A datasheet or wargear Feel No Pain is highlighted
+- **WHEN** a run's Feel No Pain 5+ comes from its own "Feel No Pain 5+" ability, on its datasheet or
+  through wargear
+- **THEN** its FNP tile renders highlighted in amber showing 5+, and its popover lists "Feel No Pain
+  5+" as the source of the value
+
+#### Scenario: A granted Feel No Pain is highlighted
+- **WHEN** an unconditional Feel No Pain 5+ grant reaches a run with no Feel No Pain
+- **THEN** that run's FNP tile renders highlighted in amber showing 5+
+
+#### Scenario: A footnoted Feel No Pain is highlighted
+- **WHEN** a run's Feel No Pain is caveated because its datasheet name is "Feel No Pain 3+*" and no
+  qualified Feel No Pain 3+ grant reaches it
+- **THEN** its FNP tile renders highlighted in amber showing 3+
 
 #### Scenario: A caveated value stays amber
 - **WHEN** a run's invulnerable save is still caveated and no other ability reaches it
@@ -1631,6 +1665,12 @@ not shown this way (see "Activated Effects Are Marked In Provenance").
 - **WHEN** a unit with no invulnerable save carries Waaagh! (5+ invulnerable save while riled up)
 - **THEN** the run renders a highlighted InSv tile showing no save, and its popover lists Waaagh!
   with 5+ and the condition "while the unit is riled up", not added
+
+#### Scenario: A once-per-battle Feel No Pain gives an otherwise absent value a tile
+- **WHEN** a Custodian Wardens unit with no Feel No Pain carries Living Fortress (once per battle,
+  Feel No Pain 4+ until the end of the phase)
+- **THEN** each run renders an FNP tile in the conditional colour showing "–", and its popover lists
+  Living Fortress with 4+, noting once per battle and not added
 
 ### Requirement: Caveated Value Popover Content
 A caveated value's popover SHALL show the datasheet value and state that it may be modified by the
@@ -1847,3 +1887,40 @@ Following it SHALL NOT change the session's list or any game state.
 - **WHEN** a player with marked casualties follows the import link and then returns to
   `/LivePlay` without importing
 - **THEN** the same list renders with the same casualties and phase/turn
+
+### Requirement: Qualified Feel No Pain Popover Line
+A Feel No Pain effect whose record names a qualifier, reaching a run, SHALL highlight that run's FNP
+tile and appear in its popover as a line naming its ability, its threshold and its qualifier, noting
+that it is not included in the shown value. It SHALL NOT change the shown value. The line SHALL be
+marked not added, with its condition, when the effect is also conditional and not activated.
+
+#### Scenario: An always-on qualified Feel No Pain
+- **WHEN** a unit with Feel No Pain 6+ carries an ability classified as an unconditional Feel No
+  Pain 5+ against mortal wounds
+- **THEN** its FNP tile shows 6+ highlighted in amber, and the popover lists that ability with 5+
+  and its qualifier "mortal wounds", noting it is not included in the value
+
+#### Scenario: A qualified Feel No Pain on a unit without one
+- **WHEN** a unit with no Feel No Pain carries an ability classified as an unconditional Feel No
+  Pain 4+ for CHARACTER models only
+- **THEN** each run renders an amber FNP tile showing "–", and the popover lists that ability with
+  4+ and its qualifier "CHARACTER models only", noting it is not included in the value
+
+### Requirement: Valueless Feel No Pain Entry Hidden Beside An FNP Tile
+An ability named exactly "Feel No Pain", with no value, SHALL NOT be listed in a component's
+abilities while any run of that component renders an FNP tile. Otherwise it SHALL be listed as
+before.
+
+#### Scenario: Custodian Wardens with Living Fortress
+- **WHEN** a Custodian Wardens unit carries a valueless "Feel No Pain" ability and Living Fortress
+- **THEN** its runs render the conditional FNP tile, and its ability list shows Living Fortress but
+  no "Feel No Pain" entry
+
+#### Scenario: A valueless entry with nothing to show stays listed
+- **WHEN** a component carries a valueless "Feel No Pain" ability and none of its runs renders an
+  FNP tile
+- **THEN** its ability list still shows "Feel No Pain"
+
+#### Scenario: A valued Feel No Pain entry stays listed
+- **WHEN** a component carries "Feel No Pain 5+" and its runs render an FNP tile showing 5+
+- **THEN** its ability list still shows "Feel No Pain 5+"
