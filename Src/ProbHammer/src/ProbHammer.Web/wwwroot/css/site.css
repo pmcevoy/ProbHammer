@@ -715,6 +715,8 @@ button.filter-flag:hover { opacity: 0.8; }
    column's auto-width grows to fit a wider value/icon combination, leaving the other five tiles'
    widths alone - spanning would let a long value bleed its width into every column it crosses. */
 .insv-tile { grid-column: 3; }
+/* Feel No Pain: same row as InSv, under W, the characteristic it protects. */
+.fnp-tile { grid-column: 4; }
 /* Value provenance highlight: "an ability has something to say about this value; tap to judge".
    The --amber-tint fill and --amber border mark the tile; the bottom-right corner tick reads as
    "there's a note about this". On a Statline tile the button is the whole tile; in a weapon table it

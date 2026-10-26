@@ -105,6 +105,19 @@
         return RenderTile("stat-tile insv-tile", "<span class=\"stat-label\">InSv</span>" + valueHtml, provenance);
     }
 
+    // Absent and highlighted renders "–"; absent and untouched renders no tile.
+    string RenderFeelNoPainTile(StatlineBlockViewModel block)
+    {
+        var provenance = block.ProvenanceFor("FNP");
+        if (provenance is null && FeelNoPainEffectResolver.Threshold(block.Statline.Fnp) is null)
+            return "";
+
+        var value = WebUtility.HtmlEncode(block.Statline.Fnp.Value.ToString());
+        var inner = "<span class=\"stat-label\">FNP</span>" +
+                    $"<span class=\"stat-value\">{value}{(block.Statline.Fnp.Value is NumericCharacteristicValue ? "+" : "")}</span>";
+        return RenderTile("stat-tile fnp-tile", inner, provenance);
+    }
+
     // A highlighted weapon value keeps the row's own <td> background; the inner button carries the
     // highlight, and its panel trails it inside the cell.
     string RenderWeaponValueCell(WeaponRowViewModel row, string field)
@@ -369,6 +382,7 @@
                             @Html.Raw(RenderScalarTile("Ld", "LD", block, "+"))
                             @Html.Raw(RenderObjectiveControlTile(block))
                             @Html.Raw(RenderInvulnerableSaveTile(block))
+                            @Html.Raw(RenderFeelNoPainTile(block))
                         </div>
                     </div>
 

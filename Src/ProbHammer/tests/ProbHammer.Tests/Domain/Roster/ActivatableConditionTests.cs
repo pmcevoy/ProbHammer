@@ -63,6 +63,18 @@ public class ActivatableConditionTests
     }
 
     [Fact]
+    public void AOncePerBattleFeelNoPain_ReportsOneConditionWithNoText()
+    {
+        var fortress = AbilityWith("Living Fortress");
+        var catalogue = Catalogue(fortress, [Conditional(new FeelNoPainEffect(4), null)], UsageLimit.OncePerBattle);
+
+        var view = AttachedUnitAggregator.Build(UnitWith(fortress), catalogue);
+
+        view.ActivatableConditions.Should().ContainSingle().Which.Should()
+            .BeEquivalentTo(new ConditionToggle(fortress, "", UsageLimit.OncePerBattle, null, IsActive: false));
+    }
+
+    [Fact]
     public void DistinctConditionTexts_AreSeparateConditions_AndReportTheirActiveState()
     {
         var firepower = AbilityWith("Advanced Firepower");

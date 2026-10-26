@@ -49,6 +49,21 @@ public class ImportFlowTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task CustodianWardens_ShowAConditionalFeelNoPainTile_AndNoValuelessFeelNoPainEntry()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await ImportAsync(client, ReadRealExport("gw-android-export-custodes.json"));
+
+        response.EnsureSuccessStatusCode();
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        html.Should().Contain("Custodian Wardens")
+            .And.Contain("class=\"stat-tile fnp-tile provenance-tile provenance-cond\"")
+            .And.Contain(">Living Fortress<")
+            .And.NotContain(">Feel No Pain<");
+    }
+
+    [Fact]
     public async Task NonBattleScribeJson_FallsThroughToTheTextPipeline_AndFailsWithItsOwnDiagnostics()
     {
         var client = _factory.CreateClient();

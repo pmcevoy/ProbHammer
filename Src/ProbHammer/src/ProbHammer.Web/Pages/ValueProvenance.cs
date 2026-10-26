@@ -49,6 +49,7 @@ internal sealed class ValueProvenanceBuilder(
     IReadOnlySet<string>? activatedAbilityNames = null)
 {
     internal const string ActivatedNote = "activated";
+    internal const string NotIncludedNote = "Not included in the value.";
 
     // Page field key (LivePlayModel.ScalarStatlineFieldOrder), Core characteristic key, label, suffix.
     private static readonly (string Field, string Characteristic, string Label, string Suffix)[] StatlineFields =
@@ -82,6 +83,9 @@ internal sealed class ValueProvenanceBuilder(
 
         if (InvulnerableSave($"InSv · {subject}", statline.InSv, notApplied) is { } insv)
             result["InSv"] = insv;
+
+        if (FeelNoPain($"FNP · {subject}", statline.Fnp, notApplied) is { } fnp)
+            result["FNP"] = fnp;
 
         return result;
     }
@@ -156,6 +160,34 @@ internal sealed class ValueProvenanceBuilder(
         return new ValueProvenance(title, "Original", original,
             [.. view.ContributingAbilities.Select(a => Line(a, resolved, [], ProvenanceLineKind.Applied)), .. pending],
             view.ContributingAbilities.Count > 0 ? "Total" : "Shown", resolved);
+    }
+
+    // A qualified effect never changes the value: in force it is a caveat line, otherwise a not-added one.
+    private ValueProvenance? FeelNoPain(string title, ScalarCharacteristicView view,
+        IReadOnlyList<NotAppliedStatlineEffect> notApplied)
+    {
+        var others = notApplied
+            .Where(n => n.Effect is FeelNoPainEffect)
+            .Select(n => (n, Effect: (FeelNoPainEffect)n.Effect))
+            .Select(x => x.Effect.Qualifier is not { } qualifier
+                ? PendingLine(x.n.SourceAbility, x.n.Condition, $"{x.Effect.Value}+")
+                : x.n.IsInForce
+                    ? Line(x.n.SourceAbility, $"{x.Effect.Value}+", [qualifier, NotIncludedNote], ProvenanceLineKind.Caveat)
+                    : Line(x.n.SourceAbility, $"{x.Effect.Value}+", [ConditionSummary(x.n.Condition), qualifier],
+                        ProvenanceLineKind.NotAdded))
+            .ToList();
+        if (view.ContributingAbilities.Count == 0 && others.Count == 0)
+            return null;
+
+        var original = Format(view.OriginalValue, "+");
+        if (view.IsCaveated)
+            return new ValueProvenance(title, "Datasheet", original,
+                [.. view.ContributingAbilities.Select(CaveatLine), .. others], null, null);
+
+        var shown = Format(view.Value, "+");
+        return new ValueProvenance(title, "Original", original,
+            [.. view.ContributingAbilities.Select(a => Line(a, shown, [], ProvenanceLineKind.Applied)), .. others],
+            view.ContributingAbilities.Count > 0 ? "Total" : "Shown", shown);
     }
 
     // Original is the total without ability contributions; one line per distinct Attacks source.

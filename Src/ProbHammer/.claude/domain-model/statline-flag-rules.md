@@ -23,8 +23,8 @@ AttachedUnitAggregator.ApplyStatlineFlagRules(statlines, abilities, classificati
                                        // DetachmentRuleInboundAbilityResolver, and an ArmyRule-origin
                                        // ability, only ever present on a unit that carries it. Only the
                                        // classification's unconditional effects apply; its
-                                       // conditional Scalar/InvulnerableSave effects are recorded
-                                       // on the same entries' NotAppliedEffects instead.
+                                       // conditional Scalar/InvulnerableSave/FeelNoPain effects are
+                                       // recorded on the same entries' NotAppliedEffects instead.
 IsBearerOf(abilityEntry, target, componentName, statlineName) -> bool
                                        // SelfRuleTarget - the matched ability's own bearer row(s),
                                        // one specific model-line when AggregateAbilityEntry
@@ -39,7 +39,10 @@ ApplyEffect(statline, effect, sourceAbility) -> Statline
                                        // ScalarCharacteristicEffect -> ApplyScalarEffect;
                                        // InvulnerableSaveCharacteristicEffect ->
                                        // ApplyInvulnerableSaveEffect (InvulnerableSaveEffectResolver);
-                                       // every other effect kind leaves the Statline alone.
+                                       // an unqualified FeelNoPainEffect ->
+                                       // FeelNoPainEffectResolver.Merge; every other effect kind
+                                       // (a qualified FeelNoPainEffect included) leaves the Statline
+                                       // alone.
 ApplyScalarEffect(statline, effect, sourceAbility) -> Statline
                                        // CharacteristicModificationResolver.Resolve, wrapped back
                                        // into ScalarCharacteristicView.Resolved(current
@@ -58,7 +61,27 @@ AttachedUnitAggregator.ResolveCaveatedInvulnerableSaves(statlines, classificatio
                                        // collision guard needed: Datasheet excludes the InSv-caveat-
                                        // internal ability names from the general ability walk, so
                                        // ApplyStatlineFlagRules never also matches it.
+
+AttachedUnitAggregator.DeriveOwnFeelNoPain(statlines, abilities)
+                                       // runs before ApplyStatlineFlagRules: each entry's Statline.Fnp
+                                       // comes from the present "Feel No Pain X+" abilities its own
+                                       // bearer carries (IsBearerOf with SelfRuleTarget, so a wargear
+                                       // FNP reaches only its own row), best threshold wins, original
+                                       // value the symbolic "–" of Statline.NoFeelNoPain and the named
+                                       // ability as contributing ability. A footnote or second value
+                                       // ("3+*", "6+ 4+*") gives a caveated first value, except a
+                                       // "X+*" with a qualified X+ grant reaching the row, which
+                                       // gives nothing (the grant explains it); a bare
+                                       // "Feel No Pain" gives nothing.
 ```
+
+**Feel No Pain** (`feel-no-pain-stat-box`): `Statline.Fnp` is a `ScalarCharacteristicView`, absent as
+`Statline.NoFeelNoPain`. Because a bearer's own FNP always has a contributing ability, a grant can't
+use the first-applied-wins guard: `FeelNoPainEffectResolver.Merge` compares thresholds instead,
+replacing the value and its source only when the grant is better. A `FeelNoPainEffect` with a
+`Qualifier` (mortal wounds, Psychic Attacks, CHARACTER models only, ...) never changes the value; it
+is recorded on `NotAppliedEffects` whatever its state, with `IsInForce` true when it is unconditional
+or activated, so the popover can list it as a caveat.
 
 **Wiring**: `AttachedUnitAggregator.Build` takes the `AbilityClassificationCatalogue` singleton
 (`Program.cs`, loaded once from `Data/ability-classifications.json`), threaded through

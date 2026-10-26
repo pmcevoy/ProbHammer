@@ -38335,8 +38335,7 @@
           {
             "effect": {
               "kind": "FeelNoPain",
-              "value": 4,
-              "qualifier": "Psychic Attacks"
+              "value": 4
             },
             "residualConditionBucket": "none"
           }

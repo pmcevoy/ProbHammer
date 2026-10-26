@@ -32,7 +32,8 @@ public sealed record WeaponCharacteristicEffect(
     EffectVerb Verb,
     int Amount) : RuleEffect;
 
-/// <summary>Data only - no consumer yet.</summary>
+/// <summary>Grants Feel No Pain <see cref="Value"/>+; resolved by <see cref="FeelNoPainEffectResolver"/>.
+/// A non-null <see cref="Qualifier"/> (a damage source or model subset) never changes the value.</summary>
 public sealed record FeelNoPainEffect(int Value, string? Qualifier = null) : RuleEffect;
 
 /// <summary>Grants <see cref="Keyword"/> to the weapons <see cref="Selector"/> picks out; resolved by

@@ -10,8 +10,9 @@ public sealed record ModelLineLoadout(
     IReadOnlyList<string> Abilities,
     string DisplayName);
 
-/// <summary><see cref="NotAppliedEffects"/> lists every conditional Statline scalar or
-/// invulnerable-save effect reaching this entry, left unapplied.</summary>
+/// <summary><see cref="NotAppliedEffects"/> lists every conditional Statline scalar, invulnerable-save
+/// or Feel No Pain effect reaching this entry, left unapplied, and every qualified Feel No Pain effect
+/// reaching it.</summary>
 public sealed record AggregateStatlineEntry(
     string ComponentName,
     string StatlineName,
@@ -63,12 +64,14 @@ public sealed record KeywordGrant(Ability SourceAbility, string Keyword, string?
 /// keywords, left unapplied.</summary>
 public sealed record NotAppliedKeywordGrant(Ability SourceAbility, string Keyword, EffectCondition Condition);
 
-/// <summary>A conditional Statline scalar or invulnerable-save effect reaching an entry but left
-/// unapplied.</summary>
+/// <summary>A conditional Statline effect reaching an entry but left unapplied, or a qualified Feel No
+/// Pain effect, which never changes the value; <see cref="IsInForce"/> marks one that is unconditional
+/// or activated.</summary>
 public sealed record NotAppliedStatlineEffect(
     Ability SourceAbility,
     RuleEffect Effect,
-    EffectCondition Condition);
+    EffectCondition Condition,
+    bool IsInForce = false);
 
 /// <summary>
 /// <see cref="LoadoutIndex"/> is the contributing <c>ModelLine</c>'s position within its

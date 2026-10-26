@@ -56780,7 +56780,7 @@
           "Effect": {
             "kind": "FeelNoPain",
             "Value": 4,
-            "Qualifier": "Psychic Attacks"
+            "Qualifier": null
           },
           "ResidualConditionBucket": "none",
           "ConditionText": null,
@@ -56803,7 +56803,7 @@
     },
     "EffectiveCoverageStatus": "complete",
     "ReviewStatus": "Pending",
-    "ReviewerNote": null
+    "ReviewerNote": "Hand-corrected 2026-10-07: FNP qualifier 'Psychic Attacks' set to null; it is not in the text (feel-no-pain-stat-box)."
   },
   "6b062b85cb58b665f478b8ae8995ab5db50a6fd8b51a82359cc2550eda550cb6": {
     "Hash": "6b062b85cb58b665f478b8ae8995ab5db50a6fd8b51a82359cc2550eda550cb6",

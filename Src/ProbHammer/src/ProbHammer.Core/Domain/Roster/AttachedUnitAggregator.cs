@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using ProbHammer.Core.Domain.Catalogue;
 
 namespace ProbHammer.Core.Domain.Roster;
@@ -20,6 +21,7 @@ public static class AttachedUnitAggregator
         var abilities = BuildAbilities(combatUnit);
         var matches = MatchAbilities(abilities, classifications, combatUnit.ConditionActivations);
         var statlines = ResolveCaveatedInvulnerableSaves(BuildStatlines(combatUnit), classifications);
+        statlines = DeriveOwnFeelNoPain(statlines, abilities, matches);
         statlines = ApplyStatlineFlagRules(statlines, matches);
 
         return new AttachedUnitAggregateView(
@@ -80,7 +82,7 @@ public static class AttachedUnitAggregator
         IReadOnlyList<AggregateStatlineEntry> statlines, List<(Unit Unit, ModelLine ModelLine)> presentLines) =>
         effect switch
         {
-            ScalarCharacteristicEffect or InvulnerableSaveCharacteristicEffect => statlines.Any(s =>
+            ScalarCharacteristicEffect or InvulnerableSaveCharacteristicEffect or FeelNoPainEffect => statlines.Any(s =>
                 s.RemainingCount > 0 &&
                 IsBearerOf(match.Entry, match.Classification.Target, s.ComponentName, s.StatlineName)),
             WeaponCharacteristicEffect { Characteristic: not ("S" or "A" or "AP" or "D" or "BS" or "WS") } => false,
@@ -119,6 +121,53 @@ public static class AttachedUnitAggregator
             var resolved = InvulnerableSaveEffectResolver.ResolveCaveat(effect, sourceAbility, insv);
             return entry with { Statline = entry.Statline with { InSv = resolved } };
         }).ToList();
+
+    private static readonly Regex FeelNoPainName =
+        new(@"^Feel No Pain (\d)\+(.*)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    // A bearer's own "Feel No Pain X+" abilities give its FNP, sourced to that ability. A footnote or a
+    // second value leaves it caveated; a bare "Feel No Pain" gives nothing. A footnoted "X+*" gives
+    // nothing when a qualified X+ grant reaches the row, since that grant is what the footnote means.
+    private static IReadOnlyList<AggregateStatlineEntry> DeriveOwnFeelNoPain(
+        IReadOnlyList<AggregateStatlineEntry> statlines, IReadOnlyList<AggregateAbilityEntry> abilities,
+        IReadOnlyList<MatchedAbility> matches)
+    {
+        var sources = abilities
+            .Select(a => (Entry: a, Match: FeelNoPainName.Match(a.Ability.Name.Trim())))
+            .Where(x => x.Match.Success)
+            .Select(x => (x.Entry, Threshold: int.Parse(x.Match.Groups[1].Value),
+                Suffix: x.Match.Groups[2].Value.Trim()))
+            .ToList();
+        if (sources.Count == 0)
+            return statlines;
+
+        return statlines.Select(entry =>
+        {
+            var qualifiedThresholds = matches
+                .Where(m => IsBearerOf(m.Entry, m.Classification.Target, entry.ComponentName, entry.StatlineName))
+                .SelectMany(m => m.Effects)
+                .Select(e => e.Effect.Effect)
+                .OfType<FeelNoPainEffect>()
+                .Where(f => f.Qualifier is not null)
+                .Select(f => f.Value)
+                .ToHashSet();
+
+            var best = sources
+                .Where(s => IsBearerOf(s.Entry, new SelfRuleTarget(), entry.ComponentName, entry.StatlineName))
+                .Where(s => !(s.Suffix == "*" && qualifiedThresholds.Contains(s.Threshold)))
+                .Select(s => (s.Entry, s.Threshold, IsCaveated: s.Suffix.Length > 0))
+                .OrderBy(s => s.Threshold).ThenBy(s => s.IsCaveated)
+                .FirstOrDefault();
+            if (best.Entry is null)
+                return entry;
+
+            var fnp = best.IsCaveated
+                ? ScalarCharacteristicView.Caveated(best.Threshold, best.Entry.Ability)
+                : ScalarCharacteristicView.Resolved(Statline.NoFeelNoPain.OriginalValue, best.Threshold,
+                    [best.Entry.Ability]);
+            return entry with { Statline = entry.Statline with { Fnp = fnp } };
+        }).ToList();
+    }
 
     private static ScalarCharacteristicView GetScalarField(Statline statline, string characteristic) =>
         characteristic switch
@@ -164,8 +213,8 @@ public static class AttachedUnitAggregator
             .ToList();
 
     // Never mutates Datasheet/Unit; only the returned decorated copy of the statline entries carries
-    // an effect. Applied effects apply; NotApplied Scalar/InvulnerableSave effects reaching the same
-    // entry are recorded instead.
+    // an effect. Applied effects apply; NotApplied Statline effects reaching the same entry, and qualified
+    // Feel No Pain effects in any state, are recorded instead.
     private static IReadOnlyList<AggregateStatlineEntry> ApplyStatlineFlagRules(
         IReadOnlyList<AggregateStatlineEntry> statlines, IReadOnlyList<MatchedAbility> matches)
     {
@@ -189,9 +238,15 @@ public static class AttachedUnitAggregator
 
                 notApplied.AddRange(match.Effects
                     .Where(e => e.State == EffectState.NotApplied &&
-                                e.Effect.Effect is ScalarCharacteristicEffect or InvulnerableSaveCharacteristicEffect)
+                                e.Effect.Effect is ScalarCharacteristicEffect or InvulnerableSaveCharacteristicEffect
+                                    or FeelNoPainEffect ||
+                                e.State == EffectState.Applied && e.Effect.Effect is FeelNoPainEffect
+                                {
+                                    Qualifier: not null
+                                })
                     .Select(e => new NotAppliedStatlineEffect(
-                        match.Entry.Ability, e.Effect.Effect, EffectCondition.Of(match.Classification, e.Effect))));
+                        match.Entry.Ability, e.Effect.Effect, EffectCondition.Of(match.Classification, e.Effect),
+                        IsInForce: e.State == EffectState.Applied)));
             }
 
             return entry with { Statline = mutated, NotAppliedEffects = notApplied };
@@ -238,13 +293,16 @@ public static class AttachedUnitAggregator
 
     // If two matched classifications would both touch the same characteristic of the same statline
     // entry, the first applied wins and the second is skipped - "skip if the field already carries a
-    // contributing ability", no separate accumulate logic. Every other effect kind leaves the
+    // contributing ability", no separate accumulate logic. Feel No Pain instead keeps the better
+    // threshold, and a qualified one never changes the value. Every other effect kind leaves the
     // Statline alone; weapon effects are applied by BuildWeapons.
     private static Statline ApplyEffect(Statline statline, RuleEffect effect, Ability sourceAbility) =>
         effect switch
         {
             ScalarCharacteristicEffect scalar => ApplyScalarEffect(statline, scalar, sourceAbility),
             InvulnerableSaveCharacteristicEffect insv => ApplyInvulnerableSaveEffect(statline, insv, sourceAbility),
+            FeelNoPainEffect { Qualifier: null } fnp =>
+                statline with { Fnp = FeelNoPainEffectResolver.Merge(fnp, sourceAbility, statline.Fnp) },
             _ => statline
         };
 

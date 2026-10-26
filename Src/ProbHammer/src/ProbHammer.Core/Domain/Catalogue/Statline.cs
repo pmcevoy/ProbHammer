@@ -8,5 +8,10 @@ public sealed record Statline(
     ScalarCharacteristicView Ld,
     ScalarCharacteristicView Oc)
 {
+    public static readonly ScalarCharacteristicView NoFeelNoPain = ScalarCharacteristicView.Resolved(
+        new SymbolicCharacteristicValue("–"), new SymbolicCharacteristicValue("–"), []);
+
     public InvulnerableSaveCharacteristicView InSv { get; init; } = InvulnerableSaveCharacteristicView.None;
+
+    public ScalarCharacteristicView Fnp { get; init; } = NoFeelNoPain;
 }

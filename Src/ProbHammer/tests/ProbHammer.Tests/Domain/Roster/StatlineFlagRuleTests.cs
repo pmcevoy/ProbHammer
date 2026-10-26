@@ -579,4 +579,213 @@ public class StatlineFlagRuleTests
 
         view.Statlines.Should().ContainSingle().Which.NotAppliedEffects.Should().BeEmpty();
     }
+
+    private static Ability FeelNoPain(string name) => new()
+    {
+        Name = name, Text = "This ability always takes the form Feel No Pain X+.",
+        Scope = AbilityScope.Model, Origin = AbilityOrigin.CoreRule
+    };
+
+    private static Unit Poxwalkers(params Ability[] datasheetAbilities) =>
+        new(new Datasheet("Poxwalkers", keywords: [], abilities: datasheetAbilities,
+                statlines: [("Poxwalker", new Statline(5, 4, 7, 1, 8, 0)), ("Ghoul", new Statline(5, 4, 7, 2, 8, 0))],
+                weaponProfiles: []),
+            [], [new ModelLine("Poxwalker", [], count: 9), new ModelLine("Ghoul", [], count: 1)]);
+
+    private static int? Fnp(AggregateStatlineEntry entry) => FeelNoPainEffectResolver.Threshold(entry.Statline.Fnp);
+
+    [Fact]
+    public void ADatasheetFeelNoPain_GivesEveryRowItsValue_SourcedToThatAbility()
+    {
+        var view = AttachedUnitAggregator.Build(Poxwalkers(FeelNoPain("Feel No Pain 5+")),
+            ClassificationFixtures.Catalogue([]));
+
+        view.Statlines.Should().HaveCount(2).And.OnlyContain(s =>
+            Fnp(s) == 5 && !s.Statline.Fnp.IsCaveated &&
+            s.Statline.Fnp.OriginalValue == Statline.NoFeelNoPain.OriginalValue &&
+            s.Statline.Fnp.ContributingAbilities.Single().Name == "Feel No Pain 5+");
+    }
+
+    [Fact]
+    public void TheBestOfSeveralFeelNoPainAbilities_Wins()
+    {
+        var view = AttachedUnitAggregator.Build(
+            Poxwalkers(FeelNoPain("Feel No Pain 6+"), FeelNoPain("Feel No Pain 5+")),
+            ClassificationFixtures.Catalogue([]));
+
+        view.Statlines.Should().OnlyContain(s => Fnp(s) == 5);
+    }
+
+    [Fact]
+    public void AWargearFeelNoPain_AppliesToItsOwnRowOnly()
+    {
+        var unit = new Unit(
+            new Datasheet("Squad", keywords: [], abilities: [],
+                statlines: [("Champion", new Statline(5, 5, 3, 2, 6, 1)), ("Trooper", new Statline(5, 5, 3, 2, 6, 1))],
+                weaponProfiles: []),
+            [],
+            [
+                new ModelLine("Champion", [], count: 1, abilities: [FeelNoPain("Feel No Pain 4+")]),
+                new ModelLine("Trooper", [], count: 4)
+            ]);
+
+        var view = AttachedUnitAggregator.Build(unit, ClassificationFixtures.Catalogue([]));
+
+        var champion = view.Statlines.Single(s => s.StatlineName == "Champion");
+        Fnp(champion).Should().Be(4);
+        champion.Statline.Fnp.ContributingAbilities.Should().ContainSingle(a => a.Name == "Feel No Pain 4+");
+        Fnp(view.Statlines.Single(s => s.StatlineName == "Trooper")).Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData("Feel No Pain 3+*", 3)]
+    [InlineData("Feel No Pain 6+ 4+*", 6)]
+    public void AFootnotedOrCompoundFeelNoPainName_IsCaveated(string name, int value)
+    {
+        var view = AttachedUnitAggregator.Build(Poxwalkers(FeelNoPain(name)), ClassificationFixtures.Catalogue([]));
+
+        view.Statlines.Should().OnlyContain(s =>
+            s.Statline.Fnp.IsCaveated && Fnp(s) == value &&
+            s.Statline.Fnp.ContributingAbilities.Single().Name == name);
+    }
+
+    [Fact]
+    public void AValuelessFeelNoPainName_GivesNoValue()
+    {
+        var view = AttachedUnitAggregator.Build(Poxwalkers(FeelNoPain("Feel No Pain")),
+            ClassificationFixtures.Catalogue([]));
+
+        view.Statlines.Should().OnlyContain(s => s.Statline.Fnp == Statline.NoFeelNoPain);
+    }
+
+    [Fact]
+    public void AFeelNoPainFollowsItsBearersLiveness()
+    {
+        var unit = new Unit(
+            new Datasheet("Squad", keywords: [], abilities: [],
+                statlines: [("Champion", new Statline(5, 5, 3, 2, 6, 1)), ("Trooper", new Statline(5, 5, 3, 2, 6, 1))],
+                weaponProfiles: []),
+            [],
+            [
+                new ModelLine("Champion", [], count: 1, abilities: [FeelNoPain("Feel No Pain 4+")]),
+                new ModelLine("Trooper", [], count: 4)
+            ]);
+        unit.ModelLines[0].RemoveCasualties(1);
+
+        var view = AttachedUnitAggregator.Build(unit, ClassificationFixtures.Catalogue([]));
+
+        view.Statlines.Should().OnlyContain(s => s.Statline.Fnp == Statline.NoFeelNoPain);
+    }
+
+    private static readonly Ability Resilient = new()
+    {
+        Name = "Disgustingly Resilient", Text = "Disgustingly Resilient test text.",
+        Scope = AbilityScope.Unit, Origin = AbilityOrigin.Intrinsic
+    };
+
+    private static AggregateStatlineEntry PoxwalkerWithGrant(FeelNoPainEffect effect,
+        UsageLimit? usageLimit = null, ConditionActivations? activations = null, params Ability[] others)
+    {
+        var (text, classification) = ClassificationFixtures.Entry(Resilient.Text, new SelfRuleTarget(), [effect]);
+        var unit = Poxwalkers([Resilient, .. others]);
+        if (activations is not null)
+            unit.ConditionActivations = activations;
+
+        var view = AttachedUnitAggregator.Build(unit,
+            ClassificationFixtures.Catalogue([(text, classification with { UsageLimit = usageLimit })]));
+        return view.Statlines[0];
+    }
+
+    [Fact]
+    public void AnUnconditionalFeelNoPainGrant_IsApplied()
+    {
+        var entry = PoxwalkerWithGrant(new FeelNoPainEffect(5));
+
+        Fnp(entry).Should().Be(5);
+        entry.Statline.Fnp.ContributingAbilities.Should().ContainSingle(a => a.Name == "Disgustingly Resilient");
+        entry.NotAppliedEffects.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ABetterGrant_ReplacesTheBearersOwnFeelNoPain()
+    {
+        var entry = PoxwalkerWithGrant(new FeelNoPainEffect(4), others: FeelNoPain("Feel No Pain 5+"));
+
+        Fnp(entry).Should().Be(4);
+        entry.Statline.Fnp.ContributingAbilities.Should().ContainSingle(a => a.Name == "Disgustingly Resilient");
+    }
+
+    [Fact]
+    public void AWorseGrant_LeavesTheBearersOwnFeelNoPain()
+    {
+        var entry = PoxwalkerWithGrant(new FeelNoPainEffect(6), others: FeelNoPain("Feel No Pain 5+"));
+
+        Fnp(entry).Should().Be(5);
+        entry.Statline.Fnp.ContributingAbilities.Should().ContainSingle(a => a.Name == "Feel No Pain 5+");
+    }
+
+    [Fact]
+    public void AQualifiedFeelNoPainGrant_LeavesTheValueUnchanged_AndIsRecordedInForce()
+    {
+        var entry = PoxwalkerWithGrant(new FeelNoPainEffect(5, "mortal wounds"));
+
+        entry.Statline.Fnp.Should().Be(Statline.NoFeelNoPain);
+        var recorded = entry.NotAppliedEffects.Should().ContainSingle().Subject;
+        recorded.Effect.Should().Be(new FeelNoPainEffect(5, "mortal wounds"));
+        recorded.IsInForce.Should().BeTrue();
+    }
+
+    [Fact]
+    public void AOncePerBattleFeelNoPain_IsRecorded_NotApplied()
+    {
+        var entry = PoxwalkerWithGrant(new FeelNoPainEffect(4), usageLimit: UsageLimit.OncePerBattle);
+
+        entry.Statline.Fnp.Should().Be(Statline.NoFeelNoPain);
+        var recorded = entry.NotAppliedEffects.Should().ContainSingle().Subject;
+        recorded.SourceAbility.Name.Should().Be("Disgustingly Resilient");
+        recorded.Condition.UsageLimit.Should().Be(UsageLimit.OncePerBattle);
+        recorded.IsInForce.Should().BeFalse();
+    }
+
+    [Fact]
+    public void AFootnotedFeelNoPain_ExplainedByAQualifiedGrant_GivesNoValue()
+    {
+        var entry = PoxwalkerWithGrant(new FeelNoPainEffect(3, "Psychic Attacks and mortal wounds"),
+            others: FeelNoPain("Feel No Pain 3+*"));
+
+        entry.Statline.Fnp.Should().Be(Statline.NoFeelNoPain);
+        entry.NotAppliedEffects.Should().ContainSingle().Which.IsInForce.Should().BeTrue();
+    }
+
+    [Fact]
+    public void AnExplainedFootnote_LeavesTheBearersGeneralFeelNoPain()
+    {
+        var entry = PoxwalkerWithGrant(new FeelNoPainEffect(3, "Psychic Attacks and mortal wounds"),
+            others: [FeelNoPain("Feel No Pain 5+"), FeelNoPain("Feel No Pain 3+*")]);
+
+        Fnp(entry).Should().Be(5);
+        entry.Statline.Fnp.IsCaveated.Should().BeFalse();
+        entry.Statline.Fnp.ContributingAbilities.Should().ContainSingle(a => a.Name == "Feel No Pain 5+");
+    }
+
+    [Fact]
+    public void AFootnotedFeelNoPain_WithAQualifiedGrantOfAnotherThreshold_StaysCaveated()
+    {
+        var entry = PoxwalkerWithGrant(new FeelNoPainEffect(4, "mortal wounds"),
+            others: FeelNoPain("Feel No Pain 3+*"));
+
+        Fnp(entry).Should().Be(3);
+        entry.Statline.Fnp.IsCaveated.Should().BeTrue();
+    }
+
+    [Fact]
+    public void AnActivatedFeelNoPain_IsApplied_AndNotRecorded()
+    {
+        var entry = PoxwalkerWithGrant(new FeelNoPainEffect(4), usageLimit: UsageLimit.OncePerBattle,
+            activations: ActivationFixtures.Condition("Disgustingly Resilient"));
+
+        Fnp(entry).Should().Be(4);
+        entry.Statline.Fnp.ContributingAbilities.Should().ContainSingle(a => a.Name == "Disgustingly Resilient");
+        entry.NotAppliedEffects.Should().BeEmpty();
+    }
 }

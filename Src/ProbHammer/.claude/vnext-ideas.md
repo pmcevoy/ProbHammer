@@ -21,24 +21,6 @@ record, not this file).
   two states (an active control, and a value an ability has something to say about), so it splits
   into something like `--active` and `--noted`, beside the already-semantic `--cond`. With semantic
   names in place, a theme is a set of redefinitions on one selector.
-- **A Feel No Pain stat box, mirroring InSv's.** Feel No Pain grants are common (153+ corpus hits)
-  and the catalogue already loads them as `FeelNoPainEffect` (data only). A dedicated box beneath
-  the M/T/Sv/W/Ld/Oc row - same treatment as the invulnerable-save box - would be its first
-  consumer.
-- **Suppress a bare glossary-tag ability entry whose Name carries no concrete value.** Confirmed via
-  real BSData (Custodian Wardens): a datasheet can link the shared, valueless `"Feel No Pain"` rule
-  directly as its own ability-list entry (a keyword tag, no append-name modifier) — unconditionally
-  useless to display ("this unit has some Feel No Pain-ish thing, value withheld"), regardless of
-  whether another ability on the same unit happens to state the value elsewhere in its own prose
-  (e.g. Custodian Wardens' "Living Fortress": "...have the Feel No Pain 4+ ability"). No cross-
-  ability reconciliation needed — this is a plain per-record check against the closed template-
-  family list (same "This ability always takes the form..." regex already used to detect the
-  family) plus "this occurrence's own Name has no value suffix," fully determinable from the corpus
-  alone, independent of whether `classify-abilities-via-llm-batch` classification succeeds. A
-  companion idea considered and dropped: a classifier-emitted "hide this ability" effect kind —
-  rejected as conflating a mechanical effect (what the rules text does) with a display/consume-time
-  decision (whether to render an entry); if a classifier-side signal ever turns out to be needed
-  here after all, it belongs with prompt v3's residue scope rule (below), not a new effect kind.
 - **Battle-round awareness in the phase/turn tracker.** The tracker knows My Turn/Their Turn but
   not who goes first in a round, so "at the start/end of the battle round" abilities (~28/~11
   corpus texts) light up in both players' Command/Fight phases. Tracking the first player (or a

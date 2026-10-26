@@ -74,7 +74,8 @@ selector, same mechanism as before, just no longer the default case.
   at `0.65rem` like a stat label. A caveated save's box is a `.provenance-tile` like any other
   value an ability has something to say about (see "Value Provenance Highlight" below), so its
   linked ability is reachable only on demand through that tile's popover, the same as every other
-  ability on the page. A
+  ability on the page. The Feel No Pain tile (`.fnp-tile`, `feel-no-pain-stat-box`) is the same
+  family on the same row, under W (the characteristic it protects; Sv is taken by InSv). A
   popover's own body (`.rule-popover-text`, `rules-glossary-popovers`) renders at `0.8rem`, with
   `white-space: pre-line` so a real line break in the source text (e.g. "Lethal Hits"' own
   Designer's Note, a separate paragraph from its main description) renders as one. A popover's
@@ -381,6 +382,11 @@ only the visual decisions.
   values never do); the tile is a provenance trigger whose popover ends "Battle-shocked → 0".
 - **Absent InSv**: a run with no save renders no InSv tile, unless a not-added conditional save
   reaches it (Waaagh!), in which case it renders a highlighted "–" tile (conditional colour).
+- **FNP is always highlighted**: Feel No Pain is always ability-granted, so even a datasheet's own
+  "Feel No Pain 5+" is an amber tile whose popover names that ability; amber on FNP does not mean
+  "changed from the datasheet" (user decision). A run with no FNP renders a "–" tile only when an
+  ability reaches it: conditional colour for a not-added grant (Living Fortress), amber for a
+  qualified one (e.g. against mortal wounds), which is a caveat line, never part of the value.
 - **Granted keyword chips** (`granted-weapon-keyword-chips`): a keyword an applied grant added or
   replaced is a `.weapon-tag-granted` chip (`--amber-tint` fill, `--amber` border); a not-added
   grant is a `.weapon-tag-cond` chip (`--cond-tint` fill, `--cond` border) after the weapon's own

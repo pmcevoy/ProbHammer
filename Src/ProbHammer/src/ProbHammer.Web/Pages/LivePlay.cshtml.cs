@@ -298,10 +298,11 @@ public class LivePlayModel(
         var rangedWeaponRows = orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Ranged).ToList();
         var meleeWeaponRows = orderedWeapons.Where(w => w.Entry.Profile.Type == WeaponType.Melee).ToList();
 
-        var statlineBlocks = GroupStatlines(view.Statlines, view.Abilities, isBattleShocked, provenance);
-        var wholeUnitAbilitySpans = BuildWholeUnitAbilitySpans(statlineBlocks, view.Abilities);
+        var abilities = WithoutValuelessFeelNoPain(view.Abilities, view.Statlines);
+        var statlineBlocks = GroupStatlines(view.Statlines, abilities, isBattleShocked, provenance);
+        var wholeUnitAbilitySpans = BuildWholeUnitAbilitySpans(statlineBlocks, abilities);
         var (adjustedStatlineBlocks, componentAbilitySpans) =
-            BuildComponentAbilitySpans(statlineBlocks, view.Abilities);
+            BuildComponentAbilitySpans(statlineBlocks, abilities);
 
         return new(
             Name: view.Name,
@@ -315,6 +316,23 @@ public class LivePlayModel(
             IsAtOrBelowHalfStrength: isAtOrBelowHalfStrength,
             IsBattleShocked: isBattleShocked,
             ActivatableConditions: view.ActivatableConditions);
+    }
+
+    // A bare "Feel No Pain" entry only points at the abilities that give the value, which the FNP tile
+    // already shows, so it is dropped from a component with an FNP tile.
+    private static IReadOnlyList<AggregateAbilityEntry> WithoutValuelessFeelNoPain(
+        IReadOnlyList<AggregateAbilityEntry> abilities, IReadOnlyList<AggregateStatlineEntry> statlines)
+    {
+        var withTile = statlines
+            .Where(s => s.Statline.Fnp.ContributingAbilities.Count > 0 ||
+                        s.NotAppliedEffects.Any(n => n.Effect is FeelNoPainEffect))
+            .Select(s => s.ComponentName)
+            .ToHashSet();
+
+        return abilities
+            .Where(a => a.ComponentName is null || !withTile.Contains(a.ComponentName) ||
+                        !string.Equals(a.Ability.Name.Trim(), "Feel No Pain", StringComparison.OrdinalIgnoreCase))
+            .ToList();
     }
 
     // Selection-key convention shared between the Statline section's toggle targets and weapon
@@ -887,7 +905,7 @@ public sealed record LivePlaySyncResponse(Dictionary<int, string> Fragments, Lis
 /// <see cref="LivePlayModel.CompressLoadoutLabels"/>, in the same order. <see cref="ModelAbilities"/>/
 /// <see cref="UnitAbilities"/> are the row-bound (ModelLine-sourced) abilities matching this
 /// specific run. <see cref="Provenance"/> holds each highlighted tile's popover content, keyed by
-/// <see cref="LivePlayModel.ScalarStatlineFieldOrder"/>'s field names plus "InSv".</summary>
+/// <see cref="LivePlayModel.ScalarStatlineFieldOrder"/>'s field names plus "InSv" and "FNP".</summary>
 public sealed record StatlineBlockViewModel(
     IReadOnlyList<AggregateStatlineEntry> Entries,
     IReadOnlyList<IReadOnlyList<string>> LoadoutLabels,
