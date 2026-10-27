@@ -9,9 +9,11 @@ The system SHALL load the ability-classification catalogue once from a checked-i
 the web application, and SHALL look up an ability's classification by the content hash of its
 normalized text - never by its Name. The normalization and hash SHALL be byte-identical to those the
 pipeline's extractor uses to key its corpus records, so every extracted text's record is reachable
-from the same text at runtime. An ability whose hash has no record SHALL have no classification, and
-SHALL be treated by every consumer exactly as an ability that classifies to no effects. A missing
-catalogue file SHALL load as an empty catalogue rather than fail startup.
+from the same text at runtime. Normalization SHALL fold a typographic apostrophe, a non-breaking
+space in place of a plain one, and whitespace surrounding the text. An ability whose hash has no
+record SHALL have no classification, and SHALL be treated by every consumer exactly as an ability
+that classifies to no effects. A missing catalogue file SHALL load as an empty catalogue rather than
+fail startup.
 
 #### Scenario: Two differently-named abilities sharing one text share one classification
 - **WHEN** two abilities with different Names carry identical rules text
@@ -21,6 +23,11 @@ catalogue file SHALL load as an empty catalogue rather than fail startup.
 - **WHEN** an ability's text differs from the extracted corpus text only by a typographic apostrophe
   or a non-breaking space in place of a plain one
 - **THEN** it resolves to the same catalogue record
+
+#### Scenario: Surrounding whitespace does not change the lookup
+- **WHEN** BSData's text for an ability ends in whitespace and a NewRecruit export carries the same
+  text trimmed
+- **THEN** the imported ability resolves to that text's catalogue record
 
 #### Scenario: Every record's key is reproducible from its own text
 - **WHEN** the checked-in catalogue file is loaded
@@ -39,23 +46,30 @@ Each catalogue record SHALL expose: a target (the bearer, the bearer's whole att
 unit keywords that a unit must all carry, or unconditional); an ordered list of classified effects,
 each with its effect, a residual-condition bucket (none, evaluable now, or never evaluable), optional
 condition text, and an optional choice branch; choice groups; the phases in which the ability is
-relevant; an optional turn ownership; an optional usage limit; a coverage status; and optional
-unclassified residue. Effects SHALL be one of seven kinds - Statline scalar, invulnerable save,
-weapon characteristic, Feel No Pain, weapon keyword grant, named ability grant, named ability
-removal - and every kind SHALL load, whether or not any consumer acts on it yet. A record of an
-unrecognized effect or target kind SHALL fail the load rather than be skipped.
+relevant; an optional turn ownership; an optional usage limit; a coverage status; optional
+unclassified (in-scope) residue; and optional out-of-scope residue. Effects SHALL be one of eight
+kinds - Statline scalar, invulnerable save, weapon characteristic, Feel No Pain, weapon keyword
+grant, named ability grant, named ability removal, roll modifier - and every kind SHALL load, whether
+or not any consumer acts on it yet. A record of an unrecognized effect or target kind SHALL fail the
+load rather than be skipped.
 
 #### Scenario: A record using a not-yet-consumed effect kind loads
 - **WHEN** the catalogue contains a record whose only effect is a weapon keyword grant
 - **THEN** the catalogue loads, and the record exposes that effect with its weapon selector and
   keyword
 
+#### Scenario: A roll-modifier record loads
+- **WHEN** the catalogue contains a record whose only effect is a roll modifier re-rolling Hit rolls
+  of 1 for ranged attacks
+- **THEN** the catalogue loads, and the record exposes the roll, whose roll it is, the modifier, the
+  amount and the weapon selector
+
 #### Scenario: A multi-keyword target keeps every keyword
 - **WHEN** a record's target names the keywords LEAGUES OF VOTANN and INFANTRY
 - **THEN** the record's target exposes both keywords
 
 #### Scenario: An unrecognized effect kind fails the load
-- **WHEN** the catalogue file contains an effect whose kind is none of the seven known kinds
+- **WHEN** the catalogue file contains an effect whose kind is none of the eight known kinds
 - **THEN** loading the catalogue fails with an error naming the problem
 
 ### Requirement: Coverage Status Never Gates Use
@@ -101,7 +115,11 @@ consumer.
 
 ### Requirement: Catalogue File Is Exported From The Pipeline With Canonical Names
 The pipeline's classifier tool SHALL provide an export that writes the catalogue file from its
-classification results, one record per classified hash, carrying that record's source text and every Name the extractor saw it under. Wherever the classification's name resolution
+classification results, one record per classified hash that is live in the extracted corpus (its
+last-seen date equal to the newest last-seen date in the corpus), carrying that record's source text
+and every Name the extractor saw it under. A classified hash that is stale or absent from the corpus
+SHALL be left out of the export but kept in the classification results, and the export SHALL report
+how many it left out. Wherever the classification's name resolution
 resolved a name - a weapon keyword, a named weapon, a target keyword, a granted or removed ability
 name - the exported record SHALL carry the canonical BSData spelling in place of the verbatim one; an
 unresolved name SHALL be exported verbatim. Review metadata, the prompt version and model SHALL NOT
@@ -120,3 +138,18 @@ be exported.
 - **WHEN** the export runs twice against unchanged classification results
 - **THEN** both runs write byte-identical files
 
+#### Scenario: A classification of text no longer in BSData is left out
+- **WHEN** the classification results hold a record whose hash the corpus still keeps but the
+  latest extraction did not see
+- **THEN** the exported catalogue has no record for that hash, the classification results still
+  hold it, and the export reports one record left out
+
+### Requirement: Export Refuses Control Characters
+The export SHALL check every string in the classifications it is about to write and, when any
+contains a control character other than a line feed, SHALL write nothing and report each offending
+record's hash and field.
+
+#### Scenario: A classification string carries a carriage-return escape
+- **WHEN** a classification's condition text contains a carriage return in place of an apostrophe
+- **THEN** the export writes no catalogue file and reports that record's hash and the condition-text
+  field
