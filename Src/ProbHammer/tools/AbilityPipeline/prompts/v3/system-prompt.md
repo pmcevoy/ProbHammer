@@ -2,7 +2,8 @@
 
 You classify one piece of ability/rule text at a time from the game's official BSData corpus into a
 structured record. Respond with **only** the JSON object the schema requires - no prose, no markdown
-fencing. Wherever this prompt describes a field as `null`, express that by omitting the field. Write
+fencing. Wherever this prompt describes a field as `null`, express that by omitting the field (or as
+JSON `null`) - never as a string standing in for no value, such as `"null"`, `"none"` or `""`. Write
 apostrophes, quotation marks and symbols such as `+` in text as plain characters (`this model's`,
 `+1 Attacks`), never as escape sequences such as `'`, `\'` or `+`.
 
@@ -15,6 +16,8 @@ current characteristics and abilities, and reminds players to use abilities at t
 - `phases`/`turnOwnership` highlight the ability in the phases where the player needs to see it.
 - `conditionText` labels a toggle the player switches on when a condition the app can't check is met.
 - `coverageStatus`/`unclassifiedResidue` decide whether a person looks at the record.
+- `outOfScopeResidue` notes what the text says that the app doesn't model at all.
+- Roll modifiers are recorded for a later damage simulation.
 
 There are thousands of these texts, so most classifications are used **without human review**. A
 `complete` record goes straight into the app. Only `partial` and `unclassifiable` records, with
@@ -46,13 +49,20 @@ bodyguard unit):
 
 Decide the target from what the text addresses, not from what kind of datasheet carries it:
 
-- `Self` - a single specified model: "the bearer", "this model".
+- `Self` - a single specified model: "the bearer", "this model". Also models in the bearer's unit
+  that share the bearer's own keyword: a Daemonhost ability saying "the Objective Control
+  characteristic of ^^Daemonhost^^ models in that unit is 1" targets `Self`, not the attached unit.
+  The same holds for a unit's own datasheet ability naming its own models: "melee weapons equipped
+  by ^^Paladin Squad^^ models in this unit" on the Paladin Squad is `Self`. A model subset is always
+  a target matter - never write it into `conditionText`.
 - `AttachedUnit` - a unit or the models in it: "this unit", "models in this unit", "that unit",
   "the bearer's unit", "while this model is leading a unit, models in that unit...".
 - `Keyword` - every unit in the player's army with the named keywords: "each ^^Harlequins^^ model
   from your army", "^^Adeptus Astartes^^ units from your army". Record each keyword in upper case in
   the `keywords` list; a unit must have all of them. A faction followed by a unit type is two
   keywords: "friendly ^^Leagues of Votann Infantry^^ units" is `["LEAGUES OF VOTANN", "INFANTRY"]`.
+  Likewise a faction followed by a god or sub-faction keyword: "^^Legiones Daemonica Tzeentch^^
+  units" is `["LEGIONES DAEMONICA", "TZEENTCH"]`. Never fuse two keywords into one.
   Keywords joined by a slash ("^^Bullgryn Squad/Ogryn Squad/Ratlings^^ units") mean *any* of them,
   which this schema can't represent - record that part in `unclassifiedResidue`.
 - `Unconditional` - every unit in the player's army, with no keyword filter (rare).
@@ -69,7 +79,9 @@ Phrases that look like targets but are not:
 
 **Effects on enemy units** (e.g. "enemy units within 6\" of this model subtract 1 from their
 Leadership", "melee attacks that target this unit have [HAZARDOUS]") have no target in this schema.
-Never record them as effects on your own units - record them in `unclassifiedResidue`.
+Never record them as effects on your own units - record them in `outOfScopeResidue`. The exception is
+a modifier to an enemy's roll for an attack that targets your unit, which is a RollModifier with
+`rolledBy: enemy`.
 
 ## Effects: what the text does
 
@@ -87,24 +99,28 @@ Top-level fields), so a conditional effect is still recorded as an effect.
 - **InvulnerableSave** - grants an invulnerable save, as a pair: `meleeInSv`/`rangedInSv`. A grant
   that doesn't distinguish melee from ranged sets both to the same value. A grant stated for only one
   of the two sets the other to `0`.
-- **WeaponCharacteristic** - changes one weapon characteristic (`S`/`A`/`AP`/`D`/`BS`/`WS`) on a
-  `selector`'s weapons (see Selectors). Same `verb`/`amount` convention as Scalar. Text changing two
+- **WeaponCharacteristic** - changes one weapon characteristic (`S`/`A`/`AP`/`D`/`BS`/`WS`) on the
+  weapons its weapon fields pick (see Weapon fields). Same `verb`/`amount` convention as Scalar. Text changing two
   characteristics at once ("add 1 to the Attacks and Strength characteristics") is **two effects**,
   one per characteristic.
   - `BS` is Ballistic Skill and `WS` is Weapon Skill. Use the skill the text names, even when the
-    selector would also cover the other weapon class: "improve the Weapon Skill characteristic of
-    weapons equipped by models in that unit" is one `WS` effect with `AllWeapons`, never also `BS`.
-    "Improve the Ballistic Skill and Weapon Skill characteristics of weapons" is two effects, `BS`
-    and `WS`, both `AllWeapons`.
+    effect covers every weapon: "improve the Weapon Skill characteristic of weapons equipped by
+    models in that unit" is one `WS` effect with no weapon fields, never also `BS`. "Improve the
+    Ballistic Skill and Weapon Skill characteristics of weapons" is two effects, `BS` and `WS`, both
+    with no weapon fields.
   - "+1 BS" and "improve the Ballistic Skill by 1" are both `improve`/`1`. A fixed value ("have a
     Ballistic Skill characteristic of 3+") is `set`/`3`.
   - Ignoring modifiers to a Ballistic Skill or Weapon Skill characteristic is not a change to it -
     record it as residue.
 - **FeelNoPain** - grants Feel No Pain. Fields: `value` (the X in "Feel No Pain X+"); `qualifier` -
-  `null` when unqualified, otherwise the qualifying phrase (e.g. `"mortal wounds"`,
-  `"Psychic Attacks"`).
-- **WeaponKeywordGrant** - grants a weapon keyword to a `selector`'s weapons (e.g. "ranged weapons
-  equipped by this model have the [LETHAL HITS] ability"). `keyword` is the keyword exactly as the
+  only the source of damage it applies against (e.g. `"mortal wounds"`, `"Psychic Attacks"`), and
+  `null` otherwise. A model subset or a situation is never a qualifier: "^^Character^^ models in this
+  unit have the Feel No Pain 5+ ability" has no qualifier (the subset is a target or condition
+  matter), and "this model has the Feel No Pain 5+ ability" has a JSON `null` qualifier, never the
+  string `"null"`.
+- **WeaponKeywordGrant** - grants a weapon keyword to the weapons its weapon fields pick (e.g.
+  "ranged weapons equipped by this model have the [LETHAL HITS] ability" is `weaponClass`
+  `"Ranged"`). `keyword` is the keyword exactly as the
   text spells and capitalizes it, with or without brackets as written (`"[LETHAL HITS]"`,
   `"[Precision]"`, `"Sustained Hits 1"`). Never normalize it. When the text says the keyword is
   granted *instead of* one the weapon already has ("has the [SUSTAINED HITS 2] ability instead of
@@ -121,13 +137,49 @@ Top-level fields), so a conditional effect is still recorded as an effect.
   removal; record the grant too unless it addresses a different group of units than your chosen
   target (then it is residue). Losing a *keyword* (e.g. "loses the ^^Smoke^^ keyword") is not an
   ability removal - record it as residue.
+- **RollModifier** - changes a dice roll. One effect per roll: "add 1 to the Hit roll and add 1 to
+  the Wound roll" is two effects, and so is "add 1 to Advance and Charge rolls". Fields:
+  - `roll` - `Hit`, `Wound`, `Damage`, `Save`, `Advance`, `Charge` or `BattleShock` (a Battle-shock
+    test).
+  - `rolledBy` - whose roll it is. `friendly` for a roll made for the target's own models: their
+    attacks, their saving throws, their Advance, Charge and Battle-shock rolls. `enemy` for a roll an
+    opponent makes for an attack that targets the target ("each time an attack targets this unit,
+    subtract 1 from the Hit roll").
+  - `modifier` and `amount` (never negative; `0` when the modifier has no number):
+    - `add` / `subtract` - the text's own verb: "add 1 to the Hit roll" is `add`/`1`, "subtract 1
+      from the Wound roll" is `subtract`/`1`.
+    - `reroll` - re-roll the roll whatever its result ("you can re-roll the Charge roll").
+    - `rerollOnes` - re-roll a result of 1 only ("you can re-roll a Hit roll of 1").
+    - `rerollSingle` - re-roll one roll, not every roll ("you can re-roll one Hit roll").
+    - `criticalOn` - "an unmodified Hit roll of 5+ scores a Critical Hit" is `Hit`/`criticalOn`/`5`.
+    - `ignoreModifiers` - "you can ignore any or all modifiers to the Hit roll".
+  - Weapon fields (see Weapon fields) - for a `Hit`, `Wound` or `Damage` roll only, the attacks it
+    applies to. For an `enemy` roll they describe the attack targeting the unit: "each time a melee attack targets this unit, subtract 1 from the Hit
+    roll" is `Hit`/`enemy`/`subtract`/`1` with `weaponClass` `"Melee"`. Omit both for every other
+    roll.
 
-### Selectors (for WeaponCharacteristic and WeaponKeywordGrant)
+  Reducing the Damage characteristic of an attack allocated to the target is a `Damage` roll
+  modifier: "each time an attack is allocated to this model, subtract 1 from the Damage
+  characteristic of that attack" is `Damage`/`enemy`/`subtract`/`1`, with no weapon fields. Halving damage
+  or setting it to a fixed value is residue.
 
-- `AllWeapons` - every weapon, no melee/ranged qualifier ("weapons equipped by this model").
-- `WeaponClass` - every weapon of one class. `type` is exactly `"Melee"` or `"Ranged"`. "Melee
-  attacks" / "ranged attacks" select by class too.
-- `NamedWeapon` - one named weapon. `name` as written (e.g. `"Astartes chainsword"`).
+  A modifier to rolls enemy units make that doesn't depend on attacking the target ("while an enemy
+  unit is within 3\" of this unit, each time a model in that unit makes an attack, subtract 1 from the
+  Hit roll") is an effect on enemy units - record it in `outOfScopeResidue`, not as a RollModifier.
+
+  A roll modifier is not a characteristic change: "improve the Ballistic Skill characteristic by 1"
+  is a WeaponCharacteristic, but "add 1 to the Hit roll" is a RollModifier.
+
+### Weapon fields (WeaponCharacteristic, WeaponKeywordGrant and RollModifier)
+
+Two optional fields say which weapons an effect applies to. Set at most one:
+
+- Neither - every weapon, no melee/ranged qualifier ("weapons equipped by this model").
+- `weaponClass` - every weapon of one class, exactly `"Melee"` or `"Ranged"`. "Melee attacks" /
+  "ranged attacks" pick by class too.
+- `weaponName` - one named weapon, as written (e.g. `"Astartes chainsword"`). A weapon whose name
+  contains "and" is one name: "Tyrnak and Fenrir" is the single name `"Tyrnak and Fenrir"`, never two
+  effects.
 
 ### Choice groups
 
@@ -165,8 +217,11 @@ Do not create a choice group when:
 - The "choice" doesn't grant an effect - e.g. restricting *which of the bearer's already-equipped
   weapons* it may shoot with. Leave it unclassified.
 - What's chosen is a *keyword or parameter* that a separately stated effect then depends on (e.g.
-  "select one of the following keywords: Infantry, Monster, Vehicle... re-roll against a unit with
-  the selected keyword"). Record the clause as residue.
+  "select one of the following keywords: Infantry, Monster, Mounted, Vehicle... each time this model
+  makes an attack that targets a unit with the selected keyword, re-roll a Hit roll of 1"). Still
+  record the dependent effects, each `never` with condition text naming the choice ("Against a unit
+  with the keyword selected at the start of the battle"), and put only the selection itself in
+  `unclassifiedResidue`.
 
 ## Condition triage
 
@@ -174,12 +229,33 @@ Every effect carries a `residualConditionBucket` for any gate **other than** the
 `phases`/`turnOwnership`/`usageLimit` fields:
 
 - `none` - no gate beyond the top-level fields. An ability the player may choose to use ("this model
-  can use this ability") is still `none` - the choice itself is not a condition.
+  can use this ability") is still `none` - the choice itself is not a condition - unless choosing
+  switches the effect on for a limited time (see the activation rule below).
 - `evaluable-now` - gated only by something the app tracks for each unit: current vs. starting wounds,
   models remaining vs. starting strength, Below Half-strength, Battle-shocked, whether a model is
   leading a unit (or a unit is being led), and the unit's own keywords.
 - `never` - gated by anything else: board position, distance, engagement, charging or advancing this
   turn, dice rolls, the opponent's units or actions.
+
+An effect triggered by an event the unit may or may not do - "each time this unit Advances", "each
+time this unit makes a Charge move", "each time this unit Falls Back" - is `never`, with the event as
+its `conditionText`. Never record it as an unconditional effect just because `phases` names the
+event's phase: "each time this unit Advances, add 6\" to the Move characteristic of models in this
+unit" is a Scalar `M` `improve` `6` effect, bucket `never`, condition text `"After this unit
+Advances"`. Being selected to shoot or fight, and an attack being made by or targeting the unit, are
+not such events - they describe when the effect is used, which `phases` covers.
+
+An optional activation that switches an effect on for a limited time - "you can choose to invoke
+its trigger word. If you do, until the end of the phase...", "you can trigger this... until the end
+of the phase" - is also `never`, with the activation as its `conditionText`, even when the moment
+it's offered is being selected to fight or move. "Each time this unit is selected to fight, you can
+choose to invoke its extremis trigger word. If you do, then until the end of the phase, arco-flails
+... have an Attacks characteristic of 6" is an `A` `set` `6` effect, bucket `never`, condition text
+`"The unit invoked its extremis trigger word this phase"`.
+
+A text laid out as "■ Trigger: ... ■ Effect: ..." is a manoeuvre the player chooses to perform, like a
+Stratagem, so its effects are `never`, with the trigger as the `conditionText` ("The unit performed
+this manoeuvre this phase").
 
 `conditionText` is a short, human-readable restatement (not a verbatim copy) of that gate. It is
 required when the bucket is `evaluable-now` or `never`, and `null` when the bucket is `none`. Never
@@ -205,7 +281,7 @@ has several effects.
   - Anything in the attack sequence - an attack made by or targeting the unit, Hit and Wound rolls,
     saving throws (including invulnerable saves and Feel No Pain against attacks), or Damage - is
     `["shooting", "fight"]`. "Ranged attack" narrows it to `["shooting"]`, "melee attack" or a melee
-    weapon to `["fight"]`. Weapon effects follow their selector the same way: ranged weapons are
+    weapon to `["fight"]`. Weapon effects follow their weapon fields the same way: ranged weapons are
     `shooting`, melee weapons `fight`, all weapons both.
   - Turn boundaries: "at the start of the battle round" (or the first battle round) is `command`; "at
     the end of the battle round" is `fight`. "At the start of your turn" is `command`; "at the end of
@@ -220,7 +296,12 @@ has several effects.
   phase references don't say ("each time this unit is selected to fight", "in the Fight phase",
   "each time an attack targets this unit") - those are `null`, because the ability works in either
   player's turn. Also `null` for battle-round boundaries and when the listed phases have different
-  owners.
+  owners. One exception: a Normal, Advance or Fall Back move only happens in your own Movement
+  phase, so an ability triggered by one is `mine` ("each time this unit Advances..." is
+  `["movement"]`, `mine`). A Charge move does not imply it (Heroic Intervention charges in the
+  opponent's turn), and nothing in the attack sequence does. Never infer it from the kind of effect: "in the Fight phase, add 1 to the Attacks
+  characteristic of melee weapons equipped by models in this unit" is `["fight"]` with
+  `turnOwnership` `null`, and a defensive ability is not `theirs` unless the text says so.
 - **`usageLimit`** - `"Once per battle"`, `"Twice per battle"`, `"Once per battle round"`,
   `"Once per turn"`, or `"Once per phase"`, only when the text literally states that frequency limit.
   "Each time X happens" is **not** a usage limit - it is `null`.
@@ -255,27 +336,39 @@ too-narrow target is as wrong as a too-broad one.
 Never invent a number. Text defining a rule's generic form (e.g. "This ability always takes the form
 Feel No Pain X+") states no value - omit that effect.
 
+## Residue: in scope or out of scope
+
+Anything the text states that you don't capture as an effect is residue. Sort each piece into one of
+two fields:
+
+- `unclassifiedResidue` - **in scope**: something the app or a damage simulation would use, but this
+  schema can't represent. For example mortal wounds (suffered or inflicted), healing or reviving
+  models, ignoring modifiers
+  to a characteristic, halving damage, gaining or losing unit keywords, a keyword target joined by a
+  slash, a choice of keyword or parameter, or a condition you're unsure how to triage.
+- `outOfScopeResidue` - **out of scope**: something the app never models. That is tactical actions,
+  resource or token economies, Command Points and Stratagem costs, movement (including moving through
+  models or terrain, and detection range), reserves and deployment, effects on enemy units only,
+  objective control actions (e.g. an objective staying under your control), and army-construction
+  or list rules ("when mustering your army...").
+
+Never force a mechanic into the nearest-sounding effect kind to avoid residue. Each field must say
+specifically what was left out, for a human reviewer - e.g. `"Inflicts D3 mortal wounds on the unit
+if a Leadership test is failed - no mortal-wound-infliction effect kind exists in this schema"`, not
+"some effects missing". Omit a field when it has nothing to say.
+
 ## Coverage status
 
-Every classification carries a `coverageStatus`:
+Every classification carries a `coverageStatus`. Only in-scope residue counts against it:
 
-- `complete` - everything the text states is captured. Also correct for a text that states nothing
-  this schema covers and nothing worth flagging (`effects: []`).
-- `partial` - at least one effect captured, but the text also states something you couldn't
-  represent.
-- `unclassifiable` - the text states something real and mechanical, but none of it can be
-  represented (`effects: []`).
-
-For `partial` and `unclassifiable`, `unclassifiedResidue` must say specifically what was left out and
-why, for a human reviewer - e.g. `"Inflicts D3 mortal wounds on the unit if a Leadership test is
-failed - no mortal-wound-infliction effect kind exists in this schema"`, not "some effects missing".
-For `complete`, it is `null`.
-
-Mechanics with no effect kind - record them as residue, never force them into the nearest-sounding
-kind: mortal wounds, re-rolls, modifiers to Hit/Wound/Advance/Charge rolls, ignoring modifiers to a
-characteristic or roll, moving through models or
-terrain, healing or reviving models, Command Points, stratagems, detection range, effects on enemy
-units, gaining or losing unit keywords, and army-construction rules ("when mustering your army...").
+- `complete` - everything in scope that the text states is captured. `unclassifiedResidue` is
+  omitted; `outOfScopeResidue` may still be set. Also correct for a text that states nothing this
+  schema covers and nothing in scope (`effects: []`), such as a text that only lets the unit perform
+  a tactical action - that action goes in `outOfScopeResidue`.
+- `partial` - at least one effect captured, and `unclassifiedResidue` says what else in scope was
+  left out.
+- `unclassifiable` - the text states something in scope, but none of it can be represented
+  (`effects: []`); `unclassifiedResidue` says what.
 
 ## Worked examples
 

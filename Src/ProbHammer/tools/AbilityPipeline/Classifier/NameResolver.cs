@@ -50,13 +50,16 @@ public sealed partial class NameResolver
             switch (classified.Effect)
             {
                 case WeaponKeywordGrantEffect grant:
-                    ResolveSelector(grant.Selector, Record);
+                    ResolveWeaponName(grant.WeaponName, Record);
                     Record("WeaponKeyword", grant.Keyword, Lookup(_weaponKeywords, grant.Keyword));
                     if (grant.ReplacesKeyword is { } replaced)
                         Record("WeaponKeyword", replaced, Lookup(_weaponKeywords, replaced));
                     break;
                 case WeaponCharacteristicEffect characteristic:
-                    ResolveSelector(characteristic.Selector, Record);
+                    ResolveWeaponName(characteristic.WeaponName, Record);
+                    break;
+                case RollModifierEffect roll:
+                    ResolveWeaponName(roll.WeaponName, Record);
                     break;
                 case NamedAbilityGrantEffect abilityGrant:
                     Record("AbilityName", abilityGrant.AbilityName, LookupAbility(abilityGrant.AbilityName));
@@ -67,10 +70,10 @@ public sealed partial class NameResolver
         return new NameResolution(resolved, unresolved);
     }
 
-    private void ResolveSelector(WeaponSelector selector, Action<string, string, string?> record)
+    private void ResolveWeaponName(string? weaponName, Action<string, string, string?> record)
     {
-        if (selector is NamedWeaponSelector named)
-            record("WeaponName", named.Name, LookupWeaponName(named.Name));
+        if (weaponName is not null)
+            record("WeaponName", weaponName, LookupWeaponName(weaponName));
     }
 
     private string? LookupWeaponName(string name)

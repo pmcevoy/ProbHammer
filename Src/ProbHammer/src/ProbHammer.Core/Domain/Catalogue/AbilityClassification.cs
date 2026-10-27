@@ -19,6 +19,9 @@ public sealed record AbilityClassification
     public required CoverageStatus CoverageStatus { get; init; }
     public string? UnclassifiedResidue { get; init; }
 
+    /// <summary>What the text says outside LivePlay's scope; shown after the in-scope residue.</summary>
+    public string? OutOfScopeResidue { get; init; }
+
     /// <summary>Whether <paramref name="effect"/> applies with no player decision or game-state check:
     /// no residual condition, no choice branch, and no usage limit or turn restriction on the
     /// ability.</summary>

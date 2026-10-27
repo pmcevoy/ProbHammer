@@ -13,8 +13,20 @@ Console.OutputEncoding = System.Text.Encoding.UTF8;
 // (e.g. --prompt v3 --label v3-draft) is re-classified by the final run.
 var promptVersion = OptionValue("--prompt") ?? "v2";
 var promptLabel = OptionValue("--label") ?? promptVersion;
+var modelOption = OptionValue("--model") ?? "sonnet-5-5";
+var collectOutPath = OptionValue("--out");
 args = args.Where((arg, i) => !arg.StartsWith("--") && (i == 0 || !args[i - 1].StartsWith("--"))).ToArray();
-const Model model = Model.ClaudeSonnet5;
+Model? selectedModel = modelOption switch
+{
+    "sonnet-5" => Model.ClaudeSonnet5,
+    "sonnet-5-5" => Model.ClaudeSonnet5_5,
+    _ => null
+};
+if (selectedModel is not { } model)
+{
+    Console.WriteLine($"Unknown model '{modelOption}'. Use sonnet-5 or sonnet-5-5.");
+    return 1;
+}
 
 var dataDir = Path.Combine(RepoRoot(), "tools", "AbilityPipeline", "data");
 var corpusPath = Path.Combine(dataDir, "ability-corpus.json");
@@ -28,7 +40,7 @@ var catalogueExportPath = Path.Combine(RepoRoot(), "src", "ProbHammer.Web", "Dat
 if (args.Length == 0)
 {
     Console.WriteLine(
-        "Usage: Classifier <submit [N|hash1,hash2,...] [--prompt vN] [--label L]|collect|resolve|export|status|schema|check-fewshot|preview <hash>|report [file]>");
+        "Usage: Classifier <submit [N|hash1,hash2,...] [--prompt vN] [--label L] [--model sonnet-5|sonnet-5-5]|collect [--out file]|resolve|export|status|schema|check-fewshot|preview <hash> [--model M]|report [file]>");
     return 1;
 }
 
@@ -91,9 +103,17 @@ int ResolveAll()
 // Run resolve first after a vocabulary refresh - export substitutes names from each record's stored Resolution.
 int Export()
 {
-    var json = CatalogueExporter.Export(ClassificationFile.Load(classificationsPath), ExtractionFile.Load(corpusPath));
-    File.WriteAllText(catalogueExportPath, json);
-    Console.WriteLine($"Wrote catalogue to '{catalogueExportPath}'.");
+    var export = CatalogueExporter.Export(ClassificationFile.Load(classificationsPath), ExtractionFile.Load(corpusPath));
+    if (export.Json is null)
+    {
+        Console.WriteLine("Control characters found - nothing written. Fix or re-run these records:");
+        foreach (var problem in export.ControlCharacters)
+            Console.WriteLine($"  {problem}");
+        return 1;
+    }
+
+    File.WriteAllText(catalogueExportPath, export.Json);
+    Console.WriteLine($"Wrote catalogue to '{catalogueExportPath}' ({export.LeftOut} classifications of stale texts left out).");
     return 0;
 }
 
@@ -260,7 +280,7 @@ async Task<int> CollectAsync()
     }
 
     var corpus = ExtractionFile.Load(corpusPath);
-    var classifications = ClassificationFile.Load(classificationsPath).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    var collected = new Dictionary<string, ClassificationRecord>();
 
     var succeeded = 0;
     var failed = 0;
@@ -322,7 +342,7 @@ async Task<int> CollectAsync()
             continue;
         }
 
-        classifications[response.CustomID] = new ClassificationRecord
+        collected[response.CustomID] = new ClassificationRecord
         {
             Hash = response.CustomID,
             Text = corpusRecord.Text,
@@ -331,20 +351,22 @@ async Task<int> CollectAsync()
             ClassifiedAt = DateTimeOffset.UtcNow,
             Classification = classification,
             Resolution = resolver.Resolve(classification),
+            Usage = new TokenUsage(usage.InputTokens, usage.OutputTokens),
             ReviewStatus = ReviewStatus.Pending
         };
         succeeded++;
     }
 
-    ClassificationFile.Save(classificationsPath, classifications);
+    var writtenPath = CollectedResults.Save(classificationsPath,
+        collectOutPath is null ? null : Path.GetFullPath(collectOutPath, dataDir), collected);
     PendingBatchFile.Delete(pendingBatchPath);
 
-    Console.WriteLine($"Collected {succeeded} classifications ({failed} failed/skipped) into '{classificationsPath}'.");
+    Console.WriteLine($"Collected {succeeded} classifications ({failed} failed/skipped) into '{writtenPath}'.");
     if (usageCount > 0)
         Console.WriteLine($"Usage ({pending.Model}, {usageCount} responses): input={inputTokens:N0} " +
                           $"output={outputTokens:N0} cacheRead={cacheReadTokens:N0} cacheWrite={cacheWriteTokens:N0} | " +
                           $"per response: input={inputTokens / usageCount:N0} output={outputTokens / usageCount:N0}");
-    return Report(classificationsPath);
+    return Report(writtenPath);
 }
 
 static string RepoRoot([CallerFilePath] string here = "") =>

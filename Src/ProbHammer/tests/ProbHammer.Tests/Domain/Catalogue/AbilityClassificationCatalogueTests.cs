@@ -32,6 +32,9 @@ public class AbilityClassificationCatalogueTests
                                                    { "effect": { "kind": "NamedAbilityGrant", "abilityName": "Scouts 9\"" },
                                                      "residualConditionBucket": "none" },
                                                    { "effect": { "kind": "NamedAbilityRemoval", "abilityName": "Dark Pacts" },
+                                                     "residualConditionBucket": "none" },
+                                                   { "effect": { "kind": "RollModifier", "roll": "Hit", "rolledBy": "friendly", "modifier": "rerollOnes",
+                                                     "amount": 0, "selector": { "kind": "WeaponClass", "type": "Ranged" } },
                                                      "residualConditionBucket": "none" }
                                                  ],
                                                  "choiceGroups": [ { "minSelect": 1, "maxSelect": 1, "options": [ "A", "B" ] } ],
@@ -39,7 +42,8 @@ public class AbilityClassificationCatalogueTests
                                                  "turnOwnership": "theirs",
                                                  "usageLimit": "Once per battle round",
                                                  "coverageStatus": "partial",
-                                                 "unclassifiedResidue": "Something else"
+                                                 "unclassifiedResidue": "Something else",
+                                                 "outOfScopeResidue": "A tactical action"
                                                }
                                              }
                                            ]
@@ -76,7 +80,9 @@ public class AbilityClassificationCatalogueTests
             new FeelNoPainEffect(5, "Mortal Wounds"),
             new WeaponKeywordGrantEffect(new AllWeapons(), "Sustained Hits 1", "Sustained Hits"),
             new NamedAbilityGrantEffect("Scouts 9\""),
-            new NamedAbilityRemovalEffect("Dark Pacts"));
+            new NamedAbilityRemovalEffect("Dark Pacts"),
+            new RollModifierEffect(ModifiedRoll.Hit, RollOwner.Friendly, RollModifierKind.RerollOnes, 0,
+                new WeaponClass(WeaponType.Ranged)));
     }
 
     [Fact]
@@ -90,6 +96,7 @@ public class AbilityClassificationCatalogueTests
         classification.UsageLimit.Should().Be(UsageLimit.OncePerBattleRound);
         classification.CoverageStatus.Should().Be(CoverageStatus.Partial);
         classification.UnclassifiedResidue.Should().Be("Something else");
+        classification.OutOfScopeResidue.Should().Be("A tactical action");
         classification.ChoiceGroups.Should().ContainSingle()
             .Which.Options.Should().Equal("A", "B");
         classification.Effects[1].ResidualConditionBucket.Should().Be(ResidualConditionBucket.EvaluableNow);
@@ -113,6 +120,17 @@ public class AbilityClassificationCatalogueTests
         var classification = Load(EveryKindJson);
         var catalogue = AbilityClassificationCatalogue.FromTexts(
             [("Add 1 to the bearer’s unit Objective Control.", classification)]);
+
+        catalogue.TryGet("Add 1 to the bearer's unit Objective Control.", out var found).Should().BeTrue();
+        found.Should().BeSameAs(classification);
+    }
+
+    [Fact]
+    public void Lookup_IgnoresSurroundingWhitespace()
+    {
+        var classification = Load(EveryKindJson);
+        var catalogue = AbilityClassificationCatalogue.FromTexts(
+            [("Add 1 to the bearer's unit Objective Control. \n\n", classification)]);
 
         catalogue.TryGet("Add 1 to the bearer's unit Objective Control.", out var found).Should().BeTrue();
         found.Should().BeSameAs(classification);

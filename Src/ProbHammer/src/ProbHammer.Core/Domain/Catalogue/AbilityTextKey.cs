@@ -8,9 +8,10 @@ namespace ProbHammer.Core.Domain.Catalogue;
 /// silently misses.</summary>
 public static class AbilityTextKey
 {
-    /// <summary>Folds known-harmless corpus authoring variance: a typographic U+2019 apostrophe and a
-    /// U+00A0 non-breaking space in place of a plain one.</summary>
-    public static string Normalize(string text) => text.Replace('’', '\'').Replace(' ', ' ');
+    /// <summary>Folds known-harmless corpus authoring variance: a typographic U+2019 apostrophe, a
+    /// U+00A0 non-breaking space in place of a plain one, and surrounding whitespace (BSData keeps it,
+    /// NewRecruit exports trim it).</summary>
+    public static string Normalize(string text) => text.Replace('’', '\'').Replace(' ', ' ').Trim();
 
     public static string Hash(string text) =>
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(Normalize(text))));

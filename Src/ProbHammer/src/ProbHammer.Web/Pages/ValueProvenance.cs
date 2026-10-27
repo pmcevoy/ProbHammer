@@ -223,14 +223,14 @@ internal sealed class ValueProvenanceBuilder(
     private ProvenanceLine Line(Ability source, string changeText, IReadOnlyList<string> notes,
         ProvenanceLineKind kind)
     {
-        var residue = classifications is not null && classifications.TryGet(source.Text, out var c)
-            ? c.UnclassifiedResidue
-            : null;
+        IReadOnlyList<string> residue = classifications is not null && classifications.TryGet(source.Text, out var c)
+            ? [.. new[] { c.UnclassifiedResidue, c.OutOfScopeResidue }.Where(r => !string.IsNullOrWhiteSpace(r)).OfType<string>()]
+            : [];
         var label = source.Origin == AbilityOrigin.Enhancement ? $"✦ {source.Name}" : source.Name;
         if (kind == ProvenanceLineKind.Applied && activatedAbilityNames?.Contains(source.Name) == true)
             notes = [ActivatedNote, .. notes];
         return new ProvenanceLine(source, label, changeText,
-            string.IsNullOrWhiteSpace(residue) ? notes : [.. notes, residue], kind);
+            [.. notes, .. residue], kind);
     }
 
     private ProvenanceLine PendingLine(Ability source, EffectCondition condition, string changeText) =>

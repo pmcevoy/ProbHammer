@@ -13,6 +13,7 @@ namespace ProbHammer.Core.Domain.Catalogue;
 [JsonDerivedType(typeof(WeaponKeywordGrantEffect), "WeaponKeywordGrant")]
 [JsonDerivedType(typeof(NamedAbilityGrantEffect), "NamedAbilityGrant")]
 [JsonDerivedType(typeof(NamedAbilityRemovalEffect), "NamedAbilityRemoval")]
+[JsonDerivedType(typeof(RollModifierEffect), "RollModifier")]
 public abstract record RuleEffect;
 
 /// <summary>A change to one <see cref="Statline"/> scalar, named by its property ("M"/"T"/"Sv"/"W"/
@@ -47,3 +48,12 @@ public sealed record NamedAbilityGrantEffect(string AbilityName) : RuleEffect;
 
 /// <summary>Data only - no consumer yet.</summary>
 public sealed record NamedAbilityRemovalEffect(string AbilityName) : RuleEffect;
+
+/// <summary>Data only - no consumer yet. A modifier to one dice roll, with the text's own verb;
+/// <see cref="Selector"/> is set only for a Hit, Wound or Damage roll.</summary>
+public sealed record RollModifierEffect(
+    ModifiedRoll Roll,
+    RollOwner RolledBy,
+    RollModifierKind Modifier,
+    int Amount,
+    WeaponSelector? Selector = null) : RuleEffect;

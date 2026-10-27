@@ -142,10 +142,19 @@ public sealed record InvulnerableSaveCharacteristicView(
         IReadOnlyList<Ability> contributingAbilities) =>
         new(originalValue, derivedValue, contributingAbilities);
 
-    /// <summary>A value left caveated by exactly one unresolved contributing ability.</summary>
-    public static InvulnerableSaveCharacteristicView Caveated(InvulnerableSave value, Ability caveatAbility) =>
-        new(value, null, [caveatAbility]);
+    /// <summary>The digit carrying the footnote marker ("4" in "4+* / 5+"); null unless caveated.</summary>
+    public int? FootnotedValue { get; init; }
 
-    public static InvulnerableSaveCharacteristicView Caveated(int melee, int ranged, Ability caveatAbility) =>
-        Caveated(new InvulnerableSave(melee, ranged), caveatAbility);
+    /// <summary>A value left caveated by exactly one unresolved contributing ability. A bare footnote's
+    /// <paramref name="footnotedValue"/> is its own stored digit, the default.</summary>
+    public static InvulnerableSaveCharacteristicView Caveated(InvulnerableSave value, Ability caveatAbility,
+        int? footnotedValue = null) =>
+        new(value, null, [caveatAbility])
+        {
+            FootnotedValue = footnotedValue ?? Math.Max(value.MeleeInSv, value.RangedInSv)
+        };
+
+    public static InvulnerableSaveCharacteristicView Caveated(int melee, int ranged, Ability caveatAbility,
+        int? footnotedValue = null) =>
+        Caveated(new InvulnerableSave(melee, ranged), caveatAbility, footnotedValue);
 }

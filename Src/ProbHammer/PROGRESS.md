@@ -2,7 +2,14 @@
 
 ## Active Work
 
-(none currently)
+**`ability-classification-prompt-v3`** - 32/32 tasks done 2026-10-27, committed, not yet archived
+(next: `/opsx:archive ability-classification-prompt-v3`, then delete the draft comparison files
+`tools/AbilityPipeline/data/v3-draft-*.json`). The full v3 run (Sonnet 5.5, 3,785 requests, ~$13.90)
+is collected, spot-checked, hand-corrected where needed, and exported; the change's design.md has
+every decision. Bugs found during verification and parked in `.claude/vnext-ideas.md`: duplicated
+rules in BattleScribe imports (Judiciar's Fights First), the structurally resolved footnote's
+popover note, a weapon-keyword-filtered selector, plural keyword resolution, and the next prompt's
+rules (eligibility, "units with this ability", Charge-move turn ownership).
 
 **Shelved (not started)**: the `infoGroup` ability-granting gap follow-up. `data/nr-custodes-talons.json`
 (added 2026-08-26) turned out NOT to unblock this - it's a NewRecruit/BattleScribe JSON export, and

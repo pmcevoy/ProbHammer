@@ -34,16 +34,14 @@ public class CharacteristicEffectRealCorpusTests
         return ArmyRosterEnricher.Enrich(parsed, catalogue);
     }
 
-    [Fact(Skip = "Waits on the classification run: the new Space Marine codex rewords Judiciar's footnote ability.")]
-    public void Judiciar_MeleeOnlyInvulnerableSaveFootnote_ResolvesViaItsClassification()
+    [Fact]
+    public void Judiciar_MeleeOnlyInvulnerableSaveFootnote_ResolvesStructurally()
     {
-        // Judiciar's raw InSv ("4+*") is a footnote the mapper leaves caveated; its linked ability's
-        // classification must resolve it to melee 4+ only.
+        // Judiciar's "4+*" links to "Against melee attacks only", which resolves with no classification.
         var roster = EnrichStandaloneUnit(["Space Marines"], "Judiciar", weapons: [], enhancements: []);
         var judiciar = roster.Units.Single();
-        var classifications = ClassificationFixtures.CheckedIn;
 
-        var view = AttachedUnitAggregator.Build(judiciar, classifications);
+        var view = AttachedUnitAggregator.Build(judiciar, AbilityClassificationCatalogue.Empty);
 
         var entry = view.Statlines.Should().ContainSingle().Subject;
         entry.Statline.InSv.IsCaveated.Should().BeFalse();

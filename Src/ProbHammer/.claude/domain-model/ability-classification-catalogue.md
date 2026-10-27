@@ -8,6 +8,8 @@ The runtime's only source of "what does this rule/ability text do".
 AbilityTextKey.Normalize(text) / .Hash(text)   // Domain/Catalogue - SHA-256 hex of the normalized
                                                // text. The pipeline's extractor keys its corpus on
                                                // the same method; any drift empties every lookup.
+                                               // Folds curly apostrophes, NBSP, and surrounding
+                                               // whitespace (NewRecruit trims what BSData keeps).
 AbilityClassificationCatalogue                 // Load(path) (missing -> Empty), FromRecords,
                                                // FromTexts (tests), TryGet(abilityText, out ...)
 AbilityClassificationRecord(Hash, Text, Names, Classification)
@@ -17,21 +19,33 @@ AbilityClassification
   Effects           : ClassifiedEffect[]       // (Effect, ResidualConditionBucket, ConditionText?,
                                                //  ChoiceBranch?)
   ChoiceGroups, Phases : GamePhase[], TurnOwnership : GameTurn?, UsageLimit?,
-  CoverageStatus, UnclassifiedResidue
+  CoverageStatus, UnclassifiedResidue, OutOfScopeResidue
   IsUnconditional(effect) / UnconditionalEffects<T>() / ConditionalEffects<T>()
-RuleEffect          // Scalar | InvulnerableSave | WeaponCharacteristic - consumed;
-                    // FeelNoPain | WeaponKeywordGrant | NamedAbilityGrant | NamedAbilityRemoval -
-                    // data only, no consumer yet
+RuleEffect          // Scalar | InvulnerableSave | WeaponCharacteristic | FeelNoPain |
+                    // WeaponKeywordGrant - consumed; NamedAbilityGrant | NamedAbilityRemoval |
+                    // RollModifier(Roll, RolledBy, Modifier, Amount, Selector?) - data only
 ```
 
 **The file** is `src/ProbHammer.Web/Data/ability-classifications.json`, written by
 `dotnet run --project tools/AbilityPipeline/Classifier -- export` (run `resolve` first after a
 vocabulary refresh). The export substitutes each resolved name's canonical BSData spelling
 (`"heavy bolters"` -> `Heavy bolter`, `[BLAST 1]` -> `BLAST 1`), reshapes the classifier's flat
-invulnerable-save effect into Core's `InvulnerableSave` value, and drops review metadata. It is
+invulnerable-save effect into Core's `InvulnerableSave` value, turns each weapon effect's flat
+`weaponClass`/`weaponName` into Core's `selector` (the classifier has no selector union: one per
+effect kind made the structured-output grammar too large), and drops review metadata. It writes
+only live hashes and prints how many stale ones it left out: the Extractor keeps a hash it no longer
+finds, so "live" means `LastSeenAt` equals the corpus's newest (`ExtractionFile.Live`, also used by
+`IncrementalSelector`). `classifications.json` keeps every record. The export writes nothing, and
+lists each hash and field, if any classification string holds a control character other than a line
+feed. It is
 written by convention, not by reference (the classifier doesn't reference Core) -
 `AbilityClassificationCatalogueTests.TheCheckedInCatalogue_LoadsAndEveryKeyIsTheHashOfItsOwnText`
 is the drift guard. An unknown effect/target `kind` fails the load rather than being skipped.
+
+**Residue** is split in two. `UnclassifiedResidue` is in scope but not expressible, and is the only
+residue that keeps a record from `complete`. `OutOfScopeResidue` is what LivePlay never models
+(tactical actions, CP, movement, effects on enemy units only...). A provenance line shows both, in
+that order, after its own notes.
 
 **Prompt versions.** `submit` reads `prompts/<--prompt>/` (default `v2`, the version the catalogue was
 built with) and stamps results with `--label` (default: the prompt name). `IncrementalSelector`
@@ -40,6 +54,12 @@ re-classifies any record whose stamp differs from the run's label, so a draft te
 `prompts/v3/` is a draft: it adds `BS`/`WS` to `WeaponCharacteristic` (`resolve-weapon-skill-effects`),
 and the other v3 items in `.claude/vnext-ideas.md` are still to come. `fewshot/examples.json` is
 shared by every prompt version.
+
+**Model and test runs.** `submit --model sonnet-5|sonnet-5-5` (default `sonnet-5-5`, chosen by the v3 draft comparison) picks the model,
+recorded in `pending-batch.json` and on every record. `collect --out <file>` (relative to `data/`)
+writes the run's records to that file alone, leaving `classifications.json` untouched, so two test
+runs on the same hashes can be compared. Each collected record carries its `Usage` (input/output
+tokens).
 
 **Unconditional rule** - the one applicability check every consumer shares: an effect applies on its
 own only when its `ResidualConditionBucket` is `None`, it has no `ChoiceBranch`, and the record has
@@ -71,7 +91,7 @@ a keyword target reaches both Statline values and every component's weapons (ori
 shared via `TryGetApplicableClassification`).
 
 **Not consumed yet** (each is a separate future change, see `.claude/vnext-ideas.md`): `Phases`/
-`TurnOwnership` for phase highlighting, and the three remaining data-only effect kinds.
+`TurnOwnership` for phase highlighting, and the three data-only effect kinds.
 
 **Tests** build catalogues with `ClassificationFixtures` (`Entry(text, target, effects,
 conditional)` / `Catalogue([...])`), including `RealCorpusExcerpt` - real ability texts the

@@ -14,7 +14,8 @@ namespace ProbHammer.Tools.AbilityPipeline.Classifier.Models;
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum CoverageStatus
 {
-    /// <summary>Every clause of the text is represented in Target/Effects. No residue.</summary>
+    /// <summary>Every in-scope clause of the text is represented in Target/Effects. Out-of-scope
+    /// residue may remain.</summary>
     [JsonStringEnumMemberName("complete")]
     Complete,
 

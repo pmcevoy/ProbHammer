@@ -15,6 +15,7 @@ namespace ProbHammer.Tools.AbilityPipeline.Classifier.Models;
 [JsonDerivedType(typeof(WeaponKeywordGrantEffect), "WeaponKeywordGrant")]
 [JsonDerivedType(typeof(NamedAbilityGrantEffect), "NamedAbilityGrant")]
 [JsonDerivedType(typeof(NamedAbilityRemovalEffect), "NamedAbilityRemoval")]
+[JsonDerivedType(typeof(RollModifierEffect), "RollModifier")]
 public abstract record ClassificationEffect;
 
 /// <summary>One atomic, unconditional mutation stated against exactly one named Statline scalar
@@ -29,14 +30,15 @@ public sealed record ScalarEffect(string Characteristic, EffectVerb Verb, int Am
 public sealed record InvulnerableSaveEffect(int MeleeInSv, int RangedInSv) : ClassificationEffect;
 
 /// <summary>One atomic, unconditional mutation stated against exactly one named WeaponProfile
-/// characteristic ("S"/"A"/"AP"/"D"), scoped to a <see cref="WeaponSelector"/>. A coordinate
-/// characteristic list in the source text always splits into one record per named characteristic -
-/// never a single record holding more than one.</summary>
+/// characteristic ("S"/"A"/"AP"/"D"/"BS"/"WS"). A coordinate characteristic list in the source text
+/// always splits into one record per named characteristic - never a single record holding more than
+/// one. Weapons are picked as described on <see cref="AttackWeaponClass"/>.</summary>
 public sealed record WeaponCharacteristicEffect(
-    WeaponSelector Selector,
     string Characteristic,
     EffectVerb Verb,
-    int Amount) : ClassificationEffect;
+    int Amount,
+    AttackWeaponClass? WeaponClass = null,
+    string? WeaponName = null) : ClassificationEffect;
 
 /// <summary>A Feel No Pain value grant - the corpus's single largest previously-unrepresented gap
 /// (153 corpus hits at proposal time, zero representation anywhere in the codebase). Qualifier is
@@ -50,8 +52,11 @@ public sealed record FeelNoPainEffect(int Value, string? Qualifier) : Classifica
 /// lesson: a closed enum silently drops a renamed/new BSData keyword. <see cref="ReplacesKeyword"/> is
 /// set when the text says the grant is "instead of" a keyword the weapon already has (e.g.
 /// [SUSTAINED HITS 2] instead of [SUSTAINED HITS 1]).</summary>
-public sealed record WeaponKeywordGrantEffect(WeaponSelector Selector, string Keyword, string? ReplacesKeyword = null)
-    : ClassificationEffect;
+public sealed record WeaponKeywordGrantEffect(
+    string Keyword,
+    string? ReplacesKeyword = null,
+    AttackWeaponClass? WeaponClass = null,
+    string? WeaponName = null) : ClassificationEffect;
 
 /// <summary>A grant of a whole separate named ability (e.g. "this model has the Stealth ability").
 /// AbilityName is verbatim, value included (e.g. Scouts 9"); <see cref="NameResolver"/> checks it
@@ -61,3 +66,14 @@ public sealed record NamedAbilityGrantEffect(string AbilityName) : Classificatio
 /// <summary>Removes a named ability (e.g. "lose the Dark Pacts ability"). Not resolved at collect: a
 /// removal only acts on an ability the unit already displays, so an unmatched name is inert.</summary>
 public sealed record NamedAbilityRemovalEffect(string AbilityName) : ClassificationEffect;
+
+/// <summary>A modifier to one dice roll, recorded with the text's own verb; Damage/enemy/subtract also
+/// covers reducing an attack's Damage characteristic. Only a Hit, Wound or Damage modifier picks
+/// weapons, as described on <see cref="AttackWeaponClass"/>.</summary>
+public sealed record RollModifierEffect(
+    ModifiedRoll Roll,
+    RollOwner RolledBy,
+    RollModifierKind Modifier,
+    int Amount,
+    AttackWeaponClass? WeaponClass = null,
+    string? WeaponName = null) : ClassificationEffect;

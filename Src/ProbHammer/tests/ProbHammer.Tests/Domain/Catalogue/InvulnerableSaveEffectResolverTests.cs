@@ -77,6 +77,48 @@ public class InvulnerableSaveEffectResolverTests
     }
 
     [Fact]
+    public void AttackTypeFootnote_BareMeleeOnly_ResolvesToTheFootnotedMeleeSaveAndNoRangedSave()
+    {
+        var footnote = SomeAbility with { Text = "Against melee attacks only" };
+        var current = InvulnerableSaveCharacteristicView.Caveated(4, 4, footnote);
+
+        var result = InvulnerableSaveEffectResolver.TryResolveAttackTypeFootnote(footnote, current);
+
+        result!.IsCaveated.Should().BeFalse();
+        result.Value.Should().Be(new InvulnerableSave(4, 0));
+        result.ContributingAbilities.Should().Equal(footnote);
+    }
+
+    [Fact]
+    public void AttackTypeFootnote_RangedOnlyWithAFullStop_ResolvesToTheRangedSide()
+    {
+        var footnote = SomeAbility with { Text = "  against Ranged attacks  only. " };
+        var current = InvulnerableSaveCharacteristicView.Caveated(5, 5, footnote);
+
+        InvulnerableSaveEffectResolver.TryResolveAttackTypeFootnote(footnote, current)!.Value
+            .Should().Be(new InvulnerableSave(0, 5));
+    }
+
+    [Fact]
+    public void AttackTypeFootnote_OnASplitFootnote_KeepsThePlainValueOnTheOtherSide()
+    {
+        var footnote = SomeAbility with { Text = "Against melee attacks only" };
+        var current = InvulnerableSaveCharacteristicView.Caveated(5, 5, footnote, footnotedValue: 4);
+
+        InvulnerableSaveEffectResolver.TryResolveAttackTypeFootnote(footnote, current)!.Value
+            .Should().Be(new InvulnerableSave(4, 5));
+    }
+
+    [Fact]
+    public void AttackTypeFootnote_WithMoreWords_FallsThrough()
+    {
+        var footnote = SomeAbility with { Text = "Against melee attacks only, while this model is leading a unit" };
+        var current = InvulnerableSaveCharacteristicView.Caveated(4, 4, footnote);
+
+        InvulnerableSaveEffectResolver.TryResolveAttackTypeFootnote(footnote, current).Should().BeNull();
+    }
+
+    [Fact]
     public void Merge_ARangedOnlyGrant_KeepsTheExistingMeleeSave()
     {
         var current = InvulnerableSaveCharacteristicView.Resolved(new InvulnerableSave(5, 5));

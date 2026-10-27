@@ -34,6 +34,27 @@ public static class InvulnerableSaveEffectResolver
         int Side(int granted, int stored) => granted != 0 ? granted : stored == footnoted ? 0 : stored;
     }
 
+    /// <summary>Resolves a footnote whose whole text is "Against melee attacks only" or "Against ranged
+    /// attacks only" from the footnoted value, with no classification; null for any other text.</summary>
+    public static InvulnerableSaveCharacteristicView? TryResolveAttackTypeFootnote(Ability sourceAbility,
+        InvulnerableSaveCharacteristicView current)
+    {
+        if (current.FootnotedValue is not { } footnoted)
+            return null;
+
+        var text = string.Join(' ', sourceAbility.Text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
+            .TrimEnd('.');
+        InvulnerableSave? granted = text.ToLowerInvariant() switch
+        {
+            "against melee attacks only" => new InvulnerableSave(footnoted, 0),
+            "against ranged attacks only" => new InvulnerableSave(0, footnoted),
+            _ => null
+        };
+        return granted is { } value
+            ? ResolveCaveat(new InvulnerableSaveCharacteristicEffect(value), sourceAbility, current)
+            : null;
+    }
+
     /// <summary>Combines a granted save with <paramref name="current"/>'s value, keeping the better
     /// save per side, so a one-sided or weaker grant never removes or worsens an existing save.
     /// Returns <paramref name="current"/> unchanged when the grant improves neither side.</summary>

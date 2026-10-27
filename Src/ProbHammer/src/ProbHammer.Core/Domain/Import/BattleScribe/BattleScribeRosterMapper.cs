@@ -361,7 +361,7 @@ public static partial class BattleScribeRosterMapper
             var footnotedDigit = int.Parse((leftFootnoted ? left : right).Groups[1].Value);
             var plainDigit = int.Parse((leftFootnoted ? right : left).Groups[1].Value);
             var ability = ResolveCaveatAbility(footnotedDigit, node, top, text);
-            return InvulnerableSaveCharacteristicView.Caveated(plainDigit, plainDigit, ability);
+            return InvulnerableSaveCharacteristicView.Caveated(plainDigit, plainDigit, ability, footnotedDigit);
         }
 
         var bareMatch = InSvBareValueRegex().Match(text);

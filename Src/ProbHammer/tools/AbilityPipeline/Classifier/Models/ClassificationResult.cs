@@ -18,4 +18,8 @@ public sealed record ClassificationResult
     public UsageLimit? UsageLimit { get; init; }
     public required CoverageStatus CoverageStatus { get; init; }
     public string? UnclassifiedResidue { get; init; }
+
+    /// <summary>What the text says outside LivePlay's scope (tactical actions, CP, movement,
+    /// effects on enemy units only...). Never keeps a record from <c>complete</c>.</summary>
+    public string? OutOfScopeResidue { get; init; }
 }

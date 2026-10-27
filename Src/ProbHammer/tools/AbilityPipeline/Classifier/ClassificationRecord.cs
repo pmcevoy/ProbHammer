@@ -20,6 +20,7 @@ public sealed record ClassificationRecord
     public required DateTimeOffset ClassifiedAt { get; init; }
     public required ClassificationResult Classification { get; init; }
     public NameResolution? Resolution { get; init; }
+    public TokenUsage? Usage { get; init; }
 
     /// <summary>The model's coverage, demoted from <c>complete</c> to <c>partial</c> when a name failed
     /// to resolve - kept separate so <see cref="Classification"/> stays exactly what the model said.</summary>
@@ -31,3 +32,5 @@ public sealed record ClassificationRecord
     public ReviewStatus ReviewStatus { get; init; } = ReviewStatus.Pending;
     public string? ReviewerNote { get; init; }
 }
+
+public sealed record TokenUsage(long InputTokens, long OutputTokens);

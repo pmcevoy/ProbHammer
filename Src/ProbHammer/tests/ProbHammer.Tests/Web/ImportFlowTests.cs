@@ -47,9 +47,8 @@ public class ImportFlowTests : IClassFixture<WebApplicationFactory<Program>>
             .Contain("Sword Brethren Squad").And.Contain("Impulsor");
     }
 
-    [Fact(Skip =
-        "Waits on the classification run: the new Custodes codex's Living Fortress and Aegis of the Emperor texts are unclassified.")]
-    public async Task CustodianWardens_ShowAConditionalFeelNoPainTile_AndNoValuelessFeelNoPainEntry()
+    [Fact]
+    public async Task CustodianWardens_ShowAQualifiedFeelNoPainTile_AndNoValuelessFeelNoPainEntry()
     {
         var client = _factory.CreateClient();
 
@@ -58,9 +57,24 @@ public class ImportFlowTests : IClassFixture<WebApplicationFactory<Program>>
         response.EnsureSuccessStatusCode();
         var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         html.Should().Contain("Custodian Wardens")
-            .And.Contain("class=\"stat-tile fnp-tile provenance-tile provenance-cond\"")
-            .And.Contain(">Living Fortress<")
+            .And.Contain("class=\"stat-tile fnp-tile provenance-tile\"")
+            .And.Contain(">Aegis of the Emperor<")
+            .And.Contain("mortal wounds")
+            .And.NotContain("fnp-tile provenance-tile provenance-cond")
             .And.NotContain(">Feel No Pain<");
+    }
+
+    [Fact]
+    public async Task CombatDoctrines_OffersItsChoice_ThoughTheExportTrimsTheBsdataText()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await ImportAsync(client, ReadRealExport("nr-templars-for-unit-tests.json"));
+
+        response.EnsureSuccessStatusCode();
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        html.Should().Contain("class=\"apply-section\"")
+            .And.Contain("Devastator Doctrine: the unit&#39;s ranged attacks have [ASSAULT]");
     }
 
     [Fact]

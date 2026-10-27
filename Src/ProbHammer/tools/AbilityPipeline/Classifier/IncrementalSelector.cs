@@ -1,8 +1,8 @@
 namespace ProbHammer.Tools.AbilityPipeline.Classifier;
 
 /// <summary>The incremental re-classification rule (spec.md's "Incremental re-classification"
-/// requirement): a hash needs (re-)classification when it has no existing record, or the record's
-/// own PromptVersion doesn't match the version about to run.
+/// requirement): a live hash needs (re-)classification when it has no existing record, or the record's
+/// own PromptVersion doesn't match the version about to run. A stale hash is never selected.
 ///
 /// spec.md's requirement also names a third trigger - "its extracted text has changed since the
 /// last classification" - worded as if that's an independent condition alongside a matching hash.
@@ -28,7 +28,7 @@ public static class IncrementalSelector
         IReadOnlyDictionary<string, ExtractionRecord> corpus,
         IReadOnlyDictionary<string, ClassificationRecord> existingClassifications,
         string currentPromptVersion) =>
-        corpus.Values
+        corpus.Live().Values
             .Where(record => NeedsClassification(record, existingClassifications, currentPromptVersion))
             .OrderBy(record => record.Names.Count > 0 ? record.Names[0] : record.Hash, StringComparer.OrdinalIgnoreCase)
             .ToList();

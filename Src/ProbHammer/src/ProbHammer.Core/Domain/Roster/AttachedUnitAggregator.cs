@@ -111,6 +111,9 @@ public static class AttachedUnitAggregator
                 return entry;
 
             var sourceAbility = insv.ContributingAbilities[0];
+            if (InvulnerableSaveEffectResolver.TryResolveAttackTypeFootnote(sourceAbility, insv) is { } structural)
+                return entry with { Statline = entry.Statline with { InSv = structural } };
+
             if (!classifications.TryGet(sourceAbility.Text, out var classification))
                 return entry;
 

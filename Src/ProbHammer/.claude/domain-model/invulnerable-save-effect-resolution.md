@@ -13,6 +13,7 @@ InvulnerableSaveEffectResolver.Resolve(effect, sourceAbility, current)
                                        // class's and method's own doc comments
   .ResolveCaveat(effect, sourceAbility, current)   // a footnoted InSv, from its linked ability
   .Merge(effect, sourceAbility, current)           // a present ability granting an InSv
+  .TryResolveAttackTypeFootnote(sourceAbility, current)  // "Against melee/ranged attacks only"
 ```
 
 **Two callers, two semantics** (`adopt-llm-ability-classifications` 7.2.1). A present ability's
@@ -22,6 +23,14 @@ existing melee save. A caveat footnote instead **defines** the save: the side it
 value; the side it leaves `0` is "no save" for a bare footnote (`4+*`, Judiciar, stored as 4/4) but
 keeps the plain value for a split one (`4+* / 5+`, Howling Banshees/Wyches, stored as 5/5).
 Real-corpus tests cover both footnote shapes.
+
+**Attack-type-only footnotes resolve structurally** (`ability-classification-prompt-v3`). When the
+footnote ability's whole text is "Against melee attacks only" or "Against ranged attacks only"
+(ignoring case, whitespace and a trailing full stop), `AttachedUnitAggregator` resolves it before the
+catalogue lookup: the named side takes the footnoted digit, the other side follows the bare/split
+rule above. The text has no value for a classifier to extract, so the digit comes from the view's
+`FootnotedValue`, which the mappers set (a split footnote stores the plain digit as its value). Any
+longer text falls through to the catalogue. Judiciar's footnote is the only real case today.
 
 **Ground-truth verified, not just unit-tested**: resolving the Effect classified from Shield Dome's
 own real text ("The bearer has a 5+ invulnerable save.") against Shield Dome's own `Ability`

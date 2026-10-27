@@ -526,7 +526,7 @@ public static partial class BsdataDatasheetMapper
             var footnotedDigit = int.Parse((leftFootnoted ? left : right).Groups[1].Value);
             var plainDigit = int.Parse((leftFootnoted ? right : left).Groups[1].Value);
             var splitAbility = ResolveCaveatAbility(footnotedDigit, ancestry, ctx, text);
-            return InvulnerableSaveCharacteristicView.Caveated(plainDigit, plainDigit, splitAbility);
+            return InvulnerableSaveCharacteristicView.Caveated(plainDigit, plainDigit, splitAbility, footnotedDigit);
         }
 
         var bareMatch = InSvBareValueRegex().Match(text);

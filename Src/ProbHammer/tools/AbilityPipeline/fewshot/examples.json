@@ -53,7 +53,7 @@
         {
           "effect": {
             "kind": "WeaponKeywordGrant",
-            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "weaponClass": "Melee",
             "keyword": "[Precision]"
           },
           "residualConditionBucket": "none",
@@ -97,7 +97,7 @@
         {
           "effect": {
             "kind": "WeaponCharacteristic",
-            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "weaponClass": "Melee",
             "characteristic": "A",
             "verb": "improve",
             "amount": 3
@@ -108,7 +108,7 @@
         {
           "effect": {
             "kind": "WeaponKeywordGrant",
-            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "weaponClass": "Melee",
             "keyword": "[DEVASTATING WOUNDS]"
           },
           "residualConditionBucket": "none",
@@ -127,14 +127,22 @@
     "hash": "edec19b4efd2914a1cef083f34a6e883fa0dfe217c4fcef81a2bc82f9dcdf730",
     "text": "Each time a **^^Harlequins^^** model from your army makes a Charge move, it can move through enemy models.",
     "expectedClassification": {
-      "target": { "kind": "Keyword", "keywords": ["HARLEQUINS"] },
+      "target": {
+        "kind": "Keyword",
+        "keywords": [
+          "HARLEQUINS"
+        ]
+      },
       "effects": [],
       "choiceGroups": [],
-      "phases": ["charge"],
+      "phases": [
+        "charge"
+      ],
       "turnOwnership": null,
       "usageLimit": null,
-      "coverageStatus": "unclassifiable",
-      "unclassifiedResidue": "Grants the ability to move through enemy models during a Charge move - no movement/terrain-interaction effect kind exists in this schema"
+      "coverageStatus": "complete",
+      "unclassifiedResidue": null,
+      "outOfScopeResidue": "Lets the models move through enemy models during a Charge move - movement is outside the app's scope"
     }
   },
   {
@@ -226,7 +234,7 @@
         {
           "effect": {
             "kind": "WeaponKeywordGrant",
-            "selector": { "kind": "WeaponClass", "type": "Ranged" },
+            "weaponClass": "Ranged",
             "keyword": "[DEVASTATING WOUNDS]"
           },
           "residualConditionBucket": "none"
@@ -234,7 +242,7 @@
         {
           "effect": {
             "kind": "WeaponKeywordGrant",
-            "selector": { "kind": "WeaponClass", "type": "Ranged" },
+            "weaponClass": "Ranged",
             "keyword": "[HAZARDOUS]"
           },
           "residualConditionBucket": "none"
@@ -254,7 +262,7 @@
         {
           "effect": {
             "kind": "WeaponKeywordGrant",
-            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "weaponClass": "Melee",
             "keyword": "[LETHAL HITS]"
           },
           "residualConditionBucket": "never",
@@ -275,7 +283,6 @@
         {
           "effect": {
             "kind": "WeaponCharacteristic",
-            "selector": { "kind": "AllWeapons" },
             "characteristic": "D",
             "verb": "improve",
             "amount": 2
@@ -318,7 +325,7 @@
         {
           "effect": {
             "kind": "WeaponCharacteristic",
-            "selector": { "kind": "NamedWeapon", "name": "Payback" },
+            "weaponName": "Payback",
             "characteristic": "A",
             "verb": "set",
             "amount": 6
@@ -328,7 +335,7 @@
         {
           "effect": {
             "kind": "WeaponKeywordGrant",
-            "selector": { "kind": "NamedWeapon", "name": "Payback" },
+            "weaponName": "Payback",
             "keyword": "[SUSTAINED HITS 3]",
             "replacesKeyword": "[SUSTAINED HITS 1]"
           },
@@ -345,25 +352,36 @@
     "hash": "299ba6c494685d115e3b404017a7faf394aeabdf9199c728f2ad76456fe99c49",
     "text": "^^**Heretic Astartes**^^ models from your army lose the Dark Pacts ability. Ranged weapons equipped by **^^Heretic Astartes**^^ models from your army have the [ASSAULT] ability.\n\nWhen mustering your army, you cannot use the Cults of the Dark Gods rule.",
     "expectedClassification": {
-      "target": { "kind": "Keyword", "keywords": ["HERETIC ASTARTES"] },
+      "target": {
+        "kind": "Keyword",
+        "keywords": [
+          "HERETIC ASTARTES"
+        ]
+      },
       "effects": [
         {
-          "effect": { "kind": "NamedAbilityRemoval", "abilityName": "Dark Pacts" },
+          "effect": {
+            "kind": "NamedAbilityRemoval",
+            "abilityName": "Dark Pacts"
+          },
           "residualConditionBucket": "none"
         },
         {
           "effect": {
             "kind": "WeaponKeywordGrant",
-            "selector": { "kind": "WeaponClass", "type": "Ranged" },
+            "weaponClass": "Ranged",
             "keyword": "[ASSAULT]"
           },
           "residualConditionBucket": "none"
         }
       ],
       "choiceGroups": [],
-      "phases": ["shooting"],
-      "coverageStatus": "partial",
-      "unclassifiedResidue": "Army-construction restriction: the Cults of the Dark Gods rule cannot be used when mustering the army"
+      "phases": [
+        "shooting"
+      ],
+      "coverageStatus": "complete",
+      "unclassifiedResidue": null,
+      "outOfScopeResidue": "Army-construction restriction: the Cults of the Dark Gods rule cannot be used when mustering the army"
     }
   },
   {
@@ -375,7 +393,7 @@
         {
           "effect": {
             "kind": "WeaponKeywordGrant",
-            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "weaponClass": "Melee",
             "keyword": "Sustained Hits 1"
           },
           "residualConditionBucket": "none",
@@ -384,7 +402,7 @@
         {
           "effect": {
             "kind": "WeaponKeywordGrant",
-            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "weaponClass": "Melee",
             "keyword": "Lethal Hits"
           },
           "residualConditionBucket": "none",
@@ -415,7 +433,6 @@
         {
           "effect": {
             "kind": "WeaponKeywordGrant",
-            "selector": { "kind": "AllWeapons" },
             "keyword": "[LETHAL HITS]"
           },
           "residualConditionBucket": "none",
@@ -425,7 +442,6 @@
         {
           "effect": {
             "kind": "WeaponKeywordGrant",
-            "selector": { "kind": "AllWeapons" },
             "keyword": "[SUSTAINED HITS 1]"
           },
           "residualConditionBucket": "none",
@@ -447,29 +463,37 @@
     "hash": "e91de766e14cc38082cf36791e335e96317a690eaf94d87a10b48e4e909899a3",
     "text": "EMPEROR'S CHAMPION model only. At the start of the first battle round, you can select up to three of the following abilities. This model has those abilities until the end of the battle:\n\n▪ Instrument of the God‑Emperor (Once per battle, per army):\n   In the Fight phase, when this unit is selected to fight, if this unit is engaged with an enemy CHARACTER unit, you can use this ability. If you do, this model's melee attacks have [DEVASTATING WOUNDS].\n\n▪ Foreseen Paths of the Unholy: This unit has ‑3\" detection range.\n\n▪ Vision of Momentous Brutality: This model's melee attacks have +2 A.\n\n▪ Augury of Retribution: Melee attacks that target this unit have [HAZARDOUS].\n\n▪ Omen of Sacred Intervention: When you target this unit with the Heroic Intervention stratagem, that use is ‑1 CP.\n\n▪ Harbinger of Judgement: When an enemy unit (excluding MONSTER/VEHICLE units) engaged with this model is selected to make a fall‑back move, roll one D6:\n    ▫ On a 2+, that enemy unit suffers D6 mortal wounds.",
     "expectedClassification": {
-      "target": { "kind": "Self" },
+      "target": {
+        "kind": "Self"
+      },
       "effects": [
         {
           "effect": {
             "kind": "WeaponKeywordGrant",
-            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "weaponClass": "Melee",
             "keyword": "[DEVASTATING WOUNDS]"
           },
           "residualConditionBucket": "never",
           "conditionText": "Once per battle, per army; only while this unit is engaged with an enemy Character unit, in the Fight phase when selected to fight",
-          "choiceBranch": { "group": 0, "option": 0 }
+          "choiceBranch": {
+            "group": 0,
+            "option": 0
+          }
         },
         {
           "effect": {
             "kind": "WeaponCharacteristic",
-            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "weaponClass": "Melee",
             "characteristic": "A",
             "verb": "improve",
             "amount": 2
           },
           "residualConditionBucket": "none",
           "conditionText": null,
-          "choiceBranch": { "group": 0, "option": 2 }
+          "choiceBranch": {
+            "group": 0,
+            "option": 2
+          }
         }
       ],
       "choiceGroups": [
@@ -486,28 +510,73 @@
           ]
         }
       ],
-      "phases": ["command", "movement", "charge", "fight"],
+      "phases": [
+        "command",
+        "movement",
+        "charge",
+        "fight"
+      ],
       "turnOwnership": null,
       "usageLimit": null,
       "coverageStatus": "partial",
-      "unclassifiedResidue": "4 of the 6 options have no effect-kind representation: Foreseen Paths (a detection-range modifier), Augury of Retribution (a keyword granted to an enemy's attacks against this unit), Omen of Sacred Intervention (a stratagem CP-cost change), and Harbinger of Judgement (mortal wounds on a dice roll)"
+      "unclassifiedResidue": "Harbinger of Judgement inflicts D6 mortal wounds on a 2+ - no mortal-wound-infliction effect kind exists in this schema",
+      "outOfScopeResidue": "Foreseen Paths of the Unholy changes detection range; Augury of Retribution gives enemy attacks against this unit [HAZARDOUS] (an effect on enemy units); Omen of Sacred Intervention reduces a Stratagem's CP cost"
     }
   },
   {
     "hash": "e4c3b6f940319d05d2458af7aa2bf32c251a0e5c79d8224193f84cfa67d5ab73",
     "text": "If your Army Faction is ^^Adeptus Astartes^^, at the start of the first battle round, select one of the following Vows to be active for ^^Adeptus Astartes^^ units from your army. While a Vow is active for your army, that unit has the associated ability below. \n\n**Abhor the Witch, Destroy the Witch**\n■ Each time this unit declares a charge, if one or more targets of that charge have the ^^Psyker^^ keyword, you can re-roll the Charge roll. Melee weapons equipped by models in this unit have the **[PRECISION]** ability while targeting ^^Psyker^^ units. \n\n**Accept Any Challenge, No Matter the Odds**\n■ Each time a model in this unit makes a melee attack, if the Strength characteristic of that attack is less than or equal to the Toughness characteristic of the target, add 1 to the wound roll\n\n**Suffer Not the Unclean to Live**\n■ This unit is eligible to declare a charge in a turn in which it Fell Back, and each time a model in this unit makes a Pile-in or Consolidation move, it does not need to end that move closer to the closest enemy model, provided it ends that move as close as possible to the nearest enemy unit. \n\n**Uphold the Honour of the Emperor**\nIf this unit has the ^^Infantry^^ keyword:\n■ At the end of your Command phase, if this unit is within range of an objective marker you control, that objective marker remains under your control until your opponent's level of control over that objective marker is greater than yours at the end of the phase. \n■ If the mission you are playing features Actions, this unit is eligible to start to perform an Action in a turn in which it Advanced.",
     "expectedClassification": {
-      "target": { "kind": "Keyword", "keywords": ["ADEPTUS ASTARTES"] },
+      "target": {
+        "kind": "Keyword",
+        "keywords": [
+          "ADEPTUS ASTARTES"
+        ]
+      },
       "effects": [
         {
           "effect": {
+            "kind": "RollModifier",
+            "roll": "Charge",
+            "rolledBy": "friendly",
+            "modifier": "reroll",
+            "amount": 0
+          },
+          "residualConditionBucket": "never",
+          "conditionText": "When one or more targets of the charge have the Psyker keyword",
+          "choiceBranch": {
+            "group": 0,
+            "option": 0
+          }
+        },
+        {
+          "effect": {
             "kind": "WeaponKeywordGrant",
-            "selector": { "kind": "WeaponClass", "type": "Melee" },
+            "weaponClass": "Melee",
             "keyword": "[PRECISION]"
           },
           "residualConditionBucket": "never",
           "conditionText": "While targeting Psyker units",
-          "choiceBranch": { "group": 0, "option": 0 }
+          "choiceBranch": {
+            "group": 0,
+            "option": 0
+          }
+        },
+        {
+          "effect": {
+            "kind": "RollModifier",
+            "roll": "Wound",
+            "rolledBy": "friendly",
+            "modifier": "add",
+            "amount": 1,
+            "weaponClass": "Melee"
+          },
+          "residualConditionBucket": "never",
+          "conditionText": "When the attack's Strength is less than or equal to the target's Toughness",
+          "choiceBranch": {
+            "group": 0,
+            "option": 1
+          }
         }
       ],
       "choiceGroups": [
@@ -522,11 +591,16 @@
           ]
         }
       ],
-      "phases": ["command", "charge", "fight"],
+      "phases": [
+        "command",
+        "charge",
+        "fight"
+      ],
       "turnOwnership": null,
       "usageLimit": null,
-      "coverageStatus": "partial",
-      "unclassifiedResidue": "Made once, at the start of the first battle round - not one of this schema's usageLimit values. Vow 1's own re-roll-the-Charge-roll clause has no effect kind (reroll mechanics aren't modeled); Vows 2-4 have no effect-kind representation at all (a to-wound-roll modifier, charge-after-Fall-Back/Pile-in-Consolidation exemptions, objective-control retention, and Action-after-Advance eligibility)"
+      "coverageStatus": "complete",
+      "unclassifiedResidue": null,
+      "outOfScopeResidue": "Suffer Not the Unclean to Live lets the unit declare a charge after Falling Back and relaxes its Pile-in and Consolidation moves (movement); Uphold the Honour of the Emperor keeps an objective marker under your control and lets the unit start an Action after Advancing (objective control, tactical actions)"
     }
   },
   {
@@ -540,10 +614,7 @@
         {
           "effect": {
             "kind": "WeaponKeywordGrant",
-            "selector": {
-              "kind": "WeaponClass",
-              "type": "Ranged"
-            },
+            "weaponClass": "Ranged",
             "keyword": "[HEAVY]"
           },
           "residualConditionBucket": "none",
@@ -555,10 +626,7 @@
         {
           "effect": {
             "kind": "WeaponCharacteristic",
-            "selector": {
-              "kind": "WeaponClass",
-              "type": "Ranged"
-            },
+            "weaponClass": "Ranged",
             "characteristic": "BS",
             "verb": "improve",
             "amount": 1
@@ -571,11 +639,24 @@
         },
         {
           "effect": {
+            "kind": "RollModifier",
+            "roll": "Hit",
+            "rolledBy": "enemy",
+            "modifier": "subtract",
+            "amount": 1,
+            "weaponClass": "Melee"
+          },
+          "residualConditionBucket": "never",
+          "conditionText": "This unit has the Battleline keyword and/or is within 6\" of a friendly Adeptus Mechanicus Battleline unit",
+          "choiceBranch": {
+            "group": 0,
+            "option": 0
+          }
+        },
+        {
+          "effect": {
             "kind": "WeaponKeywordGrant",
-            "selector": {
-              "kind": "WeaponClass",
-              "type": "Ranged"
-            },
+            "weaponClass": "Ranged",
             "keyword": "[ASSAULT]"
           },
           "residualConditionBucket": "none",
@@ -587,10 +668,7 @@
         {
           "effect": {
             "kind": "WeaponCharacteristic",
-            "selector": {
-              "kind": "WeaponClass",
-              "type": "Melee"
-            },
+            "weaponClass": "Melee",
             "characteristic": "WS",
             "verb": "improve",
             "amount": 1
@@ -604,9 +682,6 @@
         {
           "effect": {
             "kind": "WeaponCharacteristic",
-            "selector": {
-              "kind": "AllWeapons"
-            },
             "characteristic": "AP",
             "verb": "improve",
             "amount": 1
@@ -634,8 +709,75 @@
         "shooting",
         "fight"
       ],
-      "coverageStatus": "partial",
-      "unclassifiedResidue": "Protector Imperative subtracts 1 from the Hit roll of melee attacks targeting this unit - a Hit-roll modifier on enemy attacks has no effect kind in this schema"
+      "coverageStatus": "complete",
+      "unclassifiedResidue": null
+    }
+  },
+  {
+    "hash": "0666925448535710140992807b2be15cfb3e2cfd1664e8b87e6e85e88fe4173e",
+    "text": "Each time a model in this unit makes a ranged attack that targets the closest eligible enemy unit, re-roll a Hit roll of 1. If the target of that attack is within range of an objective marker your opponent controls, you can re-roll the Hit roll instead.",
+    "expectedClassification": {
+      "target": {
+        "kind": "AttachedUnit"
+      },
+      "effects": [
+        {
+          "effect": {
+            "kind": "RollModifier",
+            "roll": "Hit",
+            "rolledBy": "friendly",
+            "modifier": "rerollOnes",
+            "amount": 0,
+            "weaponClass": "Ranged"
+          },
+          "residualConditionBucket": "never",
+          "conditionText": "When targeting the closest eligible enemy unit"
+        },
+        {
+          "effect": {
+            "kind": "RollModifier",
+            "roll": "Hit",
+            "rolledBy": "friendly",
+            "modifier": "reroll",
+            "amount": 0,
+            "weaponClass": "Ranged"
+          },
+          "residualConditionBucket": "never",
+          "conditionText": "When targeting the closest eligible enemy unit and it is within range of an objective marker your opponent controls"
+        }
+      ],
+      "choiceGroups": [],
+      "phases": [
+        "shooting"
+      ],
+      "coverageStatus": "complete"
+    }
+  },
+  {
+    "hash": "433886d95bfe1036832473a59dd4dc748292f4485c2280d9e68405e753d89124",
+    "text": "Each time a melee attack targets the bearer, subtract 1 from the Hit roll.",
+    "expectedClassification": {
+      "target": {
+        "kind": "Self"
+      },
+      "effects": [
+        {
+          "effect": {
+            "kind": "RollModifier",
+            "roll": "Hit",
+            "rolledBy": "enemy",
+            "modifier": "subtract",
+            "amount": 1,
+            "weaponClass": "Melee"
+          },
+          "residualConditionBucket": "none"
+        }
+      ],
+      "choiceGroups": [],
+      "phases": [
+        "fight"
+      ],
+      "coverageStatus": "complete"
     }
   }
 ]

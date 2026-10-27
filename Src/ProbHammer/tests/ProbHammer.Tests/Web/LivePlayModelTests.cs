@@ -256,6 +256,28 @@ public class LivePlayModelTests
     }
 
     [Fact]
+    public void BuildUnitBlock_OutOfScopeResidueIsNotedAfterTheInScopeResidue()
+    {
+        var faithFuelledResolve = TestAbility("Faith-Fuelled Resolve");
+        var (text, classification) = ClassificationFixtures.Entry(faithFuelledResolve.Text,
+            new AttachedUnitRuleTarget(), [new ScalarCharacteristicEffect("Oc", EffectVerb.Improve, 1)]);
+        var classifications = ClassificationFixtures.Catalogue(
+        [
+            (text, classification with
+            {
+                UnclassifiedResidue = "Army-construction restriction",
+                OutOfScopeResidue = "Can perform a tactical action"
+            })
+        ]);
+        var statline = new Statline(6, 4, 3, 2, 6, ScalarCharacteristicView.Resolved(1, 2, [faithFuelledResolve]));
+
+        var block = LivePlayModel.BuildUnitBlock(TestView(statline), classifications: classifications);
+
+        block.Statlines.Single().ProvenanceFor("OC")!.Lines.Single().Notes
+            .Should().Equal("Army-construction restriction", "Can perform a tactical action");
+    }
+
+    [Fact]
     public void BuildUnitBlock_AResolvedInvulnerableSaveFootnote_ShowsThePrintedSaveAsTheOriginal()
     {
         var refractorField = TestAbility("Refractor Field");

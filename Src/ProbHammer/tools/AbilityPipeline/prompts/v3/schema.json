@@ -122,55 +122,6 @@
                   "kind": {
                     "const": "WeaponCharacteristic"
                   },
-                  "selector": {
-                    "type": "object",
-                    "required": [
-                      "kind"
-                    ],
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "kind": {
-                            "const": "AllWeapons"
-                          }
-                        },
-                        "required": [
-                          "kind"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "properties": {
-                          "kind": {
-                            "const": "WeaponClass"
-                          },
-                          "type": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "kind",
-                          "type"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "properties": {
-                          "kind": {
-                            "const": "NamedWeapon"
-                          },
-                          "name": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "kind",
-                          "name"
-                        ],
-                        "additionalProperties": false
-                      }
-                    ]
-                  },
                   "characteristic": {
                     "type": "string"
                   },
@@ -183,14 +134,26 @@
                   },
                   "amount": {
                     "type": "integer"
+                  },
+                  "weaponClass": {
+                    "enum": [
+                      "Melee",
+                      "Ranged",
+                      null
+                    ],
+                    "default": null
+                  },
+                  "weaponName": {
+                    "type": "string",
+                    "default": null
                   }
                 },
                 "required": [
                   "kind",
-                  "selector",
                   "characteristic",
                   "verb",
-                  "amount"
+                  "amount",
+                  "weaponClass"
                 ],
                 "additionalProperties": false
               },
@@ -218,67 +181,30 @@
                   "kind": {
                     "const": "WeaponKeywordGrant"
                   },
-                  "selector": {
-                    "type": "object",
-                    "required": [
-                      "kind"
-                    ],
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "kind": {
-                            "const": "AllWeapons"
-                          }
-                        },
-                        "required": [
-                          "kind"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "properties": {
-                          "kind": {
-                            "const": "WeaponClass"
-                          },
-                          "type": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "kind",
-                          "type"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "properties": {
-                          "kind": {
-                            "const": "NamedWeapon"
-                          },
-                          "name": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "kind",
-                          "name"
-                        ],
-                        "additionalProperties": false
-                      }
-                    ]
-                  },
                   "keyword": {
                     "type": "string"
                   },
                   "replacesKeyword": {
                     "type": "string",
                     "default": null
+                  },
+                  "weaponClass": {
+                    "enum": [
+                      "Melee",
+                      "Ranged",
+                      null
+                    ],
+                    "default": null
+                  },
+                  "weaponName": {
+                    "type": "string",
+                    "default": null
                   }
                 },
                 "required": [
                   "kind",
-                  "selector",
-                  "keyword"
+                  "keyword",
+                  "weaponClass"
                 ],
                 "additionalProperties": false
               },
@@ -309,6 +235,65 @@
                 "required": [
                   "kind",
                   "abilityName"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "const": "RollModifier"
+                  },
+                  "roll": {
+                    "enum": [
+                      "Hit",
+                      "Wound",
+                      "Damage",
+                      "Save",
+                      "Advance",
+                      "Charge",
+                      "BattleShock"
+                    ]
+                  },
+                  "rolledBy": {
+                    "enum": [
+                      "friendly",
+                      "enemy"
+                    ]
+                  },
+                  "modifier": {
+                    "enum": [
+                      "add",
+                      "subtract",
+                      "reroll",
+                      "rerollOnes",
+                      "rerollSingle",
+                      "criticalOn",
+                      "ignoreModifiers"
+                    ]
+                  },
+                  "amount": {
+                    "type": "integer"
+                  },
+                  "weaponClass": {
+                    "enum": [
+                      "Melee",
+                      "Ranged",
+                      null
+                    ],
+                    "default": null
+                  },
+                  "weaponName": {
+                    "type": "string",
+                    "default": null
+                  }
+                },
+                "required": [
+                  "kind",
+                  "roll",
+                  "rolledBy",
+                  "modifier",
+                  "amount",
+                  "weaponClass"
                 ],
                 "additionalProperties": false
               }
@@ -415,6 +400,9 @@
       ]
     },
     "unclassifiedResidue": {
+      "type": "string"
+    },
+    "outOfScopeResidue": {
       "type": "string"
     }
   },

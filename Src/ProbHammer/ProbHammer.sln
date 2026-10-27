@@ -42,6 +42,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v2", "v2", "{15C776D4-C0C4-
 		tools\AbilityPipeline\prompts\v2\system-prompt.md = tools\AbilityPipeline\prompts\v2\system-prompt.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Classifier.Tests", "tools\AbilityPipeline\Classifier.Tests\Classifier.Tests.csproj", "{550F080C-528E-4679-8FD2-3F2B4D07C2DB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v3", "v3", "{FEBFEA6E-9B77-4AF9-B6D7-65506D9D4292}"
+	ProjectSection(SolutionItems) = preProject
+		tools\AbilityPipeline\prompts\v3\schema.json = tools\AbilityPipeline\prompts\v3\schema.json
+		tools\AbilityPipeline\prompts\v3\system-prompt.md = tools\AbilityPipeline\prompts\v3\system-prompt.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -112,6 +120,18 @@ Global
 		{4B7E11BF-1B16-4F52-855B-0861A1304DBA}.Release|x64.Build.0 = Release|Any CPU
 		{4B7E11BF-1B16-4F52-855B-0861A1304DBA}.Release|x86.ActiveCfg = Release|Any CPU
 		{4B7E11BF-1B16-4F52-855B-0861A1304DBA}.Release|x86.Build.0 = Release|Any CPU
+		{550F080C-528E-4679-8FD2-3F2B4D07C2DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{550F080C-528E-4679-8FD2-3F2B4D07C2DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{550F080C-528E-4679-8FD2-3F2B4D07C2DB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{550F080C-528E-4679-8FD2-3F2B4D07C2DB}.Debug|x64.Build.0 = Debug|Any CPU
+		{550F080C-528E-4679-8FD2-3F2B4D07C2DB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{550F080C-528E-4679-8FD2-3F2B4D07C2DB}.Debug|x86.Build.0 = Debug|Any CPU
+		{550F080C-528E-4679-8FD2-3F2B4D07C2DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{550F080C-528E-4679-8FD2-3F2B4D07C2DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{550F080C-528E-4679-8FD2-3F2B4D07C2DB}.Release|x64.ActiveCfg = Release|Any CPU
+		{550F080C-528E-4679-8FD2-3F2B4D07C2DB}.Release|x64.Build.0 = Release|Any CPU
+		{550F080C-528E-4679-8FD2-3F2B4D07C2DB}.Release|x86.ActiveCfg = Release|Any CPU
+		{550F080C-528E-4679-8FD2-3F2B4D07C2DB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -126,5 +146,7 @@ Global
 		{B77CC126-EACA-4B2C-A359-B3000CBC0D72} = {22173918-B1B8-468F-9148-01C4BB03DEA1}
 		{46B2038F-FA7C-4702-AF08-C26CD4B85C19} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 		{15C776D4-C0C4-442C-9671-88242C3B6266} = {22173918-B1B8-468F-9148-01C4BB03DEA1}
+		{550F080C-528E-4679-8FD2-3F2B4D07C2DB} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
+		{FEBFEA6E-9B77-4AF9-B6D7-65506D9D4292} = {22173918-B1B8-468F-9148-01C4BB03DEA1}
 	EndGlobalSection
 EndGlobal

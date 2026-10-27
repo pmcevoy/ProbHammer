@@ -78,6 +78,9 @@ support each):
 - A model-keyword-subset selector ("weapons equipped by SERVITOR models in this unit") - Mindlock's
   five variants (BS/WS +1 while led by a Tech-Priest) need it.
 - An ability-flag-qualified weapon selector ("models from your army with this ability").
+- A weapon-keyword-filtered selector ("melee weapons ... with the [Psychic] ability also have
+  [Lethal Hits]"). Without it the grant lands on every melee weapon; the Grey Knights fight-phase
+  rule (`cc747e07…`) was hand-corrected to `partial` for this on 2026-10-27.
 - A whole-unit-scoped selector phrased without "equipped by" ("this unit's melee weapons").
 - A coordinate clause with a different amount per characteristic ("add 1 to Attacks... and add 2 to
   Strength...").
@@ -93,24 +96,7 @@ design, not as a gap to eventually close.
 
 ## Domain / data pipeline
 
-- **Ability classification prompt v3 + re-run**, timed with the next Space Marine codex once BSData
-  has it (the rewording stales today's classifications anyway; a run costs ~$16.50). Start by
-  working through the `partial` list for schema tweaks that push records to `complete`. Evidence and
-  examples: the archived `classify-abilities-via-llm-batch` design.md, "Full-run review, 2026-10-03".
-  - **Residue scope rule.** Ask the model to sort its residue into *in scope but not expressible*
-    (LivePlay or the simulation would use it) vs. *outside LivePlay's scope* (tactical actions,
-    resource/token economies, CP, movement/reserves/deployment, enemy-only effects, objective
-    control, list legality). Only the former blocks `complete`; for the latter, phase/target/timing
-    is the whole extraction.
-  - **Roll-modifier effect kind** - the largest in-scope gap (Army/Detachment rules are 1/25 and
-    24/332 complete; the old Oath of Moment failed on this alone) and a core simulation input. Draft fields:
-    roll (Hit/Wound/Damage/Save/Advance/Charge/Battle-shock), modifier (re-roll / re-roll 1s / +N /
-    -N / critical on X+), direction (made by vs. targeting this unit), existing weapon selector.
-    LivePlay: parked - a roll modifier changes no printed value, so value-provenance amber can't
-    surface it; maybe an "info" area in the statline cell, or a section-level effect strip in the
-    weapon panel (rejected for value changes, could return for this). Design once rolls are
-    actually extracted. Also covers the ~12 "ignore any or all modifiers to BS/WS and/or the Hit
-    roll" texts (Deathwing, Fury of the First, Inescapable Accuracy).
+- **Ability classification schema and prompt gaps:**
   - **Per-effect timing** - `phases`/`turnOwnership`/`usageLimit` are record-level, so "has Deep
     Strike; once per battle, redeploy" gates the permanent grant too.
   - **Structured `evaluable-now` conditions** beside `conditionText`: led by keyword (Ardent
@@ -118,27 +104,23 @@ design, not as a gap to eventually close.
     Medicae Medi-packs). Not a composite target - `Target` is who benefits.
     `KeywordResolution.EffectiveKeywords` is already casualty-aware. Check first that no bodyguard
     datasheet carries CHARACTER itself.
-  - **FNP qualifier vocabulary** (mortal wounds / Psychic Attacks / both). 8 records put a model
+  - **FNP qualifier vocabulary** (mortal wounds / Psychic Attacks / both). Some records put a model
     subset or situation in the qualifier (CHARACTER models only, Vehicle models, within an
     objective), which the FNP tile shows as a damage-source caveat; `export` already maps
     "unqualified" sentinels to `null`.
-  - **Prompt fixes:** event triggers ("each time this unit Advances/makes a Charge move") are
-    `never`, not `none` - v2 gets this right only when the text also has an always-on part (Feral
-    Rage, Spearpoint Paragon); a trigger-only text is folded into `phases` and applied permanently.
-    Hand-corrected to `never` on 2026-10-04 (each record's `ReviewerNote` says so); v3 must reproduce
-    the fix unaided, or the re-run reverts it: Brutal Raider, Attuned Onslaught, Battle-lust, Impetuous Glory, Whirling
-    Death, Speed of Vaul, Swift as the wind, Extremis Trigger Word, Talonstrike Doctrines, Frantic
-    Focus, Debt to the Soulforge; "models with the bearer's own keyword in that unit" is `Self`; an FNP
-    qualifier is only a damage source; `turnOwnership` only when the text says whose turn; don't
-    split a multi-word weapon name on "and" ("Tyrnak and Fenrir"); split faction + type keywords
-    ("LEGIONES DAEMONICA TZEENTCH"); emit JSON `null`, not the string `"null"`.
-  - **Scan the output for control characters before exporting.** v2 wrote a `\r` escape plus junk
-    in place of an apostrophe in 3 records (Templar Vows, Mindlock, Radiant Mantle; hand-corrected
-    2026-10-07).
-  - **Incremental runs** (`submit` picks only unclassified hashes - proven 2026-10-03 with 5 InSv
-    footnote texts): a small batch's requests run in parallel, so none reads the prompt cache and
-    each pays the write premium (5 requests: 0 reads, 84k written). Consider skipping the cache
-    breakpoint below some batch size.
+  - **Incremental runs** (`submit` picks only unclassified hashes): a small batch's requests run in
+    parallel, so none reads the prompt cache and each pays the write premium (5 requests: 0 reads,
+    84k written). Consider skipping the cache breakpoint below some batch size.
+- **Roll-modifier reminder strip in LivePlay.** Roll modifiers are classified (765 records), but a roll
+  modifier changes no printed value, so value-provenance amber can't surface it. Show the ones in
+  force as a phase-aware reminder, e.g. an "info" area in the statline cell or a section-level strip
+  in the weapon panel. The simulation is the other consumer; netting and capping per the 11e stacking
+  rule belong there.
+- **BattleScribe import renders a unit's duplicated rule twice.** NewRecruit's export of the Judiciar
+  lists Fights First twice in its own `rules` (same id `24-c886-e8ba-5a89`; BSData links it once),
+  and `BattleScribeRosterMapper.BuildUnit` maps every `rules[]` entry, so the ability cell shows it
+  twice. De-duplicate the rules by id before mapping (seen 2026-10-27 in
+  `nr-templars-for-unit-tests.json`).
 - **Enhancement Model/Unit scope classification.** Every Enhancement renders at Unit scope
   unconditionally today, even though real rules text sometimes signals Model scope instead (e.g.
   "this model's Objective Control"). Could be a new field on the LLM classification schema.
@@ -157,6 +139,24 @@ design, not as a gap to eventually close.
   `KeywordTarget` and Stratagem eligibility. Would need a `UnitKeywordGrant { keyword,
   replacesKeyword? }` (plus removal), an any-of `KeywordTarget` (slash = OR), and roster-build
   ordering that applies keyword grants before resolving keyword-targeted effects.
+- **Next prompt: state where eligibility rules sit.** v3 sorts "eligible to shoot/charge after
+  Advancing or Falling Back" inconsistently: Combat Doctrines' Tactical Doctrine (`02666a37…`) went to
+  out-of-scope residue (`complete`), while "re-roll Advance rolls…, and the bearer's unit is
+  eligible to shoot in a turn in which it Fell Back" (`f3bdecfd…`) went to in-scope residue
+  (`partial`, hand-corrected 2026-10-27). Name eligibility explicitly in the out-of-scope list.
+  Also decide whether an enemy unit that "made a Charge move this turn" implies the opponent's turn
+  (`4db8e26e…` is unset; v3's rule says a Charge move implies no ownership).
+  And map "X units with this ability" to the bearer's unit, not a Keyword target: v3 keyword-targeted
+  seven such datasheet texts (Aegis of the Emperor, Daughters of the Abyss, ...), which then never
+  apply; hand-corrected to `AttachedUnit` on 2026-10-27.
+- **Structurally resolved InSv footnotes still show their classification note.** Judiciar's "Against
+  melee attacks only" resolves to melee 4+ without a classification, but the full v3 run classified
+  it `unclassifiable` anyway (`b00ea448…`), so its provenance line carries "nothing can be
+  classified… needs human review" beside a resolved value. Either suppress the note when the
+  structural rule resolves, or keep such texts out of `submit`.
+- **Plural keyword resolution in `NameResolver`.** Rules text can pluralize a keyword BSData spells
+  singular ("Aspect Warriors" vs. "Aspect Warrior", `47c806a8…`), which leaves the target keyword
+  unresolved and matching no unit. Try a singular fallback when the exact name misses.
 - **Detachment-rule structural-modifier detection.** A real minority of Detachments carry a
   structured per-unit stat modifier gated by the same selection condition as the Detachment
   itself — could render as an orphaned per-unit ability instead of only the army-wide header
