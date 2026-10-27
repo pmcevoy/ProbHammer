@@ -67,6 +67,22 @@ record, not this file).
   5+*" stays caveated because Nullstone Field Generator is a Necrons-keyword aura, and keyword
   targets aren't evaluated on a unit, so its qualified 5+ never reaches the bearer to explain the
   footnote.
+- **Inbound abilities from another unit.** A unit's own ability can grant something to *other*
+  units in the army, which LivePlay should show as an inbound ability on each receiving unit, in the
+  whole-unit area that Detachment rules use (`InboundAbilities`, filled by
+  `DetachmentRuleInboundAbilityResolver`). Live example: Pedro Kantor's Inspiring Commander "If you
+  include this model in your army, until the end of the battle, non-Character models in Sternguard
+  Veteran Squad units from your army have an Objective Control characteristic of 2 while they are not
+  Battle-shocked." (`68a529a1…`). Older versions named other squads and other characters, Lysander
+  among them according to `apply-detachment-rule-keyword-targets`' Non-Goals, where this was first
+  deferred. What it needs:
+  - Match a datasheet ability's keyword or datasheet-name target against every other unit in the
+    roster, not just its bearer. Today `AttachedUnitAggregator.TryGetApplicableClassification` drops a
+    datasheet ability with a Keyword target, so these never apply.
+  - A model-subset filter ("non-Character models"); the classification marks Inspiring Commander
+    `partial` because the schema can't express it.
+  - The trigger is the bearer being in the army, not being alive or nearby ("until the end of the
+    battle"), unlike an aura ("within 6\"").
 - **Consume the remaining data-only effect kinds.** `NamedAbilityGrant` (an inbound ability; needs
   `RuleGlossary.Normalize` to strip a trailing `9"`-style value so `Scouts 9"` resolves),
   `NamedAbilityRemoval` (hide or strike the removed ability).
@@ -116,11 +132,20 @@ design, not as a gap to eventually close.
   force as a phase-aware reminder, e.g. an "info" area in the statline cell or a section-level strip
   in the weapon panel. The simulation is the other consumer; netting and capping per the 11e stacking
   rule belong there.
-- **BattleScribe import renders a unit's duplicated rule twice.** NewRecruit's export of the Judiciar
-  lists Fights First twice in its own `rules` (same id `24-c886-e8ba-5a89`; BSData links it once),
-  and `BattleScribeRosterMapper.BuildUnit` maps every `rules[]` entry, so the ability cell shows it
-  twice. De-duplicate the rules by id before mapping (seen 2026-10-27 in
-  `nr-templars-for-unit-tests.json`).
+- **BattleScribe import renders a unit's duplicated rule twice.** With a Judiciar attached to Sword
+  Brethren, NewRecruit's export lists Fights First twice in the Judiciar's own `rules` and once in
+  the Sword Brethren's (same id `24-c886-e8ba-5a89`). The source is BSData: the Judiciar model links
+  Fights First, and an `add-info` modifier with `affects: "group"`, conditioned on having an
+  association, adds it again to the Judiciar and its attached unit. `BattleScribeRosterMapper.BuildUnit`
+  maps every `rules[]` entry. Fix: de-duplicate a unit's rules by id before mapping, so the Judiciar
+  lists it once.
+  - The Sword Brethren copy stays (user decision 2026-10-27). Ideally a Leader's grant shows only in
+    the Leader's cell, like other "while leading" abilities, and dies with it, but the export can't
+    tell a group-added rule from the Bodyguard's own. GW text imports never show it, because Core
+    ignores `associations` and `add-info` modifiers.
+  - The whole-unit area is for abilities arriving from outside the attached unit (Army and
+    Detachment rules today, keyword grants from other units later), not for a Leader's grants.
+  - Seen in `nr-templars-for-unit-tests.json`.
 - **Enhancement Model/Unit scope classification.** Every Enhancement renders at Unit scope
   unconditionally today, even though real rules text sometimes signals Model scope instead (e.g.
   "this model's Objective Control"). Could be a new field on the LLM classification schema.
